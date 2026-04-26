@@ -244,6 +244,7 @@ struct Drive {
     auto stepSound(bool headBang) -> void;
 
     auto editMemory(uint32_t addr, std::vector<uint16_t> values) -> void;
+    auto memoryDump(uint8_t page, uint8_t* dump) -> void;
 };
   
 }

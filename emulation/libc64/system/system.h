@@ -347,7 +347,7 @@ struct System {
 	auto debuggerStepInto(DebuggerTheme theme) -> void;
 	auto debuggerStepOut(DebuggerTheme theme) -> bool;
 	auto getMemoryDumpBank(uint8_t bank, uint8_t* dump) -> void;
-	auto getMemoryDumpPage(uint8_t page, uint8_t* dump) -> void;
+	auto getMemoryDumpPage(DebuggerTheme theme, uint8_t page, uint8_t* dump) -> void;
 
     auto debugPointReached(Emulator::Interface::DebuggerTheme theme, Emulator::Interface::DebuggerAction action, unsigned addr) -> void;
     auto updateDebuggerSnapshot() -> void;

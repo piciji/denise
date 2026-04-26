@@ -217,14 +217,14 @@ auto CpuDebugger::buildTheme() -> GUIKIT::Layout* {
             if (!watcher) {
                 watcherHelper.addToList( inst.addr, DebuggerAction::Breakpoint );
                 watcher = watcherHelper.findBy(inst.addr, DebuggerAction::Breakpoint);
-                emulator->debuggerAdd(getCpuType(), DebuggerAction::Breakpoint, inst.addr);
+                emulator->debuggerAdd(getTheme(), DebuggerAction::Breakpoint, inst.addr);
             } else {
                 watcher->enabled ^= 1;
                 if (watcher->enabled) {
-                    emulator->debuggerAdd(getCpuType(), DebuggerAction::Breakpoint, inst.addr);
+                    emulator->debuggerAdd(getTheme(), DebuggerAction::Breakpoint, inst.addr);
                     updateWatchpointCondition( *watcher );
                 } else
-                    emulator->debuggerRemove(getCpuType(), DebuggerAction::Breakpoint, inst.addr);
+                    emulator->debuggerRemove(getTheme(), DebuggerAction::Breakpoint, inst.addr);
             }
             watcherHelper.updateList();
             emuThread->unlock();
@@ -280,15 +280,15 @@ auto CpuDebugger::buildTheme() -> GUIKIT::Layout* {
             watcher.enabled ^= 1;
             watcherHelper.updateBreakpointVisuals(row, &watcher);
             if (watcher.enabled) {
-                emulator->debuggerAdd(getCpuType(), watcher.action, watcher.addr);
+                emulator->debuggerAdd(getTheme(), watcher.action, watcher.addr);
                 updateWatchpointCondition( watcher );
             } else
-                emulator->debuggerRemove(getCpuType(), watcher.action, watcher.addr);
+                emulator->debuggerRemove(getTheme(), watcher.action, watcher.addr);
 
             if (instRow.has_value())
                 updateInstructionBreakpointVisuals(instructionList, instRow.value_or(0), &watcher);
         } else if (column == 3) {
-            emulator->debuggerRemove( getCpuType(), watcher.action, watcher.addr);
+            emulator->debuggerRemove( getTheme(), watcher.action, watcher.addr);
             if (instRow.has_value())
                 removeInstructionBreakpointVisuals(instructionList, instRow.value_or(0));
 
@@ -310,7 +310,7 @@ auto CpuDebugger::buildTheme() -> GUIKIT::Layout* {
         emuThread->lock();
         watcherHelper.addToList( vector, action, cpu->watcher.excAdder.exceptionCombo.text() );
         watcherHelper.updateList();
-        emulator->debuggerAdd(getCpuType(), action, vector);
+        emulator->debuggerAdd(getTheme(), action, vector);
         emuThread->unlock();
     };
 
@@ -350,7 +350,7 @@ auto CpuDebugger::buildTheme() -> GUIKIT::Layout* {
                 updateInstructionBreakpointVisuals(instructionList, instRow.value_or(0), watcherHelper.findBy( address, action ));
         }
 
-        emulator->debuggerAdd(getCpuType(), action, address);
+        emulator->debuggerAdd(getTheme(), action, address);
         emuThread->unlock();
     };
 
@@ -367,8 +367,8 @@ auto CpuDebugger::buildTheme() -> GUIKIT::Layout* {
 
     cpu->state.trace.clear.onActivate = [this]() {
         emuThread->lock();
-        emulator->debuggerRemove( getCpuType(), DebuggerAction::History, 0 );
-        emulator->debuggerAdd( getCpuType(), DebuggerAction::History, 0 );
+        emulator->debuggerRemove( getTheme(), DebuggerAction::History, 0 );
+        emulator->debuggerAdd( getTheme(), DebuggerAction::History, 0 );
         fetchTraces();
         updateTraceList();
         emuThread->unlock();
@@ -585,20 +585,20 @@ auto CpuDebugger::fetchInstructions(unsigned addr) -> void {
         auto& inst = instructions[i];
 
         inst.addr = addr;
-        inst.disassembled = emulator->disassemble( getCpuType(), addr, bytes );
-        inst.data = emulator->disassembleData( getCpuType(), addr, bytes );
+        inst.disassembled = emulator->disassemble( getTheme(), addr, bytes );
+        inst.data = emulator->disassembleData( getTheme(), addr, bytes );
 
         addr += bytes;
     }
 
-    emulator->debuggerAdd( getCpuType(), DebuggerAction::ModifiedCode, _addr, addr );
+    emulator->debuggerAdd( getTheme(), DebuggerAction::ModifiedCode, _addr, addr );
 }
 
 auto CpuDebugger::fetchTraces() -> void {
     for (int i = 0; i < LIST_TRACES; i++) {
         uint16_t flags;
         Trace& trace = traces[i];
-        trace.disassembled = emulator->disassembleTrace( getCpuType(), i, flags );
+        trace.disassembled = emulator->disassembleTrace( getTheme(), i, flags );
         trace.flags = flags;
     }
 }
@@ -641,7 +641,7 @@ auto CpuDebugger::prepareTheme(bool external) -> void {
                 bytes = nextAddr - addr;
         }
 
-        if (instructions[row].data != emulator->disassembleData( getCpuType(), addr, bytes )) {
+        if (instructions[row].data != emulator->disassembleData( getTheme(), addr, bytes )) {
             currentInstRow = std::nullopt;
             fetchInstructions(addr);
         }
@@ -682,29 +682,29 @@ auto CpuDebugger::updateTheme() -> void {
 }
 
 auto CpuDebugger::initTheme() -> void {
-    emulator->debuggerAdd( getCpuType(), DebuggerAction::None, 0);
-    emulator->debuggerAdd( getCpuType(), DebuggerAction::History, 0 );
+    emulator->debuggerAdd( getTheme(), DebuggerAction::None, 0);
+    emulator->debuggerAdd( getTheme(), DebuggerAction::History, 0 );
 
     for (auto& watcher : watcherHelper.watchers) {
         if (watcher.enabled) {
-            emulator->debuggerAdd( getCpuType(), watcher.action, watcher.addr );
+            emulator->debuggerAdd( getTheme(), watcher.action, watcher.addr );
             updateWatchpointCondition(watcher);
         } else
-            emulator->debuggerRemove( getCpuType(), watcher.action, watcher.addr );
+            emulator->debuggerRemove( getTheme(), watcher.action, watcher.addr );
     }
 
     // force reload of instruction cache
-    emulator->debuggerAdd( getCpuType(), DebuggerAction::ModifiedCode, 0, ~0 );
+    emulator->debuggerAdd( getTheme(), DebuggerAction::ModifiedCode, 0, ~0 );
 }
 
 auto CpuDebugger::closeTheme() -> void {
-    emulator->debuggerRemove( getCpuType(), DebuggerAction::None);
-    emulator->debuggerRemove( getCpuType(), DebuggerAction::Breakpoint );
-    emulator->debuggerRemove( getCpuType(), DebuggerAction::Watchpoint );
-    emulator->debuggerRemove( getCpuType(), DebuggerAction::WatchpointWrite );
-    emulator->debuggerRemove( getCpuType(), DebuggerAction::ExceptionPoint );
-    emulator->debuggerRemove( getCpuType(), DebuggerAction::History );
-    emulator->debuggerRemove( getCpuType(), DebuggerAction::ModifiedCode );
+    emulator->debuggerRemove( getTheme(), DebuggerAction::None);
+    emulator->debuggerRemove( getTheme(), DebuggerAction::Breakpoint );
+    emulator->debuggerRemove( getTheme(), DebuggerAction::Watchpoint );
+    emulator->debuggerRemove( getTheme(), DebuggerAction::WatchpointWrite );
+    emulator->debuggerRemove( getTheme(), DebuggerAction::ExceptionPoint );
+    emulator->debuggerRemove( getTheme(), DebuggerAction::History );
+    emulator->debuggerRemove( getTheme(), DebuggerAction::ModifiedCode );
 }
 
 auto CpuDebugger::update68k(LIBAMI::DebuggerSnapshot& s) -> void {

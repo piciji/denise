@@ -637,13 +637,25 @@ auto IecBus::editMemory(DebuggerTheme theme, uint32_t addr, std::vector<uint16_t
     drives[ getDriveId(theme) ]->editMemory( addr, values );
 }
 
+auto IecBus::memoryDump(DebuggerTheme theme, uint8_t page, uint8_t* dump) -> void {
+    drives[ getDriveId(theme) ]->memoryDump( page, dump );
+}
+
 inline auto IecBus::getDriveId(DebuggerTheme theme) -> unsigned {
     switch( theme ) {
         default:
-        case DebuggerTheme::Drive8CPU: return 0;
-        case DebuggerTheme::Drive9CPU: return 1;
-        case DebuggerTheme::Drive10CPU: return 2;
-        case DebuggerTheme::Drive11CPU: return 3;
+        case DebuggerTheme::Drive8Memory:
+        case DebuggerTheme::Drive8CPU:
+            return 0;
+        case DebuggerTheme::Drive9Memory:
+        case DebuggerTheme::Drive9CPU:
+            return 1;
+        case DebuggerTheme::Drive10Memory:
+        case DebuggerTheme::Drive10CPU:
+            return 2;
+        case DebuggerTheme::Drive11Memory:
+        case DebuggerTheme::Drive11CPU:
+            return 3;
     }
     _unreachable
 }

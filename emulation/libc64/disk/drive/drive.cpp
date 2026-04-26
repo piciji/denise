@@ -501,18 +501,6 @@ template<bool peek> auto Drive::cpuRead(uint16_t addr) -> uint8_t {
     return cpu.dataBus;
 }
 
-auto Drive::editMemory(uint32_t addr, std::vector<uint16_t> values) -> void {
-    for (int i = 0; i < values.size(); i++) {
-        uint16_t a = (addr + i) & 0xffff;
-        uint8_t v = values[i] & 0xff;
-
-        if (a & 0x8000)
-            rom[a & romMask] = v;
-
-        cpuWrite(a, v);
-    }
-}
-
 Drive::Drive(uint8_t number, System* system, IecBus& iecBus, Emulator::Interface::Media* media ) :
 via1(1),
 via2(2),
@@ -1579,6 +1567,26 @@ auto Drive::setSpeeder(uint8_t speeder) -> void {
 
 auto Drive::hide() -> void {
     hidden = true;
+}
+
+auto Drive::editMemory(uint32_t addr, std::vector<uint16_t> values) -> void {
+    for (int i = 0; i < values.size(); i++) {
+        uint16_t a = (addr + i) & 0xffff;
+        uint8_t v = values[i] & 0xff;
+
+        if (a & 0x8000)
+            rom[a & romMask] = v;
+
+        cpuWrite(a, v);
+    }
+}
+
+auto Drive::memoryDump(uint8_t page, uint8_t* dump) -> void {
+    page &= 0xf;
+    unsigned bank = page << 12;
+
+    for (unsigned addr = bank; addr <= (bank | 0xfff); addr++ )
+         *dump++ = cpuRead<true>( addr );
 }
 
 template auto Drive::cpuRead<false>(uint16_t addr) -> uint8_t;

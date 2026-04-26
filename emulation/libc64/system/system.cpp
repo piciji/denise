@@ -1601,11 +1601,23 @@ auto System::getMemoryDumpBank(uint8_t bank, uint8_t* dump) -> void {
         dynamic_cast<SuperCpu*>(expansionPort)->memoryDumpBank(bank, dump);
 }
 
-auto System::getMemoryDumpPage(uint8_t page, uint8_t* dump) -> void {
-    if (expansionPort->haltMainCpu())
-        dynamic_cast<SuperCpu*>(expansionPort)->memoryDumpPage(page, dump);
-    else
-        memoryDump(page, dump);
+auto System::getMemoryDumpPage(DebuggerTheme theme, uint8_t page, uint8_t* dump) -> void {
+    switch (theme) {
+        case DebuggerTheme::Drive8Memory:
+        case DebuggerTheme::Drive9Memory:
+        case DebuggerTheme::Drive10Memory:
+        case DebuggerTheme::Drive11Memory:
+            iecBus.memoryDump( theme, page, dump );
+            break;
+
+        default:
+        case DebuggerTheme::Memory:
+        case DebuggerTheme::MemorySCPU:
+            if (expansionPort->haltMainCpu())
+                superCpu->memoryDumpPage(page, dump);
+            else
+                memoryDump(page, dump);
+    }
 }
 
 auto System::debugPointReached(Emulator::Interface::DebuggerTheme theme, Emulator::Interface::DebuggerAction action, unsigned addr) -> void {

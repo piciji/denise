@@ -112,7 +112,7 @@
     <ClInclude Include="..\emulation\libami\system\system.h" />
     <ClInclude Include="..\emulation\libami\video\denise.h" />
     <ClInclude Include="..\emulation\libc64\disk\cia\cia8520.h" />
-    <ClInclude Include="..\emulation\libc64\disk\cpu\m6502New.h" />
+    <ClInclude Include="..\emulation\libc64\disk\cpu\m6502.h" />
     <ClInclude Include="..\emulation\libc64\disk\drive\drive.h" />
     <ClInclude Include="..\emulation\libc64\disk\iec.h" />
     <ClInclude Include="..\emulation\libc64\disk\structure\structure.h" />
@@ -278,6 +278,14 @@
     <ClInclude Include="..\program\debugger\cpuDebugger.h" />
     <ClInclude Include="..\program\debugger\debugger.h" />
     <ClInclude Include="..\program\debugger\dmaDebugger.h" />
+    <ClInclude Include="..\program\debugger\drive10CpuDebugger.h" />
+    <ClInclude Include="..\program\debugger\drive10MemDebugger.h" />
+    <ClInclude Include="..\program\debugger\drive11CpuDebugger.h" />
+    <ClInclude Include="..\program\debugger\drive11MemDebugger.h" />
+    <ClInclude Include="..\program\debugger\drive8CpuDebugger.h" />
+    <ClInclude Include="..\program\debugger\drive8MemDebugger.h" />
+    <ClInclude Include="..\program\debugger\drive9CpuDebugger.h" />
+    <ClInclude Include="..\program\debugger\drive9MemDebugger.h" />
     <ClInclude Include="..\program\debugger\memDebugger.h" />
     <ClInclude Include="..\program\debugger\memScpuDebugger.h" />
     <ClInclude Include="..\program\debugger\paulaDebugger.h" />
@@ -913,7 +921,7 @@
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|win32'">$(IntDir)%(Filename)_ami</ObjectFileName>
     </ClCompile>
     <ClCompile Include="..\emulation\libami\video\denise.cpp" />
-    <ClCompile Include="..\emulation\libc64\disk\cpu\m6502New.cpp" />
+    <ClCompile Include="..\emulation\libc64\disk\cpu\m6502.cpp" />
     <ClCompile Include="..\emulation\libc64\disk\drive\drive.cpp">
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(Filename)_disk</ObjectFileName>
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)%(Filename)_disk</ObjectFileName>

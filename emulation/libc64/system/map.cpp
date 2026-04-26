@@ -182,10 +182,16 @@ auto System::editMemory(DebuggerTheme theme, uint32_t addr, std::vector<uint16_t
         case DebuggerTheme::Drive9CPU:
         case DebuggerTheme::Drive10CPU:
         case DebuggerTheme::Drive11CPU:
+        case DebuggerTheme::Drive8Memory:
+        case DebuggerTheme::Drive9Memory:
+        case DebuggerTheme::Drive10Memory:
+        case DebuggerTheme::Drive11Memory:
             iecBus.editMemory( theme, addr, values );
             break;
 
         default:
+        case DebuggerTheme::Memory:
+        case DebuggerTheme::MemorySCPU:
         case DebuggerTheme::CPU:
         case DebuggerTheme::SCPU: {
             if (dynamic_cast<SuperCpu*>(expansionPort)) {
@@ -217,10 +223,6 @@ auto System::memoryDump(uint8_t page, uint8_t* dump) -> void {
     page &= 0xf;
     page <<= 4;
 
-    // for (uint16_t addr = bank << 8; addr <= ((bank << 8) | 0xfff); addr++ )
-    //     *dump++ = memoryCpu.peek(addr);
-    //
-    // return;
     Memory::Read* ptr = memoryCpu.reads[page];
 
     if (ptr == &readRam) {

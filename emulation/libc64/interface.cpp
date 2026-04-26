@@ -2094,8 +2094,8 @@ auto Interface::getMemoryDumpBank(uint8_t bank, uint8_t* dump) -> void {
     system->getMemoryDumpBank(bank, dump);
 }
 
-auto Interface::getMemoryDumpPage(uint8_t page, uint8_t* dump) -> void {
-    system->getMemoryDumpPage(page, dump);
+auto Interface::getMemoryDumpPage(DebuggerTheme theme, uint8_t page, uint8_t* dump) -> void {
+    system->getMemoryDumpPage(theme, page, dump);
 }
 
 }

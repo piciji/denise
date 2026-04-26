@@ -1447,7 +1447,7 @@ auto View::buildMenu() -> void {
                 debuggerDrive.menu = new GUIKIT::Menu;
                 debuggerDrive.menu->setText( "Drive" + std::to_string( nr ));
                 debuggerDrive.cpu = new GUIKIT::MenuItem;
-                debuggerDrive.cpu->onActivate = [this, emulator, nr]() {
+                debuggerDrive.cpu->onActivate = [emulator, nr]() {
                     emuThread->lock();
                     switch (nr) {
                         default:
@@ -1459,6 +1459,20 @@ auto View::buildMenu() -> void {
                     emuThread->unlock();
                 };
                 debuggerDrive.menu->append( *debuggerDrive.cpu );
+
+                debuggerDrive.mem = new GUIKIT::MenuItem;
+                debuggerDrive.mem->onActivate = [emulator, nr]() {
+                    emuThread->lock();
+                    switch (nr) {
+                        default:
+                        case 8: program->openDebugger(emulator, DebuggerTheme::Drive8Memory); break;
+                        case 9: program->openDebugger(emulator, DebuggerTheme::Drive9Memory); break;
+                        case 10: program->openDebugger(emulator, DebuggerTheme::Drive10Memory); break;
+                        case 11: program->openDebugger(emulator, DebuggerTheme::Drive11Memory); break;
+                    }
+                    emuThread->unlock();
+                };
+                debuggerDrive.menu->append( *debuggerDrive.mem );
 
                 sM.debugger->append( *debuggerDrive.menu );
                 nr++;
@@ -2273,6 +2287,7 @@ auto View::translate() -> void {
         if (dynamic_cast<LIBC64::Interface*>(sysMenu.emulator)) {
             for (auto& debuggerDrive : sysMenu.debuggerDrives) {
                 debuggerDrive.cpu->setText( "CPU" );
+                debuggerDrive.mem->setText( "Memory" );
             }
         }
 

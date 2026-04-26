@@ -64,9 +64,15 @@ MemDebugger::Memory::Memory(Debugger* debugger)
         pageList.setAlignment( {AL, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC}, true );
 
         bankList.lockRedraw();
-        for (unsigned i = 0; i < 0x10; i++) {
-            bankList.append({GUIKIT::String::convertToHex(i, 1), "Unmapped" }, true);
-            bankList.setRowForegroundColor( UNUSED_COLOR, i );
+        if (debugger->isDriveMem()) {
+            for (unsigned i = 0; i < 0x10; i++) {
+                bankList.append({GUIKIT::String::convertToHex(i, 1), std::to_string( i )}, true);
+            }
+        } else {
+            for (unsigned i = 0; i < 0x10; i++) {
+                bankList.append({GUIKIT::String::convertToHex(i, 1), "Unmapped" }, true);
+                bankList.setRowForegroundColor( UNUSED_COLOR, i );
+            }
         }
         bankList.unlockRedraw();
 
@@ -146,7 +152,7 @@ MemDebugger::C64MemControl::C64MemControl(Debugger* debugger)
 }
 
 auto MemDebugger::buildControl() -> GUIKIT::Layout* {
-    if (isC64()) {
+    if (isC64() && !isDriveMem()) {
         c64MemControl = new C64MemControl(this);
         return c64MemControl;
     }
@@ -154,7 +160,7 @@ auto MemDebugger::buildControl() -> GUIKIT::Layout* {
 }
 
 auto MemDebugger::searchAddress(unsigned addr) -> void {
-    if (getTheme() == DebuggerTheme::Memory) {
+    if ( (getTheme() == DebuggerTheme::Memory) || isDriveMem()) {
         if (isAmiga()) {
             uint8_t bank = (addr >> 16) & 0xff;
             memory->bankList.setSelection( bank );
@@ -188,7 +194,7 @@ auto MemDebugger::buildTheme() -> GUIKIT::Layout* {
         std::memset(memDumpOld, 0, 0x1000);
     }
 
-    if (isC64()) {
+    if (isC64() && !isDriveMem()) {
         updateC64MemControl(0, true);
     }
 
@@ -287,7 +293,7 @@ auto MemDebugger::updateTheme() -> void {
         updateMemory( snap);
     } else {
         LIBC64::DebuggerSnapshot& snap = *static_cast<LIBC64::DebuggerSnapshot*>(snapshot);
-        if (getTheme() == DebuggerTheme::Memory) {
+        if (isDriveMem() || (getTheme() == DebuggerTheme::Memory)) {
             updateMemory( snap);
         } else if (snap.superCpu && getTheme() == DebuggerTheme::MemorySCPU) {
             updateMemory( snap);
@@ -296,11 +302,11 @@ auto MemDebugger::updateTheme() -> void {
 }
 
 auto MemDebugger::initTheme() -> void {
-    emulator->debuggerAdd( DebuggerTheme::Memory, DebuggerAction::None, 0);
+    emulator->debuggerAdd( getTheme(), DebuggerAction::None, 0);
 }
 
 auto MemDebugger::closeTheme() -> void {
-    emulator->debuggerRemove( DebuggerTheme::Memory, DebuggerAction::None);
+    emulator->debuggerRemove( getTheme(), DebuggerAction::None);
 }
 
 auto MemDebugger::prepareTheme(bool external) -> void {
@@ -394,6 +400,8 @@ auto MemDebugger::updateMemory(LIBC64::DebuggerSnapshot& s) -> void {
 
             bank++;
         }
+    } else if (isDriveMem()) {
+        // todo
     } else {
         for (auto& m : s.mapper) {
             switch (m) {
@@ -436,7 +444,8 @@ auto MemDebugger::updateMemory(LIBC64::DebuggerSnapshot& s) -> void {
 
     updateControl( s.vPos, s.hPos );
 
-    updateC64MemControl(s.mode);
+    if (!isDriveMem())
+        updateC64MemControl(s.mode);
 }
 
 auto MemDebugger::updateC64MemControl(uint8_t _mode, bool init) -> void {
@@ -466,8 +475,8 @@ auto MemDebugger::fetchDump() -> void {
 
     auto* pNew = reinterpret_cast<T*>(memDump);
 
-    if (isC64() && (getTheme() == DebuggerTheme::Memory))
-        emulator->getMemoryDumpPage( selectedBank, reinterpret_cast<uint8_t*>(pNew) );
+    if (isC64() && ((getTheme() == DebuggerTheme::Memory) || isDriveMem()))
+        emulator->getMemoryDumpPage( getTheme(), selectedBank, reinterpret_cast<uint8_t*>(pNew) );
     else {
         emulator->getMemoryDumpBank( selectedBank, pNew );
     }

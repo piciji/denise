@@ -100,6 +100,7 @@ struct Debugger : GUIKIT::Window {
     virtual auto buildControl() -> GUIKIT::Layout* { return nullptr; }
     virtual auto updateBreakpointVisuals(DbgWatcher* watcher) -> void {}
     virtual auto isDriveCpu() -> bool { return false; }
+    virtual auto isDriveMem() -> bool { return false; }
     virtual auto getTheme() -> DebuggerTheme = 0;
 
     auto translate() -> void;
@@ -121,7 +122,7 @@ struct Debugger : GUIKIT::Window {
     auto openConditionView(DbgWatcher* watcher, GUIKIT::Position position) -> void;
     auto updateWatchpointCondition(DbgWatcher& watcher) -> bool;
 
-    auto getCpuType() -> DebuggerTheme;
+    auto getCpuTheme() -> DebuggerTheme;
 
     static auto updateReg(GUIKIT::LineEdit& reg, unsigned val) -> void;
     static auto updateReg(GUIKIT::CheckBox& reg, bool state) -> void;

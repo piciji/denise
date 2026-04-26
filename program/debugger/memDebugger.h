@@ -91,4 +91,6 @@ struct MemDebugger : Debugger {
     static auto toAscii(const uint8_t* buf, int len, char* result, char pad = '.') -> void;
 
     auto getTheme() -> DebuggerTheme override { return DebuggerTheme::Memory; }
+
+    virtual auto getDriveId() -> unsigned { return 0; }
 };

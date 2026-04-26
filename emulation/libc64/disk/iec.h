@@ -121,6 +121,8 @@ struct IecBus {
 
     auto editMemory(DebuggerTheme theme, uint32_t addr, std::vector<uint16_t> values) -> void;
 
+    auto memoryDump(DebuggerTheme theme, uint8_t page, uint8_t* dump) -> void;
+
     auto getDriveId(DebuggerTheme theme) -> unsigned;
 
     auto updateSerializationSize() -> void;

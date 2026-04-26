@@ -167,15 +167,15 @@ auto Debugger::build() -> void {
     };
 
     control->stepInto.onActivate = [this]() {
-        stepInto( emulator, getCpuType() );
+        stepInto( emulator, getCpuTheme() );
     };
 
     control->stepOut.onActivate = [this]() {
-        stepOut( emulator, getCpuType() );
+        stepOut( emulator, getCpuTheme() );
     };
 
     control->stepOver.onActivate = [this]() {
-        stepOver( emulator, getCpuType() );
+        stepOver( emulator, getCpuTheme() );
     };
 
     control->line.onActivate = [this]() {
@@ -548,14 +548,14 @@ auto Debugger::changeMemory(const std::string& addrStr, const std::string& valSt
         return;
 
     emuThread->lock();
-    emulator->editMemory( getCpuType(), addr, values);
+    emulator->editMemory( getTheme(), addr, values);
 
     if (isPaused()) {
         if (snapshot)
             snapshot->codeMaybeModified = true;
 
         for (auto& debugger : program->getActiveDebuggers()) {
-            if (debugger->getTheme() == DebuggerTheme::Memory || debugger->getTheme() == DebuggerTheme::MemorySCPU)
+            if (debugger->isDriveMem() || debugger->getTheme() == DebuggerTheme::Memory || debugger->getTheme() == DebuggerTheme::MemorySCPU)
                 (dynamic_cast<MemDebugger*>(debugger))->memChanged(false);
 
             if (debugger->isDriveCpu() || debugger->getTheme() == DebuggerTheme::CPU || debugger->getTheme() == DebuggerTheme::SCPU) {
@@ -594,7 +594,7 @@ auto Debugger::removeInstructionBreakpointVisuals(GUIKIT::ListView& listView, un
 auto Debugger::updateWatchpointCondition(DbgWatcher& watcher) -> bool {
     unsigned hitCount = watcher.useHitCount ? watcher.hitCount : 0;
     const auto& expression = watcher.useExpression ? watcher.expression : "";
-    return emulator->setWatchpointCondition( getCpuType(), watcher.action, watcher.addr, hitCount, watcher.hitCountCompare, expression, watcher.expressionCompare );
+    return emulator->setWatchpointCondition( getCpuTheme(), watcher.action, watcher.addr, hitCount, watcher.hitCountCompare, expression, watcher.expressionCompare );
 }
 
 auto Debugger::openConditionView(DbgWatcher* watcher, GUIKIT::Position position) -> void {
@@ -604,7 +604,7 @@ auto Debugger::openConditionView(DbgWatcher* watcher, GUIKIT::Position position)
     conditionViewDebugger->create(watcher, position);
     conditionViewDebugger->open();
 }
-auto Debugger::getCpuType() -> DebuggerTheme {
+auto Debugger::getCpuTheme() -> DebuggerTheme {
     if (isAmiga())
         return DebuggerTheme::CPU;
 

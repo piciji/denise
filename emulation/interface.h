@@ -348,7 +348,7 @@ struct Interface {
 
     enum class DebuggerTheme : unsigned { Unspecified = 0,
         CPU = 1, SCPU = 2, Drive8CPU = 4, Drive9CPU = 8, Drive10CPU = 0x10, Drive11CPU = 0x20,
-        Memory = 0x40, MemorySCPU = 0x80,
+        Memory = 0x40, MemorySCPU = 0x80, Drive8Memory = 0x100, Drive9Memory = 0x200, Drive10Memory = 0x400, Drive11Memory = 0x800,
         CIA = 0x1000, Video = 0x2000, BUS = 0x4000, SID = 0x8000, Copper = 0x10000, Blitter = 0x20000,
         Agnus = 0x40000, Paula = 0x80000,
 
@@ -692,7 +692,7 @@ struct Interface {
 
     virtual auto getMemoryDumpBank(uint8_t bank, uint16_t* dump) -> void {}
     virtual auto getMemoryDumpBank(uint8_t bank, uint8_t* dump) -> void {}
-    virtual auto getMemoryDumpPage(uint8_t page, uint8_t* dump) -> void {}
+    virtual auto getMemoryDumpPage(DebuggerTheme theme, uint8_t page, uint8_t* dump) -> void {}
     virtual auto getDmaDump() -> uint8_t* { return nullptr; }
 
     virtual auto editMemory(DebuggerTheme theme, uint32_t addr, std::vector<uint16_t> values) -> void {}
