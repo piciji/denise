@@ -867,35 +867,36 @@ auto Program::getAMIModelValue(LIBAMI::Interface::ModelId modelId) -> int {
     return 0;
 }
 
-auto Program::openDebugger(Emulator::Interface* emulator, Debugger::Mode mode) -> void {
+auto Program::openDebugger(Emulator::Interface* emulator, DebuggerTheme theme) -> void {
     for (auto debugger : debuggers) {
-        if (debugger->emulator == emulator && debugger->mode == mode) {
+        if (debugger->emulator == emulator && debugger->getTheme() == theme) {
             debugger->makeVisible();
             return;
         }
     }
     Debugger* debugger;
-    switch (mode) {
-        case Debugger::Mode::CPU: debugger = new CpuDebugger(emulator); break;
-        case Debugger::Mode::SCPU: debugger = new ScpuDebugger(emulator); break;
-        case Debugger::Mode::Drive8CPU: debugger = new Drive8CpuDebugger(emulator); break;
-        case Debugger::Mode::Drive9CPU: debugger = new Drive9CpuDebugger(emulator); break;
-        case Debugger::Mode::Drive10CPU: debugger = new Drive10CpuDebugger(emulator); break;
-        case Debugger::Mode::Drive11CPU: debugger = new Drive11CpuDebugger(emulator); break;
-        case Debugger::Mode::Memory: debugger = new MemDebugger(emulator); break;
-        case Debugger::Mode::MemorySCPU: debugger = new MemScpuDebugger(emulator); break;
-        case Debugger::Mode::CIA: debugger = new CiaDebugger(emulator); break;
-        case Debugger::Mode::Video: debugger = new VideoDebugger(emulator); break;
-        case Debugger::Mode::SID: debugger = new SidDebugger(emulator); break;
-        case Debugger::Mode::DMA: debugger = new DmaDebugger(emulator); break;
-        case Debugger::Mode::Copper: debugger = new CopperDebugger(emulator); break;
-        case Debugger::Mode::Blitter: debugger = new BlitterDebugger(emulator); break;
-        case Debugger::Mode::Agnus: debugger = new AgnusDebugger(emulator); break;
-        case Debugger::Mode::Paula: debugger = new PaulaDebugger(emulator); break;
+    switch (theme) {
+        case DebuggerTheme::CPU: debugger = new CpuDebugger(emulator); break;
+        case DebuggerTheme::SCPU: debugger = new ScpuDebugger(emulator); break;
+        case DebuggerTheme::Drive8CPU: debugger = new Drive8CpuDebugger(emulator); break;
+        case DebuggerTheme::Drive9CPU: debugger = new Drive9CpuDebugger(emulator); break;
+        case DebuggerTheme::Drive10CPU: debugger = new Drive10CpuDebugger(emulator); break;
+        case DebuggerTheme::Drive11CPU: debugger = new Drive11CpuDebugger(emulator); break;
+        case DebuggerTheme::Memory: debugger = new MemDebugger(emulator); break;
+        case DebuggerTheme::MemorySCPU: debugger = new MemScpuDebugger(emulator); break;
+        case DebuggerTheme::CIA: debugger = new CiaDebugger(emulator); break;
+        case DebuggerTheme::Video: debugger = new VideoDebugger(emulator); break;
+        case DebuggerTheme::SID: debugger = new SidDebugger(emulator); break;
+        case DebuggerTheme::BUS: debugger = new DmaDebugger(emulator); break;
+        case DebuggerTheme::Copper: debugger = new CopperDebugger(emulator); break;
+        case DebuggerTheme::Blitter: debugger = new BlitterDebugger(emulator); break;
+        case DebuggerTheme::Agnus: debugger = new AgnusDebugger(emulator); break;
+        case DebuggerTheme::Paula: debugger = new PaulaDebugger(emulator); break;
         default:
             return;
     }
 
+    debugger->build();
     debuggers.push_back(debugger);
     debugger->makeVisible();
 }

@@ -133,4 +133,6 @@ struct PaulaDebugger : Debugger {
     auto updateTheme() -> void override;
     auto initTheme() -> void override;
     auto closeTheme() -> void override;
+
+    auto getTheme() -> DebuggerTheme override { return DebuggerTheme::Paula; }
 };

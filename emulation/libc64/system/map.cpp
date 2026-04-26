@@ -178,16 +178,16 @@ auto System::logCpu(uint16_t addr, uint8_t data, bool write, bool nextOp) -> voi
 
 auto System::editMemory(DebuggerTheme theme, uint32_t addr, std::vector<uint16_t> values) -> void {
     switch (theme) {
-        case DebuggerTheme::DriveCPU1:
-        case DebuggerTheme::DriveCPU2:
-        case DebuggerTheme::DriveCPU3:
-        case DebuggerTheme::DriveCPU4:
+        case DebuggerTheme::Drive8CPU:
+        case DebuggerTheme::Drive9CPU:
+        case DebuggerTheme::Drive10CPU:
+        case DebuggerTheme::Drive11CPU:
             iecBus.editMemory( theme, addr, values );
             break;
 
         default:
         case DebuggerTheme::CPU:
-        case DebuggerTheme::CPU2: {
+        case DebuggerTheme::SCPU: {
             if (dynamic_cast<SuperCpu*>(expansionPort)) {
                 for (int i = 0; i < values.size(); i++) {
                     uint32_t a = (addr + i) & 0xffffff;

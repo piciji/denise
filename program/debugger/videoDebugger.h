@@ -142,4 +142,6 @@ struct VideoDebugger : Debugger {
     auto updateView(LIBC64::DebuggerSnapshot& s) -> void;
     auto updateView(LIBAMI::DebuggerSnapshot& s) -> void;
     auto getSelectedSprite() -> unsigned;
+
+    auto getTheme() -> DebuggerTheme override { return DebuggerTheme::Video; }
 };

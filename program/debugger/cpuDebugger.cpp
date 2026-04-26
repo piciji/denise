@@ -4,12 +4,8 @@
 #include "../thread/emuThread.h"
 #include "../program.h"
 
-CpuDebugger::CpuDebugger( Emulator::Interface* emulator, Mode mode )
-: Debugger( emulator, mode ) {}
-
 CpuDebugger::CpuDebugger( Emulator::Interface* emulator )
-: Debugger( emulator, Mode::CPU ) {
-    build();
+: Debugger( emulator ) {
 }
 
 CpuDebugger::~CpuDebugger() {
@@ -62,7 +58,7 @@ CpuDebugger::CPU::State::Flags::Flags(Debugger* debugger) {
     if (debugger->isAmiga()) {
         i = sizeof(LIBAMI::DebuggerSnapshot::flagIdent);
         ident = &LIBAMI::DebuggerSnapshot::flagIdent[0];
-    } else if (debugger->mode == Mode::SCPU) {
+    } else if (debugger->getTheme() == DebuggerTheme::SCPU) {
         i = sizeof(LIBC64::DebuggerSnapshot::flagIdent65816);
         ident = &LIBC64::DebuggerSnapshot::flagIdent65816[0];
     } else {
@@ -203,7 +199,7 @@ auto CpuDebugger::buildTheme() -> GUIKIT::Layout* {
     if (isAmiga()) {
         for (const Emulator::Interface::DebuggerIdent& debuggerException : LIBAMI::DebuggerSnapshot::exceptions)
             cpu->watcher.excAdder.exceptionCombo.append( debuggerException.ident, (int)debuggerException.vector );
-    } else if (mode == Mode::SCPU) {
+    } else if (getTheme() == DebuggerTheme::SCPU) {
         for (const Emulator::Interface::DebuggerIdent& debuggerException : LIBC64::DebuggerSnapshot::exceptions65816)
             cpu->watcher.excAdder.exceptionCombo.append( debuggerException.ident, (int)debuggerException.vector );
     } else {
@@ -482,7 +478,7 @@ auto CpuDebugger::updateTraceList() -> void {
     if (isAmiga()) {
         flagSize = sizeof(LIBAMI::DebuggerSnapshot::flagIdent);
         flagIdent = &LIBAMI::DebuggerSnapshot::flagIdent[0];
-    } else if (mode == Mode::SCPU) {
+    } else if (getTheme() == DebuggerTheme::SCPU) {
         flagSize = sizeof(LIBC64::DebuggerSnapshot::flagIdent65816);
         flagIdent = &LIBC64::DebuggerSnapshot::flagIdent65816[0];
     } else {
@@ -552,10 +548,7 @@ auto CpuDebugger::updateWatcherSelection() -> void {
     auto& act = snapshot->callbackAction;
     bool hiLight = false;
 
-    if ( (t == DebuggerTheme::Unspecified) || (t == DebuggerTheme::CPU && mode == Mode::CPU) || (t == DebuggerTheme::CPU2 && mode == Mode::SCPU)
-        || (t == DebuggerTheme::DriveCPU1 && mode == Mode::Drive8CPU) || (t == DebuggerTheme::DriveCPU2 && mode == Mode::Drive9CPU)
-        || (t == DebuggerTheme::DriveCPU3 && mode == Mode::Drive10CPU) || (t == DebuggerTheme::DriveCPU4 && mode == Mode::Drive11CPU)) {
-
+    if ((t == DebuggerTheme::Unspecified) || (t == getTheme())) {
         if (act == DebuggerAction::Watchpoint
         || act == DebuggerAction::WatchpointWrite
         || act == DebuggerAction::Breakpoint
@@ -620,12 +613,11 @@ auto CpuDebugger::prepareTheme(bool external) -> void {
         addr = snap.pcEdge;
     } else {
         LIBC64::DebuggerSnapshot& snap = *static_cast<LIBC64::DebuggerSnapshot*>(snapshot);
-        if (!isDriveCpu() && !(snap.superCpu && mode == Mode::SCPU) && !(!snap.superCpu && mode == Mode::CPU) )
+        if (!isDriveCpu() && !(snap.superCpu && getTheme() == DebuggerTheme::SCPU) && !(!snap.superCpu && getTheme() == DebuggerTheme::CPU) )
             return;
 
         if (isDriveCpu()) {
-            unsigned nr = (unsigned)mode - (unsigned)Mode::Drive8CPU;
-            addr = snap.drives[nr].pcEdge;
+            addr = snap.drives[getDriveId()].pcEdge;
         } else
             addr = snap.pcEdge;
     }
@@ -669,9 +661,9 @@ auto CpuDebugger::updateTheme() -> void {
 
         if (isDriveCpu())
             update6502( snap );
-        else if (!snap.superCpu && mode == Mode::CPU)
+        else if (!snap.superCpu && getTheme() == DebuggerTheme::CPU)
             update6510( snap );
-        else if (snap.superCpu && mode == Mode::SCPU)
+        else if (snap.superCpu && getTheme() == DebuggerTheme::SCPU)
             update65816( snap );
         else
             return;
@@ -746,8 +738,7 @@ auto CpuDebugger::update68k(LIBAMI::DebuggerSnapshot& s) -> void {
 
 auto CpuDebugger::update6502(LIBC64::DebuggerSnapshot& s) -> void {
     int i = 0;
-    unsigned nr = (unsigned)mode - (unsigned)Mode::Drive8CPU;
-    auto& _s = s.drives[nr];
+    auto& _s = s.drives[getDriveId()];
 
     for (auto& reg : cpu->state.registers) {
         switch (i++) {
@@ -863,11 +854,11 @@ auto CpuDebugger::translateTheme() -> void {
             } else if (i == 2) {
                 reg->left.setText( "A" );
                 if (!isDriveCpu())
-                    reg->right.setText( mode == Mode::SCPU ? "M-E" : "I/O" );
+                    reg->right.setText( getTheme() == DebuggerTheme::SCPU ? "M-E" : "I/O" );
             } else if (i == 3) {
                 if (!isDriveCpu()) {
-                    reg->left.setText( mode == Mode::SCPU ? "PBR" : "POR" );
-                    reg->right.setText( mode == Mode::SCPU ? "DBR" : "DDR" );
+                    reg->left.setText( getTheme() == DebuggerTheme::SCPU ? "PBR" : "POR" );
+                    reg->right.setText( getTheme() == DebuggerTheme::SCPU ? "DBR" : "DDR" );
                 }
             }
 

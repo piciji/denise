@@ -5,14 +5,8 @@
 #include "../tools/macros.h"
 #include <cstring>
 
-MemDebugger::MemDebugger( Emulator::Interface* emulator, Mode mode )
-: Debugger( emulator, mode ) {
-
-}
-
 MemDebugger::MemDebugger( Emulator::Interface* emulator )
-: Debugger( emulator, Mode::Memory ) {
-    build();
+: Debugger( emulator ) {
 }
 
 MemDebugger::~MemDebugger() {
@@ -50,7 +44,7 @@ MemDebugger::Memory::Memory(Debugger* debugger)
         for (unsigned i = 0; i < 0x1000; i++)
             pageList.append({GUIKIT::String::convertToHex(i * 16, 4), "   0", "   0", "   0", "   0", "   0", "   0", "   0", "   0", "................"}, true);
         pageList.unlockRedraw();
-    } else if (debugger->mode == Mode::MemorySCPU) {
+    } else if (debugger->getTheme() == DebuggerTheme::MemorySCPU) {
         pageList.setHeaderText( { "address", "0","1", "2", "3", "4", "5", "6", "7", "8","9", "A", "B", "C", "D", "E","F", "ASCII" });
         pageList.setAlignment( {AL, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC}, true );
 
@@ -94,7 +88,7 @@ MemDebugger::Memory::Memory(Debugger* debugger)
 }
 
 MemDebugger::Memory::Options::Address::Address(Debugger* debugger) {
-    edit.setMaxLength( debugger->isAmiga() || debugger->mode == Mode::MemorySCPU ? 6 : 4 );
+    edit.setMaxLength( debugger->isAmiga() || debugger->getTheme() == DebuggerTheme::MemorySCPU ? 6 : 4 );
     append(edit, {80u, 0u}, 5);
     append(view, {0u, 0u});
     setAlignment( 0.5 );
@@ -160,7 +154,7 @@ auto MemDebugger::buildControl() -> GUIKIT::Layout* {
 }
 
 auto MemDebugger::searchAddress(unsigned addr) -> void {
-    if (mode == Mode::Memory) {
+    if (getTheme() == DebuggerTheme::Memory) {
         if (isAmiga()) {
             uint8_t bank = (addr >> 16) & 0xff;
             memory->bankList.setSelection( bank );
@@ -172,7 +166,7 @@ auto MemDebugger::searchAddress(unsigned addr) -> void {
             uint16_t page = addr & 0xfff;
             memory->pageList.setSelection( page / 16 );
         }
-    } else if (mode == Mode::MemorySCPU) {
+    } else if (getTheme() == DebuggerTheme::MemorySCPU) {
         uint8_t bank = (addr >> 16) & 0xff;
         memory->bankList.setSelection( bank );
         uint16_t page = addr & 0xffff;
@@ -184,7 +178,7 @@ auto MemDebugger::searchAddress(unsigned addr) -> void {
 auto MemDebugger::buildTheme() -> GUIKIT::Layout* {
     memory = new Memory(this);
 
-    if (isAmiga() || (mode == Mode::MemorySCPU)) {
+    if (isAmiga() || (getTheme() == DebuggerTheme::MemorySCPU)) {
         memDump = new uint8_t[0x10000];
         memDumpOld = new uint8_t[0x10000];
         std::memset(memDumpOld, 0, 0x10000);
@@ -194,7 +188,7 @@ auto MemDebugger::buildTheme() -> GUIKIT::Layout* {
         std::memset(memDumpOld, 0, 0x1000);
     }
 
-    if (isC64() && isMemMode()) {
+    if (isC64()) {
         updateC64MemControl(0, true);
     }
 
@@ -254,7 +248,7 @@ auto MemDebugger::buildTheme() -> GUIKIT::Layout* {
             if (col == 17)
                 return;
 
-            if (mode == Mode::MemorySCPU) {
+            if (getTheme() == DebuggerTheme::MemorySCPU) {
                 addr = (addr & 0xff) << 16;
                 addr |= row * 16 + (col - 1);
             } else {
@@ -293,9 +287,9 @@ auto MemDebugger::updateTheme() -> void {
         updateMemory( snap);
     } else {
         LIBC64::DebuggerSnapshot& snap = *static_cast<LIBC64::DebuggerSnapshot*>(snapshot);
-        if (mode == Mode::Memory) {
+        if (getTheme() == DebuggerTheme::Memory) {
             updateMemory( snap);
-        } else if (snap.superCpu && mode == Mode::MemorySCPU) {
+        } else if (snap.superCpu && getTheme() == DebuggerTheme::MemorySCPU) {
             updateMemory( snap);
         }
     }
@@ -378,7 +372,7 @@ auto MemDebugger::updateMemory(LIBC64::DebuggerSnapshot& s) -> void {
     std::string ident;
 
     bankList.lockRedraw();
-    if (mode == Mode::MemorySCPU) {
+    if (getTheme() == DebuggerTheme::MemorySCPU) {
         for (auto& m : s.mapperSCPU) {
             switch (m) {
                 case 1: ident = "SRAM"; break;
@@ -472,7 +466,7 @@ auto MemDebugger::fetchDump() -> void {
 
     auto* pNew = reinterpret_cast<T*>(memDump);
 
-    if (isC64() && (mode == Mode::Memory))
+    if (isC64() && (getTheme() == DebuggerTheme::Memory))
         emulator->getMemoryDumpPage( selectedBank, reinterpret_cast<uint8_t*>(pNew) );
     else {
         emulator->getMemoryDumpBank( selectedBank, pNew );
@@ -515,7 +509,7 @@ auto MemDebugger::loadMemoryBank(uint8_t bank, bool noColorChanges) -> void {
     unsigned limit = 0x1000;
     if constexpr (std::is_same_v<T, uint16_t>)
         limit = 0x8000;
-    else if (mode == Mode::MemorySCPU)
+    else if (getTheme() == DebuggerTheme::MemorySCPU)
         limit = 0x10000;
 
     while (true) {

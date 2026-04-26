@@ -5,7 +5,6 @@
 
 struct MemDebugger : Debugger {
     explicit MemDebugger( Emulator::Interface* emulator );
-    explicit MemDebugger( Emulator::Interface* emulator, Mode mode );
 
     ~MemDebugger() override;
 
@@ -90,4 +89,6 @@ struct MemDebugger : Debugger {
     template<typename T> auto loadMemoryBank(uint8_t bank, bool noColorChanges) -> void;
     template<typename T> auto fetchDump() -> void;
     static auto toAscii(const uint8_t* buf, int len, char* result, char pad = '.') -> void;
+
+    auto getTheme() -> DebuggerTheme override { return DebuggerTheme::Memory; }
 };

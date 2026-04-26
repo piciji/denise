@@ -22,12 +22,7 @@ struct ConditionViewDebugger;
 struct DbgWatcher;
 
 struct Debugger : GUIKIT::Window {
-    enum class Mode {
-        CPU, SCPU, Memory, MemorySCPU, CIA, Video, SID, DMA, Copper, Blitter, Agnus, Paula,
-        Drive8CPU, Drive9CPU, Drive10CPU, Drive11CPU,
-    } mode;
-
-    Debugger( Emulator::Interface* emulator, Mode mode );
+    Debugger( Emulator::Interface* emulator );
     virtual ~Debugger();
 
     Emulator::Interface* emulator;
@@ -105,6 +100,7 @@ struct Debugger : GUIKIT::Window {
     virtual auto buildControl() -> GUIKIT::Layout* { return nullptr; }
     virtual auto updateBreakpointVisuals(DbgWatcher* watcher) -> void {}
     virtual auto isDriveCpu() -> bool { return false; }
+    virtual auto getTheme() -> DebuggerTheme = 0;
 
     auto translate() -> void;
     auto updateControl(uint16_t v, uint8_t h) -> void;
@@ -116,9 +112,6 @@ struct Debugger : GUIKIT::Window {
 
     auto isC64() -> bool;
     auto isAmiga() -> bool;
-    auto isCpuMode() const -> bool { return mode == Mode::CPU || mode == Mode::SCPU; }
-    auto isMemMode() const -> bool { return mode == Mode::Memory || mode == Mode::MemorySCPU; }
-    auto isCiaMode() const -> bool { return mode == Mode::CIA; }
 
     auto changeMemory(const std::string& addrStr, const std::string& valStr) -> void;
 

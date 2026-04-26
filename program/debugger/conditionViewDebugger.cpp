@@ -151,7 +151,7 @@ auto ConditionViewDebugger::create(DbgWatcher* watcher, GUIKIT::Position positio
 
         GUIKIT::String::replace( placeHolder, ":", ":$000000" );
     } else {
-        if (debugger->mode == Debugger::Mode::SCPU) {
+        if (debugger->getTheme() == DebuggerTheme::SCPU) {
             for (auto& cond: LIBC64::DebuggerSnapshot::breakConditionsSCPU)
                 placeHolder += " " + (std::string)cond.ident;
         } else {

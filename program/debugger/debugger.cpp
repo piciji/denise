@@ -29,8 +29,8 @@ Debugger::~Debugger() {
     delete control;
 }
 
-Debugger::Debugger( Emulator::Interface* emulator, Mode mode )
-: emulator( emulator ), mode( mode ) {
+Debugger::Debugger( Emulator::Interface* emulator )
+: emulator( emulator ) {
     this->settings = Program::getSettings( emulator );
 }
 
@@ -555,14 +555,14 @@ auto Debugger::changeMemory(const std::string& addrStr, const std::string& valSt
             snapshot->codeMaybeModified = true;
 
         for (auto& debugger : program->getActiveDebuggers()) {
-            if (debugger->mode == Mode::Memory || debugger->mode == Mode::MemorySCPU)
+            if (debugger->getTheme() == DebuggerTheme::Memory || debugger->getTheme() == DebuggerTheme::MemorySCPU)
                 (dynamic_cast<MemDebugger*>(debugger))->memChanged(false);
 
-            if (debugger->isDriveCpu() || debugger->mode == Mode::CPU || debugger->mode == Mode::SCPU) {
+            if (debugger->isDriveCpu() || debugger->getTheme() == DebuggerTheme::CPU || debugger->getTheme() == DebuggerTheme::SCPU) {
                 (dynamic_cast<CpuDebugger*>(debugger))->memChanged();
             }
 
-            if (debugger->mode == Mode::Copper) {
+            if (debugger->getTheme() == DebuggerTheme::Copper) {
                 (dynamic_cast<CopperDebugger*>(debugger))->memChanged();
             }
         }
@@ -608,17 +608,11 @@ auto Debugger::getCpuType() -> DebuggerTheme {
     if (isAmiga())
         return DebuggerTheme::CPU;
 
-    if (mode == Mode::SCPU)
-        return DebuggerTheme::CPU2;
+    if (getTheme() == DebuggerTheme::SCPU)
+        return DebuggerTheme::SCPU;
 
-    if (mode == Mode::Drive8CPU)
-        return DebuggerTheme::DriveCPU1;
-    if (mode == Mode::Drive9CPU)
-        return DebuggerTheme::DriveCPU2;
-    if (mode == Mode::Drive10CPU)
-        return DebuggerTheme::DriveCPU3;
-    if (mode == Mode::Drive11CPU)
-        return DebuggerTheme::DriveCPU4;
+    if (isDriveCpu())
+        return getTheme();
 
     return DebuggerTheme::CPU;
 }

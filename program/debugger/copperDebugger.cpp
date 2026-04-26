@@ -84,8 +84,7 @@ CopperDebugger::CopperControl::CopperControl() {
 }
 
 CopperDebugger::CopperDebugger( Emulator::Interface* emulator )
-: Debugger( emulator, Debugger::Mode::Copper ) {
-    build();
+: Debugger( emulator ) {
 }
 
 CopperDebugger::~CopperDebugger() {

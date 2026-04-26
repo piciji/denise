@@ -154,4 +154,5 @@ struct BlitterDebugger : Debugger {
     auto initTheme() -> void override;
     auto closeTheme() -> void override;
     auto buildControl() -> GUIKIT::Layout* override;
+    auto getTheme() -> DebuggerTheme override { return DebuggerTheme::Blitter; }
 };

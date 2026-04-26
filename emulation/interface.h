@@ -346,9 +346,12 @@ struct Interface {
         uint16_t watcher[4];
     };
 
-    enum class DebuggerTheme : unsigned { Unspecified = 0, CPU = 1, CPU2 = 2, DriveCPU1 = 4, DriveCPU2 = 8, DriveCPU3 = 0x10, DriveCPU4 = 0x20,
-        Memory = 0x100, CIA = 0x200, Video = 0x400, BUS = 0x800, SID = 0x1000, Copper = 0x2000, Blitter = 0x4000,
-        Agnus = 0x8000, Paula = 0x10000,
+    enum class DebuggerTheme : unsigned { Unspecified = 0,
+        CPU = 1, SCPU = 2, Drive8CPU = 4, Drive9CPU = 8, Drive10CPU = 0x10, Drive11CPU = 0x20,
+        Memory = 0x40, MemorySCPU = 0x80,
+        CIA = 0x1000, Video = 0x2000, BUS = 0x4000, SID = 0x8000, Copper = 0x10000, Blitter = 0x20000,
+        Agnus = 0x40000, Paula = 0x80000,
+
     };
 
     enum class DebuggerAction { None, Breakpoint, Watchpoint, WatchpointWrite, ExceptionPoint, Softstop, ModifiedCode, History, Line, Frame,

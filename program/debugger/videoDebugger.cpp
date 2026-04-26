@@ -4,8 +4,7 @@
 #include "../thread/emuThread.h"
 
 VideoDebugger::VideoDebugger( Emulator::Interface* emulator )
-: Debugger( emulator, Debugger::Mode::Video ) {
-    build();
+: Debugger( emulator ) {
 }
 
 VideoDebugger::Video::Wraper::RegWrapper::Mode::Mode() {

@@ -5,8 +5,7 @@
 #include "../thread/emuThread.h"
 
 DmaDebugger::DmaDebugger( Emulator::Interface* emulator )
-: Debugger( emulator, Debugger::Mode::DMA ) {
-    build();
+: Debugger( emulator ) {
 }
 
 DmaDebugger::~DmaDebugger() {

@@ -235,8 +235,7 @@ BlitterDebugger::BlitterControl::BlitterControl() {
 }
 
 BlitterDebugger::BlitterDebugger( Emulator::Interface* emulator )
-: Debugger( emulator, Debugger::Mode::Blitter ) {
-    build();
+: Debugger( emulator ) {
 }
 
 auto BlitterDebugger::saveIdent() -> std::string {

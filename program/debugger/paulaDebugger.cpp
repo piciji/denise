@@ -220,8 +220,7 @@ PaulaDebugger::Paula::Paula() {
 }
 
 PaulaDebugger::PaulaDebugger( Emulator::Interface* emulator )
-: Debugger( emulator, Debugger::Mode::Paula ) {
-    build();
+: Debugger( emulator ) {
 }
 
 auto PaulaDebugger::updateTheme() -> void {

@@ -1334,7 +1334,7 @@ auto View::buildMenu() -> void {
         sM.debuggerCpu = new GUIKIT::MenuItem;
         sM.debuggerCpu->onActivate = [this, emulator]() {
             emuThread->lock();
-            program->openDebugger(emulator, Debugger::Mode::CPU);
+            program->openDebugger(emulator, DebuggerTheme::CPU);
             emuThread->unlock();
         };
         sM.debugger->append( *sM.debuggerCpu );
@@ -1342,7 +1342,7 @@ auto View::buildMenu() -> void {
         sM.debuggerMem = new GUIKIT::MenuItem;
         sM.debuggerMem->onActivate = [this, emulator]() {
             emuThread->lock();
-            program->openDebugger(emulator, Debugger::Mode::Memory);
+            program->openDebugger(emulator, DebuggerTheme::Memory);
             emuThread->unlock();
         };
         sM.debugger->append( *sM.debuggerMem );
@@ -1351,7 +1351,7 @@ auto View::buildMenu() -> void {
             sM.debuggerSCPU = new GUIKIT::MenuItem;
             sM.debuggerSCPU->onActivate = [this, emulator]() {
                 emuThread->lock();
-                program->openDebugger(emulator, Debugger::Mode::SCPU);
+                program->openDebugger(emulator, DebuggerTheme::SCPU);
                 emuThread->unlock();
             };
             sM.debugger->append( *sM.debuggerSCPU );
@@ -1359,7 +1359,7 @@ auto View::buildMenu() -> void {
             sM.debuggerMemSCPU = new GUIKIT::MenuItem;
             sM.debuggerMemSCPU->onActivate = [this, emulator]() {
                 emuThread->lock();
-                program->openDebugger(emulator, Debugger::Mode::MemorySCPU);
+                program->openDebugger(emulator, DebuggerTheme::MemorySCPU);
                 emuThread->unlock();
             };
             sM.debugger->append( *sM.debuggerMemSCPU );
@@ -1372,7 +1372,7 @@ auto View::buildMenu() -> void {
         sM.debuggerVideo = new GUIKIT::MenuItem;
         sM.debuggerVideo->onActivate = [this, emulator]() {
             emuThread->lock();
-            program->openDebugger(emulator, Debugger::Mode::Video);
+            program->openDebugger(emulator, DebuggerTheme::Video);
             emuThread->unlock();
         };
         sM.debugger->append( *sM.debuggerVideo );
@@ -1381,7 +1381,7 @@ auto View::buildMenu() -> void {
             sM.debuggerSid = new GUIKIT::MenuItem;
             sM.debuggerSid->onActivate = [this, emulator]() {
                 emuThread->lock();
-                program->openDebugger(emulator, Debugger::Mode::SID);
+                program->openDebugger(emulator, DebuggerTheme::SID);
                 emuThread->unlock();
             };
             sM.debugger->append( *sM.debuggerSid );
@@ -1393,7 +1393,7 @@ auto View::buildMenu() -> void {
             sM.debuggerCopper = new GUIKIT::MenuItem;
             sM.debuggerCopper->onActivate = [this, emulator]() {
                 emuThread->lock();
-                program->openDebugger(emulator, Debugger::Mode::Copper);
+                program->openDebugger(emulator, DebuggerTheme::Copper);
                 emuThread->unlock();
             };
             sM.debugger->append( *sM.debuggerCopper );
@@ -1401,7 +1401,7 @@ auto View::buildMenu() -> void {
             sM.debuggerBlitter = new GUIKIT::MenuItem;
             sM.debuggerBlitter->onActivate = [this, emulator]() {
                 emuThread->lock();
-                program->openDebugger(emulator, Debugger::Mode::Blitter);
+                program->openDebugger(emulator, DebuggerTheme::Blitter);
                 emuThread->unlock();
             };
             sM.debugger->append( *sM.debuggerBlitter );
@@ -1409,7 +1409,7 @@ auto View::buildMenu() -> void {
             sM.debuggerAgnus = new GUIKIT::MenuItem;
             sM.debuggerAgnus->onActivate = [this, emulator]() {
                 emuThread->lock();
-                program->openDebugger(emulator, Debugger::Mode::Agnus);
+                program->openDebugger(emulator, DebuggerTheme::Agnus);
                 emuThread->unlock();
             };
             sM.debugger->append( *sM.debuggerAgnus );
@@ -1417,7 +1417,7 @@ auto View::buildMenu() -> void {
             sM.debuggerPaula = new GUIKIT::MenuItem;
             sM.debuggerPaula->onActivate = [this, emulator]() {
                 emuThread->lock();
-                program->openDebugger(emulator, Debugger::Mode::Paula);
+                program->openDebugger(emulator, DebuggerTheme::Paula);
                 emuThread->unlock();
             };
             sM.debugger->append( *sM.debuggerPaula );
@@ -1428,7 +1428,7 @@ auto View::buildMenu() -> void {
         sM.debuggerDma = new GUIKIT::MenuItem;
         sM.debuggerDma->onActivate = [this, emulator]() {
             emuThread->lock();
-            program->openDebugger(emulator, Debugger::Mode::DMA);
+            program->openDebugger(emulator, DebuggerTheme::BUS);
             emuThread->unlock();
         };
         sM.debugger->append( *sM.debuggerDma );
@@ -1436,7 +1436,7 @@ auto View::buildMenu() -> void {
         sM.debuggerCia = new GUIKIT::MenuItem;
         sM.debuggerCia->onActivate = [this, emulator]() {
             emuThread->lock();
-            program->openDebugger(emulator, Debugger::Mode::CIA);
+            program->openDebugger(emulator, DebuggerTheme::CIA);
             emuThread->unlock();
         };
         sM.debugger->append( *sM.debuggerCia );
@@ -1451,10 +1451,10 @@ auto View::buildMenu() -> void {
                     emuThread->lock();
                     switch (nr) {
                         default:
-                        case 8: program->openDebugger(emulator, Debugger::Mode::Drive8CPU); break;
-                        case 9: program->openDebugger(emulator, Debugger::Mode::Drive9CPU); break;
-                        case 10: program->openDebugger(emulator, Debugger::Mode::Drive10CPU); break;
-                        case 11: program->openDebugger(emulator, Debugger::Mode::Drive11CPU); break;
+                        case 8: program->openDebugger(emulator, DebuggerTheme::Drive8CPU); break;
+                        case 9: program->openDebugger(emulator, DebuggerTheme::Drive9CPU); break;
+                        case 10: program->openDebugger(emulator, DebuggerTheme::Drive10CPU); break;
+                        case 11: program->openDebugger(emulator, DebuggerTheme::Drive11CPU); break;
                     }
                     emuThread->unlock();
                 };

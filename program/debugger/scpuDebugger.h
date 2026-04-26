@@ -5,8 +5,7 @@
 
 struct ScpuDebugger : CpuDebugger {
     explicit ScpuDebugger( Emulator::Interface* emulator )
-    : CpuDebugger( emulator, Mode::SCPU ) {
-        build();
+    : CpuDebugger( emulator ) {
     }
 
     auto saveIdent() -> std::string override {
@@ -16,4 +15,6 @@ struct ScpuDebugger : CpuDebugger {
     auto titleIdent() -> std::string override {
         return emulator->ident + " Debugger SCPU";
     }
+
+    auto getTheme() -> DebuggerTheme override { return DebuggerTheme::SCPU; }
 };

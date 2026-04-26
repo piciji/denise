@@ -1,3 +1,6 @@
+case 0x00:
+    interrupt<true, mhz2, busLogger>( );
+    break;
 
 case 0x01:
     ORA( GET_INDEXED_INDIRECT )

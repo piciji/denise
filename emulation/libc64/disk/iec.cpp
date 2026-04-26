@@ -640,10 +640,10 @@ auto IecBus::editMemory(DebuggerTheme theme, uint32_t addr, std::vector<uint16_t
 inline auto IecBus::getDriveId(DebuggerTheme theme) -> unsigned {
     switch( theme ) {
         default:
-        case DebuggerTheme::DriveCPU1: return 0;
-        case DebuggerTheme::DriveCPU2: return 1;
-        case DebuggerTheme::DriveCPU3: return 2;
-        case DebuggerTheme::DriveCPU4: return 3;
+        case DebuggerTheme::Drive8CPU: return 0;
+        case DebuggerTheme::Drive9CPU: return 1;
+        case DebuggerTheme::Drive10CPU: return 2;
+        case DebuggerTheme::Drive11CPU: return 3;
     }
     _unreachable
 }

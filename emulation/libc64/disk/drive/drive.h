@@ -11,8 +11,7 @@
 #include "../via/via.h"
 
 #include "../structure/structure.h"
-//#include "../cpu/m6502.h"
-#include "../cpu/m6502New.h"
+#include "../cpu/m6502.h"
 #include "../../../tools/rand.h"
 #include "../../../tools/serializer.h"
 #include "../../../cia/new/cia.h"

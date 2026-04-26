@@ -3,8 +3,7 @@
 #include "../program.h"
 
 SidDebugger::SidDebugger( Emulator::Interface* emulator )
-: Debugger( emulator, Mode::SID ) {
-    build();
+: Debugger( emulator ) {
 }
 
 SidDebugger::Chip::Top::Voice::Wave::Wave() {

@@ -5,8 +5,7 @@
 
 struct MemScpuDebugger : MemDebugger {
     explicit MemScpuDebugger( Emulator::Interface* emulator )
-    : MemDebugger( emulator, Mode::MemorySCPU ) {
-        build();
+    : MemDebugger( emulator ) {
     }
 
     auto saveIdent() -> std::string override {
@@ -16,4 +15,6 @@ struct MemScpuDebugger : MemDebugger {
     auto titleIdent() -> std::string override {
         return emulator->ident + " Debugger Memory SCPU";
     }
+
+    auto getTheme() -> DebuggerTheme override { return DebuggerTheme::MemorySCPU; }
 };

@@ -4,8 +4,7 @@
 #include "../../emulation/libami/system/debuggerSnapshot.h"
 
 AgnusDebugger::AgnusDebugger( Emulator::Interface* emulator )
-: Debugger( emulator, Debugger::Mode::Agnus ) {
-    build();
+: Debugger( emulator ) {
 }
 
 AgnusDebugger::Agnus::Entry::Entry(bool useCheck) {

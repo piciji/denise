@@ -12,7 +12,6 @@
 struct CpuDebugger : Debugger {
 
     explicit CpuDebugger( Emulator::Interface* emulator );
-    explicit CpuDebugger( Emulator::Interface* emulator, Mode mode );
 
     ~CpuDebugger() override;
 
@@ -158,4 +157,8 @@ struct CpuDebugger : Debugger {
     auto memChanged() -> void;
 
     auto buildControl() -> GUIKIT::Layout* override;
+
+    auto getTheme() -> DebuggerTheme override { return DebuggerTheme::CPU; }
+
+    virtual auto getDriveId() -> unsigned { return 0; }
 };

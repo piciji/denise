@@ -77,4 +77,5 @@ struct CiaDebugger : Debugger {
     auto updateTheme() -> void override;
     auto saveIdent() -> std::string override;
     auto titleIdent() -> std::string override;
+    auto getTheme() -> DebuggerTheme override { return DebuggerTheme::CIA; }
 };

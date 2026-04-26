@@ -680,10 +680,6 @@ template<bool mhz2, bool busLogger> auto M6510::process() -> void {
 
         READ_PC_INC_NEXT_OP
         switch( dataBus ) {
-            case 0x00:
-                interrupt<true, mhz2, busLogger>( );
-                break;
-
             #include "optable.h"
         }
         pcEdge = pc;
@@ -695,10 +691,6 @@ template<bool mhz2, bool busLogger> auto M6510::process() -> void {
 
 	READ_PC_INC_NEXT_OP
 	switch( dataBus ) {
-        case 0x00:
-            interrupt<true, mhz2, busLogger>( );
-            break;
-
         #include "optable.h"
 	}
 }

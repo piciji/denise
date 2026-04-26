@@ -1794,7 +1794,7 @@ auto SuperCpu::debugPointReached(int source, unsigned addr) -> void {
         case SoftStop: action = DebuggerAction::Softstop; break;
         default: return;
     }
-    system->debugPointReached(DebuggerTheme::CPU2, action, addr);
+    system->debugPointReached(DebuggerTheme::SCPU, action, addr);
 }
 
 }

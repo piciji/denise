@@ -127,4 +127,6 @@ struct SidDebugger : Debugger {
     auto closeTheme() -> void override;
     auto translateTheme() -> void override;
     auto initTheme() -> void override;
+
+    auto getTheme() -> DebuggerTheme override { return DebuggerTheme::SID; }
 };

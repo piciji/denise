@@ -5,8 +5,7 @@
 
 struct Drive11CpuDebugger : CpuDebugger {
     explicit Drive11CpuDebugger( Emulator::Interface* emulator )
-    : CpuDebugger( emulator, Mode::Drive11CPU ) {
-        build();
+    : CpuDebugger( emulator ) {
     }
 
     auto saveIdent() -> std::string override {
@@ -18,4 +17,8 @@ struct Drive11CpuDebugger : CpuDebugger {
     }
 
     auto isDriveCpu() -> bool override { return true; }
+
+    auto getTheme() -> DebuggerTheme override { return DebuggerTheme::Drive11CPU; }
+
+    auto getDriveId() -> unsigned override { return 3; }
 };

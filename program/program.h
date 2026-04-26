@@ -198,7 +198,7 @@ struct Program : Emulator::Interface::Bind {
     auto setJit(Emulator::Interface* emulator) -> void;
     auto setRewind(Emulator::Interface* emulator) -> void;
 
-    auto openDebugger(Emulator::Interface* emulator, Debugger::Mode mode) -> void;
+    auto openDebugger(Emulator::Interface* emulator, DebuggerTheme theme) -> void;
     auto hasActiveDebugger() -> bool;
     auto hasFocusedDebugger() -> bool;
     auto getActiveDebuggers() -> std::vector<Debugger*>;

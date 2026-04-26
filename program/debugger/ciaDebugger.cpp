@@ -4,8 +4,7 @@
 #include "../program.h"
 
 CiaDebugger::CiaDebugger( Emulator::Interface* emulator )
-: Debugger( emulator, Mode::CIA ) {
-    build();
+: Debugger( emulator ) {
 }
 
 CiaDebugger::CIA::Chip::Port::Port() {

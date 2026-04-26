@@ -6,7 +6,6 @@ set(headers
         interface.h
         disk/iec.h
         disk/cpu/m6502.h
-        disk/cpu/opcodes.cpp
         disk/drive/drive.h
         disk/drive/mechanics.cpp
         disk/drive/mechanicsG64.cpp
@@ -188,8 +187,7 @@ target_sources(coreC64 PRIVATE
         interface.cpp
         m6510/m6510.cpp
         m6510/m65Debugger.cpp;
-        #disk/cpu/m6502.cpp
-        disk/cpu/m6502New.cpp
+        disk/cpu/m6502.cpp
         m6510/dasmHandler.cpp
 
         vicII/base.cpp

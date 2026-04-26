@@ -1207,8 +1207,8 @@ auto System::burstOrParallelUpdate() -> void {
 }
 
 auto System::driveCycleSyncingUpdate() -> void {
-    if (debuggerSnapshot.themes & ((unsigned)DebuggerTheme::DriveCPU1 | (unsigned)DebuggerTheme::DriveCPU2
-        | (unsigned)DebuggerTheme::DriveCPU3 | (unsigned)DebuggerTheme::DriveCPU4)) {
+    if (debuggerSnapshot.themes & ((unsigned)DebuggerTheme::Drive8CPU | (unsigned)DebuggerTheme::Drive9CPU
+        | (unsigned)DebuggerTheme::Drive10CPU | (unsigned)DebuggerTheme::Drive11CPU)) {
         secondDriveCable.cycleSyncing = true;
 
     } else {
@@ -1419,16 +1419,16 @@ auto System::debuggerAdd(DebuggerTheme theme, DebuggerAction action, uint32_t ad
             else
                 cpu.debuggerAdd( action, static_cast<uint16_t>(addr), static_cast<uint16_t>(addrTo) );
             break;
-        case DebuggerTheme::CPU2:
+        case DebuggerTheme::SCPU:
             if (action == DebuggerAction::None)
                 debuggerSnapshot.themes |= (unsigned)theme;
             else
                 superCpu->debuggerAdd(action, addr, addrTo);
             break;
-        case DebuggerTheme::DriveCPU1:
-        case DebuggerTheme::DriveCPU2:
-        case DebuggerTheme::DriveCPU3:
-        case DebuggerTheme::DriveCPU4:
+        case DebuggerTheme::Drive8CPU:
+        case DebuggerTheme::Drive9CPU:
+        case DebuggerTheme::Drive10CPU:
+        case DebuggerTheme::Drive11CPU:
             if (action == DebuggerAction::None) {
                 debuggerSnapshot.themes |= (unsigned)theme;
                 driveCycleSyncingUpdate();
@@ -1494,7 +1494,7 @@ auto System::debuggerRemove(DebuggerTheme theme, DebuggerAction action, std::opt
             else
                 cpu.debuggerRemove( action);
             break;
-        case DebuggerTheme::CPU2:
+        case DebuggerTheme::SCPU:
             if (action == DebuggerAction::None)
                 debuggerSnapshot.themes &= ~(unsigned)theme;
             else if (addr.has_value())
@@ -1502,10 +1502,10 @@ auto System::debuggerRemove(DebuggerTheme theme, DebuggerAction action, std::opt
             else
                 superCpu->debuggerRemove( action );
             break;
-        case DebuggerTheme::DriveCPU1:
-        case DebuggerTheme::DriveCPU2:
-        case DebuggerTheme::DriveCPU3:
-        case DebuggerTheme::DriveCPU4:
+        case DebuggerTheme::Drive8CPU:
+        case DebuggerTheme::Drive9CPU:
+        case DebuggerTheme::Drive10CPU:
+        case DebuggerTheme::Drive11CPU:
             if (action == DebuggerAction::None) {
                 debuggerSnapshot.themes &= ~(unsigned)theme;
                 driveCycleSyncingUpdate();
@@ -1523,19 +1523,17 @@ auto System::debuggerRemove(DebuggerTheme theme, DebuggerAction action, std::opt
 
 auto System::setWatchpointCondition(DebuggerTheme theme, DebuggerAction action, unsigned addr, unsigned hitCount, unsigned hitCountMode, const std::string& expression, unsigned expressionMode) -> bool {
     switch (theme) {
-        case DebuggerTheme::DriveCPU1:
-        case DebuggerTheme::DriveCPU2:
-        case DebuggerTheme::DriveCPU3:
-        case DebuggerTheme::DriveCPU4:
+        case DebuggerTheme::Drive8CPU:
+        case DebuggerTheme::Drive9CPU:
+        case DebuggerTheme::Drive10CPU:
+        case DebuggerTheme::Drive11CPU:
             return iecBus.setWatchpointCondition( theme, action, addr, hitCount, hitCountMode, expression, expressionMode );
 
         default:
         case DebuggerTheme::CPU:
-        case DebuggerTheme::CPU2:
-            if (expansionPort->haltMainCpu())
-                return superCpu->setWatchpointCondition( action, addr, hitCount, hitCountMode, expression, expressionMode );
-
             return cpu.setWatchpointCondition( action, addr, hitCount, hitCountMode, expression, expressionMode );
+        case DebuggerTheme::SCPU:
+            return superCpu->setWatchpointCondition( action, addr, hitCount, hitCountMode, expression, expressionMode );
     }
 
     return false;
@@ -1543,15 +1541,15 @@ auto System::setWatchpointCondition(DebuggerTheme theme, DebuggerAction action, 
 
 auto System::debuggerStepOver(DebuggerTheme theme) -> void {
     switch (theme) {
-        case DebuggerTheme::DriveCPU1:
-        case DebuggerTheme::DriveCPU2:
-        case DebuggerTheme::DriveCPU3:
-        case DebuggerTheme::DriveCPU4:
+        case DebuggerTheme::Drive8CPU:
+        case DebuggerTheme::Drive9CPU:
+        case DebuggerTheme::Drive10CPU:
+        case DebuggerTheme::Drive11CPU:
             iecBus.debuggerStepOver(theme);
             break;
         default:
         case DebuggerTheme::CPU:
-        case DebuggerTheme::CPU2:
+        case DebuggerTheme::SCPU:
             if (expansionPort->haltMainCpu())
                 superCpu->debuggerStepOver();
             else
@@ -1562,15 +1560,15 @@ auto System::debuggerStepOver(DebuggerTheme theme) -> void {
 
 auto System::debuggerStepInto(DebuggerTheme theme) -> void {
     switch (theme) {
-        case DebuggerTheme::DriveCPU1:
-        case DebuggerTheme::DriveCPU2:
-        case DebuggerTheme::DriveCPU3:
-        case DebuggerTheme::DriveCPU4:
+        case DebuggerTheme::Drive8CPU:
+        case DebuggerTheme::Drive9CPU:
+        case DebuggerTheme::Drive10CPU:
+        case DebuggerTheme::Drive11CPU:
             iecBus.debuggerStepInto(theme);
             break;
         default:
         case DebuggerTheme::CPU:
-        case DebuggerTheme::CPU2:
+        case DebuggerTheme::SCPU:
             if (expansionPort->haltMainCpu())
                 superCpu->debuggerStepInto();
             else
@@ -1581,15 +1579,15 @@ auto System::debuggerStepInto(DebuggerTheme theme) -> void {
 
 auto System::debuggerStepOut(DebuggerTheme theme) -> bool {
     switch (theme) {
-        case DebuggerTheme::DriveCPU1:
-        case DebuggerTheme::DriveCPU2:
-        case DebuggerTheme::DriveCPU3:
-        case DebuggerTheme::DriveCPU4:
+        case DebuggerTheme::Drive8CPU:
+        case DebuggerTheme::Drive9CPU:
+        case DebuggerTheme::Drive10CPU:
+        case DebuggerTheme::Drive11CPU:
             return iecBus.debuggerStepOut(theme);
 
         default:
         case DebuggerTheme::CPU:
-        case DebuggerTheme::CPU2:
+        case DebuggerTheme::SCPU:
             if (expansionPort->haltMainCpu())
                 return superCpu->debuggerStepOut();
             return cpu.debuggerStepOut();
@@ -1624,13 +1622,13 @@ auto System::updateDebuggerSnapshot() -> void {
     debuggerSnapshot.callbackTheme = debugger.theme;
     debuggerSnapshot.codeMaybeModified = debuggerSnapshot.superCpu ? superCpu->hasModifiedCode() : cpu.hasModifiedCode();
 
-    if (debuggerSnapshot.themes & ((unsigned)DebuggerTheme::CPU | (unsigned)DebuggerTheme::CPU2 )) {
+    if (debuggerSnapshot.themes & ((unsigned)DebuggerTheme::CPU | (unsigned)DebuggerTheme::SCPU )) {
         if (expansionPort->haltMainCpu())
             superCpu->updateSnapshot(debuggerSnapshot);
         else
             cpu.updateSnapshot(debuggerSnapshot);
     }
-    if (debuggerSnapshot.themes & (unsigned)DebuggerTheme::Memory) {
+    if (debuggerSnapshot.themes & ((unsigned)DebuggerTheme::Memory | (unsigned)DebuggerTheme::MemorySCPU )) {
         if (expansionPort->haltMainCpu())
             superCpu->updateMemorySnapshot( debuggerSnapshot );
         else
@@ -1649,14 +1647,14 @@ auto System::updateDebuggerSnapshot() -> void {
         sidManager.updateSnapshot( debuggerSnapshot );
     }
 
-    if (debuggerSnapshot.themes & (unsigned)DebuggerTheme::DriveCPU1)
-        iecBus.updateCpuSnapshot(DebuggerTheme::DriveCPU1, debuggerSnapshot);
-    if (debuggerSnapshot.themes & (unsigned)DebuggerTheme::DriveCPU2)
-        iecBus.updateCpuSnapshot(DebuggerTheme::DriveCPU2, debuggerSnapshot);
-    if (debuggerSnapshot.themes & (unsigned)DebuggerTheme::DriveCPU3)
-        iecBus.updateCpuSnapshot(DebuggerTheme::DriveCPU3, debuggerSnapshot);
-    if (debuggerSnapshot.themes & (unsigned)DebuggerTheme::DriveCPU4)
-        iecBus.updateCpuSnapshot(DebuggerTheme::DriveCPU4, debuggerSnapshot);
+    if (debuggerSnapshot.themes & (unsigned)DebuggerTheme::Drive8CPU)
+        iecBus.updateCpuSnapshot(DebuggerTheme::Drive8CPU, debuggerSnapshot);
+    if (debuggerSnapshot.themes & (unsigned)DebuggerTheme::Drive9CPU)
+        iecBus.updateCpuSnapshot(DebuggerTheme::Drive9CPU, debuggerSnapshot);
+    if (debuggerSnapshot.themes & (unsigned)DebuggerTheme::Drive10CPU)
+        iecBus.updateCpuSnapshot(DebuggerTheme::Drive10CPU, debuggerSnapshot);
+    if (debuggerSnapshot.themes & (unsigned)DebuggerTheme::Drive11CPU)
+        iecBus.updateCpuSnapshot(DebuggerTheme::Drive11CPU, debuggerSnapshot);
 
     vicII->updatePositionSnapshot(debuggerSnapshot);
 }
@@ -1686,15 +1684,15 @@ auto System::updateMemorySnapshot(DebuggerSnapshot& snap) -> void {
 
 auto System::disassemble(DebuggerTheme theme, unsigned addr, unsigned& bytes) -> std::string {
     switch (theme) {
-        case DebuggerTheme::DriveCPU1:
-        case DebuggerTheme::DriveCPU2:
-        case DebuggerTheme::DriveCPU3:
-        case DebuggerTheme::DriveCPU4:
+        case DebuggerTheme::Drive8CPU:
+        case DebuggerTheme::Drive9CPU:
+        case DebuggerTheme::Drive10CPU:
+        case DebuggerTheme::Drive11CPU:
             return iecBus.disassemble( theme, (uint16_t)addr, bytes );
 
         default:
         case DebuggerTheme::CPU:
-        case DebuggerTheme::CPU2:
+        case DebuggerTheme::SCPU:
             if (expansionPort->haltMainCpu())
                 return superCpu->disassemble(addr, bytes);
             return cpu.disassemble(addr, bytes);
@@ -1705,15 +1703,15 @@ auto System::disassemble(DebuggerTheme theme, unsigned addr, unsigned& bytes) ->
 
 auto System::disassembleData(DebuggerTheme theme, unsigned addr, unsigned bytes) -> std::string {
     switch (theme) {
-        case DebuggerTheme::DriveCPU1:
-        case DebuggerTheme::DriveCPU2:
-        case DebuggerTheme::DriveCPU3:
-        case DebuggerTheme::DriveCPU4:
+        case DebuggerTheme::Drive8CPU:
+        case DebuggerTheme::Drive9CPU:
+        case DebuggerTheme::Drive10CPU:
+        case DebuggerTheme::Drive11CPU:
             return iecBus.disassembleData( theme, (uint16_t)addr, bytes );
 
         default:
         case DebuggerTheme::CPU:
-        case DebuggerTheme::CPU2:
+        case DebuggerTheme::SCPU:
             if (expansionPort->haltMainCpu())
                 return superCpu->disassembleData(addr, bytes);
             return cpu.disassembleData( (uint16_t)addr, bytes );
@@ -1724,15 +1722,15 @@ auto System::disassembleData(DebuggerTheme theme, unsigned addr, unsigned bytes)
 
 auto System::disassembleTrace(DebuggerTheme theme, unsigned i, uint8_t& flags) -> std::string {
     switch (theme) {
-        case DebuggerTheme::DriveCPU1:
-        case DebuggerTheme::DriveCPU2:
-        case DebuggerTheme::DriveCPU3:
-        case DebuggerTheme::DriveCPU4:
+        case DebuggerTheme::Drive8CPU:
+        case DebuggerTheme::Drive9CPU:
+        case DebuggerTheme::Drive10CPU:
+        case DebuggerTheme::Drive11CPU:
             return iecBus.disassembleTrace( theme, i, flags );
 
         default:
         case DebuggerTheme::CPU:
-        case DebuggerTheme::CPU2:
+        case DebuggerTheme::SCPU:
             if (expansionPort->haltMainCpu())
                 return superCpu->disassembleTrace(i, flags);
             return cpu.disassembleTrace( i, flags );
