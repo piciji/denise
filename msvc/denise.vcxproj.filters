@@ -1294,6 +1294,21 @@
     <ClInclude Include="..\program\debugger\drive11MemDebugger.h">
       <Filter>program\debugger</Filter>
     </ClInclude>
+    <ClInclude Include="..\program\debugger\drive8ViaDebugger.h">
+      <Filter>program\debugger</Filter>
+    </ClInclude>
+    <ClInclude Include="..\program\debugger\drive9ViaDebugger.h">
+      <Filter>program\debugger</Filter>
+    </ClInclude>
+    <ClInclude Include="..\program\debugger\drive10ViaDebugger.h">
+      <Filter>program\debugger</Filter>
+    </ClInclude>
+    <ClInclude Include="..\program\debugger\drive11ViaDebugger.h">
+      <Filter>program\debugger</Filter>
+    </ClInclude>
+    <ClInclude Include="..\program\debugger\viaDebugger.h">
+      <Filter>program\debugger</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\emulation\cia\base.cpp">
@@ -2570,6 +2585,9 @@
     </ClCompile>
     <ClCompile Include="..\emulation\libc64\disk\cpu\m6502.cpp">
       <Filter>emulation\libc64\disk\cpu</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\debugger\viaDebugger.cpp">
+      <Filter>program\debugger</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
