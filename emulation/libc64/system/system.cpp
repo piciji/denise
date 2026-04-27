@@ -1633,40 +1633,50 @@ auto System::updateDebuggerSnapshot() -> void {
     debuggerSnapshot.callbackAddress = debugger.addr;
     debuggerSnapshot.callbackTheme = debugger.theme;
     debuggerSnapshot.codeMaybeModified = debuggerSnapshot.superCpu ? superCpu->hasModifiedCode() : cpu.hasModifiedCode();
+    unsigned _t = debuggerSnapshot.themes;
 
-    if (debuggerSnapshot.themes & ((unsigned)DebuggerTheme::CPU | (unsigned)DebuggerTheme::SCPU )) {
+    if (_t & ((unsigned)DebuggerTheme::CPU | (unsigned)DebuggerTheme::SCPU )) {
         if (expansionPort->haltMainCpu())
             superCpu->updateSnapshot(debuggerSnapshot);
         else
             cpu.updateSnapshot(debuggerSnapshot);
     }
-    if (debuggerSnapshot.themes & ((unsigned)DebuggerTheme::Memory | (unsigned)DebuggerTheme::MemorySCPU )) {
+    if (_t & ((unsigned)DebuggerTheme::Memory | (unsigned)DebuggerTheme::MemorySCPU )) {
         if (expansionPort->haltMainCpu())
             superCpu->updateMemorySnapshot( debuggerSnapshot );
         else
             updateMemorySnapshot(debuggerSnapshot);
     }
-    if (debuggerSnapshot.themes & (unsigned)DebuggerTheme::CIA) {
+    if (_t & (unsigned)DebuggerTheme::CIA) {
         updateCiaDebuggerSnapshot(debuggerSnapshot);
     }
-    if (debuggerSnapshot.themes & (unsigned)DebuggerTheme::Video) {
+    if (_t & (unsigned)DebuggerTheme::Video) {
         vicII->updateVideoSnapshot(debuggerSnapshot);
     }
-    if (debuggerSnapshot.themes & (unsigned)DebuggerTheme::BUS) {
+    if (_t & (unsigned)DebuggerTheme::BUS) {
         vicII->updateDmaSnapshot(debuggerSnapshot);
     }
-    if (debuggerSnapshot.themes & (unsigned)DebuggerTheme::SID) {
+    if (_t & (unsigned)DebuggerTheme::SID) {
         sidManager.updateSnapshot( debuggerSnapshot );
     }
 
-    if (debuggerSnapshot.themes & (unsigned)DebuggerTheme::Drive8CPU)
+    if (_t & (unsigned)DebuggerTheme::Drive8CPU)
         iecBus.updateCpuSnapshot(DebuggerTheme::Drive8CPU, debuggerSnapshot);
-    if (debuggerSnapshot.themes & (unsigned)DebuggerTheme::Drive9CPU)
+    if (_t & (unsigned)DebuggerTheme::Drive9CPU)
         iecBus.updateCpuSnapshot(DebuggerTheme::Drive9CPU, debuggerSnapshot);
-    if (debuggerSnapshot.themes & (unsigned)DebuggerTheme::Drive10CPU)
+    if (_t & (unsigned)DebuggerTheme::Drive10CPU)
         iecBus.updateCpuSnapshot(DebuggerTheme::Drive10CPU, debuggerSnapshot);
-    if (debuggerSnapshot.themes & (unsigned)DebuggerTheme::Drive11CPU)
+    if (_t & (unsigned)DebuggerTheme::Drive11CPU)
         iecBus.updateCpuSnapshot(DebuggerTheme::Drive11CPU, debuggerSnapshot);
+
+    if (_t & (unsigned)DebuggerTheme::Drive8VIA)
+        iecBus.updateViaSnapshot(DebuggerTheme::Drive8VIA, debuggerSnapshot);
+    if (_t & (unsigned)DebuggerTheme::Drive9VIA)
+        iecBus.updateViaSnapshot(DebuggerTheme::Drive9VIA, debuggerSnapshot);
+    if (_t & (unsigned)DebuggerTheme::Drive10VIA)
+        iecBus.updateViaSnapshot(DebuggerTheme::Drive10VIA, debuggerSnapshot);
+    if (_t & (unsigned)DebuggerTheme::Drive11VIA)
+        iecBus.updateViaSnapshot(DebuggerTheme::Drive11VIA, debuggerSnapshot);
 
     vicII->updatePositionSnapshot(debuggerSnapshot);
 }
@@ -1830,8 +1840,10 @@ auto System::updateCiaDebuggerSnapshot(DebuggerSnapshot& snap) -> void {
 
     snap.cia[0].sdr = cia1.sdr;
     snap.cia[0].shiftCount = cia1.sdrShiftCount;
+    snap.cia[0].sdrOutput = cia1.cra & 0x40;
     snap.cia[1].sdr = cia2.sdr;
     snap.cia[1].shiftCount = cia2.sdrShiftCount;
+    snap.cia[1].sdrOutput = cia2.cra & 0x40;
 }
 
 }

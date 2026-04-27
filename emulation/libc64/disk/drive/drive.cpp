@@ -12,6 +12,7 @@
 #include "../../system/firmware.h"
 #include "../../../tools/gcr.h"
 #include "../../../tools/memory.h"
+#include "../../system/debuggerSnapshot.h"
 
 // for 300 rpm = 5 rotation / sec = 16.000.000 / 5
 
@@ -873,7 +874,6 @@ structure(system, this) {
     via1.readPort = [this, system]( Via::Port port, Via::Lines* lines ) {
         
         if (port == Via::Port::B) {
-            // invert the three input bits, add device number  
             return (uint8_t)( ((0x1a | this->iecBus.readPort()) ^ 0x85) | (this->number << 5) );
         }
 
@@ -1587,6 +1587,56 @@ auto Drive::memoryDump(uint8_t page, uint8_t* dump) -> void {
 
     for (unsigned addr = bank; addr <= (bank | 0xfff); addr++ )
          *dump++ = cpuRead<true>( addr );
+}
+
+auto Drive::updateViaDebuggerSnapshot(DebuggerSnapshot& snap) -> void {
+    auto& v1 = snap.via[0];
+    auto& v1P0 = v1.port[0];
+    v1P0.pr = via1.lines.pra;
+    v1P0.ddr = via1.lines.ddra;
+    v1P0.io = via1.peek(1);
+    v1P0.timer = via1.timerACounter;
+    v1P0.timerLatch = via1.timerALatch;
+    v1P0.toggleOut = false;
+
+    auto& v1P1 = v1.port[1];
+    v1P1.pr = via1.lines.prb;
+    v1P1.ddr = via1.lines.ddrb;
+    v1P1.io = via1.peek(0);
+    v1P1.timer = via1.timerBCounter;
+    v1P1.timerLatch = via1.timerBLatch;
+    v1P1.toggleOut = via1.timerAToggle;
+
+    v1.ier = via1.ier;
+    v1.ifr = via1.ifr;
+    v1.acr = via1.acr;
+    v1.pcr = via1.pcr;
+    v1.sdr = via1.sdr;
+    v1.shiftCount = via1.shift.count;
+
+    auto& v2 = snap.via[1];
+    auto& v2P0 = v2.port[0];
+    v2P0.pr = via2.lines.pra;
+    v2P0.ddr = via2.lines.ddra;
+    v2P0.io = via2.peek(1);
+    v2P0.timer = via2.timerACounter;
+    v2P0.timerLatch = via2.timerALatch;
+    v2P0.toggleOut = false;
+
+    auto& v2P1 = v2.port[1];
+    v2P1.pr = via2.lines.prb;
+    v2P1.ddr = via2.lines.ddrb;
+    v2P1.io = via2.peek(0);
+    v2P1.timer = via2.timerBCounter;
+    v2P1.timerLatch = via2.timerBLatch;
+    v2P1.toggleOut = via2.timerAToggle;
+
+    v2.ier = via2.ier;
+    v2.ifr = via2.ifr;
+    v2.acr = via2.acr;
+    v2.pcr = via2.pcr;
+    v2.sdr = via2.sdr;
+    v2.shiftCount = via2.shift.count;
 }
 
 template auto Drive::cpuRead<false>(uint16_t addr) -> uint8_t;

@@ -193,6 +193,7 @@ struct DebuggerSnapshot : Emulator::Interface::DebuggerSnapshot {
 
         uint8_t sdr;
         unsigned shiftCount;
+        bool sdrOutput;
     } cia[2];
 
     struct {

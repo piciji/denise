@@ -91,6 +91,7 @@ struct View : GUIKIT::Window {
                 GUIKIT::Menu* menu = nullptr;
                     GUIKIT::MenuItem* cpu;
                     GUIKIT::MenuItem* mem;
+                    GUIKIT::MenuItem* via;
             } debuggerDrives[4];
 
         GUIKIT::MenuItem* audio;

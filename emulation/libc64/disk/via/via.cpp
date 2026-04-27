@@ -23,7 +23,6 @@ Via::Via( uint8_t model ) {
 	irqCall = [](bool state) {};
     
     // 'unused line' is default behaviour: external device use pullup resistors to keep these lines always high
-    // i assume an ouptut of 0 from via side doesn't change the line while external device pulls this line up ???    
     // override these callbacks if external device uses these lines
     ca2Out = [this](bool direction) { };
     cb2Out = [this](bool direction) { };
@@ -38,7 +37,7 @@ auto Via::reset() -> void {
     lines.ioaOld = lines.iobOld = 0xff;
     lines.latchA = lines.latchB = 0;
     
-    sdr = 0;  // not reseted
+    sdr = 0;
     
     ifr = ier = 0;
     pcr = acr = 0;

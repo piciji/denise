@@ -65,7 +65,7 @@ struct Via {
     
     auto pb6Pulse() -> void;
 
-    // incomming transitions
+    // incoming transitions
     auto ca1In( bool direction, bool irqNextCycle = true ) -> void;
     auto ca2In( bool direction, bool irqNextCycle = true ) -> void;
     auto cb1In( bool direction, bool pulse = true, bool irqNextCycle = true ) -> void;

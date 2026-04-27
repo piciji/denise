@@ -59,6 +59,7 @@ struct CiaDebugger : Debugger {
                 GUIKIT::LineEdit sdr;
                 GUIKIT::Label labelShiftCount;
                 GUIKIT::LineEdit shiftCount;
+                GUIKIT::CheckBox output;
                 Shifter();
             } shifter;
 

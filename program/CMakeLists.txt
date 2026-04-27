@@ -84,6 +84,7 @@ set(srcs
         debugger/cpuDebugger.cpp
         debugger/memDebugger.cpp
         debugger/ciaDebugger.cpp
+        debugger/viaDebugger.cpp
         debugger/videoDebugger.cpp
         debugger/sidDebugger.cpp
         debugger/dmaDebugger.cpp

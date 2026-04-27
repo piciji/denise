@@ -629,6 +629,10 @@ auto IecBus::updateCpuSnapshot( DebuggerTheme theme, DebuggerSnapshot& snap ) ->
     drives[ getDriveId(theme) ]->cpu.updateSnapshot( snap );
 }
 
+auto IecBus::updateViaSnapshot( DebuggerTheme theme, DebuggerSnapshot& snap ) -> void {
+    drives[ getDriveId(theme) ]->updateViaDebuggerSnapshot( snap );
+}
+
 auto IecBus::setWatchpointCondition(DebuggerTheme theme, DebuggerAction action, unsigned addr, unsigned hitCount, unsigned hitCountMode, const std::string& expression, unsigned expressionMode) -> bool {
     return drives[ getDriveId(theme) ]->cpu.setWatchpointCondition( action, addr, hitCount, hitCountMode, expression, expressionMode );
 }
@@ -646,15 +650,19 @@ inline auto IecBus::getDriveId(DebuggerTheme theme) -> unsigned {
         default:
         case DebuggerTheme::Drive8Memory:
         case DebuggerTheme::Drive8CPU:
+        case DebuggerTheme::Drive8VIA:
             return 0;
         case DebuggerTheme::Drive9Memory:
         case DebuggerTheme::Drive9CPU:
+        case DebuggerTheme::Drive9VIA:
             return 1;
         case DebuggerTheme::Drive10Memory:
         case DebuggerTheme::Drive10CPU:
+        case DebuggerTheme::Drive10VIA:
             return 2;
         case DebuggerTheme::Drive11Memory:
         case DebuggerTheme::Drive11CPU:
+        case DebuggerTheme::Drive11VIA:
             return 3;
     }
     _unreachable

@@ -121,7 +121,28 @@ struct DebuggerSnapshot : Emulator::Interface::DebuggerSnapshot {
 
         uint8_t sdr;
         unsigned shiftCount;
+        bool sdrOutput;
     } cia[2];
+
+    struct {
+        struct {
+            uint8_t pr;
+            uint8_t ddr;
+            uint8_t io;
+
+            uint16_t timer;
+            uint16_t timerLatch;
+
+            bool toggleOut;
+        } port[2];
+
+        uint8_t ifr;
+        uint8_t ier;
+        uint8_t acr;
+        uint8_t pcr;
+        uint8_t sdr;
+        unsigned shiftCount;
+    } via[2];
 
     struct {
         struct {
@@ -191,20 +212,45 @@ struct DebuggerSnapshot : Emulator::Interface::DebuggerSnapshot {
 
             },
             { // Port B
-                    {7, "ROW7"},{6, "ROW6"},{5, "ROW5"},{4, "BTNA"},
-                    {3, "JOYA3"},{2, "JOYA2"},{1, "JOYA1"},{0, "JOYA0"}
+                {7, "ROW7"},{6, "ROW6"},{5, "ROW5"},{4, "BTNA"},
+                {3, "JOYA3"},{2, "JOYA2"},{1, "JOYA1"},{0, "JOYA0"}
             }
         },
         { // CIA B
-                { // Port A
-                    {7, "DATA IN"},{6, "CLK IN"},{5, "DATA OUT"},{4, "CLK OUT"},
-                    {3, "ATN OUT"},{2, "M"},{1, "VA15"},{0, "VA14"}
+            { // Port A
+                {7, "DATA IN"},{6, "CLK IN"},{5, "DATA OUT"},{4, "CLK OUT"},
+                {3, "ATN OUT"},{2, "M"},{1, "VA15"},{0, "VA14"}
 
-                },
-                { // Port B
-                    {7, "USER-L"}, {6, "U-K"},{5, "U-J"},{4, "U-H"},
-                    {3, "U-F"},{2, "U-E"},{1, "U-D"},{0, "U-C"}
-                }
+            },
+            { // Port B
+                {7, "USER-L"}, {6, "U-K"},{5, "U-J"},{4, "U-H"},
+                {3, "U-F"},{2, "U-E"},{1, "U-D"},{0, "U-C"}
+            }
+        }
+    };
+
+    constexpr static Emulator::Interface::DebuggerIdent ViaPorts[2][2][8] = {
+        { // VIA A
+            { // Port A
+                {7, "RDY"},{6, "Bit6"},{5, "Bit5"},{4, "Bit4"},
+                {3, "Bit3"},{2, "Bit2"},{1, "Bit1"}, {0, "TRACK-0"}
+
+            },
+            { // Port B
+                {7, "ATN-IN"},{6, "6"},{5, "5"},{4, "ATN-OUT"},
+                {3, "CLK-OUT"},{2, "CLK-IN"},{1, "DATA-OUT"},{0, "DATA-IN"}
+            }
+        },
+        { // VIA B
+            { // Port A
+                {7, "Bit7"},{6, "Bit6"},{5, "Bit5"},{4, "Bit4"},
+                {3, "Bit3"},{2, "Bit2"},{1, "Bit1"},{0, "Bit0"}
+
+            },
+            { // Port B
+                {7, "SYNC"}, {6, "SZ"},{5, "SZ"},{4, "WP"},
+                {3, "LED"},{2, "MTR"},{1, "STEP"},{0, "STEP"}
+            }
         }
     };
 

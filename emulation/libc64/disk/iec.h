@@ -109,6 +109,7 @@ struct IecBus {
     auto debuggerRemove( DebuggerTheme theme, DebuggerAction action, uint16_t addr) -> void;
     auto debuggerRemove( DebuggerTheme theme, DebuggerAction action) -> void;
     auto updateCpuSnapshot( DebuggerTheme theme, DebuggerSnapshot& snap ) -> void;
+    auto updateViaSnapshot( DebuggerTheme theme, DebuggerSnapshot& snap ) -> void;
     auto setWatchpointCondition(DebuggerTheme theme, DebuggerAction action, unsigned addr, unsigned hitCount, unsigned hitCountMode, const std::string& expression, unsigned expressionMode) -> bool;
 
     auto disassemble(DebuggerTheme theme, uint16_t addr, unsigned& bytes) -> std::string;

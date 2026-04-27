@@ -28,6 +28,10 @@
 #include "debugger/drive9CpuDebugger.h"
 #include "debugger/drive10CpuDebugger.h"
 #include "debugger/drive11CpuDebugger.h"
+#include "debugger/drive8ViaDebugger.h"
+#include "debugger/drive9ViaDebugger.h"
+#include "debugger/drive10ViaDebugger.h"
+#include "debugger/drive11ViaDebugger.h"
 #include "debugger/drive8MemDebugger.h"
 #include "debugger/drive9MemDebugger.h"
 #include "debugger/drive10MemDebugger.h"
@@ -890,6 +894,10 @@ auto Program::openDebugger(Emulator::Interface* emulator, DebuggerTheme theme) -
         case DebuggerTheme::Drive9Memory: debugger = new Drive9MemDebugger(emulator); break;
         case DebuggerTheme::Drive10Memory: debugger = new Drive10MemDebugger(emulator); break;
         case DebuggerTheme::Drive11Memory: debugger = new Drive11MemDebugger(emulator); break;
+        case DebuggerTheme::Drive8VIA: debugger = new Drive8ViaDebugger(emulator); break;
+        case DebuggerTheme::Drive9VIA: debugger = new Drive9ViaDebugger(emulator); break;
+        case DebuggerTheme::Drive10VIA: debugger = new Drive10ViaDebugger(emulator); break;
+        case DebuggerTheme::Drive11VIA: debugger = new Drive11ViaDebugger(emulator); break;
         case DebuggerTheme::Memory: debugger = new MemDebugger(emulator); break;
         case DebuggerTheme::MemorySCPU: debugger = new MemScpuDebugger(emulator); break;
         case DebuggerTheme::CIA: debugger = new CiaDebugger(emulator); break;

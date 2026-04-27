@@ -959,8 +959,10 @@ auto System::updateCiaDebuggerSnapshot(DebuggerSnapshot& snap) -> void {
 
     snap.cia[0].sdr = cia1.sdr;
     snap.cia[0].shiftCount = cia1.sdrShiftCount;
+    snap.cia[0].sdrOutput = cia1.timerA.control & 0x40;
     snap.cia[1].sdr = cia2.sdr;
     snap.cia[1].shiftCount = cia2.sdrShiftCount;
+    snap.cia[1].sdrOutput = cia2.timerA.control & 0x40;
 }
 
 template auto System::dongleJoydat<false>(uint16_t& val) -> void;

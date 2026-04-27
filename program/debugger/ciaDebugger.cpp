@@ -129,7 +129,8 @@ CiaDebugger::CIA::Chip::Shifter::Shifter() {
     append(label, {50u, 0u}, 5);
     append(sdr, {getWidth(2, true), 0u}, 10);
     append(labelShiftCount, {0u, 0u}, 5);
-    append(shiftCount, {getWidth(2, true), 0u});
+    append(shiftCount, {getWidth(2, true), 0u}, 10);
+    append(output, {0u, 0u});
 
     setAlignment( 0.5 );
 }
@@ -241,6 +242,7 @@ template<typename T> auto CiaDebugger::updateCia(T& s) -> void {
         auto& sh = c.shifter;
         updateReg( sh.sdr, sc.sdr );
         updateReg( sh.shiftCount, sc.shiftCount );
+        updateReg( sh.output, sc.sdrOutput );
     }
 
     updateControl( s.vPos, s.hPos );
@@ -296,6 +298,7 @@ auto CiaDebugger::translateTheme() -> void {
         c.tod24bit.labelAlarm.setText("Alarm" );
         c.shifter.label.setText( "SDR:" );
         c.shifter.labelShiftCount.setText("Shifter" );
+        c.shifter.output.setText("Output" );
     }
 }
 

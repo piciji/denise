@@ -1474,6 +1474,20 @@ auto View::buildMenu() -> void {
                 };
                 debuggerDrive.menu->append( *debuggerDrive.mem );
 
+                debuggerDrive.via = new GUIKIT::MenuItem;
+                debuggerDrive.via->onActivate = [emulator, nr]() {
+                    emuThread->lock();
+                    switch (nr) {
+                        default:
+                        case 8: program->openDebugger(emulator, DebuggerTheme::Drive8VIA); break;
+                        case 9: program->openDebugger(emulator, DebuggerTheme::Drive9VIA); break;
+                        case 10: program->openDebugger(emulator, DebuggerTheme::Drive10VIA); break;
+                        case 11: program->openDebugger(emulator, DebuggerTheme::Drive11VIA); break;
+                    }
+                    emuThread->unlock();
+                };
+                debuggerDrive.menu->append( *debuggerDrive.via );
+
                 sM.debugger->append( *debuggerDrive.menu );
                 nr++;
             }
@@ -2288,6 +2302,7 @@ auto View::translate() -> void {
             for (auto& debuggerDrive : sysMenu.debuggerDrives) {
                 debuggerDrive.cpu->setText( "CPU" );
                 debuggerDrive.mem->setText( "Memory" );
+                debuggerDrive.via->setText( "VIA" );
             }
         }
 
