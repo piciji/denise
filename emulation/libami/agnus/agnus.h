@@ -21,6 +21,8 @@
  */
 
 namespace LIBAMI {
+typedef Emulator::Interface::DebuggerAction DebuggerAction;
+typedef Emulator::Interface::DebuggerTheme DebuggerTheme;
 
 struct System;
 struct Interface;
@@ -173,6 +175,7 @@ struct Agnus {
 
     struct Debugger {
         Emulator::Interface::DebuggerAction action = Emulator::Interface::DebuggerAction::None;
+        Emulator::Interface::DebuggerTheme theme = Emulator::Interface::DebuggerTheme::Unspecified;
         uint32_t addr;
 
         unsigned dmaLog = DmaLogNone;
@@ -521,6 +524,7 @@ struct Agnus {
     inline auto updateDdfEnableCache() -> void;
 
     auto debugPointReached(int source, unsigned addr) -> void;
+    auto debugPointReached(DebuggerTheme theme, DebuggerAction action, unsigned addr) -> void;
     auto oneTimeDebuggerAction() -> void;
     auto updateSnapshot(DebuggerSnapshot& snap) -> void;
     auto updateVideoSnapshot(DebuggerSnapshot& snap) -> void;
@@ -529,6 +533,7 @@ struct Agnus {
     auto updateMemorySnapshot(DebuggerSnapshot& snap) -> void;
 
     auto addDmaLogEntry() -> void;
+    auto checkDmaStops() -> void;
     auto peekDmaWatcher(Emulator::Interface::DebuggerDma& dmaLogger) -> void;
     auto debuggerAutoUpdate() -> void;
     auto debuggerUpdateEvent() -> void;

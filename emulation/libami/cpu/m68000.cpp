@@ -132,7 +132,7 @@ auto Cpu::parseExpressionValue(const std::string& input, int& pos) -> uint32_t {
     return 0;
 }
 
-auto Cpu::setWatchpointCondition(DebuggerAction action, unsigned addr, unsigned hitCount, unsigned hitCountMode, const std::string& expression, unsigned expressionMode) -> bool {
+auto Cpu::setWatchpointCondition(DebuggerTheme theme, DebuggerAction action, unsigned addr, unsigned hitCount, unsigned hitCountMode, const std::string& expression, unsigned expressionMode) -> bool {
     bool expressionError = false;
 
     if (!expression.empty()) {
@@ -149,26 +149,32 @@ auto Cpu::setWatchpointCondition(DebuggerAction action, unsigned addr, unsigned 
         }
     }
 
-    switch (action) {
-        case DebuggerAction::Breakpoint:
-            breakPoints.setBreakpointCondition( addr, hitCount, hitCountMode, expressionError ? "" : expression, expressionMode );
-            break;
-        case DebuggerAction::Watchpoint:
-            watchPoints.setBreakpointCondition( addr, hitCount, hitCountMode, expressionError ? "" : expression, expressionMode );
-            break;
-        case DebuggerAction::WatchpointWrite:
-            watchPointsWrite.setBreakpointCondition( addr, hitCount, hitCountMode, expressionError ? "" : expression, expressionMode );
-            break;
-        case DebuggerAction::ExceptionPoint:
-            exceptionPoints.setBreakpointCondition( addr, hitCount, hitCountMode, expressionError ? "" : expression, expressionMode );
-            break;
-        case DebuggerAction::BreakpointCopper:
-            ref.copper.breakPoints.setBreakpointCondition( addr, hitCount, hitCountMode, expressionError ? "" : expression, expressionMode );
-            break;
-        case DebuggerAction::WatchpointCopper:
-            ref.copper.watchPoints.setBreakpointCondition( addr, hitCount, hitCountMode, expressionError ? "" : expression, expressionMode );
-            break;
-        default: break;
+    if (theme == DebuggerTheme::Copper) {
+        switch (action) {
+            case DebuggerAction::Breakpoint:
+                ref.copper.breakPoints.setBreakpointCondition( addr, hitCount, hitCountMode, expressionError ? "" : expression, expressionMode );
+                break;
+            case DebuggerAction::Watchpoint:
+                ref.copper.watchPoints.setBreakpointCondition( addr, hitCount, hitCountMode, expressionError ? "" : expression, expressionMode );
+                break;
+            default: break;
+        }
+    } else {
+        switch (action) {
+            case DebuggerAction::Breakpoint:
+                breakPoints.setBreakpointCondition( addr, hitCount, hitCountMode, expressionError ? "" : expression, expressionMode );
+                break;
+            case DebuggerAction::Watchpoint:
+                watchPoints.setBreakpointCondition( addr, hitCount, hitCountMode, expressionError ? "" : expression, expressionMode );
+                break;
+            case DebuggerAction::WatchpointWrite:
+                watchPointsWrite.setBreakpointCondition( addr, hitCount, hitCountMode, expressionError ? "" : expression, expressionMode );
+                break;
+            case DebuggerAction::ExceptionPoint:
+                exceptionPoints.setBreakpointCondition( addr, hitCount, hitCountMode, expressionError ? "" : expression, expressionMode );
+                break;
+            default: break;
+        }
     }
 
     return !expressionError;

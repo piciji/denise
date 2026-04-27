@@ -332,6 +332,18 @@ inline auto Agnus::peekDmaWatcher(Emulator::Interface::DebuggerDma& dmaLogger) -
     }
 }
 
+auto Agnus::checkDmaStops() -> void {
+    if (debugger.dmaLog & DmaLogBlitter) {
+        if (busUsage >= BUS_USAGE_BLITTER_A && busUsage <= BUS_USAGE_BLITTER_D) {
+            debugger.dmaLog &= ~DmaLogBlitter;
+            debugPointReached( DebuggerTheme::Blitter, DebuggerAction::Softstop, 0 );
+        }
+    } else if (debugger.dmaLog & DmaLogCycle) {
+        debugger.dmaLog &= ~DmaLogCycle;
+        debugPointReached( DebuggerTheme::Unspecified, DebuggerAction::Softstop, 0 );
+    }
+}
+
 auto Agnus::addDmaLogEntry() -> void {
     auto& dmaLogger = debugger.dma[hPos];
     dmaLogger.usage = busUsage;
@@ -341,21 +353,14 @@ auto Agnus::addDmaLogEntry() -> void {
     dmaLogger.mnemonic = nullptr;
     dmaLogger.hilight = DebuggerDmaHilight::Default;
     peekDmaWatcher(dmaLogger);
-
-    if (debugger.dmaLog & DmaLogBlitter) {
-        if (busUsage >= BUS_USAGE_BLITTER_A && busUsage <= BUS_USAGE_BLITTER_D) {
-            debugger.dmaLog &= ~DmaLogBlitter;
-            debugPointReached( (int)DebuggerAction::SoftstopBlitter, 0 );
-        }
-    } else if (debugger.dmaLog & DmaLogCycle) {
-        debugger.dmaLog &= ~DmaLogCycle;
-        debugPointReached( (int)DebuggerAction::SoftstopCycle, 0 );
-    }
 }
 
 template<bool logDma> auto Agnus::addWaitstatesToCPU() -> void {
     if (overclock.speed) {
         if (overclock.cycles) {
+            if constexpr (logDma) {
+                checkDmaStops();
+            }
             dmaCycle(); // set address on BUS (clock stretch to stock speed)
 
             if constexpr (logDma) {
@@ -370,6 +375,9 @@ template<bool logDma> auto Agnus::addWaitstatesToCPU() -> void {
     }
 
     while (busUsage != BUS_FREE) {
+        if constexpr (logDma) {
+            checkDmaStops();
+        }
         dmaCycle();
         countWaitCycles++;
 
@@ -745,6 +753,9 @@ template<bool logDma> inline auto Agnus::sync(unsigned cycles) -> void {
         overclock.cycles += cycles;
 
         while (overclock.cycles >= overclock.speed) {
+            if constexpr (logDma) {
+                checkDmaStops();
+            }
             dmaCycle();
             overclock.cycles -= overclock.speed;
 
@@ -757,6 +768,9 @@ template<bool logDma> inline auto Agnus::sync(unsigned cycles) -> void {
         // triggers DMA cycle following current CPU micro cycle.
         // means it is always a DMA cycle ahead of CPU to find out if next cycle is usable for CPU
         while( cycles ) {
+            if constexpr (logDma) {
+                checkDmaStops();
+            }
             dmaCycle();
             cycles -= 2;
 
@@ -1044,15 +1058,17 @@ auto Agnus::debugPointReached(int source, unsigned addr) -> void {
         case M68FAMILY::M68000::ExceptionPoint: action = DebuggerAction::ExceptionPoint; break;
         case M68FAMILY::M68000::BreakPoint: action = DebuggerAction::Breakpoint; break;
         case M68FAMILY::M68000::SoftStop: action = DebuggerAction::Softstop; break;
-        case (int)DebuggerAction::BreakpointCopper: action = DebuggerAction::BreakpointCopper; break;
-        case (int)DebuggerAction::WatchpointCopper: action = DebuggerAction::WatchpointCopper; break;
-        case (int)DebuggerAction::SoftstopBlitter: action = DebuggerAction::SoftstopBlitter; break;
-        case (int)DebuggerAction::SoftstopCycle: action = DebuggerAction::SoftstopCycle; break;
         default: return;
     }
 
+    debugPointReached(DebuggerTheme::CPU, action, addr);
+}
+
+auto Agnus::debugPointReached(DebuggerTheme theme, DebuggerAction action, unsigned addr) -> void {
     debugger.action = action;
+    debugger.theme = theme;
     debugger.addr = addr;
+
     system->debuggerUpdate();
 }
 
@@ -1081,7 +1097,8 @@ template<bool _write, bool _word, bool _prg> auto Agnus::memoryAcceesMnemonic() 
 auto Agnus::oneTimeDebuggerAction() -> void {
     debugger.action = debugger.oneTimeAction;
     debugger.addr = 0;
-    debugger.oneTimeAction = Emulator::Interface::DebuggerAction::None;
+    debugger.oneTimeAction = DebuggerAction::None;
+    debugger.theme = DebuggerTheme::Unspecified;
     system->debuggerUpdate();
 }
 
@@ -1108,7 +1125,7 @@ auto Agnus::updateSnapshot(DebuggerSnapshot& snap) -> void {
     snap.busUsage = busUsage;
     snap.callbackAction = debugger.action;
     snap.callbackAddress = debugger.addr;
-    snap.callbackTheme = Interface::DebuggerTheme::Unspecified;
+    snap.callbackTheme = debugger.theme;
     snap.codeMaybeModified = cpu.hasModifiedCode();
 }
 

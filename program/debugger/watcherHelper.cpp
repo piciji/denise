@@ -7,7 +7,7 @@ auto WatcherHelper::updateList() -> void {
 
     for (auto& w : watchers) {
         if (w.ident.empty()) {
-            int format = debugger->isC64() || w.action == DebuggerAction::WatchpointCopper || w.action == DebuggerAction::BreakpointCopper ? 4 : 6;
+            int format = debugger->isC64() ? 4 : 6;
             watcherList->append( {"", GUIKIT::String::convertToHex(w.addr, format),"", ""}, true );
         } else {
             watcherList->append( {"", w.ident, "", ""}, true );
@@ -17,7 +17,7 @@ auto WatcherHelper::updateList() -> void {
 
         updateBreakpointVisuals( row, &w, true );
 
-        if (w.action == DebuggerAction::Watchpoint || w.action == DebuggerAction::WatchpointCopper)
+        if (w.action == DebuggerAction::Watchpoint)
             watcherList->setImage( row, 2, debugger->memoryImg, true );
         else if (w.action == DebuggerAction::WatchpointWrite)
             watcherList->setImage( row, 2, debugger->memoryBorderImg, true );

@@ -120,18 +120,18 @@ auto CopperDebugger::buildTheme() -> GUIKIT::Layout* {
                 emuThread->lock();
                 auto& inst = lPtr->instructions[row];
 
-                DbgWatcher* watcher = watcherHelper.findBy(inst.addr, DebuggerAction::BreakpointCopper);
+                DbgWatcher* watcher = watcherHelper.findBy(inst.addr, DebuggerAction::Breakpoint);
                 if (!watcher) {
-                    watcherHelper.addToList( inst.addr, DebuggerAction::BreakpointCopper );
-                    watcher = watcherHelper.findBy(inst.addr, DebuggerAction::BreakpointCopper);
-                    emulator->debuggerAdd(DebuggerTheme::Copper, DebuggerAction::BreakpointCopper, inst.addr);
+                    watcherHelper.addToList( inst.addr, DebuggerAction::Breakpoint );
+                    watcher = watcherHelper.findBy(inst.addr, DebuggerAction::Breakpoint);
+                    emulator->debuggerAdd(getTheme(), DebuggerAction::Breakpoint, inst.addr);
                 } else {
                     watcher->enabled ^= 1;
                     if (watcher->enabled) {
-                        emulator->debuggerAdd(DebuggerTheme::Copper, DebuggerAction::BreakpointCopper, inst.addr);
+                        emulator->debuggerAdd(getTheme(), DebuggerAction::Breakpoint, inst.addr);
                         updateWatchpointCondition( *watcher );
                     } else
-                        emulator->debuggerRemove(DebuggerTheme::Copper, DebuggerAction::BreakpointCopper, inst.addr);
+                        emulator->debuggerRemove(getTheme(), DebuggerAction::Breakpoint, inst.addr);
                 }
                 watcherHelper.updateList();
                 emuThread->unlock();
@@ -152,7 +152,7 @@ auto CopperDebugger::buildTheme() -> GUIKIT::Layout* {
         list.listView.onContext = [this, lPtr](unsigned row, unsigned column, GUIKIT::Position position ) {
             if (column == 0) {
                 auto& inst = lPtr->instructions[row];
-                DbgWatcher* watcher = watcherHelper.findBy(inst.addr, DebuggerAction::BreakpointCopper);
+                DbgWatcher* watcher = watcherHelper.findBy(inst.addr, DebuggerAction::Breakpoint);
                 if (watcher)
                     openConditionView( watcher, position);
 
@@ -218,17 +218,17 @@ auto CopperDebugger::buildTheme() -> GUIKIT::Layout* {
             watcher.enabled ^= 1;
             watcherHelper.updateBreakpointVisuals(row, &watcher);
             if (watcher.enabled) {
-                emulator->debuggerAdd(DebuggerTheme::Copper, watcher.action, watcher.addr);
+                emulator->debuggerAdd(getTheme(), watcher.action, watcher.addr);
                 updateWatchpointCondition( watcher );
             } else
-                emulator->debuggerRemove(DebuggerTheme::Copper, watcher.action, watcher.addr);
+                emulator->debuggerRemove(getTheme(), watcher.action, watcher.addr);
         }
 
         for (auto& list : copper->lists) {
             Copper::List* lPtr = &list;
 
             std::optional<unsigned> instRow = std::nullopt;
-            if (watcher.action == DebuggerAction::BreakpointCopper)
+            if (watcher.action == DebuggerAction::Breakpoint)
                 instRow = findInstructionRowBy(lPtr, watcher.addr);
 
             if (!instRow.has_value())
@@ -242,7 +242,7 @@ auto CopperDebugger::buildTheme() -> GUIKIT::Layout* {
         }
 
         if (column == 3) {
-            emulator->debuggerRemove( DebuggerTheme::Copper, watcher.action, watcher.addr);
+            emulator->debuggerRemove( getTheme(), watcher.action, watcher.addr);
             watcherHelper.removeFromList(watcher.addr, watcher.action);
             watcherHelper.updateList();
         }
@@ -263,9 +263,9 @@ auto CopperDebugger::buildTheme() -> GUIKIT::Layout* {
         if (address == -1)
             return;
 
-        DebuggerAction action = DebuggerAction::BreakpointCopper;
+        DebuggerAction action = DebuggerAction::Breakpoint;
         if (copper->watcher.typeLayout.watchPoint.checked()) {
-            action = DebuggerAction::WatchpointCopper;
+            action = DebuggerAction::Watchpoint;
         }
 
         if (watcherHelper.findBy( address, action ))
@@ -275,7 +275,7 @@ auto CopperDebugger::buildTheme() -> GUIKIT::Layout* {
         watcherHelper.addToList( static_cast<unsigned>(address), action );
         watcherHelper.updateList();
 
-        if (action == DebuggerAction::BreakpointCopper) {
+        if (action == DebuggerAction::Breakpoint) {
             for (auto& list : copper->lists) {
                 Copper::List* lPtr = &list;
 
@@ -285,7 +285,7 @@ auto CopperDebugger::buildTheme() -> GUIKIT::Layout* {
             }
         }
 
-        emulator->debuggerAdd(DebuggerTheme::Copper, action, address);
+        emulator->debuggerAdd(getTheme(), action, address);
         emuThread->unlock();
     };
 
@@ -419,7 +419,7 @@ auto CopperDebugger::buildControl() -> GUIKIT::Layout* {
             return;
         emuThread->lock();
         timerVisibility->setEnabled();
-        emulator->debuggerAdd( DebuggerTheme::Copper, DebuggerAction::SoftstopCopper, 0 );
+        emulator->debuggerAdd( getTheme(), DebuggerAction::Softstop, 0 );
         emuThread->unlockDebugger();
         emuThread->unlock();
     };
@@ -439,22 +439,22 @@ auto CopperDebugger::buildControl() -> GUIKIT::Layout* {
 }
 
 auto CopperDebugger::initTheme() -> void {
-    emulator->debuggerAdd( DebuggerTheme::Copper, DebuggerAction::None, 0);
+    emulator->debuggerAdd( getTheme(), DebuggerAction::None, 0);
 
     for (auto& watcher : watcherHelper.watchers) {
         if (watcher.enabled) {
-            emulator->debuggerAdd( DebuggerTheme::Copper, watcher.action, watcher.addr );
+            emulator->debuggerAdd( getTheme(), watcher.action, watcher.addr );
             updateWatchpointCondition(watcher);
         } else
-            emulator->debuggerRemove( DebuggerTheme::Copper, watcher.action, watcher.addr );
+            emulator->debuggerRemove( getTheme(), watcher.action, watcher.addr );
     }
 }
 
 auto CopperDebugger::closeTheme() -> void {
-    emulator->debuggerRemove( DebuggerTheme::Copper, DebuggerAction::None);
-    emulator->debuggerRemove( DebuggerTheme::Copper, DebuggerAction::BreakpointCopper );
-    emulator->debuggerRemove( DebuggerTheme::Copper, DebuggerAction::WatchpointCopper );
-    emulator->debuggerRemove( DebuggerTheme::Copper, DebuggerAction::SoftstopCopper );
+    emulator->debuggerRemove( getTheme(), DebuggerAction::None);
+    emulator->debuggerRemove( getTheme(), DebuggerAction::Breakpoint );
+    emulator->debuggerRemove( getTheme(), DebuggerAction::Watchpoint );
+    emulator->debuggerRemove( getTheme(), DebuggerAction::Softstop );
 }
 
 auto CopperDebugger::saveIdent() -> std::string {
@@ -545,7 +545,7 @@ auto CopperDebugger::updateInstructionList(Copper::List* list, bool forceUpdate)
                 instructionList.setText( i, 2, disassembled, true );
             }
 
-            auto breakPoint = watcherHelper.findBy( addr, DebuggerAction::BreakpointCopper );
+            auto breakPoint = watcherHelper.findBy( addr, DebuggerAction::Breakpoint );
             if (!breakPoint) {
                 instructionList.setImage( i, 0, nullImg, true );
             } else {
@@ -576,14 +576,21 @@ auto CopperDebugger::updateInstructionList(Copper::List* list, bool forceUpdate)
 
 auto CopperDebugger::updateWatcherSelection() -> void {
     auto& watcherList = copper->watcher.listView;
-    if (snapshot->callbackAction == DebuggerAction::WatchpointCopper
-        || snapshot->callbackAction == DebuggerAction::BreakpointCopper) {
-        auto row = watcherHelper.findRowBy(snapshot->callbackAddress, snapshot->callbackAction);
-        if (row.has_value())
-            watcherList.setSelection( row.value_or(0) );
-        else if (watcherList.selected())
-            watcherList.setSelected( false );
-    } else if (watcherList.selected())
+    auto& t = snapshot->callbackTheme;
+    auto& act = snapshot->callbackAction;
+    bool hiLight = false;
+
+    if (t == getTheme()) {
+        if (act == DebuggerAction::Watchpoint || act == DebuggerAction::Breakpoint) {
+            auto row = watcherHelper.findRowBy(snapshot->callbackAddress, snapshot->callbackAction);
+            if (row.has_value()) {
+                watcherList.setSelection( row.value_or(0) );
+                hiLight = true;
+            }
+        }
+    }
+
+    if (!hiLight && watcherList.selected())
         watcherList.setSelected( false );
 }
 

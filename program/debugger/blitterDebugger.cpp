@@ -437,7 +437,7 @@ auto BlitterDebugger::buildControl() -> GUIKIT::Layout* {
             return;
         emuThread->lock();
         timerVisibility->setEnabled();
-        emulator->debuggerAdd( DebuggerTheme::Blitter, DebuggerAction::SoftstopBlitter, 0 );
+        emulator->debuggerAdd( DebuggerTheme::Blitter, DebuggerAction::Softstop, 0 );
         emuThread->unlockDebugger();
         emuThread->unlock();
     };

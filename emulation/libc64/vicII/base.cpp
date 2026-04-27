@@ -398,7 +398,8 @@ auto VicIIBase::resetDebuggerDma() -> void {
 auto VicIIBase::oneTimeDebuggerAction() -> void {
     system->debugger.action = debugger.action;
     system->debugger.addr = 0;
-    debugger.action = Emulator::Interface::DebuggerAction::None;
+    system->debugger.theme = DebuggerTheme::Unspecified;
+    debugger.action = DebuggerAction::None;
     system->debuggerUpdate();
 }
 
@@ -410,7 +411,7 @@ auto VicIIBase::updateVideoSnapshot(DebuggerSnapshot& snap) -> void {
         auto& _sprD = debugger.spr[i];
         auto& _sprT = s.spr[i];
         auto& _spr = sprite[i];
-        unsigned pos = snap.callbackAction == Interface::DebuggerAction::AutoUpdate ? _sprD.lastPos : _sprD.pos;
+        unsigned pos = snap.callbackAction == Emulator::Interface::DebuggerAction::AutoUpdate ? _sprD.lastPos : _sprD.pos;
 
         if (pos)
             std::memcpy(_sprT.data, _sprD.data, pos);

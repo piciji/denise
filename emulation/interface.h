@@ -355,8 +355,7 @@ struct Interface {
     };
 
     enum class DebuggerAction { None, Breakpoint, Watchpoint, WatchpointWrite, ExceptionPoint, Softstop, ModifiedCode, History, Line, Frame,
-        DmaView, DmaLog, DmaWatch, AutoUpdate, UIRequestedStop, HaltCPU, BreakpointCopper, WatchpointCopper,
-        SoftstopCopper, SoftstopBlitter, SoftstopCycle };
+        DmaView, DmaLog, DmaWatch, AutoUpdate, UIRequestedStop, HaltCPU };
 
     struct DebuggerSnapshot {
         unsigned themes = 0; // multiple themes

@@ -739,7 +739,7 @@ auto System::debuggerAdd(DebuggerTheme theme, DebuggerAction action, unsigned ad
                 case DebuggerAction::DmaWatch:
                     agnus.debugger.dmaWatchers[addrTo & 3] = addr | (0x80 << 24);
                     break;
-                case DebuggerAction::SoftstopCycle:
+                case DebuggerAction::Softstop:
                     agnus.debugger.softStopCycle();
                     break;
                 default: break;
@@ -772,7 +772,7 @@ auto System::debuggerAdd(DebuggerTheme theme, DebuggerAction action, unsigned ad
                 case DebuggerAction::None:
                     debuggerSnapshot.themes |= (unsigned)theme;
                     break;
-                case DebuggerAction::SoftstopBlitter:
+                case DebuggerAction::Softstop:
                     agnus.debugger.softStopBlitterDma();
                     break;
                 default: break;
@@ -864,8 +864,8 @@ auto System::debuggerRemove(DebuggerTheme theme, DebuggerAction action, std::opt
     agnus.debuggerUpdateEvent();
 }
 
-auto System::setWatchpointCondition(DebuggerAction action, unsigned addr, unsigned hitCount, unsigned hitCountMode, const std::string& expression, unsigned expressionMode) -> bool {
-    return cpu.setWatchpointCondition( action, addr, hitCount, hitCountMode, expression, expressionMode );
+auto System::setWatchpointCondition(DebuggerTheme theme, DebuggerAction action, unsigned addr, unsigned hitCount, unsigned hitCountMode, const std::string& expression, unsigned expressionMode) -> bool {
+    return cpu.setWatchpointCondition( theme, action, addr, hitCount, hitCountMode, expression, expressionMode );
 }
 
 auto System::editMemory(uint32_t addr, std::vector<uint16_t> values) -> void {

@@ -105,5 +105,5 @@ struct CopperDebugger : Debugger {
     auto updateInstructionViews(bool forceUpdate = false) -> void;
     auto searchAddress(Copper::List* list, unsigned addr) -> void;
     auto memChanged() -> void;
-    auto getTheme() -> DebuggerTheme override { return DebuggerTheme::CIA; }
+    auto getTheme() -> DebuggerTheme override { return DebuggerTheme::Copper; }
 };

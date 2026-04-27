@@ -548,7 +548,7 @@ auto CpuDebugger::updateWatcherSelection() -> void {
     auto& act = snapshot->callbackAction;
     bool hiLight = false;
 
-    if ((t == DebuggerTheme::Unspecified) || (t == getTheme())) {
+    if (t == getTheme()) {
         if (act == DebuggerAction::Watchpoint
         || act == DebuggerAction::WatchpointWrite
         || act == DebuggerAction::Breakpoint

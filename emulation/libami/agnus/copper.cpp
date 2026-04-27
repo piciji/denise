@@ -212,7 +212,7 @@ auto Copper::process() -> void {
                     }
 
                     if ((debuggerState & WatchPoint) && watchPoints.check(reg, true))
-                        agnus.debugPointReached( (int)DebuggerAction::WatchpointCopper, reg );
+                        agnus.debugPointReached( DebuggerTheme::Copper, DebuggerAction::Watchpoint, reg );
 
                     copPtr += 2;
 
@@ -406,9 +406,9 @@ auto Copper::reset() -> void {
 
 auto Copper::debuggerAdd(DebuggerAction action, unsigned addr) -> void {
     switch (action) {
-        case DebuggerAction::BreakpointCopper:      breakPoints.add( addr ); break;
-        case DebuggerAction::WatchpointCopper:      watchPoints.add( addr ); break;
-        case DebuggerAction::SoftstopCopper:        debuggerState |= SoftStep; break;
+        case DebuggerAction::Breakpoint:    breakPoints.add( addr ); break;
+        case DebuggerAction::Watchpoint:    watchPoints.add( addr ); break;
+        case DebuggerAction::Softstop:      debuggerState |= SoftStep; break;
         default:
             break;
     }
@@ -416,9 +416,9 @@ auto Copper::debuggerAdd(DebuggerAction action, unsigned addr) -> void {
 
 auto Copper::debuggerRemove(DebuggerAction action, unsigned addr) -> void {
     switch (action) {
-        case DebuggerAction::BreakpointCopper:      breakPoints.remove( addr ); break;
-        case DebuggerAction::WatchpointCopper:      watchPoints.remove( addr ); break;
-        case DebuggerAction::SoftstopCopper:        debuggerState &= ~SoftStep; break;
+        case DebuggerAction::Breakpoint:    breakPoints.remove( addr ); break;
+        case DebuggerAction::Watchpoint:    watchPoints.remove( addr ); break;
+        case DebuggerAction::Softstop:      debuggerState &= ~SoftStep; break;
         default:
             break;
     }
@@ -426,9 +426,9 @@ auto Copper::debuggerRemove(DebuggerAction action, unsigned addr) -> void {
 
 auto Copper::debuggerRemove(DebuggerAction action) -> void {
     switch (action) {
-        case DebuggerAction::BreakpointCopper:      breakPoints.removeAll(); break;
-        case DebuggerAction::WatchpointCopper:      watchPoints.removeAll(); break;
-        case DebuggerAction::SoftstopCopper:        debuggerState &= ~SoftStep; break;
+        case DebuggerAction::Breakpoint:    breakPoints.removeAll(); break;
+        case DebuggerAction::Watchpoint:    watchPoints.removeAll(); break;
+        case DebuggerAction::Softstop:      debuggerState &= ~SoftStep; break;
         default:
             break;
     }
@@ -446,11 +446,11 @@ auto Copper::checkBreakpoints() -> void {
         debuggerState &= ~SoftStep;
         if (agnus.debugger.dmaLog)
             agnus.addDmaLogEntry();
-        agnus.debugPointReached( (int)DebuggerAction::BreakpointCopper, copPtr );
+        agnus.debugPointReached( DebuggerTheme::Copper, DebuggerAction::Breakpoint, copPtr );
     } else if ((debuggerState & BreakPoint) && breakPoints.check(copPtr, true)) {
         if (agnus.debugger.dmaLog)
             agnus.addDmaLogEntry();
-        agnus.debugPointReached( (int)DebuggerAction::BreakpointCopper, copPtr );
+        agnus.debugPointReached( DebuggerTheme::Copper, DebuggerAction::Breakpoint, copPtr );
     }
 }
 

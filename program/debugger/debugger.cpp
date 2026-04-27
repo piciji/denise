@@ -594,7 +594,7 @@ auto Debugger::removeInstructionBreakpointVisuals(GUIKIT::ListView& listView, un
 auto Debugger::updateWatchpointCondition(DbgWatcher& watcher) -> bool {
     unsigned hitCount = watcher.useHitCount ? watcher.hitCount : 0;
     const auto& expression = watcher.useExpression ? watcher.expression : "";
-    return emulator->setWatchpointCondition( getCpuTheme(), watcher.action, watcher.addr, hitCount, watcher.hitCountCompare, expression, watcher.expressionCompare );
+    return emulator->setWatchpointCondition( getTheme(), watcher.action, watcher.addr, hitCount, watcher.hitCountCompare, expression, watcher.expressionCompare );
 }
 
 auto Debugger::openConditionView(DbgWatcher* watcher, GUIKIT::Position position) -> void {

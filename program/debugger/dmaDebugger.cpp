@@ -113,7 +113,7 @@ auto DmaDebugger::buildControl() -> GUIKIT::Layout* {
                 return;
             emuThread->lock();
             timerVisibility->setEnabled();
-            emulator->debuggerAdd( DebuggerTheme::BUS, DebuggerAction::SoftstopCycle, 0 );
+            emulator->debuggerAdd( DebuggerTheme::BUS, DebuggerAction::Softstop, 0 );
             emuThread->unlockDebugger();
             emuThread->unlock();
         };
