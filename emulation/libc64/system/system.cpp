@@ -1398,7 +1398,7 @@ auto System::debuggerAdd(DebuggerTheme theme, DebuggerAction action, uint32_t ad
         case DebuggerTheme::SID:
             debuggerSnapshot.themes |= (unsigned)theme;
             break;
-        case DebuggerTheme::BUS:
+        case DebuggerTheme::DMA:
             switch (action) {
                 case DebuggerAction::DmaView:
                     vicIICycle.enableDmaView(true, addr == 0);
@@ -1472,7 +1472,7 @@ auto System::debuggerRemove(DebuggerTheme theme, DebuggerAction action, std::opt
         case DebuggerTheme::SID:
             debuggerSnapshot.themes &= ~(unsigned)theme;
             break;
-        case DebuggerTheme::BUS:
+        case DebuggerTheme::DMA:
             switch (action) {
                 case DebuggerAction::DmaView:
                     vicIICycle.enableDmaView(false, !addr.has_value() || (addr.value_or(0) == 0));
@@ -1653,7 +1653,7 @@ auto System::updateDebuggerSnapshot() -> void {
     if (_t & (unsigned)DebuggerTheme::Video) {
         vicII->updateVideoSnapshot(debuggerSnapshot);
     }
-    if (_t & (unsigned)DebuggerTheme::BUS) {
+    if (_t & (unsigned)DebuggerTheme::DMA) {
         vicII->updateDmaSnapshot(debuggerSnapshot);
     }
     if (_t & (unsigned)DebuggerTheme::SID) {

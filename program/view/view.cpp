@@ -1428,7 +1428,7 @@ auto View::buildMenu() -> void {
         sM.debuggerDma = new GUIKIT::MenuItem;
         sM.debuggerDma->onActivate = [this, emulator]() {
             emuThread->lock();
-            program->openDebugger(emulator, DebuggerTheme::BUS);
+            program->openDebugger(emulator, DebuggerTheme::DMA);
             emuThread->unlock();
         };
         sM.debugger->append( *sM.debuggerDma );
@@ -2274,35 +2274,35 @@ auto View::translate() -> void {
 
         sysMenu.systemManagement->setText(trans->get("system_management") + "...");
         sysMenu.debugger->setText(trans->get("Debugger"));
-        sysMenu.debuggerCpu->setText(trans->get("CPU"));
-        sysMenu.debuggerMem->setText(trans->get("MEM"));
-        sysMenu.debuggerCia->setText(trans->get("CIA"));
+        sysMenu.debuggerCpu->setText(getReadable( DebuggerTheme::CPU ));
+        sysMenu.debuggerMem->setText(getReadable( DebuggerTheme::Memory ));
+        sysMenu.debuggerCia->setText(getReadable( DebuggerTheme::CIA ));
 
-        sysMenu.debuggerVideo->setText(trans->getA( dynamic_cast<LIBC64::Interface*>(sysMenu.emulator) ? "VIC-II" : "Denise"));
+        sysMenu.debuggerVideo->setText(getReadable( DebuggerTheme::Video, sysMenu.emulator ));
         if (sysMenu.debuggerSid)
-            sysMenu.debuggerSid->setText(trans->getA( "SID"));
+            sysMenu.debuggerSid->setText(getReadable( DebuggerTheme::SID ));
         if (sysMenu.debuggerCopper)
-            sysMenu.debuggerCopper->setText(trans->getA( "Copper"));
+            sysMenu.debuggerCopper->setText( getReadable( DebuggerTheme::Copper ));
         if (sysMenu.debuggerBlitter)
-            sysMenu.debuggerBlitter->setText(trans->getA( "Blitter"));
+            sysMenu.debuggerBlitter->setText(getReadable( DebuggerTheme::Blitter ));
         if (sysMenu.debuggerAgnus)
-            sysMenu.debuggerAgnus->setText(trans->getA( "Agnus"));
+            sysMenu.debuggerAgnus->setText( getReadable( DebuggerTheme::Agnus ));
         if (sysMenu.debuggerPaula)
-            sysMenu.debuggerPaula->setText(trans->getA( "Paula"));
+            sysMenu.debuggerPaula->setText( getReadable( DebuggerTheme::Paula ));
 
-        sysMenu.debuggerDma->setText(trans->get("DMA"));
+        sysMenu.debuggerDma->setText(getReadable( DebuggerTheme::DMA ));
 
         if (sysMenu.debuggerMemSCPU)
-            sysMenu.debuggerMemSCPU->setText(trans->get("MEM SCPU"));
+            sysMenu.debuggerMemSCPU->setText(getReadable( DebuggerTheme::MemorySCPU ));
 
         if (sysMenu.debuggerSCPU)
-            sysMenu.debuggerSCPU->setText(trans->get("SCPU"));
+            sysMenu.debuggerSCPU->setText(getReadable( DebuggerTheme::SCPU ));
 
         if (dynamic_cast<LIBC64::Interface*>(sysMenu.emulator)) {
             for (auto& debuggerDrive : sysMenu.debuggerDrives) {
-                debuggerDrive.cpu->setText( "CPU" );
-                debuggerDrive.mem->setText( "Memory" );
-                debuggerDrive.via->setText( "VIA" );
+                debuggerDrive.cpu->setText( getReadable( DebuggerTheme::Drive8CPU ) );
+                debuggerDrive.mem->setText( getReadable( DebuggerTheme::Drive8Memory ) );
+                debuggerDrive.via->setText( getReadable( DebuggerTheme::Drive8VIA ) );
             }
         }
 
@@ -2869,4 +2869,61 @@ auto View::FpsWindow::build() -> void {
     layout.append(bottom, {~0u, 0u});
 
     append( layout );
+}
+
+auto View::getReadable(DebuggerTheme theme, Emulator::Interface* emulator) -> std::string {
+    switch ( theme ) {
+        default:
+            return "";
+        case DebuggerTheme::CPU:
+            return "CPU";
+        case DebuggerTheme::SCPU:
+            return "SCPU";
+        case DebuggerTheme::Drive8CPU:
+            return emulator ? "Drive8 CPU" : "CPU";
+        case DebuggerTheme::Drive9CPU:
+            return emulator ? "Drive9 CPU" : "CPU";
+        case DebuggerTheme::Drive10CPU:
+            return emulator ? "Drive10 CPU" : "CPU";
+        case DebuggerTheme::Drive11CPU:
+            return emulator ? "Drive11 CPU" : "CPU";
+        case DebuggerTheme::Memory:
+            return "Memory";
+        case DebuggerTheme::MemorySCPU:
+            return "Memory SCPU";
+        case DebuggerTheme::Drive8Memory:
+            return emulator ? "Drive8 Memory" : "Memory";
+        case DebuggerTheme::Drive9Memory:
+            return emulator ? "Drive9 Memory" : "Memory";
+        case DebuggerTheme::Drive10Memory:
+            return emulator ? "Drive10 Memory" : "Memory";
+        case DebuggerTheme::Drive11Memory:
+            return emulator ? "Drive11 Memory" : "Memory";
+        case DebuggerTheme::Drive8VIA:
+            return emulator ? "Drive8 VIA" : "VIA";
+        case DebuggerTheme::Drive9VIA:
+            return emulator ? "Drive9 VIA" : "VIA";
+        case DebuggerTheme::Drive10VIA:
+            return emulator ? "Drive10 VIA" : "VIA";
+        case DebuggerTheme::Drive11VIA:
+            return emulator ? "Drive11 VIA" : "VIA";
+        case DebuggerTheme::CIA:
+            return "CIA";
+        case DebuggerTheme::Video:
+            return !emulator ? "Video" : (dynamic_cast<LIBC64::Interface*>(emulator) ? "VIC-II" : "Denise");
+        case DebuggerTheme::DMA:
+            return "DMA";
+        case DebuggerTheme::SID:
+            return "SID";
+        case DebuggerTheme::Copper:
+            return "Copper";
+        case DebuggerTheme::Blitter:
+            return "Blitter";
+        case DebuggerTheme::Agnus:
+            return "Agnus";
+        case DebuggerTheme::Paula:
+            return "Paula";
+    }
+
+    return "";
 }

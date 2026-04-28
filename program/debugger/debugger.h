@@ -29,6 +29,7 @@ struct Debugger : GUIKIT::Window {
     GUIKIT::Settings* settings = nullptr;
 
     GUIKIT::Menu settingsMenu;
+    std::vector<GUIKIT::MenuItem*> menuItems;
     GUIKIT::MenuCheckItem showTipsItem;
 
     GUIKIT::Image addImg;
@@ -133,6 +134,7 @@ struct Debugger : GUIKIT::Window {
     template <unsigned length>
     static auto updateRegBin(GUIKIT::LineEdit& reg, unsigned val) -> void;
     auto updateRegDec(GUIKIT::LineEdit& reg, unsigned val) -> void;
+    auto appendDebuggerItems() -> void;
 
     static auto isPaused() -> bool;
     static auto stepOut(Emulator::Interface* emulator, DebuggerTheme theme = DebuggerTheme::CPU) -> void;

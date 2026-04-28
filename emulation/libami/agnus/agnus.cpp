@@ -335,12 +335,15 @@ inline auto Agnus::peekDmaWatcher(Emulator::Interface::DebuggerDma& dmaLogger) -
 auto Agnus::checkDmaStops() -> void {
     if (debugger.dmaLog & DmaLogBlitter) {
         if (busUsage >= BUS_USAGE_BLITTER_A && busUsage <= BUS_USAGE_BLITTER_D) {
-            debugger.dmaLog &= ~DmaLogBlitter;
+            debugger.dmaLog &= ~(DmaLogBlitter | DmaLogCycle);
             debugPointReached( DebuggerTheme::Blitter, DebuggerAction::Softstop, 0 );
         }
-    } else if (debugger.dmaLog & DmaLogCycle) {
-        debugger.dmaLog &= ~DmaLogCycle;
-        debugPointReached( DebuggerTheme::Unspecified, DebuggerAction::Softstop, 0 );
+    }
+    if (debugger.dmaLog & DmaLogCycle) {
+        if (debugger.cycleHpos != hPos) {
+            debugger.dmaLog &= ~DmaLogCycle;
+            debugPointReached( DebuggerTheme::Unspecified, DebuggerAction::Softstop, 0 );
+        }
     }
 }
 
@@ -355,7 +358,7 @@ auto Agnus::addDmaLogEntry() -> void {
     peekDmaWatcher(dmaLogger);
 }
 
-template<bool logDma> auto Agnus::addWaitstatesToCPU() -> void {
+template<bool logDma> inline auto Agnus::addWaitstatesToCPU() -> void {
     if (overclock.speed) {
         if (overclock.cycles) {
             if constexpr (logDma) {
@@ -1219,7 +1222,8 @@ auto Agnus::Debugger::softStopBlitterDma() -> void {
     dmaLog |= DmaLogBlitter;
 }
 
-auto Agnus::Debugger::softStopCycle() -> void {
+auto Agnus::Debugger::softStopCycle(uint8_t h) -> void {
+    cycleHpos = h;
     dmaLog |= DmaLogCycle;
 }
 

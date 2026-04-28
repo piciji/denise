@@ -187,6 +187,7 @@ struct Agnus {
 
         uint8_t* dmaFrame = nullptr;
         uint8_t lastHpos = 0xe3;
+        uint8_t cycleHpos;
 
         Emulator::Interface::DebuggerAction oneTimeAction;
         unsigned stopLine = ~0;
@@ -198,7 +199,7 @@ struct Agnus {
         auto enableDmaView(bool state, bool withScrolling = true) -> void;
         auto enableDmaLog(bool state) -> void;
         auto softStopBlitterDma() -> void;
-        auto softStopCycle() -> void;
+        auto softStopCycle(uint8_t h) -> void;
     } debugger;
 
     struct Sprite {

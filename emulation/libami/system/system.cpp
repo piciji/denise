@@ -725,7 +725,7 @@ auto System::debuggerAdd(DebuggerTheme theme, DebuggerAction action, unsigned ad
             debuggerSnapshot.themes |= (unsigned)theme;
             denise.debugger.setEnable( true );
             break;
-        case DebuggerTheme::BUS:
+        case DebuggerTheme::DMA:
             switch (action) {
                 case DebuggerAction::DmaView:
                     agnus.debugger.enableDmaView(true, addr == 0);
@@ -740,7 +740,7 @@ auto System::debuggerAdd(DebuggerTheme theme, DebuggerAction action, unsigned ad
                     agnus.debugger.dmaWatchers[addrTo & 3] = addr | (0x80 << 24);
                     break;
                 case DebuggerAction::Softstop:
-                    agnus.debugger.softStopCycle();
+                    agnus.debugger.softStopCycle(agnus.hPos);
                     break;
                 default: break;
             } break;
@@ -811,7 +811,7 @@ auto System::debuggerRemove(DebuggerTheme theme, DebuggerAction action, std::opt
             debuggerSnapshot.themes &= ~(unsigned)theme;
             denise.debugger.setEnable( false );
             break;
-        case DebuggerTheme::BUS:
+        case DebuggerTheme::DMA:
             switch (action) {
                 case DebuggerAction::DmaView:
                     agnus.debugger.enableDmaView(false, !addr.has_value() || (addr.value_or(0) == 0));
@@ -890,7 +890,7 @@ auto System::updateDebuggerSnapshot() -> void {
         denise.updateSnapshot(debuggerSnapshot);
         agnus.updateVideoSnapshot( debuggerSnapshot );
     }
-    if (debuggerSnapshot.themes & (unsigned)DebuggerTheme::BUS)
+    if (debuggerSnapshot.themes & (unsigned)DebuggerTheme::DMA)
         agnus.updateDmaSnapshot( debuggerSnapshot );
     if (debuggerSnapshot.themes & (unsigned)DebuggerTheme::Copper)
         agnus.copper.updateDmaSnapshot( debuggerSnapshot );

@@ -7,6 +7,8 @@
 #include "../media/recentFiles.h"
 #include <mutex>
 
+typedef Emulator::Interface::DebuggerTheme DebuggerTheme;
+
 struct View : GUIKIT::Window {
     Message* message;
 	GUIKIT::Timer anyloadTimer;
@@ -364,6 +366,7 @@ struct View : GUIKIT::Window {
     auto hideSplashscreen() -> void;
     auto updateFPSMenu() -> void;
     auto buildFpsWindow() -> void;
+    static auto getReadable(DebuggerTheme theme, Emulator::Interface* emulator = nullptr) -> std::string;
     
     View();
 };

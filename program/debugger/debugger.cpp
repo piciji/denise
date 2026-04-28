@@ -12,6 +12,7 @@
 #include "conditionViewDebugger.h"
 #include "watcherHelper.h"
 #include "../helper/settingsHelper.h"
+#include "../view/view.h"
 #include <bitset>
 
 GUIKIT::Timer* Debugger::timerVisibility = nullptr;
@@ -222,6 +223,11 @@ auto Debugger::build() -> void {
         }
         emuThread->unlock();
     };
+
+    appendDebuggerItems();
+
+    settingsMenu.append( *new GUIKIT::MenuSeparator );
+
     settingsMenu.append( showTipsItem );
 
     control->settings.onMenu = [this]() {
@@ -246,6 +252,51 @@ auto Debugger::build() -> void {
     setTitle( titleIdent() );
 
     translate();
+}
+
+auto Debugger::appendDebuggerItems() -> void {
+    std::vector<DebuggerTheme> themes;
+
+    if (isC64()) {
+        themes = {
+            DebuggerTheme::CPU, DebuggerTheme::SCPU, DebuggerTheme::Memory, DebuggerTheme::MemorySCPU,
+            DebuggerTheme::CIA, DebuggerTheme::Video, DebuggerTheme::DMA, DebuggerTheme::SID,
+            DebuggerTheme::Unspecified,
+            DebuggerTheme::Drive8CPU, DebuggerTheme::Drive8Memory, DebuggerTheme::Drive8VIA,
+            DebuggerTheme::Unspecified,
+            DebuggerTheme::Drive9CPU, DebuggerTheme::Drive9Memory, DebuggerTheme::Drive9VIA,
+            DebuggerTheme::Unspecified,
+            DebuggerTheme::Drive10CPU, DebuggerTheme::Drive10Memory, DebuggerTheme::Drive10VIA,
+            DebuggerTheme::Unspecified,
+            DebuggerTheme::Drive11CPU, DebuggerTheme::Drive11Memory, DebuggerTheme::Drive11VIA,
+        };
+    } else {
+        themes = {
+            DebuggerTheme::CPU, DebuggerTheme::Memory, DebuggerTheme::CIA, DebuggerTheme::Video,
+            DebuggerTheme::DMA, DebuggerTheme::Copper, DebuggerTheme::Blitter,
+            DebuggerTheme::Agnus, DebuggerTheme::Paula
+        };
+    }
+
+    for (auto& theme : themes) {
+        if (theme == getTheme())
+            continue;
+
+        if (theme == DebuggerTheme::Unspecified) {
+            auto item = new GUIKIT::MenuSeparator;
+            settingsMenu.append( *item );
+            continue;
+        }
+
+        auto item = new GUIKIT::MenuItem;
+        item->setText( View::getReadable( theme, emulator ) );
+        item->onActivate = [this, theme]() {
+            emuThread->lock();
+            program->openDebugger(emulator, theme);
+            emuThread->unlock();
+        };
+        settingsMenu.append( *item );
+    }
 }
 
 auto Debugger::translate() -> void {

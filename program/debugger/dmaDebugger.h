@@ -111,5 +111,5 @@ struct DmaDebugger : Debugger {
     auto updateView(LIBC64::DebuggerSnapshot& s) -> void;
     auto updateColor(Dma::DmaFrame::BusUsage* busUsage, unsigned id, unsigned _col) -> void;
 
-    auto getTheme() -> DebuggerTheme override { return DebuggerTheme::BUS; }
+    auto getTheme() -> DebuggerTheme override { return DebuggerTheme::DMA; }
 };

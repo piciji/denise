@@ -903,7 +903,7 @@ auto Program::openDebugger(Emulator::Interface* emulator, DebuggerTheme theme) -
         case DebuggerTheme::CIA: debugger = new CiaDebugger(emulator); break;
         case DebuggerTheme::Video: debugger = new VideoDebugger(emulator); break;
         case DebuggerTheme::SID: debugger = new SidDebugger(emulator); break;
-        case DebuggerTheme::BUS: debugger = new DmaDebugger(emulator); break;
+        case DebuggerTheme::DMA: debugger = new DmaDebugger(emulator); break;
         case DebuggerTheme::Copper: debugger = new CopperDebugger(emulator); break;
         case DebuggerTheme::Blitter: debugger = new BlitterDebugger(emulator); break;
         case DebuggerTheme::Agnus: debugger = new AgnusDebugger(emulator); break;
