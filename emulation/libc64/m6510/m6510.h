@@ -5,7 +5,7 @@
 #include <functional>
 #include <string>
 #include <optional>
-#include "m65debugger.h"
+#include "m65Debugger.h"
 #include "../../tools/watcher.h"
 #include "../system/memory.h"
 #include "../../interface.h"

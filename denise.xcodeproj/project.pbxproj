@@ -205,8 +205,6 @@
 		9D8FB4E22CB47539006905BE /* icons.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FB4E02CB47539006905BE /* icons.cpp */; };
 		9D8FB4E32CB47539006905BE /* logos.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FB4E12CB47539006905BE /* logos.cpp */; };
 		9D8FB4E42CB475A8006905BE /* images.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAB412CB3F8EE006905BE /* images.cpp */; settings = {COMPILER_FLAGS = "-I$(PROJECT_DIR)/deps/stb/"; }; };
-		9D90B8952F52227B00EBF6F6 /* audioDebugger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D90B8942F52227B00EBF6F6 /* audioDebugger.cpp */; };
-		9D90B8962F52227B00EBF6F6 /* audioDebugger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D90B8942F52227B00EBF6F6 /* audioDebugger.cpp */; };
 		9D98A74B2F4B93EF00BB972F /* expressionParser.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D98A7492F4B93EF00BB972F /* expressionParser.cpp */; };
 		9D98A74C2F4B93EF00BB972F /* expressionParser.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D98A7492F4B93EF00BB972F /* expressionParser.cpp */; };
 		9D99AA7A2E4631490075FF62 /* libbrotlicommon.1.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 9D99AA692E462DE20075FF62 /* libbrotlicommon.1.dylib */; };
@@ -240,8 +238,14 @@
 		9DC0D1812F69EA06005DB0ED /* conditionViewDebugger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DC0D17A2F69EA06005DB0ED /* conditionViewDebugger.cpp */; };
 		9DC0D1822F69EA06005DB0ED /* copperDebugger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DC0D17B2F69EA06005DB0ED /* copperDebugger.cpp */; };
 		9DC0D1832F69EA06005DB0ED /* copperDebugger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DC0D17B2F69EA06005DB0ED /* copperDebugger.cpp */; };
-		9DC2FA6B2F7E5E5500819F9F /* m6502New.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DC2FA692F7E5E5500819F9F /* m6502New.cpp */; };
-		9DC2FA6C2F7E5E5500819F9F /* m6502New.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DC2FA692F7E5E5500819F9F /* m6502New.cpp */; };
+		9DC4559E2FA108F5004C6482 /* m6502.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DC4559C2FA108F5004C6482 /* m6502.cpp */; };
+		9DC4559F2FA108F5004C6482 /* m6502.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DC4559C2FA108F5004C6482 /* m6502.cpp */; };
+		9DC455A22FA10935004C6482 /* sidDebugger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DC455A02FA10934004C6482 /* sidDebugger.cpp */; };
+		9DC455A32FA10935004C6482 /* sidDebugger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DC455A02FA10934004C6482 /* sidDebugger.cpp */; };
+		9DC455A42FA10935004C6482 /* viaDebugger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DC455A12FA10934004C6482 /* viaDebugger.cpp */; };
+		9DC455A52FA10935004C6482 /* viaDebugger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DC455A12FA10934004C6482 /* viaDebugger.cpp */; };
+		9DC455A82FA10977004C6482 /* m65Debugger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DC455A62FA10977004C6482 /* m65Debugger.cpp */; };
+		9DC455A92FA10977004C6482 /* m65Debugger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DC455A62FA10977004C6482 /* m65Debugger.cpp */; };
 		9DD0A0B62E3B943B0018DA68 /* usbSidPico.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DD0A0B42E3B943B0018DA68 /* usbSidPico.cpp */; settings = {COMPILER_FLAGS = "-DLIBUSB -I$(PROJECT_DIR)/deps/USBSID-Pico/"; }; };
 		9DD0A0BA2E3B94AF0018DA68 /* USBSID.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DD0A0B92E3B94AF0018DA68 /* USBSID.cpp */; settings = {COMPILER_FLAGS = "-DHAVE_ALIGNED_ALLOC -I$(PROJECT_DIR)/data/libs/include/"; }; };
 		9DD0A0BC2E3B9A220018DA68 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9DD0A0BB2E3B9A220018DA68 /* Security.framework */; };
@@ -1047,7 +1051,6 @@
 		9D8FAD9D2CB40DF7006905BE /* tape.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = tape.cpp; sourceTree = "<group>"; };
 		9D8FAD9E2CB40DF7006905BE /* tape.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = tape.h; sourceTree = "<group>"; };
 		9D8FADA02CB40DF7006905BE /* iec.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = iec.cpp; sourceTree = "<group>"; };
-		9D8FADA32CB40DF7006905BE /* opcodes.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = opcodes.cpp; sourceTree = "<group>"; };
 		9D8FADA62CB40DF7006905BE /* wd1770.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = wd1770.cpp; sourceTree = "<group>"; };
 		9D8FADA72CB40DF7006905BE /* wd1770.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = wd1770.h; sourceTree = "<group>"; };
 		9D8FADA92CB40DF7006905BE /* via.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = via.h; sourceTree = "<group>"; };
@@ -1128,8 +1131,6 @@
 		9D8FAEB22CB415E3006905BE /* AudioUnit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioUnit.framework; path = System/Library/Frameworks/AudioUnit.framework; sourceTree = SDKROOT; };
 		9D8FB4E02CB47539006905BE /* icons.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = icons.cpp; path = data/icons/icons.cpp; sourceTree = "<group>"; };
 		9D8FB4E12CB47539006905BE /* logos.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = logos.cpp; path = data/icons/logos.cpp; sourceTree = "<group>"; };
-		9D90B8932F52227A00EBF6F6 /* audioDebugger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = audioDebugger.h; sourceTree = "<group>"; };
-		9D90B8942F52227B00EBF6F6 /* audioDebugger.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = audioDebugger.cpp; sourceTree = "<group>"; };
 		9D98A7492F4B93EF00BB972F /* expressionParser.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = expressionParser.cpp; sourceTree = "<group>"; };
 		9D98A74A2F4B93EF00BB972F /* expressionParser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = expressionParser.h; sourceTree = "<group>"; };
 		9D99AA642E462DE10075FF62 /* libbz2.1.0.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libbz2.1.0.dylib; path = data/libs/shared/macIntel/libbz2.1.0.dylib; sourceTree = "<group>"; };
@@ -1159,10 +1160,28 @@
 		9DC0D17B2F69EA06005DB0ED /* copperDebugger.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = copperDebugger.cpp; sourceTree = "<group>"; };
 		9DC0D17C2F69EA06005DB0ED /* copperDebugger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = copperDebugger.h; sourceTree = "<group>"; };
 		9DC0D17D2F69EA06005DB0ED /* watcherHelper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = watcherHelper.h; sourceTree = "<group>"; };
-		9DC2FA692F7E5E5500819F9F /* m6502New.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = m6502New.cpp; sourceTree = "<group>"; };
-		9DC2FA6A2F7E5E5500819F9F /* m6502New.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = m6502New.h; sourceTree = "<group>"; };
 		9DC345C22E8EF1130071B38B /* history.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = history.h; sourceTree = "<group>"; };
 		9DC3A9982E8F07DD005B0F8C /* coreaudio3.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = coreaudio3.cpp; sourceTree = "<group>"; };
+		9DC4558D2FA108AC004C6482 /* sidDebugger.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = sidDebugger.h; sourceTree = "<group>"; };
+		9DC4558F2FA108AC004C6482 /* viaDebugger.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = viaDebugger.h; sourceTree = "<group>"; };
+		9DC455902FA108B8004C6482 /* drive10CpuDebugger.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = drive10CpuDebugger.h; sourceTree = "<group>"; };
+		9DC455912FA108B8004C6482 /* drive9CpuDebugger.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = drive9CpuDebugger.h; sourceTree = "<group>"; };
+		9DC455922FA108B8004C6482 /* drive8CpuDebugger.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = drive8CpuDebugger.h; sourceTree = "<group>"; };
+		9DC455932FA108B8004C6482 /* drive9ViaDebugger.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = drive9ViaDebugger.h; sourceTree = "<group>"; };
+		9DC455942FA108B8004C6482 /* drive8ViaDebugger.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = drive8ViaDebugger.h; sourceTree = "<group>"; };
+		9DC455952FA108B8004C6482 /* drive9MemDebugger.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = drive9MemDebugger.h; sourceTree = "<group>"; };
+		9DC455962FA108B8004C6482 /* drive10MemDebugger.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = drive10MemDebugger.h; sourceTree = "<group>"; };
+		9DC455972FA108B8004C6482 /* drive10ViaDebugger.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = drive10ViaDebugger.h; sourceTree = "<group>"; };
+		9DC455982FA108B8004C6482 /* drive11CpuDebugger.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = drive11CpuDebugger.h; sourceTree = "<group>"; };
+		9DC455992FA108B8004C6482 /* drive11ViaDebugger.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = drive11ViaDebugger.h; sourceTree = "<group>"; };
+		9DC4559A2FA108B8004C6482 /* drive11MemDebugger.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = drive11MemDebugger.h; sourceTree = "<group>"; };
+		9DC4559B2FA108B8004C6482 /* drive8MemDebugger.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = drive8MemDebugger.h; sourceTree = "<group>"; };
+		9DC4559C2FA108F5004C6482 /* m6502.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = m6502.cpp; sourceTree = "<group>"; };
+		9DC4559D2FA108F5004C6482 /* m6502.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = m6502.h; sourceTree = "<group>"; };
+		9DC455A02FA10934004C6482 /* sidDebugger.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = sidDebugger.cpp; sourceTree = "<group>"; };
+		9DC455A12FA10934004C6482 /* viaDebugger.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = viaDebugger.cpp; sourceTree = "<group>"; };
+		9DC455A62FA10977004C6482 /* m65Debugger.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = m65Debugger.cpp; sourceTree = "<group>"; };
+		9DC455A72FA10977004C6482 /* m65Debugger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = m65Debugger.h; sourceTree = "<group>"; };
 		9DD0A0B42E3B943B0018DA68 /* usbSidPico.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = usbSidPico.cpp; sourceTree = "<group>"; };
 		9DD0A0B52E3B943B0018DA68 /* usbSidPico.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = usbSidPico.h; sourceTree = "<group>"; };
 		9DD0A0B82E3B94AF0018DA68 /* USBSID.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = USBSID.h; path = "deps/USBSID-Pico/USBSID.h"; sourceTree = SOURCE_ROOT; };
@@ -2437,6 +2456,8 @@
 		9D8FAD642CB40DF7006905BE /* m6510 */ = {
 			isa = PBXGroup;
 			children = (
+				9DC455A62FA10977004C6482 /* m65Debugger.cpp */,
+				9DC455A72FA10977004C6482 /* m65Debugger.h */,
 				9D8F51032EDB5A1B00153A53 /* dasmHandler.cpp */,
 				9D8F51022EDB5A1B00153A53 /* dasmHandler.h */,
 				9D8FAD652CB40DF7006905BE /* m6510.h */,
@@ -2554,9 +2575,8 @@
 		9D8FADA12CB40DF7006905BE /* cpu */ = {
 			isa = PBXGroup;
 			children = (
-				9DC2FA692F7E5E5500819F9F /* m6502New.cpp */,
-				9DC2FA6A2F7E5E5500819F9F /* m6502New.h */,
-				9D8FADA32CB40DF7006905BE /* opcodes.cpp */,
+				9DC4559C2FA108F5004C6482 /* m6502.cpp */,
+				9DC4559D2FA108F5004C6482 /* m6502.h */,
 			);
 			path = cpu;
 			sourceTree = "<group>";
@@ -2751,6 +2771,22 @@
 		9DBA88402ED0C7D400DF0756 /* debugger */ = {
 			isa = PBXGroup;
 			children = (
+				9DC455A02FA10934004C6482 /* sidDebugger.cpp */,
+				9DC455A12FA10934004C6482 /* viaDebugger.cpp */,
+				9DC455922FA108B8004C6482 /* drive8CpuDebugger.h */,
+				9DC4559B2FA108B8004C6482 /* drive8MemDebugger.h */,
+				9DC455942FA108B8004C6482 /* drive8ViaDebugger.h */,
+				9DC455912FA108B8004C6482 /* drive9CpuDebugger.h */,
+				9DC455952FA108B8004C6482 /* drive9MemDebugger.h */,
+				9DC455932FA108B8004C6482 /* drive9ViaDebugger.h */,
+				9DC455902FA108B8004C6482 /* drive10CpuDebugger.h */,
+				9DC455962FA108B8004C6482 /* drive10MemDebugger.h */,
+				9DC455972FA108B8004C6482 /* drive10ViaDebugger.h */,
+				9DC455982FA108B8004C6482 /* drive11CpuDebugger.h */,
+				9DC4559A2FA108B8004C6482 /* drive11MemDebugger.h */,
+				9DC455992FA108B8004C6482 /* drive11ViaDebugger.h */,
+				9DC4558D2FA108AC004C6482 /* sidDebugger.h */,
+				9DC4558F2FA108AC004C6482 /* viaDebugger.h */,
 				9D3226652F97727E005B3154 /* paulaDebugger.cpp */,
 				9D3226662F97727E005B3154 /* paulaDebugger.h */,
 				9D32BA882F940DF900AC6442 /* agnusDebugger.cpp */,
@@ -2763,8 +2799,6 @@
 				9DC0D17C2F69EA06005DB0ED /* copperDebugger.h */,
 				9DC0D1782F69EA06005DB0ED /* watcherHelper.cpp */,
 				9DC0D17D2F69EA06005DB0ED /* watcherHelper.h */,
-				9D90B8942F52227B00EBF6F6 /* audioDebugger.cpp */,
-				9D90B8932F52227A00EBF6F6 /* audioDebugger.h */,
 				9D6F44852F2E6CD4005BABFA /* dmaDebugger.cpp */,
 				9D6F44862F2E6CD4005BABFA /* dmaDebugger.h */,
 				9D4CCC462F0BD4EB00ADD454 /* videoDebugger.cpp */,
@@ -2903,6 +2937,7 @@
 				9D55396E2D5A90BB0083E91B /* superCpu.cpp in Sources */,
 				9D55396D2D5A90AE0083E91B /* chessCard.cpp in Sources */,
 				9D55396C2D5A909C0083E91B /* w65C02.cpp in Sources */,
+				9DC4559E2FA108F5004C6482 /* m6502.cpp in Sources */,
 				9D55396B2D5A90940083E91B /* w65816.cpp in Sources */,
 				9D8FB4E42CB475A8006905BE /* images.cpp in Sources */,
 				9D8FAE072CB40DF8006905BE /* input.cpp in Sources */,
@@ -2968,6 +3003,7 @@
 				9D8FAE2D2CB40DF8006905BE /* diskDrive.cpp in Sources */,
 				9D8FAB2D2CB3F6F0006905BE /* autoloader.cpp in Sources */,
 				9D8FABB02CB3F8EE006905BE /* api.cpp in Sources */,
+				9DC455A22FA10935004C6482 /* sidDebugger.cpp in Sources */,
 				9D8FAE3D2CB40DF9006905BE /* sectorBlock.cpp in Sources */,
 				9D8FAC7C2CB40C9D006905BE /* ShaderCache.cpp in Sources */,
 				9D07CD0B2E296CD000A9787E /* ext_header.cpp in Sources */,
@@ -3009,12 +3045,12 @@
 				9D8FAB172CB3F6EF006905BE /* drive.cpp in Sources */,
 				9D4D104A2F071C6B00296467 /* cpuDebugger.cpp in Sources */,
 				9D8FAAFC2CB3F6EF006905BE /* manager.cpp in Sources */,
-				9DC2FA6B2F7E5E5500819F9F /* m6502New.cpp in Sources */,
 				9D8FAAF92CB3F6EF006905BE /* manager.cpp in Sources */,
 				9DE47D102DE8CD6200903CA4 /* uuid.cpp in Sources */,
 				9D4D104E2F071DA500296467 /* dasmHandler.cpp in Sources */,
 				9DD306D82DFAFF2200B8F12F /* httpClient.cpp in Sources */,
 				9D8FAB012CB3F6EF006905BE /* archiveViewer.cpp in Sources */,
+				9DC455A82FA10977004C6482 /* m65Debugger.cpp in Sources */,
 				9D8FADFD2CB40DF8006905BE /* denise.cpp in Sources */,
 				9D8FAB142CB3F6EF006905BE /* cosineSSE.cpp in Sources */,
 				9D8FAE942CB40DFA006905BE /* chamberlin.cpp in Sources */,
@@ -3060,7 +3096,6 @@
 				9D8FAB1A2CB3F6EF006905BE /* reverb.cpp in Sources */,
 				9D8FAE602CB40DF9006905BE /* system.cpp in Sources */,
 				9D8FAB042CB3F6EF006905BE /* config.cpp in Sources */,
-				9D90B8952F52227B00EBF6F6 /* audioDebugger.cpp in Sources */,
 				9D8FAAFE2CB3F6EF006905BE /* shaderParser.cpp in Sources */,
 				9D8FAC992CB40C9D006905BE /* driver.cpp in Sources */,
 				9D8FAE5B2CB40DF9006905BE /* sidManager.cpp in Sources */,
@@ -3072,6 +3107,7 @@
 				9D8FADFA2CB40DF8006905BE /* m93c86.cpp in Sources */,
 				9D8FB4E22CB47539006905BE /* icons.cpp in Sources */,
 				9D8FAE502CB40DF9006905BE /* controlPort.cpp in Sources */,
+				9DC455A42FA10935004C6482 /* viaDebugger.cpp in Sources */,
 				9D8FAE082CB40DF8006905BE /* controlPort.cpp in Sources */,
 				9D98A74B2F4B93EF00BB972F /* expressionParser.cpp in Sources */,
 				9D8FAC7B2CB40C9D006905BE /* renderThread.cpp in Sources */,
@@ -3097,6 +3133,7 @@
 				9DECF91F2E45F309005C0BBA /* superCpu.cpp in Sources */,
 				9DECF9202E45F309005C0BBA /* chessCard.cpp in Sources */,
 				9DECF9212E45F309005C0BBA /* w65C02.cpp in Sources */,
+				9DC4559F2FA108F5004C6482 /* m6502.cpp in Sources */,
 				9DECF9222E45F309005C0BBA /* w65816.cpp in Sources */,
 				9DECF9232E45F309005C0BBA /* images.cpp in Sources */,
 				9DECF9242E45F309005C0BBA /* input.cpp in Sources */,
@@ -3162,6 +3199,7 @@
 				9DECF9572E45F309005C0BBA /* diskDrive.cpp in Sources */,
 				9DECF9582E45F309005C0BBA /* autoloader.cpp in Sources */,
 				9DECF9592E45F309005C0BBA /* api.cpp in Sources */,
+				9DC455A32FA10935004C6482 /* sidDebugger.cpp in Sources */,
 				9DECF95A2E45F309005C0BBA /* sectorBlock.cpp in Sources */,
 				9DECF95B2E45F309005C0BBA /* ShaderCache.cpp in Sources */,
 				9DECF95C2E45F309005C0BBA /* ext_header.cpp in Sources */,
@@ -3203,12 +3241,12 @@
 				9DECF9772E45F309005C0BBA /* drive.cpp in Sources */,
 				9D4D104B2F071C6B00296467 /* cpuDebugger.cpp in Sources */,
 				9DECF9782E45F309005C0BBA /* manager.cpp in Sources */,
-				9DC2FA6C2F7E5E5500819F9F /* m6502New.cpp in Sources */,
 				9DECF9792E45F309005C0BBA /* manager.cpp in Sources */,
 				9DECF97A2E45F309005C0BBA /* uuid.cpp in Sources */,
 				9D4D104F2F071DA500296467 /* dasmHandler.cpp in Sources */,
 				9DECF97B2E45F309005C0BBA /* httpClient.cpp in Sources */,
 				9DECF97C2E45F309005C0BBA /* archiveViewer.cpp in Sources */,
+				9DC455A92FA10977004C6482 /* m65Debugger.cpp in Sources */,
 				9DECF97D2E45F309005C0BBA /* denise.cpp in Sources */,
 				9DECF97E2E45F309005C0BBA /* cosineSSE.cpp in Sources */,
 				9DECF97F2E45F309005C0BBA /* chamberlin.cpp in Sources */,
@@ -3254,7 +3292,6 @@
 				9DECF99F2E45F309005C0BBA /* reverb.cpp in Sources */,
 				9DECF9A02E45F309005C0BBA /* system.cpp in Sources */,
 				9DECF9A12E45F309005C0BBA /* config.cpp in Sources */,
-				9D90B8962F52227B00EBF6F6 /* audioDebugger.cpp in Sources */,
 				9DECF9A22E45F309005C0BBA /* shaderParser.cpp in Sources */,
 				9DECF9A32E45F309005C0BBA /* driver.cpp in Sources */,
 				9DECF9A42E45F309005C0BBA /* sidManager.cpp in Sources */,
@@ -3266,6 +3303,7 @@
 				9DECF9A92E45F309005C0BBA /* m93c86.cpp in Sources */,
 				9DECF9AA2E45F309005C0BBA /* icons.cpp in Sources */,
 				9DECF9AB2E45F309005C0BBA /* controlPort.cpp in Sources */,
+				9DC455A52FA10935004C6482 /* viaDebugger.cpp in Sources */,
 				9DECF9AC2E45F309005C0BBA /* controlPort.cpp in Sources */,
 				9D98A74C2F4B93EF00BB972F /* expressionParser.cpp in Sources */,
 				9DECF9AD2E45F309005C0BBA /* renderThread.cpp in Sources */,
