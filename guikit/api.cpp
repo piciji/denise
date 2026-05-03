@@ -816,6 +816,10 @@ auto MultilineEdit::setEditable(bool editable) -> void {
     p.setEditable(editable);
 }
 
+auto MultilineEdit::scrollToEndWhenUpdating(bool scrollToEnd) -> void {
+    state.scrollToEnd = scrollToEnd;
+}
+
 auto MultilineEdit::text() -> std::string { 
     return p.text();
 }

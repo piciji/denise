@@ -76,52 +76,84 @@ struct PaulaDebugger : Debugger {
             Aud();
         } aud;
 
-        struct Fdc : GUIKIT::FramedVerticalLayout {
-            struct Entry : GUIKIT::HorizontalLayout {
-                GUIKIT::Label label;
-                GUIKIT::LineEdit edit;
-                GUIKIT::Label labelR;
-                GUIKIT::LineEdit editR;
+        struct FdcAndPot : GUIKIT::VerticalLayout {
+            struct Fdc : GUIKIT::FramedVerticalLayout {
+                struct Entry : GUIKIT::HorizontalLayout {
+                    GUIKIT::Label label;
+                    GUIKIT::LineEdit edit;
+                    GUIKIT::Label labelR;
+                    GUIKIT::LineEdit editR;
 
-                Entry();
-            };
+                    Entry();
+                };
 
-            struct Flags : GUIKIT::HorizontalLayout {
-                GUIKIT::CheckBox check1;
-                GUIKIT::CheckBox check2;
-                GUIKIT::CheckBox check3;
-                Flags();
-            };
+                struct Flags : GUIKIT::HorizontalLayout {
+                    GUIKIT::CheckBox check1;
+                    GUIKIT::CheckBox check2;
+                    GUIKIT::CheckBox check3;
+                    Flags();
+                };
 
-            struct Selected : GUIKIT::HorizontalLayout {
-                GUIKIT::Label label;
-                GUIKIT::CheckBox checks[4];
+                struct Selected : GUIKIT::HorizontalLayout {
+                    GUIKIT::Label label;
+                    GUIKIT::CheckBox checks[4];
 
-                Selected();
-            };
+                    Selected();
+                };
 
-            struct Fifo : GUIKIT::FramedHorizontalLayout {
-                GUIKIT::ImageView imgIn;
-                GUIKIT::LineEdit edit1;
-                GUIKIT::LineEdit edit2;
-                GUIKIT::LineEdit edit3;
-                GUIKIT::ImageView imgOut;
+                struct Fifo : GUIKIT::FramedHorizontalLayout {
+                    GUIKIT::ImageView imgIn;
+                    GUIKIT::LineEdit edit1;
+                    GUIKIT::LineEdit edit2;
+                    GUIKIT::LineEdit edit3;
+                    GUIKIT::ImageView imgOut;
 
-                Fifo();
-            };
+                    Fifo();
+                };
 
-            Entry entry1;
-            Entry entry2;
-            Entry entry3;
+                Entry entry1;
+                Entry entry2;
+                Entry entry3;
 
-            Selected selected;
+                Selected selected;
 
-            Flags flags1;
-            Flags flags2;
-            Fifo fifo;
+                Flags flags1;
+                Flags flags2;
+                Fifo fifo;
 
-            Fdc();
-        } fdc;
+                Fdc();
+            } fdc;
+
+            struct Pot : GUIKIT::FramedVerticalLayout {
+                struct PotGo : GUIKIT::HorizontalLayout {
+                    GUIKIT::Label label;
+                    GUIKIT::LineEdit edit;
+
+                    PotGo();
+                } potGo, potGoR;
+
+                struct Flags : GUIKIT::HorizontalLayout {
+                    GUIKIT::CheckBox check1;
+                    GUIKIT::CheckBox check2;
+                    GUIKIT::CheckBox check3;
+                    GUIKIT::CheckBox check4;
+                    Flags();
+                } flagsPotGoDir, flagsPotGo, flagsPotGoR;
+
+                struct PotDat : GUIKIT::HorizontalLayout {
+                    GUIKIT::Label label;
+                    GUIKIT::LineEdit edit;
+                    GUIKIT::Label labelR;
+                    GUIKIT::LineEdit editR;
+
+                    PotDat();
+                } potDat;
+
+                Pot();
+            } pot;
+
+            FdcAndPot();
+        } fdcAndPot;
 
         Paula();
     } *paula = nullptr;

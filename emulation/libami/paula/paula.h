@@ -2,6 +2,7 @@
 #pragma once
 
 #include <cstdint>
+#include <string>
 
 namespace Emulator {
     struct Serializer;
@@ -15,6 +16,7 @@ struct Cpu;
 struct Input;
 struct DiskDrive;
 struct DebuggerSnapshot;
+struct SerialPort;
 
 struct Paula {
     Paula(System* system, Agnus& agnus, Cpu& cpu, Input& input, DiskDrive& disk0, DiskDrive& disk1, DiskDrive& disk2, DiskDrive& disk3);
@@ -25,6 +27,7 @@ struct Paula {
     Agnus& agnus;
     Cpu& cpu;
     Input& input;
+    SerialPort& serial;
 
     uint16_t intena;
     uint16_t intreq;
@@ -76,12 +79,12 @@ struct Paula {
     int receiveShifter;
     int receiveCounter;
     uint16_t serdatR;
-    bool loopBack;
-    bool rxd;
     bool txd;
     bool overrun;
     int64_t serialTransferEvent;
     int64_t serialReceiveEvent;
+    std::string incoming;
+    std::string outgoing;
 
     uint8_t turboRequested = 0;
     uint8_t turbo = 0;
@@ -246,10 +249,15 @@ struct Paula {
     auto prepareTransfer() -> void;
     auto updateTxd() -> void;
     auto updateSerialEvent() -> void;
+    auto fallingEdgeRXD() -> void;
     auto updateSnapshot(DebuggerSnapshot& snap) -> void;
+    auto updateSerialSnapshot(DebuggerSnapshot& snap) -> void;
     
     auto iplUpdate() -> void;
     template<bool force = true> auto sampleUpdate() -> void;
+
+    auto addIncomingByte(uint8_t byte) -> void;
+    auto addOutgoingByte(uint8_t byte) -> void;
 };
 
 }

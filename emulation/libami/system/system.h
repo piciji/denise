@@ -16,6 +16,7 @@
 #include "../../tools/history.h"
 #include "../../tools/serializer.h"
 #include "debuggerSnapshot.h"
+#include "serial.h"
 
 namespace LIBAMI {
 
@@ -33,6 +34,7 @@ struct System {
     Denise denise;
     Paula paula;
     RTC rtc;
+    SerialPort serial;
     DiskDrive diskDrives[4];
     HardDrive hardDrives[4];
     bool ntsc;
@@ -46,14 +48,6 @@ struct System {
     Cia<MOS_8520> cia1;
     Cia<MOS_8520> cia2;
     History<uint32_t, uint16_t, 3> history;
-
-    enum Dongle { DongleNone = 0, DongleRoboCop3, DongleBat2, DongleCricketCaptain, DongleLeaderBoard, DongleRugbyCoach, DongleStrikerManager };
-    struct {
-        Dongle type;
-        uint8_t control;
-        int64_t clock;
-        auto connected() -> bool { return type != DongleNone; }
-    } dongle;
 
     struct {
         unsigned config = 0;
@@ -136,11 +130,10 @@ struct System {
     auto isDisplayFrame() -> const bool { return !runAhead.pos; }
     auto isProcessFrame() -> const bool { return !runAhead.active || (runAhead.frames == runAhead.pos); }
 
-    template<bool CIA2> auto dongleCiaWrite(Cia<MOS_8520>::Lines* lines) -> void;
-    template<bool CIA2> auto dongleCiaRead(Cia<MOS_8520>::Lines* lines, uint8_t& val) -> void;
-    template<bool CIA2> auto dongleCiaPeek(Cia<MOS_8520>::Lines* lines, uint8_t& val) -> void;
-    template<bool portB> auto dongleJoydat(uint16_t& val) -> void;
-    auto donglePotGo(uint16_t& val) -> void;
+    auto setSerialPlugin(int value) -> void;
+    auto getSerialPlugin() -> int;
+    auto setDongle(int value) -> void;
+    auto getDongle() -> int;
 
     auto setOverclock(unsigned factor) -> void;
     auto getOverclock() -> unsigned;

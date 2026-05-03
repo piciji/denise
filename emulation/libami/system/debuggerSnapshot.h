@@ -85,7 +85,24 @@ struct DebuggerSnapshot : Emulator::Interface::DebuggerSnapshot {
         bool wordEqual;
         int diskState;
         uint8_t selectedDrive;
+
+        uint16_t potgo;
+        uint16_t potgoR;
+        uint16_t pot0Dat;
+        uint16_t pot1Dat;
     } paula;
+
+    struct {
+        std::string incoming;
+        std::string outgoing;
+        uint32_t port;
+        uint16_t transmit;
+        uint16_t transmitShifter;
+        uint16_t receiveShifter;
+        unsigned baudRate;
+        bool LONG;
+        uint16_t serDatR;
+    } serial;
 
     struct {
         struct {

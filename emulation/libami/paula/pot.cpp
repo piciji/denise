@@ -41,9 +41,23 @@ auto Paula::pot1Dat() -> uint16_t {
 }
 
 auto Paula::peekPotGoR() -> uint16_t {
-    auto potTemp = pot;
-    auto out = potGoR();
-    pot = potTemp;
+    uint16_t out = 0;
+    uint16_t data = pot.go;
+    uint8_t capX0 = pot.capX0;
+    uint8_t capY0 = pot.capY0;
+    uint8_t capX1 = pot.capX1;
+    uint8_t capY1 = pot.capY1;
+
+    if (data & POT_DIR_X0) capX0 = (data & POT_DAT_X0) ? 255 : 0;
+    if (data & POT_DIR_Y0) capY0 = (data & POT_DAT_Y0) ? 255 : 0;
+    if (data & POT_DIR_X1) capX1 = (data & POT_DAT_X1) ? 255 : 0;
+    if (data & POT_DIR_Y1) capY1 = (data & POT_DAT_Y1) ? 255 : 0;
+
+    if (capX0 == 255) out |= POT_DAT_X0;
+    if (capY0 == 255) out |= POT_DAT_Y0;
+    if (capX1 == 255) out |= POT_DAT_X1;
+    if (capY1 == 255) out |= POT_DAT_Y1;
+
     return out;
 }
 
@@ -65,11 +79,9 @@ auto Paula::potGoR() -> uint16_t {
 
 auto Paula::potGo(uint16_t value) -> void {
     pot.go = value;
-    if (system->dongle.connected())
-        system->donglePotGo(value);
 
     potOutput(value);
-    input.writePot(pot.capX0, pot.capY0, pot.capX1, pot.capY1);
+    input.writePot(pot.capX0, pot.capY0, pot.capX1, pot.capY1, value);
 
     if (value & 1) {
         pot.cntY0 = pot.cntX0 = pot.cntY1 = pot.cntX1 = 0;
@@ -95,7 +107,7 @@ auto Paula::potProgress() -> void {
             if ((pot.go & POT_DIR_Y0) == 0) pot.capY0 = 0;
             if ((pot.go & POT_DIR_X1) == 0) pot.capX1 = 0;
             if ((pot.go & POT_DIR_Y1) == 0) pot.capY1 = 0;
-            input.writePot(pot.capX0, pot.capY0, pot.capX1, pot.capY1);
+            input.writePot(pot.capX0, pot.capY0, pot.capX1, pot.capY1, pot.go);
         }
     } else {
         pot.running = false;

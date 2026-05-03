@@ -3,12 +3,13 @@
 #include "../agnus/agnus.h"
 #include "../system/system.h"
 #include "../interface.h"
+#include "../system/serial.h"
 #include "irq.cpp"
 #include "audio.cpp"
 #include "filter.cpp"
 #include "fdc.cpp"
 #include "pot.cpp"
-#include "serial.cpp"
+#include "uart.cpp"
 
 
 namespace LIBAMI {
@@ -21,10 +22,10 @@ disk1(disk1),
 disk2(disk2),
 disk3(disk3),
 cpu(cpu),
+serial( system->serial ),
 input(input) {
     sampleLimit = 0;
     filterMode = 0;
-    loopBack = false;
 }
 
 auto Paula::dmal() -> uint16_t {
@@ -92,6 +93,9 @@ auto Paula::setAdkCon(uint16_t value) -> void {
 
     if ((adkcon & 0x400) && !(_adkcon & 0x400))
         dskShifterPos = 0;
+
+    bool uartBrk = (adkcon & 0x800) != 0;
+    serial.setTXD(txd && !uartBrk);
 }
 
 auto Paula::dmaCon(uint16_t value) -> void {
@@ -168,8 +172,6 @@ auto Paula::serialize(Emulator::Serializer& s, bool light) -> void {
     s.integer(receiveShifter);
     s.integer(receiveCounter);
     s.integer(serdatR);
-    s.integer(loopBack);
-    s.integer(rxd);
     s.integer(txd);
     s.integer(overrun);
     s.integer(serialTransferEvent);
@@ -320,7 +322,8 @@ auto Paula::power() -> void {
     receiveShifter = 0;
     receiveCounter = 0;
 
-    rxd = true;
+    incoming.clear();
+    outgoing.clear();
     txd = true;
     overrun = false;
     setFilter();
@@ -369,6 +372,19 @@ template<bool force> auto Paula::sampleUpdate() -> void {
     sampleCycle = agnus.clock;
 }
 
+auto Paula::updateSerialSnapshot(DebuggerSnapshot& snap) -> void {
+    auto& s = snap.serial;
+    s.transmit = serDat;
+    s.transmitShifter = serShifter;
+    s.serDatR = peekSerdatR();
+    s.receiveShifter = receiveShifter;
+    s.LONG = serPer & 0x8000;
+    s.baudRate = (float)agnus.frequency() / (float)PULSE_WIDTH + 0.5f;
+    s.port = serial.port;
+    s.incoming = incoming;
+    s.outgoing = outgoing;
+}
+
 auto Paula::updateSnapshot(DebuggerSnapshot& snap) -> void {
     auto& s = snap.paula;
     s.intena = intena;
@@ -383,6 +399,10 @@ auto Paula::updateSnapshot(DebuggerSnapshot& snap) -> void {
     s.wordEqual = wordEqual;
     s.diskState = (int)diskState;
     s.selectedDrive = disk0.selected | disk1.selected << 1 | disk2.selected << 2 | disk3.selected << 3;
+    s.pot0Dat = peekPot0Dat();
+    s.pot1Dat = peekPot1Dat();
+    s.potgo = pot.go;
+    s.potgoR = peekPotGoR();
 
     int i = 0;
     for (auto& cha : channels) {

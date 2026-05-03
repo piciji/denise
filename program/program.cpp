@@ -46,6 +46,7 @@
 #include "debugger/blitterDebugger.h"
 #include "debugger/agnusDebugger.h"
 #include "debugger/paulaDebugger.h"
+#include "debugger/serialDebugger.h"
 
 Program* program = nullptr;
 DRIVER::Input* inputDriver = new DRIVER::Input;
@@ -908,6 +909,7 @@ auto Program::openDebugger(Emulator::Interface* emulator, DebuggerTheme theme) -
         case DebuggerTheme::Blitter: debugger = new BlitterDebugger(emulator); break;
         case DebuggerTheme::Agnus: debugger = new AgnusDebugger(emulator); break;
         case DebuggerTheme::Paula: debugger = new PaulaDebugger(emulator); break;
+        case DebuggerTheme::Serial: debugger = new SerialDebugger(emulator); break;
         default:
             return;
     }

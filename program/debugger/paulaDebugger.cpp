@@ -143,7 +143,7 @@ PaulaDebugger::Paula::Aud::Aud() {
     }
 }
 
-PaulaDebugger::Paula::Fdc::Entry::Entry() {
+PaulaDebugger::Paula::FdcAndPot::Fdc::Entry::Entry() {
     edit.setEditable( false );
     edit.setFont( GUIKIT::Font::monospace( ) );
     editR.setEditable( false );
@@ -157,7 +157,7 @@ PaulaDebugger::Paula::Fdc::Entry::Entry() {
     setAlignment( 0.5 );
 }
 
-PaulaDebugger::Paula::Fdc::Flags::Flags() {
+PaulaDebugger::Paula::FdcAndPot::Fdc::Flags::Flags() {
     check1.setReadonly( );
     check2.setReadonly( );
     check3.setReadonly( );
@@ -169,7 +169,7 @@ PaulaDebugger::Paula::Fdc::Flags::Flags() {
     setAlignment( 0.5 );
 }
 
-PaulaDebugger::Paula::Fdc::Selected::Selected() {
+PaulaDebugger::Paula::FdcAndPot::Fdc::Selected::Selected() {
     append( label, {0u, 0u}, 10 );
 
     int i = 0;
@@ -182,7 +182,7 @@ PaulaDebugger::Paula::Fdc::Selected::Selected() {
     setAlignment( 0.5 );
 }
 
-PaulaDebugger::Paula::Fdc::Fifo::Fifo() {
+PaulaDebugger::Paula::FdcAndPot::Fdc::Fifo::Fifo() {
     edit1.setEditable( false );
     edit2.setEditable( false );
     edit3.setEditable( false );
@@ -200,7 +200,7 @@ PaulaDebugger::Paula::Fdc::Fifo::Fifo() {
     setAlignment( 0.5 );
 }
 
-PaulaDebugger::Paula::Fdc::Fdc() {
+PaulaDebugger::Paula::FdcAndPot::Fdc::Fdc() {
     append(entry1, {0u, 0u}, 10 );
     append(entry2, {0u, 0u}, 10 );
     append(entry3, {0u, 0u}, 10 );
@@ -213,10 +213,64 @@ PaulaDebugger::Paula::Fdc::Fdc() {
     setPadding( 10 );
 }
 
+PaulaDebugger::Paula::FdcAndPot::Pot::PotGo::PotGo() {
+    edit.setEditable( false );
+    edit.setFont( GUIKIT::Font::monospace( ) );
+
+    append( label, {0u, 0u}, 10 );
+    append( edit, {getWidth( 4, true ), 0u} );
+
+    setAlignment( 0.5 );
+}
+
+PaulaDebugger::Paula::FdcAndPot::Pot::Flags::Flags() {
+    check1.setReadonly( );
+    check2.setReadonly( );
+    check3.setReadonly( );
+    check4.setReadonly( );
+
+    append( check1, {0u, 0u}, 10 );
+    append( check2, {0u, 0u}, 10 );
+    append( check3, {0u, 0u}, 10 );
+    append( check4, {0u, 0u} );
+
+    setAlignment( 0.5 );
+}
+
+PaulaDebugger::Paula::FdcAndPot::Pot::PotDat::PotDat() {
+    edit.setEditable( false );
+    edit.setFont( GUIKIT::Font::monospace( ) );
+    editR.setEditable( false );
+    editR.setFont( GUIKIT::Font::monospace( ) );
+
+    append( label, {0u, 0u}, 10 );
+    append( edit, {getWidth( 4, true ), 0u}, 10 );
+    append( labelR, {0u, 0u}, 10 );
+    append( editR, {getWidth( 4, true ), 0u} );
+
+    setAlignment( 0.5 );
+}
+
+PaulaDebugger::Paula::FdcAndPot::Pot::Pot() {
+    append( potGo, {0u, 0u}, 10 );
+    append( flagsPotGoDir, {0u, 0u}, 10 );
+    append( flagsPotGo, {0u, 0u}, 10 );
+    append( potGoR, {0u, 0u}, 10 );
+    append( flagsPotGoR, {0u, 0u}, 10 );
+    append( potDat, {0u, 0u} );
+
+    setPadding( 10 );
+}
+
+PaulaDebugger::Paula::FdcAndPot::FdcAndPot() {
+    append( fdc, {0u, 0u}, 5 );
+    append( pot, {0u, 0u} );
+}
+
 PaulaDebugger::Paula::Paula() {
     append( intr, {0u, 0u}, 15 );
     append( aud, {0u, 0u}, 15 );
-    append( fdc, {0u, 0u} );
+    append( fdcAndPot, {0u, 0u} );
 }
 
 PaulaDebugger::PaulaDebugger( Emulator::Interface* emulator )
@@ -263,7 +317,7 @@ auto PaulaDebugger::updateTheme() -> void {
         i++;
     }
 
-    auto& fdc = paula->fdc;
+    auto& fdc = paula->fdcAndPot.fdc;
     updateReg( fdc.entry1.edit, s.dskLen );
     updateReg( fdc.entry1.editR, s.dskTransferLength );
     updateReg( fdc.entry2.edit, s.adkcon );
@@ -302,6 +356,27 @@ auto PaulaDebugger::updateTheme() -> void {
         updateReg( fdc.fifo.edit3, "", ~0 );
     }
 
+    auto& pot = paula->fdcAndPot.pot;
+    updateReg( pot.potGo.edit, s.potgo);
+    updateReg( pot.potGoR.edit, s.potgoR);
+    updateReg( pot.potDat.edit, s.pot0Dat);
+    updateReg( pot.potDat.editR, s.pot1Dat);
+
+    updateReg( pot.flagsPotGoDir.check1, s.potgo & 0x8000 );
+    updateReg( pot.flagsPotGoDir.check2, s.potgo & 0x2000 );
+    updateReg( pot.flagsPotGoDir.check3, s.potgo & 0x800 );
+    updateReg( pot.flagsPotGoDir.check4, s.potgo & 0x200 );
+
+    updateReg( pot.flagsPotGo.check1, s.potgo & 0x4000 );
+    updateReg( pot.flagsPotGo.check2, s.potgo & 0x1000 );
+    updateReg( pot.flagsPotGo.check3, s.potgo & 0x400 );
+    updateReg( pot.flagsPotGo.check4, s.potgo & 0x100 );
+
+    updateReg( pot.flagsPotGoR.check1, s.potgoR & 0x4000 );
+    updateReg( pot.flagsPotGoR.check2, s.potgoR & 0x1000 );
+    updateReg( pot.flagsPotGoR.check3, s.potgoR & 0x400 );
+    updateReg( pot.flagsPotGoR.check4, s.potgoR & 0x100 );
+
     updateControl( snap.vPos, snap.hPos );
 }
 
@@ -321,7 +396,7 @@ auto PaulaDebugger::buildTheme() -> GUIKIT::Layout* {
         cha.line2.imageDat.setImage( &arrowRightImg );
         cha.line2.imageVol.setImage( &arrowRightImg );
     }
-    auto& fdc = paula->fdc;
+    auto& fdc = paula->fdcAndPot.fdc;
     fdc.fifo.imgIn.setImage(&arrowRightImg);
     fdc.fifo.imgOut.setImage(&arrowRightImg);
     return paula;
@@ -329,8 +404,30 @@ auto PaulaDebugger::buildTheme() -> GUIKIT::Layout* {
 
 auto PaulaDebugger::translateTheme() -> void {
     paula->intr.setText( "Interrupts" );
-    paula->fdc.setText( "FDC" );
-    paula->fdc.fifo.setText( "FIFO" );
+    paula->fdcAndPot.fdc.setText( "FDC" );
+    paula->fdcAndPot.fdc.fifo.setText( "FIFO" );
+
+    paula->fdcAndPot.pot.setText( "POT" );
+    paula->fdcAndPot.pot.potGo.label.setText( "POTGO" );
+    paula->fdcAndPot.pot.potGoR.label.setText( "POTGOR" );
+
+    paula->fdcAndPot.pot.flagsPotGoDir.check1.setText( "OUTRY" );
+    paula->fdcAndPot.pot.flagsPotGoDir.check2.setText( "OUTRX" );
+    paula->fdcAndPot.pot.flagsPotGoDir.check3.setText( "OUTLY" );
+    paula->fdcAndPot.pot.flagsPotGoDir.check4.setText( "OUTLX" );
+
+    paula->fdcAndPot.pot.flagsPotGo.check1.setText( "DATRY" );
+    paula->fdcAndPot.pot.flagsPotGo.check2.setText( "DATRX" );
+    paula->fdcAndPot.pot.flagsPotGo.check3.setText( "DATLY" );
+    paula->fdcAndPot.pot.flagsPotGo.check4.setText( "DATLX" );
+
+    paula->fdcAndPot.pot.flagsPotGoR.check1.setText( "DATRY" );
+    paula->fdcAndPot.pot.flagsPotGoR.check2.setText( "DATRX" );
+    paula->fdcAndPot.pot.flagsPotGoR.check3.setText( "DATLY" );
+    paula->fdcAndPot.pot.flagsPotGoR.check4.setText( "DATLX" );
+
+    paula->fdcAndPot.pot.potDat.label.setText( "POT0DAT" );
+    paula->fdcAndPot.pot.potDat.labelR.setText( "POT1DAT" );
 
     std::vector<GUIKIT::Layout*> entries;
     int i = 0;
@@ -364,7 +461,8 @@ auto PaulaDebugger::translateTheme() -> void {
     GUIKIT::Layout::alignChildWidth( entries );
     GUIKIT::Layout::alignChildWidth( entries, 4 );
 
-    auto& fdc = paula->fdc;
+    auto& fdc = paula->fdcAndPot.fdc;
+    auto& pot = paula->fdcAndPot.pot;
     fdc.entry1.label.setText("DSKLEN");
     fdc.entry1.labelR.setText("Transfer");
     fdc.entry2.label.setText("ADKCON");
@@ -402,6 +500,20 @@ auto PaulaDebugger::translateTheme() -> void {
     for (auto* entry : paula->intr.entries)
         entries.push_back( entry );
     GUIKIT::Layout::alignChildWidth( entries );
+
+    entries.clear();
+    entries.push_back( &pot.potGo );
+    entries.push_back( &pot.potGoR );
+    entries.push_back( &pot.potDat );
+    GUIKIT::Layout::alignChildWidth( entries );
+
+    entries.clear();
+    entries.push_back( &pot.flagsPotGo );
+    entries.push_back( &pot.flagsPotGoR );
+    entries.push_back( &pot.flagsPotGoDir );
+    GUIKIT::Layout::alignChildWidth( entries, 0 );
+    GUIKIT::Layout::alignChildWidth( entries, 1 );
+    GUIKIT::Layout::alignChildWidth( entries, 2 );
 }
 
 auto PaulaDebugger::initTheme() -> void {

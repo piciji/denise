@@ -521,9 +521,13 @@ struct MultilineEdit : Widget {
     auto editable() const -> bool { return state.editable; }
     auto text() -> std::string;
     auto setEditable(bool editable = true) -> void;
+    auto scrollToEndWhenUpdating(bool scrollToEnd = true) -> void;
+    auto textSize() -> unsigned { return Widget::state.text.size(); }
+    auto textRef() -> std::string& { return Widget::state.text; }
     
     struct {
         bool editable = true;
+        bool scrollToEnd = false;
     } state;
 
     pMultilineEdit& p;
@@ -1784,6 +1788,7 @@ struct String {
     static auto removeExtension(std::string str, int maxParts = 1, int maxPartSize = 3) -> std::string;
     static auto sgets(char* buf, unsigned& bufSize, unsigned& n, char** str) -> char*;
     static auto getDomain(const std::string& str, std::string& path) -> std::string;
+    static auto equalFromEnd(const std::string& a, const std::string& b) -> bool;
 
     template<typename T> static auto addThousandSeparator(T digit) -> std::string {
         return addThousandSeparator( std::to_string( digit ) );

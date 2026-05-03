@@ -19,6 +19,9 @@ Input::Input(System* system, Agnus& agnus, Cia<MOS_8520>& cia1)
 
     controlPort1 = new ControlPort(interface, *this);
     controlPort2 = new ControlPort(interface, *this);
+
+    dongle.type = DongleNone;
+    dongle.control = 0;
 }
 
 auto Input::readParallelportCIA1B(uint8_t& res) -> void {
@@ -54,6 +57,11 @@ auto Input::writeCiaPort1(bool state) -> void {
 }
 
 auto Input::writeCiaPort2(bool state) -> void {
+    if (dongle.type == DongleRoboCop3) {
+        if (state)
+            dongle.control ^= 1;
+    }
+
     controlPort2->writeCia(state);
 }
 
@@ -66,8 +74,8 @@ auto Input::readDenisePortA() -> uint16_t {
     system->observeInputFetches();
     jitPoll();
     uint16_t out = controlPort1->readDirection();
-    if (system->dongle.connected())
-        system->dongleJoydat<false>(out);
+    if (dongle.connected())
+        dongleJoydat<false>(out);
     return out;
 }
 
@@ -85,8 +93,8 @@ auto Input::readDenisePortB() -> uint16_t {
     system->observeInputFetches();
     jitPoll();
     uint16_t out = controlPort2->readDirection();
-    if (system->dongle.connected())
-        system->dongleJoydat<true>(out);
+    if (dongle.connected())
+        dongleJoydat<true>(out);
     return out;
 }
 
@@ -96,7 +104,10 @@ auto Input::observePot(uint8_t& x0, uint8_t& y0, uint8_t& x1, uint8_t& y1) -> vo
     controlPort2->observePot(x1, y1);
 }
 
-auto Input::writePot(uint8_t& x0, uint8_t& y0, uint8_t& x1, uint8_t& y1) -> void {
+auto Input::writePot(uint8_t& x0, uint8_t& y0, uint8_t& x1, uint8_t& y1, uint16_t potgo) -> void {
+    if (dongle.connected())
+        donglePotGo(potgo);
+
     controlPort1->writePot(x0, y0);
     controlPort2->writePot(x1, y1);
 }
@@ -159,6 +170,7 @@ auto Input::reset() -> void {
     controlPort1->reset();
     controlPort2->reset();
     sampling.midscreen = 0;
+    dongle.control = 0;
 }
 
 auto Input::connectControlport( Emulator::Interface::Connector* connector, Emulator::Interface::Device* device ) -> void {
@@ -241,6 +253,69 @@ auto Input::serialize(Emulator::Serializer& s) -> void {
 
     if ( s.mode() == Emulator::Serializer::Mode::Load )
         sampling.midscreen = 0;
+
+    s.integer((uint8_t&)dongle.type);
+    s.integer(dongle.control);
+}
+
+auto Input::donglePotGo(uint16_t val) -> void {
+    switch(dongle.type) {
+        case DongleStrikerManager:
+            if ((val & 0x0500) == 0x0500) {
+                dongle.control++;
+            } else {
+                if (dongle.control > 0)
+                    dongle.control--;
+            }
+            break;
+        default: break;
+    }
+}
+
+template<bool portB> auto Input::dongleJoydat(uint16_t& val) -> void {
+    switch(dongle.type) {
+        case DongleRoboCop3:
+            if (portB && dongle.control) {
+                val += 0x100;
+            }
+            break;
+        case DongleCricketCaptain:
+            if (!portB) {
+                val &= ~0x3;
+                if (dongle.control == 0)
+                    val |= 0x1;
+                else
+                    val |= 0x2;
+            }
+            dongle.control ^= 1;
+            break;
+        case DongleLeaderBoard:
+            if (portB) {
+                val &= ~0x303;
+                val |= 0x101;
+            }
+            break;
+
+        case DongleRugbyCoach:
+            if (portB) {
+                val &= ~0x303;
+                val |= 0x301;
+            }
+            break;
+        case DongleStrikerManager:
+            if (portB) {
+                if (dongle.control >= 4) {
+                    val &= ~0x0303;
+                    val |= 0x0203;
+                    dongle.control--;
+                } else if (dongle.control > 0) {
+                    val &= ~0x0303;
+                    val |= 0x0200;
+                }
+            }
+            break;
+        default: break;
+    }
 }
 
 }

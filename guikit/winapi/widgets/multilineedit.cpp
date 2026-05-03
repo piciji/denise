@@ -30,10 +30,24 @@ auto pMultilineEdit::setForegroundColor(unsigned color) -> void {
 }
 
 auto pMultilineEdit::setText(const std::string& text) -> void {
+    if (!hwnd)
+        return;
+
     locked = true;
     std::string _text = text;
     GUIKIT::String::replace(_text, "\n", "\r\n");
-    pWidget::setText(_text);
+
+    if (multilineEdit.state.scrollToEnd) {
+        SendMessage(hwnd, WM_SETREDRAW, FALSE, 0);
+        pWidget::setText(_text);
+        int lineCount = SendMessage(hwnd, EM_GETLINECOUNT, 0, 0);
+        SendMessage(hwnd, EM_LINESCROLL, 0, lineCount);
+        SendMessage(hwnd, WM_SETREDRAW, TRUE, 0);
+        InvalidateRect(hwnd, NULL, TRUE);
+        UpdateWindow(hwnd);
+    } else {
+        pWidget::setText(_text);
+    }
     locked = false;
 }
 

@@ -109,6 +109,7 @@
     <ClInclude Include="..\emulation\libami\paula\paula.h" />
     <ClInclude Include="..\emulation\libami\system\firmware.h" />
     <ClInclude Include="..\emulation\libami\system\rtc.h" />
+    <ClInclude Include="..\emulation\libami\system\serial.h" />
     <ClInclude Include="..\emulation\libami\system\system.h" />
     <ClInclude Include="..\emulation\libami\video\denise.h" />
     <ClInclude Include="..\emulation\libc64\disk\cia\cia8520.h" />
@@ -294,6 +295,7 @@
     <ClInclude Include="..\program\debugger\memScpuDebugger.h" />
     <ClInclude Include="..\program\debugger\paulaDebugger.h" />
     <ClInclude Include="..\program\debugger\scpuDebugger.h" />
+    <ClInclude Include="..\program\debugger\serialDebugger.h" />
     <ClInclude Include="..\program\debugger\sidDebugger.h" />
     <ClInclude Include="..\program\debugger\viaDebugger.h" />
     <ClInclude Include="..\program\debugger\videoDebugger.h" />
@@ -900,11 +902,11 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|win32'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="..\emulation\libami\paula\serial.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    <ClCompile Include="..\emulation\libami\paula\uart.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="..\emulation\libami\system\firmware.cpp">
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|win32'">$(IntDir)%(Filename)_ami</ObjectFileName>
@@ -913,6 +915,7 @@
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(Filename)_ami</ObjectFileName>
     </ClCompile>
     <ClCompile Include="..\emulation\libami\system\rtc.cpp" />
+    <ClCompile Include="..\emulation\libami\system\serial.cpp" />
     <ClCompile Include="..\emulation\libami\system\serialization.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
@@ -1721,6 +1724,7 @@
     <ClCompile Include="..\program\debugger\dmaDebugger.cpp" />
     <ClCompile Include="..\program\debugger\memDebugger.cpp" />
     <ClCompile Include="..\program\debugger\paulaDebugger.cpp" />
+    <ClCompile Include="..\program\debugger\serialDebugger.cpp" />
     <ClCompile Include="..\program\debugger\sidDebugger.cpp" />
     <ClCompile Include="..\program\debugger\viaDebugger.cpp" />
     <ClCompile Include="..\program\debugger\videoDebugger.cpp" />

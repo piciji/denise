@@ -40,6 +40,13 @@ struct Input {
         bool externalKeyEvent = false;
     } sampling;
 
+    enum Dongle { DongleNone = 0, DongleRoboCop3, DongleCricketCaptain, DongleLeaderBoard, DongleRugbyCoach, DongleStrikerManager };
+    struct {
+        Dongle type;
+        uint8_t control;
+        auto connected() const -> bool { return type != DongleNone; }
+    } dongle;
+
     auto connectControlport( Emulator::Interface::Connector* connector, Emulator::Interface::Device* device ) -> void;
     auto getConnectedDevice( Emulator::Interface::Connector* connector ) -> Emulator::Interface::Device*;
     auto getCursorPosition( Emulator::Interface::Device* device, int16_t& x, int16_t& y ) -> bool;
@@ -58,7 +65,7 @@ struct Input {
     auto writeDeniseJoytest(uint16_t data) -> void;
 
     auto observePot(uint8_t& x0, uint8_t& y0, uint8_t& x1, uint8_t& y1) -> void;
-    auto writePot(uint8_t& x0, uint8_t& y0, uint8_t& x1, uint8_t& y1) -> void;
+    auto writePot(uint8_t& x0, uint8_t& y0, uint8_t& x1, uint8_t& y1, uint16_t potgo) -> void;
     auto observePotPort1(uint8_t& x0, uint8_t& y0) -> void;
     auto observePotPort2(uint8_t& x1, uint8_t& y1) -> void;
 
@@ -76,6 +83,15 @@ struct Input {
     auto setSampling(uint8_t mode) -> void;
     auto updateSampling() -> void;
     inline auto externalKeyEvent() -> bool const { return sampling.externalKeyEvent; }
+
+    template<bool portB> auto dongleJoydat(uint16_t& val) -> void;
+    auto donglePotGo(uint16_t val) -> void;
+
+    auto setDongle(Dongle _dongle) -> void {
+        this->dongle.type = _dongle;
+    }
+
+    auto getDongle() const -> Dongle { return this->dongle.type; }
 };
 
 }

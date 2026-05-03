@@ -1309,6 +1309,12 @@
     <ClInclude Include="..\program\debugger\viaDebugger.h">
       <Filter>program\debugger</Filter>
     </ClInclude>
+    <ClInclude Include="..\program\debugger\serialDebugger.h">
+      <Filter>program\debugger</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libami\system\serial.h">
+      <Filter>emulation\libami\system</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\emulation\cia\base.cpp">
@@ -2052,9 +2058,6 @@
     <ClCompile Include="..\emulation\libami\paula\pot.cpp">
       <Filter>emulation\libami\paula</Filter>
     </ClCompile>
-    <ClCompile Include="..\emulation\libami\paula\serial.cpp">
-      <Filter>emulation\libami\paula</Filter>
-    </ClCompile>
     <ClCompile Include="..\emulation\libami\system\serialization.cpp">
       <Filter>emulation\libami\system</Filter>
     </ClCompile>
@@ -2588,6 +2591,15 @@
     </ClCompile>
     <ClCompile Include="..\program\debugger\viaDebugger.cpp">
       <Filter>program\debugger</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libami\paula\uart.cpp">
+      <Filter>emulation\libami\paula</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\debugger\serialDebugger.cpp">
+      <Filter>program\debugger</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libami\system\serial.cpp">
+      <Filter>emulation\libami\system</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

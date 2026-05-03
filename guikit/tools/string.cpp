@@ -533,3 +533,9 @@ auto String::getDomain(const std::string& str, std::string& path) -> std::string
 
     return "";
 }
+
+auto String::equalFromEnd(const std::string& a, const std::string& b) -> bool {
+    if (a.size() != b.size())
+        return false;
+    return std::equal(a.rbegin(), a.rend(), b.rbegin());
+}

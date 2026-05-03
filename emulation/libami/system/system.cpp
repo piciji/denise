@@ -5,7 +5,6 @@
 #include "../../tools/sanitizer.h"
 #include  "../../tools/macros.h"
 #include "serialization.cpp"
-#include "dongle.cpp"
 #include "../expansionPort/builtinHD.h"
 #include "../../tools/memory.h"
 
@@ -25,6 +24,7 @@ hardDrives { {0, this, agnus}, {1, this, agnus}, {2, this, agnus}, {3, this, agn
 paula(this, agnus, cpu, input, diskDrives[0], diskDrives[1], diskDrives[2], diskDrives[3]),
 agnus(this, cpu, denise, paula, cia1, cia2, input, rtc),
 input(this, agnus, cia1),
+serial( this ),
 rtc(agnus) {
 
     cia1.logOut = [this, interface](const char* info, bool newLine , bool hex ) {
@@ -82,9 +82,6 @@ rtc(agnus) {
             if ((lines->ioa ^ lines->ioaOld) & 0x80) {
                 input.writeCiaPort2(lines->ioa & 0x80);
             }
-
-            if (dongle.connected())
-                dongleCiaWrite<false>(lines);
         } else {
             // parallel port
         }
@@ -98,8 +95,13 @@ rtc(agnus) {
 
         if ( port == Cia<MOS_8520>::PORTA ) {
             uint8_t out = lines->ioa;
-            if (dongle.connected())
-                dongleCiaRead<true>(lines, out);
+
+            if (serial.getRI()) out &= ~4;
+            if (serial.getDSR()) out &= ~8;
+            if (serial.getCTS()) out &= ~0x10;
+            if (serial.getCD()) out &= ~0x20;
+            if (serial.getRTS()) out &= ~0x40;
+            if (serial.getDTR()) out &= ~0x80;
 
             input.readParallelportCIA2A(out);
             return out;
@@ -112,8 +114,13 @@ rtc(agnus) {
 
         if ( port == Cia<MOS_8520>::PORTA ) {
             uint8_t out = lines->ioa;
-            if (dongle.connected())
-                dongleCiaPeek<true>(lines, out);
+
+            if (serial.getRI()) out &= ~4;
+            if (serial.getDSR()) out &= ~8;
+            if (serial.getCTS<true>()) out &= ~0x10;
+            if (serial.getCD()) out &= ~0x20;
+            if (serial.getRTS()) out &= ~0x40;
+            if (serial.getDTR()) out &= ~0x80;
 
             input.readParallelportCIA2A(out);
             return out;
@@ -125,8 +132,9 @@ rtc(agnus) {
     cia2.writePort = [this]( Cia<MOS_8520>::Port port, Cia<MOS_8520>::Lines* lines ) {
 
         if ( port == Cia<MOS_8520>::PORTA ) {
-            if (dongle.connected())
-                dongleCiaWrite<true>(lines);
+
+            if (lines->ddra & 0x40) serial.setRTS( (lines->pra & 0x40) == 0 );
+            if (lines->ddra & 0x80) serial.setDTR( (lines->pra & 0x80) == 0 );
 
             cia2.setCNTAndSP( lines->ioa & 2, lines->ioa & 1 );
 
@@ -214,9 +222,6 @@ rtc(agnus) {
     paula.activeDrive = &diskDrives[0];
     ntsc = false;
     firmwareChanged = true;
-    dongle.type = DongleNone;
-    dongle.control = 0;
-    dongle.clock = 0;
 }
 
 System::~System() {
@@ -247,6 +252,7 @@ auto System::power(bool softReset, bool resetInstruction) -> void {
     cia1.reset();
     cia2.reset();
     input.reset();
+    serial.reset();
     rtc.reset(softReset);
 
     for(auto& drive : diskDrives)
@@ -261,8 +267,6 @@ auto System::power(bool softReset, bool resetInstruction) -> void {
         interface->fpsChanged();
     }
 
-    dongle.control = 0;
-    dongle.clock = 0;
     interface->updateLedState(Emulator::Interface::LedId::Power, agnus.ecsAndHigher() ? 2 : 0);
     history.reset();
     powerOn = true;
@@ -751,11 +755,6 @@ auto System::debuggerAdd(DebuggerTheme theme, DebuggerAction action, unsigned ad
                 cpu.debuggerAdd( action, addr, addrTo );
             break;
 
-        case DebuggerTheme::Agnus:
-        case DebuggerTheme::Paula:
-            debuggerSnapshot.themes |= (unsigned)theme;
-            break;
-
         case DebuggerTheme::Copper:
             switch (action) {
                 case DebuggerAction::None:
@@ -797,7 +796,11 @@ auto System::debuggerAdd(DebuggerTheme theme, DebuggerAction action, unsigned ad
                 default: break;
             }
         } break;
+
         default:
+        case DebuggerTheme::Agnus:
+        case DebuggerTheme::Paula:
+        case DebuggerTheme::Serial:
             debuggerSnapshot.themes |= (unsigned)theme;
             break;
     }
@@ -834,11 +837,6 @@ auto System::debuggerRemove(DebuggerTheme theme, DebuggerAction action, std::opt
                 cpu.debuggerRemove( action );
             break;
 
-        case DebuggerTheme::Agnus:
-        case DebuggerTheme::Paula:
-            debuggerSnapshot.themes &= ~(unsigned)theme;
-            break;
-
         case DebuggerTheme::Copper:
             switch (action) {
                 case DebuggerAction::None:
@@ -858,6 +856,9 @@ auto System::debuggerRemove(DebuggerTheme theme, DebuggerAction action, std::opt
             break;
 
         default:
+        case DebuggerTheme::Agnus:
+        case DebuggerTheme::Paula:
+        case DebuggerTheme::Serial:
             debuggerSnapshot.themes &= ~(unsigned)theme;
             break;
     }
@@ -900,6 +901,8 @@ auto System::updateDebuggerSnapshot() -> void {
         agnus.updatePtrSnapshot( debuggerSnapshot );
     if (debuggerSnapshot.themes & (unsigned)DebuggerTheme::Paula)
         paula.updateSnapshot( debuggerSnapshot );
+    if (debuggerSnapshot.themes & (unsigned)DebuggerTheme::Serial)
+        paula.updateSerialSnapshot( debuggerSnapshot );
 }
 
 auto System::updateCiaDebuggerSnapshot(DebuggerSnapshot& snap) -> void {
@@ -965,7 +968,20 @@ auto System::updateCiaDebuggerSnapshot(DebuggerSnapshot& snap) -> void {
     snap.cia[1].sdrOutput = cia2.timerA.control & 0x40;
 }
 
-template auto System::dongleJoydat<false>(uint16_t& val) -> void;
-template auto System::dongleJoydat<true>(uint16_t& val) -> void;
+auto System::setSerialPlugin(int value) -> void {
+    serial.setPlugin( static_cast<SerialPort::Plugin>(value) );
+}
+
+auto System::getSerialPlugin() -> int {
+    return static_cast<int>(serial.plugin);
+}
+
+auto System::setDongle(int value) -> void {
+    input.setDongle( static_cast<Input::Dongle>(value) );
+}
+
+auto System::getDongle() -> int {
+    return input.getDongle();
+}
 
 }

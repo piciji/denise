@@ -7,7 +7,7 @@
 
 namespace LIBAMI {
 
-const std::string Interface::Version = "245";
+const std::string Interface::Version = "246";
 
 Interface::Interface() : Emulator::Interface( "Amiga" ) {
 
@@ -49,9 +49,9 @@ auto Interface::prepareModels() -> void {
     models.push_back({ModelIdFastMem, "Fast Mem", Model::Type::Slider, Model::Purpose::Memory, 0, {0, 8}, { "0", "64 KB", "128 KB", "256 KB", "512 KB", "1 MB", "2 MB", "4 MB", "8 MB" }});
 
     models.push_back({ModelIdRTC, "RTC", Model::Type::Switch, Model::Purpose::Misc, 0});
-    models.push_back({ModelIdSerialLoopback, "Serial Loopback", Model::Type::Switch, Model::Purpose::Misc, 0});
-    models.push_back({ModelIdDongle, "Plugin Dongle", Model::Type::Combo, Model::Purpose::Misc, 0, {0,6}, {"None", "RoboCop 3", "B.A.T. II", "Cricket Captain", "Leader Board", "Rugby Coach", "Striker Manager"}});
     models.push_back({ModelIdOverclock, "Overclocking", Model::Type::Radio, Model::Purpose::Cpu, 0, {0, 3}, { "None", "2x", "4x", "8x" } });
+    models.push_back({ModelIdJoyportDongle, "Joyport Dongle", Model::Type::Combo, Model::Purpose::Misc, 0, {0,5}, {"None", "RoboCop 3", "Cricket Captain", "Leader Board", "Rugby Coach", "Striker Manager"}});
+    models.push_back({ModelIdSerialPlugin, "Serial Plugin", Model::Type::Combo, Model::Purpose::Misc, 0, {0,3}, {"None", "Loopback", "Loopback VA", "B.A.T. II"}});
     models.push_back({ModelIdHardDrivesBuiltInSlower, "Slower Built-In HDD", Model::Type::Switch, Model::Purpose::Misc, 0 });
 }
 
@@ -548,11 +548,11 @@ auto Interface::setModelValue(unsigned modelId, int value) -> void {
         case ModelIdRTC:
             system->setRTC(value);
             break;
-        case ModelIdSerialLoopback:
-            system->paula.loopBack = !!value;
+        case ModelIdSerialPlugin:
+            system->setSerialPlugin(value);
             break;
-        case ModelIdDongle:
-            system->dongle.type = static_cast <System::Dongle>(value);
+        case ModelIdJoyportDongle:
+            system->setDongle(value);
             break;
         case ModelIdOverclock:
             system->setOverclock(value);
@@ -580,8 +580,8 @@ auto Interface::getModelValue(unsigned modelId) -> int {
         case ModelIdSlowMem:                        return system->getSlowmem();
         case ModelIdFastMem:                        return system->getFastmem();
         case ModelIdRTC:                            return (int)system->useRTC();
-        case ModelIdSerialLoopback:                 return (int)system->paula.loopBack;
-        case ModelIdDongle:                         return (int)system->dongle.type;
+        case ModelIdSerialPlugin:                   return system->getSerialPlugin();
+        case ModelIdJoyportDongle:                  return system->getDongle();
         case ModelIdOverclock:                      return (int)system->getOverclock();
         case ModelIdHardDrivesBuiltInSlower:        return (int)system->getHDDAsync();
     }

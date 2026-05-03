@@ -94,6 +94,7 @@ set(srcs
         debugger/blitterDebugger.cpp
         debugger/agnusDebugger.cpp
         debugger/paulaDebugger.cpp
+        debugger/serialDebugger.cpp
         view/status.cpp
         config/config.cpp
         config/layouts/drivers.cpp

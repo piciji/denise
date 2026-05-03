@@ -274,7 +274,7 @@ auto Debugger::appendDebuggerItems() -> void {
         themes = {
             DebuggerTheme::CPU, DebuggerTheme::Memory, DebuggerTheme::CIA, DebuggerTheme::Video,
             DebuggerTheme::DMA, DebuggerTheme::Copper, DebuggerTheme::Blitter,
-            DebuggerTheme::Agnus, DebuggerTheme::Paula
+            DebuggerTheme::Agnus, DebuggerTheme::Paula, DebuggerTheme::Serial,
         };
     }
 

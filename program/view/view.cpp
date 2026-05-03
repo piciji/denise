@@ -1332,7 +1332,7 @@ auto View::buildMenu() -> void {
         sM.debugger->setIcon( debugImage );
 
         sM.debuggerCpu = new GUIKIT::MenuItem;
-        sM.debuggerCpu->onActivate = [this, emulator]() {
+        sM.debuggerCpu->onActivate = [emulator]() {
             emuThread->lock();
             program->openDebugger(emulator, DebuggerTheme::CPU);
             emuThread->unlock();
@@ -1340,7 +1340,7 @@ auto View::buildMenu() -> void {
         sM.debugger->append( *sM.debuggerCpu );
 
         sM.debuggerMem = new GUIKIT::MenuItem;
-        sM.debuggerMem->onActivate = [this, emulator]() {
+        sM.debuggerMem->onActivate = [emulator]() {
             emuThread->lock();
             program->openDebugger(emulator, DebuggerTheme::Memory);
             emuThread->unlock();
@@ -1349,7 +1349,7 @@ auto View::buildMenu() -> void {
 
         if ( dynamic_cast<LIBC64::Interface*>(emulator)) {
             sM.debuggerSCPU = new GUIKIT::MenuItem;
-            sM.debuggerSCPU->onActivate = [this, emulator]() {
+            sM.debuggerSCPU->onActivate = [emulator]() {
                 emuThread->lock();
                 program->openDebugger(emulator, DebuggerTheme::SCPU);
                 emuThread->unlock();
@@ -1357,7 +1357,7 @@ auto View::buildMenu() -> void {
             sM.debugger->append( *sM.debuggerSCPU );
 
             sM.debuggerMemSCPU = new GUIKIT::MenuItem;
-            sM.debuggerMemSCPU->onActivate = [this, emulator]() {
+            sM.debuggerMemSCPU->onActivate = [emulator]() {
                 emuThread->lock();
                 program->openDebugger(emulator, DebuggerTheme::MemorySCPU);
                 emuThread->unlock();
@@ -1370,7 +1370,7 @@ auto View::buildMenu() -> void {
         }
 
         sM.debuggerVideo = new GUIKIT::MenuItem;
-        sM.debuggerVideo->onActivate = [this, emulator]() {
+        sM.debuggerVideo->onActivate = [emulator]() {
             emuThread->lock();
             program->openDebugger(emulator, DebuggerTheme::Video);
             emuThread->unlock();
@@ -1379,7 +1379,7 @@ auto View::buildMenu() -> void {
 
         if ( dynamic_cast<LIBC64::Interface*>(emulator)) {
             sM.debuggerSid = new GUIKIT::MenuItem;
-            sM.debuggerSid->onActivate = [this, emulator]() {
+            sM.debuggerSid->onActivate = [emulator]() {
                 emuThread->lock();
                 program->openDebugger(emulator, DebuggerTheme::SID);
                 emuThread->unlock();
@@ -1389,9 +1389,10 @@ auto View::buildMenu() -> void {
             sM.debuggerBlitter = nullptr;
             sM.debuggerAgnus = nullptr;
             sM.debuggerPaula = nullptr;
+            sM.debuggerSerial = nullptr;
         } else {
             sM.debuggerCopper = new GUIKIT::MenuItem;
-            sM.debuggerCopper->onActivate = [this, emulator]() {
+            sM.debuggerCopper->onActivate = [emulator]() {
                 emuThread->lock();
                 program->openDebugger(emulator, DebuggerTheme::Copper);
                 emuThread->unlock();
@@ -1399,7 +1400,7 @@ auto View::buildMenu() -> void {
             sM.debugger->append( *sM.debuggerCopper );
 
             sM.debuggerBlitter = new GUIKIT::MenuItem;
-            sM.debuggerBlitter->onActivate = [this, emulator]() {
+            sM.debuggerBlitter->onActivate = [emulator]() {
                 emuThread->lock();
                 program->openDebugger(emulator, DebuggerTheme::Blitter);
                 emuThread->unlock();
@@ -1407,7 +1408,7 @@ auto View::buildMenu() -> void {
             sM.debugger->append( *sM.debuggerBlitter );
 
             sM.debuggerAgnus = new GUIKIT::MenuItem;
-            sM.debuggerAgnus->onActivate = [this, emulator]() {
+            sM.debuggerAgnus->onActivate = [emulator]() {
                 emuThread->lock();
                 program->openDebugger(emulator, DebuggerTheme::Agnus);
                 emuThread->unlock();
@@ -1415,18 +1416,26 @@ auto View::buildMenu() -> void {
             sM.debugger->append( *sM.debuggerAgnus );
 
             sM.debuggerPaula = new GUIKIT::MenuItem;
-            sM.debuggerPaula->onActivate = [this, emulator]() {
+            sM.debuggerPaula->onActivate = [emulator]() {
                 emuThread->lock();
                 program->openDebugger(emulator, DebuggerTheme::Paula);
                 emuThread->unlock();
             };
             sM.debugger->append( *sM.debuggerPaula );
 
+            sM.debuggerSerial = new GUIKIT::MenuItem;
+            sM.debuggerSerial->onActivate = [emulator]() {
+                emuThread->lock();
+                program->openDebugger(emulator, DebuggerTheme::Serial);
+                emuThread->unlock();
+            };
+            sM.debugger->append( *sM.debuggerSerial );
+
             sM.debuggerSid = nullptr;
         }
 
         sM.debuggerDma = new GUIKIT::MenuItem;
-        sM.debuggerDma->onActivate = [this, emulator]() {
+        sM.debuggerDma->onActivate = [emulator]() {
             emuThread->lock();
             program->openDebugger(emulator, DebuggerTheme::DMA);
             emuThread->unlock();
@@ -1434,7 +1443,7 @@ auto View::buildMenu() -> void {
         sM.debugger->append( *sM.debuggerDma );
 
         sM.debuggerCia = new GUIKIT::MenuItem;
-        sM.debuggerCia->onActivate = [this, emulator]() {
+        sM.debuggerCia->onActivate = [emulator]() {
             emuThread->lock();
             program->openDebugger(emulator, DebuggerTheme::CIA);
             emuThread->unlock();
@@ -2289,6 +2298,8 @@ auto View::translate() -> void {
             sysMenu.debuggerAgnus->setText( getReadable( DebuggerTheme::Agnus ));
         if (sysMenu.debuggerPaula)
             sysMenu.debuggerPaula->setText( getReadable( DebuggerTheme::Paula ));
+        if (sysMenu.debuggerSerial)
+            sysMenu.debuggerSerial->setText( getReadable( DebuggerTheme::Serial ));
 
         sysMenu.debuggerDma->setText(getReadable( DebuggerTheme::DMA ));
 
@@ -2923,6 +2934,8 @@ auto View::getReadable(DebuggerTheme theme, Emulator::Interface* emulator) -> st
             return "Agnus";
         case DebuggerTheme::Paula:
             return "Paula";
+        case DebuggerTheme::Serial:
+            return "Serial";
     }
 
     return "";

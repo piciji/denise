@@ -106,6 +106,7 @@ auto System::serializeAll(Emulator::Serializer& s) -> void {
     paula.serialize( s );
     input.serialize( s );
     rtc.serialize( s );
+    serial.serialize( s );
 
     for(auto& drive : diskDrives)
         drive.serialize(s);
@@ -121,11 +122,8 @@ auto System::serialize(Emulator::Serializer& s) -> void {
 
     s.integer(ntsc);
     s.integer(asyncHDDAccess);
-    s.integer((uint8_t&)dongle.type);
-    if (dongle.type) {
-        s.integer(dongle.clock);
-        s.integer(dongle.control);
-    }
+    //s.integer((uint8_t&)dongle.type);
+    //s.integer(dongle.control);
 }
 
 // for runahead
@@ -144,6 +142,7 @@ auto System::serializeLight(MemState<uint32_t, uint16_t, 3>& memState, bool from
     denise.serialize(s);
     paula.serialize(s, !fromHistory && (runAhead.frames > 1));
     input.serialize(s);
+    serial.serialize( s );
     if (fromHistory)
         rtc.serialize( s );
 
@@ -169,6 +168,7 @@ auto System::unserializeLight(MemState<uint32_t, uint16_t, 3>& memState, bool fr
     denise.serialize(s);
     paula.serialize(s, !fromHistory && (runAhead.frames > 1));
     input.serialize(s);
+    serial.serialize( s );
     if (fromHistory)
         rtc.serialize( s );
 

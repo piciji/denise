@@ -59,8 +59,7 @@ set(headers
         paula/irq.cpp
         paula/paula.h
         paula/pot.cpp
-        paula/serial.cpp
-        system/dongle.cpp
+        paula/uart.cpp
         system/rtc.h
         system/serialization.cpp
         system/system.h
@@ -129,6 +128,7 @@ target_sources(coreAmiga PRIVATE
         drive/hunk.cpp
         drive/scp/scp.cpp
         system/rtc.cpp
+        system/serial.cpp
         drive/dms/pfile.cpp
         expansionPort/expansionPort.cpp
         expansionPort/fastMem.cpp
