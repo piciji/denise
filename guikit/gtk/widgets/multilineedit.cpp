@@ -20,6 +20,31 @@ auto pMultilineEdit::setText(const std::string& text) -> void {
     locked = false;
 }
 
+auto pMultilineEdit::appendText(const std::string& text, unsigned maxSize) -> void {
+	locked = true;
+	GtkTextIter endIter;
+
+	auto& s = multilineEdit.textRef();
+	s += text;
+
+	if (s.size() > maxSize ) {
+		unsigned fivePercent = 5 * maxSize / 100;
+		s = s.substr(s.size() - fivePercent);
+		gtk_text_buffer_set_text( buffer, "", -1 );
+		gtk_text_buffer_get_end_iter(buffer, &endIter);
+		gtk_text_buffer_insert(buffer, &endIter, s.c_str(), -1);
+	} else {
+		gtk_text_buffer_get_end_iter(buffer, &endIter);
+		gtk_text_buffer_insert(buffer, &endIter, text.c_str(), -1);
+	}
+
+	GtkTextMark* mark = gtk_text_buffer_create_mark(buffer, NULL, &endIter, TRUE);
+	gtk_text_view_scroll_to_mark(GTK_TEXT_VIEW(subWidget), mark, 0.0, false, 0.0, 0.0);
+	gtk_text_buffer_delete_mark(buffer, mark);
+
+	locked = false;
+}
+
 auto pMultilineEdit::text() -> std::string {
 	
 	GtkTextIter startSel, endSel;
@@ -50,7 +75,7 @@ auto pMultilineEdit::create() -> void {
 	gtk_text_view_set_right_margin( GTK_TEXT_VIEW(subWidget), 3);
 	gtk_text_view_set_top_margin( GTK_TEXT_VIEW(subWidget), 3);
 	gtk_text_view_set_bottom_margin( GTK_TEXT_VIEW(subWidget), 3);
-	gtk_text_view_set_wrap_mode( GTK_TEXT_VIEW(subWidget), GTK_WRAP_WORD );
+	gtk_text_view_set_wrap_mode( GTK_TEXT_VIEW(subWidget), GTK_WRAP_WORD_CHAR );
 	
 	buffer = gtk_text_view_get_buffer( GTK_TEXT_VIEW(subWidget) );
 	

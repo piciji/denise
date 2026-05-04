@@ -11,6 +11,10 @@
 		9D06E2782E4CC1D800CF5A5E /* mp3Writer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D06E2762E4CC1D800CF5A5E /* mp3Writer.cpp */; settings = {COMPILER_FLAGS = "-I$(PROJECT_DIR)/data/libs/include/"; }; };
 		9D06E27D2E4CC79B00CF5A5E /* libmp3lame.0.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 9D06E27C2E4CC79B00CF5A5E /* libmp3lame.0.dylib */; };
 		9D06E27E2E4CC79B00CF5A5E /* libmp3lame.0.dylib in Embed Libraries */ = {isa = PBXBuildFile; fileRef = 9D06E27C2E4CC79B00CF5A5E /* libmp3lame.0.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		9D06FBF52FA92300009F364B /* serialDebugger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D06FBF42FA92300009F364B /* serialDebugger.cpp */; };
+		9D06FBF62FA92300009F364B /* serialDebugger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D06FBF42FA92300009F364B /* serialDebugger.cpp */; };
+		9D06FBFB2FA92343009F364B /* serial.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D06FBF92FA92343009F364B /* serial.cpp */; };
+		9D06FBFC2FA92343009F364B /* serial.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D06FBF92FA92343009F364B /* serial.cpp */; };
 		9D07CC8C2E296C5F00A9787E /* images.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D07CC8B2E296C5F00A9787E /* images.cpp */; settings = {COMPILER_FLAGS = "-I$(PROJECT_DIR)/deps/cgif/ -I$(PROJECT_DIR)/deps/stb/"; }; };
 		9D07CCF92E296CD000A9787E /* lh1_decoder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D07CCD12E296CD000A9787E /* lh1_decoder.cpp */; };
 		9D07CCFA2E296CD000A9787E /* lha_reader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D07CCD22E296CD000A9787E /* lha_reader.cpp */; };
@@ -503,6 +507,12 @@
 		9D06E2752E4CC1D700CF5A5E /* mp3Writer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = mp3Writer.h; sourceTree = "<group>"; };
 		9D06E2762E4CC1D800CF5A5E /* mp3Writer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = mp3Writer.cpp; sourceTree = "<group>"; };
 		9D06E27C2E4CC79B00CF5A5E /* libmp3lame.0.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libmp3lame.0.dylib; path = data/libs/shared/macArm/libmp3lame.0.dylib; sourceTree = "<group>"; };
+		9D06FBF32FA92300009F364B /* serialDebugger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = serialDebugger.h; sourceTree = "<group>"; };
+		9D06FBF42FA92300009F364B /* serialDebugger.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = serialDebugger.cpp; sourceTree = "<group>"; };
+		9D06FBF72FA92326009F364B /* uart.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = uart.cpp; sourceTree = "<group>"; };
+		9D06FBF82FA92343009F364B /* serial.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = serial.h; sourceTree = "<group>"; };
+		9D06FBF92FA92343009F364B /* serial.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = serial.cpp; sourceTree = "<group>"; };
+		9D06FBFA2FA92343009F364B /* debuggerSnapshot.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = debuggerSnapshot.h; sourceTree = "<group>"; };
 		9D07CC8A2E296C5F00A9787E /* images.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = images.h; sourceTree = "<group>"; };
 		9D07CC8B2E296C5F00A9787E /* images.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = images.cpp; sourceTree = "<group>"; };
 		9D07CCD12E296CD000A9787E /* lh1_decoder.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = lh1_decoder.cpp; sourceTree = "<group>"; };
@@ -881,7 +891,6 @@
 		9D8FACD92CB40DF6006905BE /* keyboard.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = keyboard.h; sourceTree = "<group>"; };
 		9D8FACDA2CB40DF6006905BE /* keyboard.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = keyboard.cpp; sourceTree = "<group>"; };
 		9D8FACDB2CB40DF6006905BE /* interface.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = interface.h; sourceTree = "<group>"; };
-		9D8FACDD2CB40DF6006905BE /* dongle.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = dongle.cpp; sourceTree = "<group>"; };
 		9D8FACDE2CB40DF6006905BE /* rtc.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = rtc.cpp; sourceTree = "<group>"; };
 		9D8FACDF2CB40DF6006905BE /* serialization.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = serialization.cpp; sourceTree = "<group>"; };
 		9D8FACE02CB40DF6006905BE /* system.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = system.cpp; sourceTree = "<group>"; };
@@ -910,7 +919,6 @@
 		9D8FACFA2CB40DF7006905BE /* audio.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = audio.cpp; sourceTree = "<group>"; };
 		9D8FACFB2CB40DF7006905BE /* filter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = filter.cpp; sourceTree = "<group>"; };
 		9D8FACFC2CB40DF7006905BE /* fdc.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = fdc.cpp; sourceTree = "<group>"; };
-		9D8FACFD2CB40DF7006905BE /* serial.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = serial.cpp; sourceTree = "<group>"; };
 		9D8FACFE2CB40DF7006905BE /* paula.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = paula.h; sourceTree = "<group>"; };
 		9D8FACFF2CB40DF7006905BE /* irq.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = irq.cpp; sourceTree = "<group>"; };
 		9D8FAD012CB40DF7006905BE /* dms.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = dms.cpp; sourceTree = "<group>"; };
@@ -2176,9 +2184,11 @@
 		9D8FACDC2CB40DF6006905BE /* system */ = {
 			isa = PBXGroup;
 			children = (
+				9D06FBFA2FA92343009F364B /* debuggerSnapshot.h */,
+				9D06FBF92FA92343009F364B /* serial.cpp */,
+				9D06FBF82FA92343009F364B /* serial.h */,
 				9D6404402DCDEEF500624A00 /* firmware.cpp */,
 				9D64043F2DCDEEF500624A00 /* firmware.h */,
-				9D8FACDD2CB40DF6006905BE /* dongle.cpp */,
 				9D8FACDE2CB40DF6006905BE /* rtc.cpp */,
 				9D8FACDF2CB40DF6006905BE /* serialization.cpp */,
 				9D8FACE02CB40DF6006905BE /* system.cpp */,
@@ -2215,12 +2225,12 @@
 		9D8FACF72CB40DF7006905BE /* paula */ = {
 			isa = PBXGroup;
 			children = (
+				9D06FBF72FA92326009F364B /* uart.cpp */,
 				9D8FACF82CB40DF7006905BE /* paula.cpp */,
 				9D8FACF92CB40DF7006905BE /* pot.cpp */,
 				9D8FACFA2CB40DF7006905BE /* audio.cpp */,
 				9D8FACFB2CB40DF7006905BE /* filter.cpp */,
 				9D8FACFC2CB40DF7006905BE /* fdc.cpp */,
-				9D8FACFD2CB40DF7006905BE /* serial.cpp */,
 				9D8FACFE2CB40DF7006905BE /* paula.h */,
 				9D8FACFF2CB40DF7006905BE /* irq.cpp */,
 			);
@@ -2771,6 +2781,8 @@
 		9DBA88402ED0C7D400DF0756 /* debugger */ = {
 			isa = PBXGroup;
 			children = (
+				9D06FBF42FA92300009F364B /* serialDebugger.cpp */,
+				9D06FBF32FA92300009F364B /* serialDebugger.h */,
 				9DC455A02FA10934004C6482 /* sidDebugger.cpp */,
 				9DC455A12FA10934004C6482 /* viaDebugger.cpp */,
 				9DC455922FA108B8004C6482 /* drive8CpuDebugger.h */,
@@ -2949,6 +2961,7 @@
 				9D4D10482F071C6B00296467 /* memDebugger.cpp in Sources */,
 				9D8FAB182CB3F6EF006905BE /* bass.cpp in Sources */,
 				9D8FAE212CB40DF8006905BE /* paula.cpp in Sources */,
+				9D06FBF52FA92300009F364B /* serialDebugger.cpp in Sources */,
 				9D8FAB132CB3F6EF006905BE /* cosinePrecise.cpp in Sources */,
 				9D07CD052E296CD000A9787E /* crc16.cpp in Sources */,
 				9D8FAE882CB40DF9006905BE /* base.cpp in Sources */,
@@ -3000,6 +3013,7 @@
 				9D8FAE482CB40DF9006905BE /* retroReplay.cpp in Sources */,
 				9D8F51042EDB5A1B00153A53 /* dasmHandler.cpp in Sources */,
 				9D07CD0E2E296CD000A9787E /* lhx_decoder.cpp in Sources */,
+				9D06FBFB2FA92343009F364B /* serial.cpp in Sources */,
 				9D8FAE2D2CB40DF8006905BE /* diskDrive.cpp in Sources */,
 				9D8FAB2D2CB3F6F0006905BE /* autoloader.cpp in Sources */,
 				9D8FABB02CB3F8EE006905BE /* api.cpp in Sources */,
@@ -3145,6 +3159,7 @@
 				9D4D10492F071C6B00296467 /* memDebugger.cpp in Sources */,
 				9DECF92A2E45F309005C0BBA /* bass.cpp in Sources */,
 				9DECF92B2E45F309005C0BBA /* paula.cpp in Sources */,
+				9D06FBF62FA92300009F364B /* serialDebugger.cpp in Sources */,
 				9DECF92C2E45F309005C0BBA /* cosinePrecise.cpp in Sources */,
 				9DECF92D2E45F309005C0BBA /* crc16.cpp in Sources */,
 				9DECF92E2E45F309005C0BBA /* base.cpp in Sources */,
@@ -3196,6 +3211,7 @@
 				9DECF9552E45F309005C0BBA /* retroReplay.cpp in Sources */,
 				9D8F51052EDB5A1B00153A53 /* dasmHandler.cpp in Sources */,
 				9DECF9562E45F309005C0BBA /* lhx_decoder.cpp in Sources */,
+				9D06FBFC2FA92343009F364B /* serial.cpp in Sources */,
 				9DECF9572E45F309005C0BBA /* diskDrive.cpp in Sources */,
 				9DECF9582E45F309005C0BBA /* autoloader.cpp in Sources */,
 				9DECF9592E45F309005C0BBA /* api.cpp in Sources */,

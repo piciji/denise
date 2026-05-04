@@ -1,6 +1,5 @@
 
 #define PULSE_WIDTH ((serPer & 0x7fff) + 1)
-#define MAX_EXPORT_SIZE (1024 * 10)
 #include "../../tools/error.h"
 
 namespace LIBAMI {
@@ -142,18 +141,12 @@ auto Paula::updateSerialEvent() -> void {
 
 auto Paula::addIncomingByte(uint8_t byte) -> void {
     if (isprint( byte ) || byte == '\n') {
-        if (incoming.size() >= MAX_EXPORT_SIZE)
-            incoming.erase(incoming.begin());
-
         incoming += byte;
     }
 }
 
 auto Paula::addOutgoingByte(uint8_t byte) -> void {
     if (isprint( byte ) || byte == '\n') {
-        if (outgoing.size() >= MAX_EXPORT_SIZE)
-            outgoing.erase(outgoing.begin());
-
         outgoing += byte;
     }
 }

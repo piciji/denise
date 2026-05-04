@@ -340,6 +340,7 @@ struct pMultilineEdit : pWidget {
     auto setText(const std::string& text) -> void;
     auto text() -> std::string;
     auto setForegroundColor(unsigned color) -> void;
+    auto appendText(const std::string& text, unsigned maxSize) -> void;
 
     pMultilineEdit(MultilineEdit& multilineEdit) : pWidget(multilineEdit), multilineEdit(multilineEdit) {}
     auto rebuild() -> void;

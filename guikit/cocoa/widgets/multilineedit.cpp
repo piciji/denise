@@ -96,6 +96,34 @@ auto pMultilineEdit::setText(const std::string& text) -> void {
     calculatedMinimumSize.updated = false;
 }
 
+auto pMultilineEdit::appendText(const std::string& text, unsigned maxSize) -> void {
+    NSAttributedString* attrStr;
+    auto& s = multilineEdit.textRef();
+    s += text;
+    
+    if (s.size() > maxSize) {
+        unsigned fivePercent = 5 * maxSize / 100;
+        s = s.substr(s.size() - fivePercent);
+        [[(id)cocoaView content] setString: @""];
+        
+        NSDictionary* attrs = [[(id)cocoaView content] typingAttributes];
+
+        attrStr =
+            [[NSAttributedString alloc] initWithString: [NSString stringWithUTF8String: s.c_str()]
+                                            attributes:attrs];
+    } else {
+        NSDictionary* attrs = [[(id)cocoaView content] typingAttributes];
+
+        attrStr =
+            [[NSAttributedString alloc] initWithString: [NSString stringWithUTF8String: text.c_str()]
+                                            attributes:attrs];
+    }
+
+    [[[(id)cocoaView content] textStorage] appendAttributedString:attrStr];
+    
+    [[(id)cocoaView content] scrollToEndOfDocument:nil];
+}
+
 auto pMultilineEdit::init() -> void {
     @autoreleasepool {
         cocoaView = [[CocoaMultilineEdit alloc] initWith : multilineEdit];
