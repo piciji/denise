@@ -162,6 +162,7 @@ struct pMultilineEdit : pWidget {
     auto setForegroundColor(unsigned color) -> void;
     auto setGeometry(Geometry geometry) -> void;
     auto setFont(std::string font) -> void;
+    auto appendText(const std::string& text, unsigned maxSize) -> void;
     
     auto init() -> void;
     
