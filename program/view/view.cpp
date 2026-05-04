@@ -389,7 +389,7 @@ auto View::build() -> void {
         
 	    if (button == GUIKIT::Mouse::Button::Left) {
 
-	        if (showSplashScreen) {
+	        if (videoDriver->visibleSplashScreen()) {
 	            emuThread->lock(true);
 
 	            int result = cursorForPlaceholderInUpperTriangle();
@@ -412,15 +412,6 @@ auto View::build() -> void {
 #ifdef __APPLE__
         inputDriver->sentUIMouseMovement(deltaX, deltaY);
 #endif
-        if (!showSplashScreen)
-            return;
-
-        int result = cursorForPlaceholderInUpperTriangle(pos);
-
-        if (result == -1)
-            setDefaultCursor();
-        else
-            setPointerCursor();
     };
 	
 	viewport.onMouseLeave = []() {
@@ -430,13 +421,6 @@ auto View::build() -> void {
     setDragnDrop();
 
     viewport.hideCursorByInactivity(2000);
-}
-
-auto View::hideSplashscreen() -> void {
-    if (showSplashScreen) {
-        showSplashScreen = false;
-        setDefaultCursor();
-    }
 }
 
 auto View::setAnyload( Emulator::Interface* emulator ) -> void {

@@ -16,7 +16,6 @@ struct View : GUIKIT::Window {
 	GUIKIT::Timer fullscreenOnStartUp;
     GUIKIT::Timer cursorHideTimer;
     GUIKIT::StatusBar statusBar;
-    bool showSplashScreen = false;
 	bool requestFullscreenSwitch = false;
     bool customResizeMode = false;
     int dropZone = 0;
@@ -364,7 +363,6 @@ struct View : GUIKIT::Window {
     auto clearScreenshotBuffer() -> void;
     auto updateScreenshotUI() -> void;
     auto setAudioRecordText() -> void;
-    auto hideSplashscreen() -> void;
     auto updateFPSMenu() -> void;
     auto buildFpsWindow() -> void;
     static auto getReadable(DebuggerTheme theme, Emulator::Interface* emulator = nullptr) -> std::string;

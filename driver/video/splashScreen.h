@@ -15,7 +15,6 @@ struct SplashScreen {
     enum Status { NO_UPDATE = 0, TEXTURE_UPDATE = 1, DATA_UPDATE = 2, FINISH = 3 };
 
     Viewport viewport;
-    Video::SplashscreenCallback cb;
 
     SplashScreen(bool toggleRGB_BGR = false) {
         this->toggleRGB_BGR = toggleRGB_BGR;
@@ -71,17 +70,19 @@ struct SplashScreen {
 
     auto finish() -> void {
         enable = false;
-        cb();
     }
 
-    auto setImage(uint8_t* _data, unsigned _width, unsigned _height, unsigned showFrames, Video::SplashscreenCallback cb) -> void {
+    auto setImage(uint8_t* _data, unsigned _width, unsigned _height, unsigned showFrames) -> void {
         if (!initialized)
             return;
-        this->cb = cb;
         this->showFrames = showFrames;
         bitmap.setData(_data, _width, _height, toggleRGB_BGR);
         alpha = 1.0;
         enable = true;
+    }
+
+    auto isVisible() -> bool {
+        return enable && showFrames > 0;
     }
 
     auto hide() -> void {

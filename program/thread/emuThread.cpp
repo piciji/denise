@@ -226,9 +226,6 @@ auto EmuThread::handleUIEvents() -> void {
         if(_events & EVT_UPDATE_FPS)
             program->fpsChangeTimer.setEnabled();
 
-        if (_events & EVT_DISMISS_PLACEHOLDER)
-            view->hideSplashscreen();
-
         if (_events & EVT_AUTO_LOAD_NO_TRAPS) {
             lock(true);
             fileloader->autoload(activeEmulator, autoloader->getLatestDrive(activeEmulator), 0, false, true);

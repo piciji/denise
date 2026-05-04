@@ -7,6 +7,23 @@
 
 # changelog
 
+## 2.8 (not yet)
+* Debugger/Disassembler for Amiga
+    * CPU, Memory, Logic Viewer, Denise, Agnus, Copper, Blitter, Paula, Serial, CIA
+    * break/watch/exception points for CPU/Copper
+    * stepping: CPU/Copper instructions, single CCKs, Blitter cycles
+    * debug borders with optional display of DMA usage
+* Debugger/Disassembler for C64
+    * CPU, SCPU, Memory, Memory-SCPU, Logic Viewer, VIC-II, SID, CIA
+    * Drive 8,9,10,11: CPU, Memory, VIA
+    * break/watch/exception points for CPU and SCPU
+    * stepping: CPU/SCPU instructions, RDY cycles
+    * debug borders with optional display of DMA usage
+* C64: support for KCS Power Cartridge was added by ClausS
+* C64: add hotkey to toggle priority between joystick port and keyboard
+    * helpful for keyboard joysticks
+* Amiga: support hard disks with more than 4 GB
+
 ## 2.7
 * added screenshot generation
     * option to merge two adjacent frames (e.g. interlace)

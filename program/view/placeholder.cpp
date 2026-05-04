@@ -40,16 +40,7 @@ auto View::loadPlaceholder() -> void {
 
     unsigned frames = dynamic_cast<LIBC64::Interface*>(program->getLastUsedEmu()) ? 110 : 220;
 
-    DRIVER::Video::SplashscreenCallback cb;
-    cb = [this]() {
-        if (emuThread->enabled)
-            emuThread->events |= EmuThread::EVT_DISMISS_PLACEHOLDER;
-        else
-            showSplashScreen = false;
-    };
-
-    videoDriver->setSplashScreen(placeholder.data, placeholder.width, placeholder.height, frames, cb);
-    showSplashScreen = true;
+    videoDriver->setSplashScreen(placeholder.data, placeholder.width, placeholder.height, frames);
 }
 
 auto View::renderPlaceholder(uint8_t gpuOptions) -> bool {

@@ -396,12 +396,16 @@ namespace DRIVER {
         _h = viewScreen.scaling.height >> 1;
     }
 
-    auto setSplashScreen(uint8_t* _data, unsigned _width, unsigned _height, unsigned showFrames, SplashscreenCallback cb) -> void {
-        splashScreen.setImage(_data, _width, _height, showFrames, cb);
+    auto setSplashScreen(uint8_t* _data, unsigned _width, unsigned _height, unsigned showFrames) -> void {
+        splashScreen.setImage(_data, _width, _height, showFrames);
     }
 
     auto hideSplashScreen() -> void {
         splashScreen.hide();
+    }
+
+    auto visibleSplashScreen() -> bool {
+        return splashScreen.isVisible();
     }
 
     auto setDragnDropOverlay(uint8_t* _data, unsigned _width, unsigned _height, unsigned line = 0) -> void {
