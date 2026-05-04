@@ -233,6 +233,11 @@ auto SerialDebugger::translateTheme() -> void {
 
 auto SerialDebugger::initTheme() -> void {
     emulator->debuggerAdd( getTheme(), DebuggerAction::None, 0);
+
+    auto& outgoing = serial->bottom.outgoing;
+    outgoing.edit.setText( "" );
+    auto& incoming = serial->bottom.incoming;
+    incoming.edit.setText( "" );
 }
 
 auto SerialDebugger::closeTheme() -> void {
