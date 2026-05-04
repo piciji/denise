@@ -521,13 +521,12 @@ struct MultilineEdit : Widget {
     auto editable() const -> bool { return state.editable; }
     auto text() -> std::string;
     auto setEditable(bool editable = true) -> void;
-    auto scrollToEndWhenUpdating(bool scrollToEnd = true) -> void;
     auto textSize() -> unsigned { return Widget::state.text.size(); }
     auto textRef() -> std::string& { return Widget::state.text; }
+    auto appendText(const std::string& text, unsigned maxSize) -> void;
     
     struct {
         bool editable = true;
-        bool scrollToEnd = false;
     } state;
 
     pMultilineEdit& p;

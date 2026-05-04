@@ -36,18 +36,39 @@ auto pMultilineEdit::setText(const std::string& text) -> void {
     locked = true;
     std::string _text = text;
     GUIKIT::String::replace(_text, "\n", "\r\n");
+    pWidget::setText(_text);
+    locked = false;
+}
 
-    if (multilineEdit.state.scrollToEnd) {
-        SendMessage(hwnd, WM_SETREDRAW, FALSE, 0);
-        pWidget::setText(_text);
-        int lineCount = SendMessage(hwnd, EM_GETLINECOUNT, 0, 0);
-        SendMessage(hwnd, EM_LINESCROLL, 0, lineCount);
-        SendMessage(hwnd, WM_SETREDRAW, TRUE, 0);
-        InvalidateRect(hwnd, NULL, TRUE);
-        UpdateWindow(hwnd);
-    } else {
-        pWidget::setText(_text);
+auto pMultilineEdit::appendText(const std::string& text, unsigned maxSize) -> void {
+    if (!hwnd)
+        return;
+
+    locked = true;
+
+    std::string _text = text;
+    String::replace(_text, "\n", "\r\n");
+
+    auto& s = multilineEdit.textRef();
+    s += _text;
+
+    SendMessage(hwnd, WM_SETREDRAW, FALSE, 0);
+    if (s.size() > maxSize ) {
+        unsigned fivePercent = 5 * maxSize / 100;
+        s = s.substr(s.size() - fivePercent);
+        pWidget::setText( "" );
+        _text = s;
     }
+
+    SendMessage(hwnd, EM_SETSEL, (WPARAM)-1, (LPARAM)-1); // move caret to end
+    SendMessage(hwnd, EM_REPLACESEL, FALSE, (LPARAM)(wchar_t*)utf16_t(_text));
+
+    int lineCount = SendMessage(hwnd, EM_GETLINECOUNT, 0, 0);
+    SendMessage(hwnd, EM_LINESCROLL, 0, lineCount);
+    SendMessage(hwnd, WM_SETREDRAW, TRUE, 0);
+    InvalidateRect(hwnd, NULL, TRUE);
+    UpdateWindow(hwnd);
+
     locked = false;
 }
 

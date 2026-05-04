@@ -816,12 +816,12 @@ auto MultilineEdit::setEditable(bool editable) -> void {
     p.setEditable(editable);
 }
 
-auto MultilineEdit::scrollToEndWhenUpdating(bool scrollToEnd) -> void {
-    state.scrollToEnd = scrollToEnd;
-}
-
 auto MultilineEdit::text() -> std::string { 
     return p.text();
+}
+
+auto MultilineEdit::appendText(const std::string& text, unsigned maxSize) -> void {
+    p.appendText(text, maxSize);
 }
 
 MultilineEdit::MultilineEdit() : Widget(*new pMultilineEdit(*this)), p((pMultilineEdit&)Widget::p) { p.init(); }

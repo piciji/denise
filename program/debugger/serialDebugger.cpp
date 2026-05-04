@@ -100,7 +100,6 @@ SerialDebugger::Serial::Top::Top() {
 
 SerialDebugger::Serial::Bottom::Data::Data() {
     edit.setEditable( false );
-    edit.scrollToEndWhenUpdating();
     edit.setFont( GUIKIT::Font::monospace( ) );
 
     append( edit, {~0u, ~0u} );
@@ -164,13 +163,13 @@ auto SerialDebugger::updateTheme() -> void {
     updateReg( pins.line2.check4, s.port & (1 << 22) );
 
     auto& incoming = serial->bottom.incoming;
-    if (!GUIKIT::String::equalFromEnd(s.incoming, incoming.edit.textRef())) {
-        incoming.edit.setText( s.incoming );
+    if (!s.incoming.empty()) {
+        incoming.edit.appendText( s.incoming, 8192 );
     }
 
     auto& outgoing = serial->bottom.outgoing;
-    if (!GUIKIT::String::equalFromEnd(s.outgoing, outgoing.edit.textRef())) {
-        outgoing.edit.setText( s.outgoing );
+    if (!s.outgoing.empty()) {
+        outgoing.edit.appendText( s.outgoing, 8192 );
     }
 
     updateControl( snap.vPos, snap.hPos );

@@ -381,8 +381,10 @@ auto Paula::updateSerialSnapshot(DebuggerSnapshot& snap) -> void {
     s.LONG = serPer & 0x8000;
     s.baudRate = (float)agnus.frequency() / (float)PULSE_WIDTH + 0.5f;
     s.port = serial.port;
-    s.incoming = incoming;
-    s.outgoing = outgoing;
+    s.incoming = std::move(incoming);
+    incoming.clear();
+    s.outgoing = std::move(outgoing);
+    outgoing.clear();
 }
 
 auto Paula::updateSnapshot(DebuggerSnapshot& snap) -> void {
