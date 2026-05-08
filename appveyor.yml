@@ -92,7 +92,7 @@ for:
     - cmd: g++ -v
   
   build_script:
-    - cmd: cmake -G "MinGW Makefiles" -B builds/release && cmake --build builds/release && cmake --install builds/release
+    - cmd: cmake -G "MinGW Makefiles" -B builds/release -DENABLE_LTO=ON && cmake --build builds/release && cmake --install builds/release
    
   after_build:
     - ps: |
@@ -209,7 +209,7 @@ for:
           ./configure && make install
           cd ..        
         fi
-        cmake -B builds/release -DCMAKE_INSTALL_PREFIX=builds/release && cmake --build builds/release && cmake --install builds/release
+        cmake -B builds/release -DCMAKE_INSTALL_PREFIX=builds/release -DENABLE_LTO=ON && cmake --build builds/release && cmake --install builds/release
         dmgbuild -s data/dmgSettings.py "Denise" builds/denise.dmg
     
   after_build:
@@ -263,7 +263,7 @@ for:
           ./configure && make install
           cd ..        
         fi
-        cmake -B builds/release -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_INSTALL_PREFIX=builds/release && cmake --build builds/release && cmake --install builds/release
+        cmake -B builds/release -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_INSTALL_PREFIX=builds/release -DENABLE_LTO=ON && cmake --build builds/release && cmake --install builds/release
         dmgbuild -s data/dmgSettings.py "Denise" builds/release/denise.dmg
 
   after_build:

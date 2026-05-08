@@ -244,4 +244,8 @@ target_sources(coreC64 PRIVATE
 
 target_compile_options(coreC64 PRIVATE -Wno-shift-count-overflow)
 
+if(ltoSupported)
+   set_target_properties(coreC64 PROPERTIES INTERPROCEDURAL_OPTIMIZATION TRUE)
+endif()
+
 target_link_libraries(coreC64 PRIVATE cia ciaNew cpu65c02 cpu65816)

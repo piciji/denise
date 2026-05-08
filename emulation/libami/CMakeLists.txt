@@ -145,6 +145,13 @@ target_sources(coreAmiga PRIVATE
 
 target_compile_options(coreAmiga PRIVATE -Wno-shift-count-overflow)
 
+
+if(ltoSupported)
+  set_target_properties(coreAmiga PROPERTIES INTERPROCEDURAL_OPTIMIZATION TRUE)
+  # target_compile_options(coreAmiga PUBLIC -flto=auto)
+  # target_link_options(coreAmiga PUBLIC -flto=auto)
+endif()
+
 target_link_libraries(coreAmiga PRIVATE ciaNew)
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Linux" OR CMAKE_SYSTEM_NAME STREQUAL "NetBSD")

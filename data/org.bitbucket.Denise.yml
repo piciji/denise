@@ -10,6 +10,8 @@ rename-appdata-file: denise.appdata.xml
 modules:
   - name: denise
     buildsystem: cmake
+    config-opts:
+      - -DENABLE_LTO=ON
     builddir: true
     sources:
       - type: dir

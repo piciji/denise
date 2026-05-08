@@ -59,7 +59,7 @@ jobs:
     - name: DEB package    
       compiler: gcc
       script:
-      - cmake -B builds/release -DCMAKE_CXX_COMPILER=g++-12 || travis_terminate 1;
+      - cmake -B builds/release -DCMAKE_CXX_COMPILER=g++-12 -DENABLE_LTO=ON || travis_terminate 1;
       - cmake --build builds/release -j 4 || travis_terminate 1;
       - cd data
       - chmod +x build_deb.sh
