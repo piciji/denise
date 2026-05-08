@@ -17,7 +17,7 @@ set(CMAKE_NO_SYSTEM_FROM_IMPORTED YES)
 
 set(ltoSupported 0)
 
-if(DEFINED ENABLE_LTO AND ENABLE_LTO)
+if(DEFINED ENABLE_LTO AND ENABLE_LTO AND NOT CMAKE_SIZEOF_VOID_P EQUAL 4) # no 32 bit support
     include(CheckIPOSupported)
     check_ipo_supported(RESULT ltoSupported)
 endif()
