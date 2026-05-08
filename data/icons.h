@@ -202,4 +202,6 @@ extern uint8_t arrowLeft[169];
 
 extern uint8_t arrowRight[167];
 
+extern uint8_t circleGray[304];
+
 }

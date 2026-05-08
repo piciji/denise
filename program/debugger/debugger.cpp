@@ -86,7 +86,7 @@ auto Debugger::build() -> void {
 
     addImg.loadPng((uint8_t*)Icons::add, sizeof(Icons::add));
     breakEnableImg.loadPng((uint8_t*)Icons::recordHi, sizeof(Icons::recordHi));
-    breakDisableImg.loadPng((uint8_t*)Icons::record, sizeof(Icons::record));
+    breakDisableImg.loadPng((uint8_t*)Icons::circleGray, sizeof(Icons::circleGray));
     breakCondEnableImg.loadPng((uint8_t*)Icons::circleBlue, sizeof(Icons::circleBlue));
     // don't share list view images at different scaling sizes, otherwise it scales again and again
     breakEnableSmallImg.loadPng((uint8_t*)Icons::recordHi, sizeof(Icons::recordHi));
