@@ -1686,7 +1686,11 @@ auto SuperCpu::parseExpressionValue(const std::string& input, int& pos) -> uint3
                 case 27: return p.n;
 
                 case 100:
-                case 101: {
+                case 101:
+                case 102:
+                case 103:
+                case 104:
+                case 105: {
                     int radix = 10;
                     if (input.compare(pos, 1, "$") == 0) {
                         radix = 16;

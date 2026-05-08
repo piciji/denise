@@ -60,7 +60,11 @@ auto M6510::parseExpressionValue(const std::string& input, int& pos) -> uint32_t
                 case 20: return !!(regP & 0x80);
 
                 case 100:
-                case 101: {
+                case 101:
+                case 102:
+                case 103:
+                case 104:
+                case 105: {
                     int radix = 10;
                     if (input.compare(pos, 1, "$") == 0) {
                         radix = 16;

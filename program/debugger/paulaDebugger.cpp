@@ -264,7 +264,7 @@ PaulaDebugger::Paula::FdcAndPot::Pot::Pot() {
 
 PaulaDebugger::Paula::FdcAndPot::FdcAndPot() {
     append( fdc, {0u, 0u}, 5 );
-    append( pot, {0u, 0u} );
+    append( pot, {~0u, 0u} );
 }
 
 PaulaDebugger::Paula::Paula() {
