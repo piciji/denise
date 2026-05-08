@@ -580,4 +580,4 @@
 
 ## 0.9.9 beta
 * initial release
-* c64 cartdrige emulation only
+* c64 cartridge emulation only
