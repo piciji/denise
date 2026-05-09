@@ -60,6 +60,7 @@ BlitterDebugger::Blitter::ColLeft::Flags::Flags() {
 
 BlitterDebugger::Blitter::ColLeft::BltD::Data::Data() {
     check.setReadonly( );
+    check.setFont( GUIKIT::Font::monospace( ) );
     edit.setEditable( false );
 
     append( check, {0u, 0u}, 10 );
@@ -92,6 +93,7 @@ BlitterDebugger::Blitter::ColLeft::ColLeft() {
 
 BlitterDebugger::Blitter::ColCenter::BltA::Data::Data() {
     check.setReadonly( );
+    check.setFont( GUIKIT::Font::monospace( ) );
     edit.setEditable( false );
     editOld.setEditable( false );
 
@@ -134,6 +136,7 @@ BlitterDebugger::Blitter::ColCenter::BltA::BltA() {
 
 BlitterDebugger::Blitter::ColCenter::BltB::Data::Data() {
     check.setReadonly( );
+    check.setFont( GUIKIT::Font::monospace( ) );
     edit.setEditable( false );
     editOld.setEditable( false );
 
@@ -163,6 +166,7 @@ BlitterDebugger::Blitter::ColCenter::BltB::BltB() {
 
 BlitterDebugger::Blitter::ColCenter::BltC::BltC() {
     check.setReadonly( );
+    check.setFont( GUIKIT::Font::monospace( ) );
     edit.setEditable( false );
 
     append( check, {0u, 0u}, 10 );
@@ -320,7 +324,6 @@ auto BlitterDebugger::translateTheme() -> void {
 auto BlitterDebugger::updateTheme() -> void {
     LIBAMI::DebuggerSnapshot& snap = *static_cast<LIBAMI::DebuggerSnapshot*>(snapshot);
     auto& s = snap.blitter;
-
 
     auto& bltCon0 = blitter->colLeft.control.bltCon0;
     updateReg(bltCon0.editShift, s.bltCon0 >> 12);

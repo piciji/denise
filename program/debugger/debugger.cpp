@@ -536,10 +536,13 @@ auto Debugger::updateReg(GUIKIT::RadioBox& reg) -> void {
 
 auto Debugger::hilight(GUIKIT::CheckBox& reg, bool state) -> void {
     if (reg.overrideForegroundColor() != state) {
-        if (state)
+        if (state) {
             reg.setForegroundColor( SUCCESS_COLOR );
-        else
+            reg.setFont(GUIKIT::Font::system( "bold", true ));
+        } else {
             reg.resetForegroundColor();
+            reg.setFont(GUIKIT::Font::monospace());
+        }
     }
 }
 
