@@ -1,9 +1,9 @@
-Package: Denise
+Package: denise
 Version: _VERSION
-Architecture: all
+Architecture: amd64
 Essential: no
 Priority: optional
 Depends: libgtk-3-0,libpulse0,libudev1,libxcb-xinput0,libxcb-xfixes0,libmp3lame0,libfreetype6
-Maintainer: PiCiJi
+Maintainer: PiCiJi <PiCiJi@gmx.de>
 Installed-Size: _INSTALLED_SIZE
 Description: a C64/Amiga emulator
