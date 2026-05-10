@@ -1307,6 +1307,7 @@ int USBSID_Class::LIBUSB_Exit(void)
   }
   if (ctx) {
     libusb_exit(ctx);
+    ctx = NULL;
   }
 
   rc = -1;
