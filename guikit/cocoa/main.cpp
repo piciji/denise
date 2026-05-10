@@ -940,6 +940,8 @@ auto pWindow::changeCursor( Image& image, unsigned hotSpotX, unsigned hotSpotY )
         
         [nsImage release];
         
+        [NSCursor unhide];
+        
         [cocoaWindow resetCursorRects];
     }
 }
@@ -953,6 +955,8 @@ auto pWindow::setDefaultCursor() -> void {
         
         customCursor = nullptr;
         
+        [NSCursor unhide];
+        
         [cocoaWindow resetCursorRects];
     }
 }
@@ -964,6 +968,8 @@ auto pWindow::setPointerCursor() -> void {
             [customCursor release];
         
         customCursor = nullptr;
+        
+        [NSCursor unhide];
         
         //[[NSCursor pointingHandCursor] set];
         
