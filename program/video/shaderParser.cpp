@@ -691,6 +691,7 @@ auto ShaderParser::fetchShaderSource(const std::string& path, ShaderPreset::Pass
     static const std::string pragmaPrefix = "#pragma";
     static const std::string endifPrefix = "#endif";
     static const std::string paramPrefix = "#pragma parameter";
+    static const std::string paramDenisePrefix = "#pragma parameter_denise";
     static const std::string namePrefix = "#pragma name";
     static const std::string formatPrefix = "#pragma format";
     static const std::string stagePrefix = "#pragma stage";
@@ -737,6 +738,7 @@ auto ShaderParser::fetchShaderSource(const std::string& path, ShaderPreset::Pass
         addLineToStage<true>(stages, "#extension GL_GOOGLE_cpp_style_line_directive : require\n", pass);
         addLineToStage<true>(stages, "#define _HAS_ORIGINALASPECT_UNIFORMS\n", pass);
         addLineToStage<true>(stages, "#define _HAS_FRAMETIME_UNIFORMS\n", pass);
+        addLineToStage<true>(stages, "#define _USE_DENISE_EMU\n", pass);
     }
 
     unsigned pos = !depth ? 2 : 1;
@@ -786,16 +788,21 @@ auto ShaderParser::fetchShaderSource(const std::string& path, ShaderPreset::Pass
                 addLineToStage(stages, line, pass);
          //       addLineToStage<true>(stages, "#line " + std::to_string(pos + 1) + " \"" + GUIKIT::String::getFileName(path) + "\"\n", pass);
 
-                if (GUIKIT::String::startsWith(line, paramPrefix)) {
+                if (GUIKIT::String::startsWith(line, paramPrefix) || GUIKIT::String::startsWith(line, paramDenisePrefix)) {
                     ShaderPreset::Param param;
+                    std::string _pre = paramPrefix;
+                    if ( GUIKIT::String::startsWith(line, paramDenisePrefix))
+                        _pre = paramDenisePrefix;
+
+                    _pre += " %63s \"%63[^\"]\" %f %f %f %f";
 
                     char id[64];
                     char desc[64];
 #ifdef _MSC_VER
-                    if ((filled = sscanf_s(line.c_str(), "#pragma parameter %63s \"%63[^\"]\" %f %f %f %f",
+                    if ((filled = sscanf_s(line.c_str(), _pre.c_str(),
                                            id, sizeof(id), desc, sizeof(desc), &param.initial, &param.minimum, &param.maximum, &param.step)) < 5)
 #else
-                    if ((filled = sscanf(line.c_str(), "#pragma parameter %63s \"%63[^\"]\" %f %f %f %f",
+                    if ((filled = sscanf(line.c_str(), _pre.c_str(),
                                          id, desc, &param.initial, &param.minimum, &param.maximum, &param.step)) < 5)
 #endif
                         goto End;
