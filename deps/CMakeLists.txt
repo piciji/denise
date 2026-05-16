@@ -141,3 +141,31 @@ elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
 endif()
 
 target_sources(spirv PRIVATE ${srcs})
+
+# libresidfp
+add_library(libresidfp STATIC)
+
+set(srcs
+        libresidfp/src/Dac.cpp
+        libresidfp/src/EnvelopeGenerator.cpp
+        libresidfp/src/ExternalFilter.cpp
+        libresidfp/src/Filter.cpp
+        libresidfp/src/Filter6581.cpp
+        libresidfp/src/Filter8580.cpp
+        libresidfp/src/FilterModelConfig.cpp
+        libresidfp/src/FilterModelConfig6581.cpp
+        libresidfp/src/FilterModelConfig8580.cpp
+        libresidfp/src/Integrator6581.cpp
+        libresidfp/src/Integrator8580.cpp
+        libresidfp/src/OpAmp.cpp
+        libresidfp/src/Spline.cpp
+        libresidfp/src/WaveformCalculator.cpp
+        libresidfp/src/WaveformGenerator.cpp
+        libresidfp/src/residfp/residfp.cpp
+)
+
+SET_SOURCE_FILES_PROPERTIES(libresidfp/src/residfp/residfp.cpp
+        PROPERTIES INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/deps/libresidfp/src;")
+
+target_sources(libresidfp PRIVATE ${srcs})
+
