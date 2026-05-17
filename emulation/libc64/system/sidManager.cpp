@@ -3,21 +3,25 @@
 #include "system.h"
 #include "../expansionPort/expansionPort.h"
 #include "../sid/clone.cpp"
+#include "../sid/reSid24.h"
+#include "../sid/chamberlin.h"
 
 namespace LIBC64 {
 
-SidManager::SidManager(LIBC64::System* system) : system(system), usbSIDPico(*system) {
-    for (unsigned i = 0; i < 7; i++)
-        sids[i] = new Sid( i + 1, system, *this, Sid::Type::MOS_6581 );
+std::vector<std::string> SidManager::adrOptions = {
+"Default", "D400", "D420", "D440", "D460", "D480", "D4A0", "D4C0", "D4E0", "D500", "D520", "D540", "D560", "D580",
+"D5A0", "D5C0", "D5E0", "D600", "D620", "D640", "D660", "D680", "D6A0", "D6C0", "D6E0", "D700", "D720", "D740", "D760", "D780",
+"D7A0", "D7C0", "D7E0", "DE00", "DE20", "DE40", "DE60", "DE80", "DEA0", "DEC0", "DEE0", "DF00", "DF20", "DF40", "DF60", "DF80", "DFA0", "DFC0", "DFE0"
+};
 
-    sid = new Sid( 0, system, *this, Sid::Type::MOS_6581 );
+SidManager::SidManager(System* system) : system(system), usbSIDPico(*system) {
+    for (unsigned i = 0; i < 8; i++)
+        sids[i] = new ReSid( i, system, *this, ReSid::Type::MOS_8580 );
 
     sampleCounter = 0;
     sampleLimit = 2;
     audioOut = true;
-    useExternalFilter = true;
     serializationSizeForSevenMoreSids = 0;
-    useVolumeCorrection = false;
     sysClock = 0;
     potX = 0xff;
     potY = 0xff;
@@ -33,22 +37,6 @@ SidManager::SidManager(LIBC64::System* system) : system(system), usbSIDPico(*sys
     extraSids = false;
     leftSids = 0;
     rightSids = 0;
-    updateOptionsInUse();
-}
-
-auto SidManager::setExternalFilter(bool state) -> void {
-    useExternalFilter = state;
-    updateOptionsInUse();
-}
-
-auto SidManager::updateOptionsInUse() -> void {
-    optionsInUse = audioOut;
-    if (useExternalFilter)
-        optionsInUse |= 2;
-    if (sid->filterType == Sid::FilterType::Chamberlin)
-        optionsInUse |= 4;
-    else if (sid->filterType == Sid::FilterType::ResidVice24)
-        optionsInUse |= 16;
 }
 
 auto SidManager::intensifyPseudoStereo(bool state) -> void {
@@ -64,7 +52,7 @@ auto SidManager::intensifyPseudoStereo(bool state) -> void {
 auto SidManager::applyOffsetPseudoStereo() -> void {
 
     for (auto useSid : useSids) {
-        if ((useSid->leftChannel == useSid->rightChannel) || (useSid == sid) || useSid->ioMask)
+        if ((useSid->leftChannel == useSid->rightChannel) || (useSid == mainSid()) || useSid->ioMask)
             continue;
 
         offsetPseudoStereo.offset = (system->vicII->frequency() >> 1) + (Emulator::Rand::rand() & 0x3ffff);
@@ -74,17 +62,11 @@ auto SidManager::applyOffsetPseudoStereo() -> void {
 }
 
 auto SidManager::setIoMask(int nr, uint8_t pos) -> void {
-    if (nr == 0)
-        sid->setIoMask(pos);
-    else
-        sids[nr-1]->setIoMask(pos);
+    sids[nr]->setIoMask(pos);
 }
 
 auto SidManager::getIoPos(int nr) -> int {
-    if (nr == 0)
-        return sid->ioPos;
-
-    return sids[nr-1]->ioPos;
+    return sids[nr]->ioPos;
 }
 
 auto SidManager::readSidReg(uint16_t addr) -> uint8_t {
@@ -92,7 +74,7 @@ auto SidManager::readSidReg(uint16_t addr) -> uint8_t {
     if (extraSids)
         return getSidByAdr( addr )->readIO( addr );
 
-    return sid->readIO( addr );
+    return mainSid()->readIO( addr );
 }
 
 auto SidManager::peekSidReg(uint16_t addr) -> uint8_t {
@@ -100,7 +82,7 @@ auto SidManager::peekSidReg(uint16_t addr) -> uint8_t {
     if (extraSids)
         return getSidByAdr( addr )->peekIO( addr );
 
-    return sid->peekIO( addr );
+    return mainSid()->peekIO( addr );
 }
 
 auto SidManager::writeSidReg(uint16_t addr, uint8_t value) -> void {
@@ -108,7 +90,7 @@ auto SidManager::writeSidReg(uint16_t addr, uint8_t value) -> void {
     if (extraSids)
         return writeSid( addr, value );
 
-    sid->writeIO( addr, value );
+    mainSid()->writeIO( addr, value );
 }
 
 auto SidManager::readIo(uint16_t& addr, uint8_t& value) -> bool {
@@ -142,39 +124,7 @@ auto SidManager::writeIo(uint16_t addr, uint8_t value) -> void {
     }
 }
 
-auto SidManager::setSeparateFilterInputs(bool state) -> void {
-    // only for primary SID
-    sid->setSeparateFilterInputs(state);
-}
-
-auto SidManager::hasSeparateFilterInputs() -> bool {
-    return sid->hasSeparateFilterInputs();
-}
-
 auto SidManager::updateClock() -> void {
-    switch(optionsInUse) {
-        case 3: updateClockT<3>(); break;
-        case 7: updateClockT<7>(); break;
-        case 0x13: updateClockT<0x13>(); break;
-
-        case 0: updateClockT<0>(); break;
-        case 1: updateClockT<1>(); break;
-        case 2: updateClockT<2>(); break;
-
-        case 4: updateClockT<4>(); break;
-        case 5: updateClockT<5>(); break;
-        case 6: updateClockT<6>(); break;
-
-        case 0x10: updateClockT<0x10>(); break;
-        case 0x11: updateClockT<0x11>(); break;
-        case 0x12: updateClockT<0x12>(); break;
-    }
-}
-
-template<int options> auto SidManager::updateClockT() -> void {
-    constexpr bool _useChamberlain = options & 4;
-    constexpr bool _useResid24 = options & 16;
-
     system->sysTimer.add( &callAlarm, 200, Emulator::SystemTimer::Action::UpdateExisting );
 
     int _delay = system->sysTimer.fallBackCycles( sysClock );
@@ -184,18 +134,12 @@ template<int options> auto SidManager::updateClockT() -> void {
 
     if (extraSids) {
         if (offsetPseudoStereo.offset > 0)
-            clockMultiChips<options | 8>(_delay);
-        else
-            clockMultiChips<options>(_delay);
-    } else {
-        if constexpr (_useChamberlain || _useResid24)
-            sampleCounter = sid->clock<options>(_delay, sampleCounter, sampleLimit);
+            audioOut ? clockMultiChips<true, true>(_delay) : clockMultiChips<false, true>(_delay);
         else {
-            if (sid->separateFilterInputs)
-                sampleCounter = sid->clock<options | 32>(_delay, sampleCounter, sampleLimit);
-            else
-                sampleCounter = sid->clock<options>(_delay, sampleCounter, sampleLimit);
+            audioOut ? clockMultiChips<true, false>(_delay) : clockMultiChips<false, false>(_delay);
         }
+    } else {
+        sampleCounter = mainSid()->clock(_delay, sampleCounter, sampleLimit, audioOut);
     }
 
     sysClock = system->sysTimer.clock;
@@ -206,19 +150,11 @@ auto SidManager::registerCallbacks() -> void {
     system->sysTimer.registerCallback( { { &callPotUpdate, 1 }, { &callAlarm, 1 } } );
 }
 
-
 auto SidManager::disableAudioOut(bool state) -> void {
     audioOut = !state;
-    updateOptionsInUse();
 }
 
-template<int options> auto SidManager::clockMultiChips(int cycles) -> void {
-    constexpr bool _audioOut = options & 1;
-    //constexpr bool _useExtFilter = options & 2;
-    //constexpr bool _useChamberlain = options & 4;
-    //constexpr bool _useResid24 = options & 16;
-    constexpr bool _delayed = options & 8;
-
+template<bool _audioOut, bool _delayed> auto SidManager::clockMultiChips(int cycles) -> void {
     double sampleLeft, sampleRight;
     const int _limit = sampleLimit;
 
@@ -233,15 +169,15 @@ template<int options> auto SidManager::clockMultiChips(int cycles) -> void {
 
                 if constexpr (_delayed) {
                     if (useSid != offsetPseudoStereo.delayedSid)
-                        useSid->clock<options>();
+                        useSid->clock();
                 } else
-                    useSid->clock<options | 8>(); // reuse 8
+                    useSid->clock();
 
                 if (useSid->leftChannel)
-                    sampleLeft += useSid->curSample;
+                    sampleLeft += useSid->getSample();
 
                 if (useSid->rightChannel)
-                    sampleRight += useSid->curSample;
+                    sampleRight += useSid->getSample();
             }
 
             if (!leftSids) {
@@ -261,8 +197,12 @@ template<int options> auto SidManager::clockMultiChips(int cycles) -> void {
             }
 
         } else {
-            for (auto useSid : useSids)
-                useSid->clock<options>();
+            for (auto useSid : useSids) {
+                if constexpr (_audioOut)
+                    useSid->clock();
+                else
+                    useSid->clockSilent();
+            }
         }
     }
 
@@ -283,7 +223,7 @@ auto SidManager::getSidByAdr(uint16_t addr, bool ioArea) -> Sid* {
             return useSid;
     }
 
-    return ioArea ? nullptr : sid;
+    return ioArea ? nullptr : mainSid();
 }
 
 auto SidManager::writeSid(uint16_t addr, uint8_t value) -> void {
@@ -309,7 +249,7 @@ auto SidManager::writeSid(uint16_t addr, uint8_t value) -> void {
     }
 
     if (!match)
-        sid->writeIO( addr, value );
+        mainSid()->writeIO( addr, value );
     else {
         if (offsetPseudoStereo.allow) {
             if ((addr & 0x1f) == 0x18) {
@@ -349,18 +289,18 @@ auto SidManager::updateSidUsage() -> void {
         return;
     }
 
-    if (sid->leftChannel || sid->rightChannel)
-        useSids.push_back(sid);
+    if (mainSid()->leftChannel || mainSid()->rightChannel)
+        useSids.push_back(mainSid());
 
-    if (sid->leftChannel)
+    if (mainSid()->leftChannel)
         leftSids += 1.0;
 
-    if (sid->rightChannel)
+    if (mainSid()->rightChannel)
         rightSids += 1.0;
 
     for (int i = 0; i < system->requestedSids; i++) {
 
-        Sid* extraSid = sids[i];
+        Sid* extraSid = sids[i+1];
 
         if (extraSid->leftChannel || extraSid->rightChannel)
             useSids.push_back( extraSid );
@@ -397,97 +337,109 @@ auto SidManager::isStereo() -> bool {
 }
 
 auto SidManager::setEnableFilterAll( bool state ) -> void {
-    sid->filter.setEnable( state );
-
-    for (unsigned i = 0; i < 7; i++)
-        sids[i]->filter.setEnable( state );
+    for (auto sid : sids)
+        sid->enableFilter( state );
 }
 
 auto SidManager::isEnableFilter( ) -> bool {
-    return sid->filter.enabled;
+    return mainSid()->filterEnabled();
 }
 
-auto SidManager::setFilterTypeAll( Sid::FilterType filterType ) -> void {
-    sid->setFilterType(filterType);
-    sid->volumeCorrection(useVolumeCorrection);
-
-    for (unsigned i = 0; i < 7; i++) {
-        sids[i]->setFilterType(filterType);
-        sids[i]->volumeCorrection(useVolumeCorrection);
-    }
-    updateOptionsInUse();
+auto SidManager::setEngineAll( int value ) -> void {
+    engine = value;
+    rebuildSids(true);
+    updateSidUsage();
     system->history.reset();
 }
 
-auto SidManager::getFilterType( ) -> Sid::FilterType {
-    return sid->filterType;
-}
+auto SidManager::rebuildSids(bool cloneOld) -> void {
+    for (unsigned i = 0; i < 8; i++) {
+        auto oldSid = sids[i];
+        Sid* newSid;
 
-auto SidManager::setFilterVolumeCorrection( bool state ) -> void {
-    useVolumeCorrection = state;
+        switch (engine) {
+            default:
+            case 0:
+            case 1:
+                newSid = new ReSid( i, system, *this, oldSid->type );
+                break;
+            case 2:
+                newSid = new ReSid24( i, system, *this, oldSid->type );
+                break;
+            case 3:
+                newSid = new Chamberlin( i, system, *this, oldSid->type );
+                break;
+        }
 
-    sid->volumeCorrection(state);
-
-    for (int i = 0; i < 7; i++)
-        sids[i]->volumeCorrection(state);
-}
-
-auto SidManager::setType( int nr, Sid::Type type ) -> void {
-    if (nr == 0) {
-        sid->setType(type);
-        sid->volumeCorrection(useVolumeCorrection);
-    } else {
-        sids[nr-1]->setType( type );
-        sids[nr-1]->volumeCorrection( useVolumeCorrection );
+        if (cloneOld)
+            newSid->clone( oldSid, false );
+        sids[i] = newSid;
+        delete oldSid;
     }
 }
 
-auto SidManager::getType(int nr) -> Sid::Type {
-    if (nr == 0)
-        return sid->type;
+auto SidManager::getEngine( ) -> int {
+    return engine;
+}
 
-    return sids[nr-1]->type;
+auto SidManager::setType( int nr, ReSid::Type type ) -> void {
+    sids[nr]->setType( type );
+}
+
+auto SidManager::getType(int nr) -> ReSid::Type {
+    return sids[nr]->type;
 }
 
 auto SidManager::updateChamberlinFrequencyAll(double sampleRate) -> void {
-
-    sid->chamberlinFilter.updateFrequency( sampleRate );
-
-    for (unsigned i = 0; i < 7; i++)
-        sids[i]->chamberlinFilter.updateFrequency( sampleRate );
+    for (auto sid : sids) {
+        sid->setSampleRate(sampleRate);
+    }
 }
 
 auto SidManager::adjustFilterBias6581All(int value) -> void {
-    sid->filter.adjustFilterBias6581( value );
-
-    for (unsigned i = 0; i < 7; i++)
-        sids[i]->filter.adjustFilterBias6581( value );
+    for (auto sid : sids) {
+        sid->adjustFilterBias6581( value );
+    }
 }
 
 auto SidManager::getFilterBias6581() -> int {
-    return sid->filter.bias6581;
+    return mainSid()->getFilterBias6581();
 }
 
 auto SidManager::adjustFilterBias8580All(int value) -> void {
-    sid->filter.adjustFilterBias8580( value );
-
-    for (unsigned i = 0; i < 7; i++)
-        sids[i]->filter.adjustFilterBias8580( value );
+    for (auto sid : sids) {
+        sid->adjustFilterBias8580( value );
+    }
 }
 
 auto SidManager::getFilterBias8580() -> int {
-    return sid->filter.bias8580;
+    return mainSid()->getFilterBias8580();
+}
+
+auto SidManager::adjustFilterRange6581All(int value) -> void {
+
+}
+
+auto SidManager::getFilterRange6581() -> int {
+    return 0;
+}
+
+auto SidManager::setWaveformStrength(int value) -> void {
+
+}
+
+auto SidManager::getWaveformStrength() -> int {
+    return 0;
 }
 
 auto SidManager::setDigiBoostAll( bool state ) -> void {
-    sid->setDigiBoost( state );
-
-    for (unsigned i = 0; i < 7; i++)
-        sids[i]->setDigiBoost( state );
+    for (auto sid : sids) {
+        sid->setDigiBoost( state );
+    }
 }
 
 auto SidManager::getDigiBoost( ) -> bool {
-    return sid->filter.digiBoost;
+    return mainSid()->hasDigiBoost();
 }
 
 auto SidManager::resetAll() -> void {
@@ -495,11 +447,11 @@ auto SidManager::resetAll() -> void {
     potX = potY = 0xff;
     system->sysTimer.add( &callAlarm, 300, Emulator::SystemTimer::Action::UpdateExisting );
 
-    sid->reset();
-    if (usbSIDPico.enabled) usbSIDPico.reset();
+    if (usbSIDPico.enabled)
+        usbSIDPico.reset();
 
-    for (int i = 0; i < 7; i++)
-        sids[i]->reset();
+    for (auto sid : sids)
+        sid->reset();
 
     sampleCounter = 0;
     offsetPseudoStereo.offset = 0;
@@ -513,45 +465,32 @@ auto SidManager::calcSerializationSizeForSevenMoreSids() -> void {
 
     Emulator::Serializer s;
 
-    sid->serialize( s, false );
+    mainSid()->serialize( s, false );
 
     serializationSizeForSevenMoreSids = s.size() * 7;
 }
 
 auto SidManager::useLeftChannel(int nr, bool state) -> void {
-    if (nr == 0)
-        sid->useLeftChannel(state);
-    else
-        sids[nr-1]->useLeftChannel(state);
+    sids[nr]->useLeftChannel(state);
 
     updateSidUsage();
 }
 
 auto SidManager::hasLeftChannel(int nr) -> bool {
-    if (nr == 0)
-        return sid->leftChannel;
-
-    return sids[nr-1]->leftChannel;
+    return sids[nr]->leftChannel;
 }
 
 auto SidManager::useRightChannel(int nr, bool state) -> void {
-    if (nr == 0)
-        sid->useRightChannel(state);
-    else
-        sids[nr-1]->useRightChannel(state);
+    sids[nr]->useRightChannel(state);
 
     updateSidUsage();
 }
 
 auto SidManager::hasRightChannel(int nr) -> bool {
-    if (nr == 0)
-        return sid->rightChannel;
-
-    return sids[nr-1]->rightChannel;
+    return sids[nr]->rightChannel;
 }
 
 auto SidManager::setResampleQuality( uint8_t val ) -> void {
-
     sampleCounter = 0;
 
     switch(val) {
@@ -564,7 +503,6 @@ auto SidManager::setResampleQuality( uint8_t val ) -> void {
 }
 
 auto SidManager::getResampleQuality( ) -> uint8_t {
-
     switch(sampleLimit) {
         case 1: return 0;
         default:
@@ -593,17 +531,23 @@ auto SidManager::setUSBSIDDiffSize(unsigned value) -> void {
 }
 
 auto SidManager::searializeActiveSids(Emulator::Serializer& s, bool light) -> void {
+    bool _loadState = !s.memUsage() && (s.mode() == Emulator::Serializer::Mode::Load);
 
     s.integer( sysClock );
-    s.integer( useVolumeCorrection );
     s.integer( potX );
     s.integer( potY );
+    int _engine = engine;
+    s.integer( engine );
 
-    sid->serialize(s, light);
+    if (_loadState && _engine != engine) {
+        rebuildSids(false);
+    }
+
+    mainSid()->serialize(s, light);
 
     if (system->requestedSids && (s.mode() != Emulator::Serializer::Mode::Size) ) {
         for (unsigned i = 0; i < system->requestedSids; i++)
-            sids[i]->serialize(s, light);
+            sids[i + 1]->serialize(s, light);
     }
 
     uint8_t sampleLimitBefore = sampleLimit;
@@ -612,57 +556,40 @@ auto SidManager::searializeActiveSids(Emulator::Serializer& s, bool light) -> vo
         s.integer( sampleCounter );
 
     s.integer( sampleLimit );
-    s.integer( useExternalFilter );
 
-    if (!s.memUsage() && (s.mode() == Emulator::Serializer::Mode::Load) ) {
+    if (_loadState) {
         updateSidUsage();
 
         if (sampleLimitBefore != sampleLimit)
             system->updateStats();
-
-        updateOptionsInUse();
     }
 }
 
 auto SidManager::updateSnapshot(DebuggerSnapshot& snap) -> void {
-    Sid* _sid = sid;
-
     uint8_t _potX = getPotX();
     uint8_t _potY = getPotY();
 
     for (unsigned i = 0; i < 8; i++) {
         auto& s = snap.sids[i];
 
-        s.active = i == 0 || ((i - 1) < system->requestedSids);
+        s.active = (i == 0) || (i <= system->requestedSids);
 
         if (s.active) {
-            s.volume = _sid->filter.vol;
             s.potX = _potX;
             s.potY = _potY;
-
-            s.filter.cutOff = _sid->filter.fc;
-            s.filter.resonance = _sid->filter.res;
-            s.filter.voices = _sid->filter.filt;
-            s.filter.mode = _sid->filter.mode >> 4;
-
-            for (unsigned v = 0; v < 3; v++) {
-                auto& sv = s.voices[v];
-                auto& _sidV = _sid->voice[v];
-                auto& _sidE = _sid->envelope[v];
-
-                sv.wave = _sidV.waveform;
-                sv.frequency = _sidV.freq;
-                sv.pulseWidth = _sidV.pw;
-                sv.attack = _sidE.attack;
-                sv.delay = _sidE.delay;
-                sv.sustain = _sidE.sustain;
-                sv.release = _sidE.release;
-                sv.control = _sidV.contr;
-            }
+            sids[i]->updateSnapshot( snap );
         }
+    }
+}
 
-        if (i < 7)
-            _sid = sids[i];
+auto SidManager::clone( uint8_t start, uint8_t end ) -> void {
+    if (start >= end)
+         return;
+
+    for( ; start < end; start++ ) {
+        Sid* sid = sids[start + 1];
+
+        sid->clone( mainSid(), true );
     }
 }
 

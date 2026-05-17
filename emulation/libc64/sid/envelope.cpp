@@ -1,5 +1,5 @@
 
-#include "sid.h"
+#include "reSid.h"
 
 #define DELAY_ATTACK0    1
 #define DELAY_ATTACK1    2
@@ -27,34 +27,34 @@
 
 namespace LIBC64 {
     
-uint16_t Sid::Envelope::ratePeriodLookup[16] = {
+uint16_t ReSid::Envelope::ratePeriodLookup[16] = {
     8, /*2ms*/ 31, /*8ms*/ 62, /*16ms*/ 94, /*24ms*/
     148, /*38ms*/ 219, /*56ms*/ 266, /*68ms*/ 312, /*80ms*/
     391, /*100ms*/ 976, /*250ms*/ 1953, /*500ms*/ 3125, /*800ms*/
     3906, /*1 s*/ 11719, /*3 s*/ 19531, /*5 s*/ 31250 /*8 s*/
 };
 
-Emulator::DAC<uint8_t> Sid::Envelope::dac6581( 8, 2.20, false );
-Emulator::DAC<uint8_t> Sid::Envelope::dac8580( 8, 2.00, true );
+Emulator::DAC<uint8_t> ReSid::Envelope::dac6581( 8, 2.20, false );
+Emulator::DAC<uint8_t> ReSid::Envelope::dac8580( 8, 2.00, true );
 
-auto Sid::Envelope::setType( Type type ) -> void {
+auto ReSid::Envelope::setType( Type type ) -> void {
     
     this->type = type;
     
     dac = type == Type::MOS_6581 ? &dac6581 : &dac8580;
 }
 
-inline auto Sid::Envelope::sustainComparator() -> uint8_t {
+inline auto ReSid::Envelope::sustainComparator() -> uint8_t {
     
     return (sustain << 4) | sustain;
 }
 
-inline auto Sid::Envelope::output() -> uint8_t {
-    
-    return dac->get( counter );
-}
+// inline auto ReSid::Envelope::output() -> uint8_t {
+//
+//     return dac->get( counter );
+// }
 
-auto Sid::Envelope::setAttackDecay( uint8_t value ) -> void {
+auto ReSid::Envelope::setAttackDecay( uint8_t value ) -> void {
     
     attack = ( value >> 4 ) & 0xf;
     decay = value & 0xf;
@@ -66,7 +66,7 @@ auto Sid::Envelope::setAttackDecay( uint8_t value ) -> void {
         ratePeriod = ratePeriodLookup[ decay ];
 }
 
-auto Sid::Envelope::setSustainRelease( uint8_t value ) -> void {
+auto ReSid::Envelope::setSustainRelease( uint8_t value ) -> void {
     
     sustain = (value >> 4) & 0xf;
     release = value & 0xf;
@@ -75,7 +75,7 @@ auto Sid::Envelope::setSustainRelease( uint8_t value ) -> void {
         ratePeriod = ratePeriodLookup[ release ];
 }
 
-auto Sid::Envelope::control( bool gate ) -> void {
+auto ReSid::Envelope::control( bool gate ) -> void {
     
     if ( gate == gateBefore )
         return;
@@ -117,7 +117,7 @@ auto Sid::Envelope::control( bool gate ) -> void {
     gateBefore = gate;
 }
 
-auto Sid::Envelope::reset() -> void {
+auto ReSid::Envelope::reset() -> void {
     
     attack = decay = sustain = release = 0;
     
@@ -142,7 +142,7 @@ auto Sid::Envelope::reset() -> void {
     delay = 0;
 }
 
-auto Sid::Envelope::callEnvelope() -> void {
+auto ReSid::Envelope::callEnvelope() -> void {
     if (unlikely(lockEnvCounter))
         return;
 
@@ -161,7 +161,7 @@ auto Sid::Envelope::callEnvelope() -> void {
     updateExponentialPeriod();
 }
 
-auto Sid::Envelope::callExponentialCounter() -> void {
+auto ReSid::Envelope::callExponentialCounter() -> void {
     exponentialCounter = 0;
 
     if (((state == S_DECAY) && (counter != sustainComparator())) // decrease volume untill seted sustain value
@@ -171,7 +171,7 @@ auto Sid::Envelope::callExponentialCounter() -> void {
     }
 }
 
-inline auto Sid::Envelope::clock() -> void {
+inline auto ReSid::Envelope::clock() -> void {
 	
     env3 = counter;
     
@@ -221,7 +221,7 @@ inline auto Sid::Envelope::clock() -> void {
 		rateCounter = 1;     	
 }
 
-auto Sid::Envelope::updateExponentialPeriod() -> void {
+auto ReSid::Envelope::updateExponentialPeriod() -> void {
 
     switch( counter ) {
         case 0xff: exponentialPeriod = 1; break;

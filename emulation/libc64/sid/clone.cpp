@@ -1,29 +1,37 @@
 
-#include "sid.h"
+#include "reSid.h"
 
 namespace LIBC64 {
-    
-auto SidManager::clone( uint8_t start, uint8_t end ) -> void {
-    
-    if (start >= end)
-        return;
-    
-    for( ; start < end; start++ ) {
-        
-        auto ES = sids[start];
-        
-        ES->lastBusValue = sid->lastBusValue;        
-        ES->databusDecay = sid->databusDecay;
-        ES->databusDecayTime = sid->databusDecayTime;
-        ES->v1 = sid->v1;
-        ES->v2 = sid->v2;
-        ES->v3 = sid->v3;
-        ES->separateFilterInputs = false;
-        
+
+auto ReSid::clone(Sid* src, bool keepProps) -> void {
+
+    if (!keepProps) {
+        leftChannel = src->leftChannel;
+        rightChannel = src->rightChannel;
+        ioPos = src->ioPos;
+        ioMask = src->ioMask;
+    }
+    sampleRate = src->sampleRate;
+
+    if (dynamic_cast<ReSid*>(src)) {
+        ReSid* _s = dynamic_cast<ReSid*>(src);
+
+        if (!keepProps) {
+            scaling = _s->scaling;
+            databusDecayTime = _s->databusDecayTime;
+        }
+
+        lastBusValue = _s->lastBusValue;
+        databusDecay = _s->databusDecay;
+
+        v1 = _s->v1;
+        v2 = _s->v2;
+        v3 = _s->v3;
+
         for ( unsigned i = 0; i < 3; i++ ) {
-            Sid::Voice& v = sid->voice[i];
-            Sid::Voice& vES = ES->voice[i];
-            
+            Voice& v = _s->voice[i];
+            Voice& vES = voice[i];
+
             vES.accumulator = v.accumulator;
             vES.freq = v.freq;
             vES.pw = v.pw;
@@ -35,6 +43,7 @@ auto SidManager::clone( uint8_t start, uint8_t end ) -> void {
             vES.test = v.test;
             vES.msbRising = v.msbRising;
             vES.sync = v.sync;
+            vES.contr = v.contr;
             vES.shiftRegister = v.shiftRegister;
             vES.noNoise = v.noNoise;
             vES.noiseOutput = v.noiseOutput;
@@ -45,12 +54,12 @@ auto SidManager::clone( uint8_t start, uint8_t end ) -> void {
             vES.aging = v.aging;
             vES.shiftReset = v.shiftReset;
             vES.shiftPipeline = v.shiftPipeline;
-            
-            vES.setType( vES.type, ES->filterType == Sid::FilterType::Chamberlin );
-            
-            Sid::Envelope& e = sid->envelope[i];
-            Sid::Envelope& eES = ES->envelope[i];
-            
+
+            vES.setType( keepProps ? vES.type : v.type );
+
+            Envelope& e = _s->envelope[i];
+            Envelope& eES = envelope[i];
+
             eES.state = e.state;
             eES.counter = e.counter;
             eES.env3 = e.env3;
@@ -64,50 +73,106 @@ auto SidManager::clone( uint8_t start, uint8_t end ) -> void {
             eES.attack = e.attack;
             eES.decay = e.decay;
             eES.sustain = e.sustain;
-            eES.release = e.release;            
-        }
-        
-        ES->filter.fc = sid->filter.fc;
-        ES->filter.res = sid->filter.res;
-        ES->filter.filt = sid->filter.filt;
-        ES->filter.mode = sid->filter.mode;
-        ES->filter.vol = sid->filter.vol;
-        ES->filter._1024_div_Q = sid->filter._1024_div_Q;
-        ES->filter.sum = sid->filter.sum;
-        ES->filter.mix = sid->filter.mix;
-        ES->filter.ve = sid->filter.ve;
-        ES->filter.v3 = sid->filter.v3;
-        ES->filter.v2 = sid->filter.v2;
-        ES->filter.v1 = sid->filter.v1;
-        
-        ES->filter.Vhp = 0;
-        ES->filter.Vbp = 0;
-        ES->filter.Vlp = 0;
-        ES->filter.Vbp_x = 0;
-        ES->filter.Vbp_vc = 0;
-        ES->filter.Vlp_x = 0;
-        ES->filter.Vlp_vc = 0;
-        
-        ES->filter.Vddt_Vw_2 = sid->filter.Vddt_Vw_2;
-        ES->filter.Vw_bias = sid->filter.Vw_bias;
-        ES->filter.VbpRes = sid->filter.VbpRes;
-        ES->filter.w0 = sid->filter.w0;
-        
-        ES->chamberlinFilter.svfQ = sid->chamberlinFilter.svfQ;
-        ES->chamberlinFilter.svfF = sid->chamberlinFilter.svfF;
-        ES->chamberlinFilter.lp = sid->chamberlinFilter.lp;
-        ES->chamberlinFilter.hp = sid->chamberlinFilter.hp;
-        ES->chamberlinFilter.bp = sid->chamberlinFilter.bp;
-        ES->chamberlinFilter.np = sid->chamberlinFilter.np;
+            eES.release = e.release;
+            eES.delay = e.delay;
 
-        ES->filter.kVgt = sid->filter.kVgt;
-        ES->filter.n_dac = sid->filter.n_dac;
-        
-        ES->externalFilter.Vlp = sid->externalFilter.Vlp;
-        ES->externalFilter.Vhp = sid->externalFilter.Vhp;
-        ES->externalFilter.w0lp_1_s7 = sid->externalFilter.w0lp_1_s7;
-        ES->externalFilter.w0hp_1_s17 = sid->externalFilter.w0hp_1_s17;                
+            eES.setType( keepProps ? vES.type : v.type );
+        }
+
+        auto& sf = _s->filter;
+        if (!keepProps) {
+            filter.digiBoost = sf.digiBoost;
+            filter.type = sf.type;
+        }
+        filter.enabled = sf.enabled;
+        if (!keepProps)
+            filter.voiceMask = sf.voiceMask;
+
+        filter.bias6581 = sf.bias6581;
+        filter.bias8580 = sf.bias8580;
+
+        filter.fc = sf.fc;
+        filter.res = sf.res;
+        filter.filt = sf.filt;
+        filter.mode = sf.mode;
+        filter.vol = sf.vol;
+        filter._1024_div_Q = sf._1024_div_Q;
+        filter.sum = sf.sum;
+        filter.mix = sf.mix;
+        if (!keepProps)
+            filter.ve = sf.ve;
+        else {
+            updateDigiBoost(filter.digiBoost && type == Type::MOS_8580);
+        }
+        filter.v3 = sf.v3;
+        filter.v2 = sf.v2;
+        filter.v1 = sf.v1;
+
+        if (keepProps) {
+            filter.Vhp = 0;
+            filter.Vbp = 0;
+            filter.Vlp = 0;
+            filter.Vbp_x = 0;
+            filter.Vbp_vc = 0;
+            filter.Vlp_x = 0;
+            filter.Vlp_vc = 0;
+        } else {
+            filter.Vhp = sf.Vhp;
+            filter.Vbp = sf.Vbp;
+            filter.Vlp = sf.Vlp;
+            filter.Vbp_x = sf.Vbp_x;
+            filter.Vbp_vc = sf.Vbp_vc;
+            filter.Vlp_x = sf.Vlp_x;
+            filter.Vlp_vc = sf.Vlp_vc;
+        }
+
+        filter.Vddt_Vw_2 = sf.Vddt_Vw_2;
+        filter.Vw_bias = sf.Vw_bias;
+        filter.VbpRes = sf.VbpRes;
+        filter.w0 = sf.w0;
+
+        filter.kVgt = sf.kVgt;
+        filter.n_dac = sf.n_dac;
+
+        auto& sCLin = _s->chamberlinFilter;
+        chamberlinFilter.svfQ = sCLin.svfQ;
+        chamberlinFilter.svfF = sCLin.svfF;
+        chamberlinFilter.lp = sCLin.lp;
+        chamberlinFilter.hp = sCLin.hp;
+        chamberlinFilter.bp = sCLin.bp;
+        chamberlinFilter.np = sCLin.np;
+
+        auto& sExt = _s->externalFilter;
+        externalFilter.Vlp = sExt.Vlp;
+        externalFilter.Vhp = sExt.Vhp;
+        externalFilter.w0lp_1_s7 = sExt.w0lp_1_s7;
+        externalFilter.w0hp_1_s17 = sExt.w0hp_1_s17;
     }
-}    
+}
+
+auto ReSid::updateSnapshot(DebuggerSnapshot& snap) -> void {
+    auto& s = snap.sids[nr];
+
+    s.volume = filter.vol;
+    s.filter.cutOff = filter.fc;
+    s.filter.resonance = filter.res;
+    s.filter.voices = filter.filt;
+    s.filter.mode = filter.mode >> 4;
+
+    for (unsigned v = 0; v < 3; v++) {
+        auto& sv = s.voices[v];
+        auto& _sidV = voice[v];
+        auto& _sidE = envelope[v];
+
+        sv.wave = _sidV.waveform;
+        sv.frequency = _sidV.freq;
+        sv.pulseWidth = _sidV.pw;
+        sv.attack = _sidE.attack;
+        sv.delay = _sidE.delay;
+        sv.sustain = _sidE.sustain;
+        sv.release = _sidE.release;
+        sv.control = _sidV.contr;
+    }
+}
     
 }

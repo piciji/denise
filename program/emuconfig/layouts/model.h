@@ -94,6 +94,8 @@ struct ModelLayout : GUIKIT::FramedVerticalLayout {
     auto setVisibility(Emulator::Interface::Model* model, Emulator::Interface::Model* model2 = nullptr) -> void;
 
     auto setImageUri(Line::Block* block, float val) -> void;
+
+    auto decimalPlaces(float scaler) -> unsigned;
     
     ModelLayout();
 };

@@ -565,9 +565,6 @@
     <ClInclude Include="..\emulation\libc64\prg\prg.h">
       <Filter>emulation\libc64\prg</Filter>
     </ClInclude>
-    <ClInclude Include="..\emulation\libc64\sid\sid.h">
-      <Filter>emulation\libc64\sid</Filter>
-    </ClInclude>
     <ClInclude Include="..\emulation\libc64\system\gluelogic.h">
       <Filter>emulation\libc64\system</Filter>
     </ClInclude>
@@ -1315,6 +1312,18 @@
     <ClInclude Include="..\emulation\libami\system\serial.h">
       <Filter>emulation\libami\system</Filter>
     </ClInclude>
+    <ClInclude Include="..\emulation\libc64\sid\chamberlin.h">
+      <Filter>emulation\libc64\sid</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libc64\sid\reSid24.h">
+      <Filter>emulation\libc64\sid</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libc64\system\sid.h">
+      <Filter>emulation\libc64\system</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libc64\sid\reSid.h">
+      <Filter>emulation\libc64\sid</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\emulation\cia\base.cpp">
@@ -1486,9 +1495,6 @@
       <Filter>emulation\libc64\sid</Filter>
     </ClCompile>
     <ClCompile Include="..\emulation\libc64\sid\serialization.cpp">
-      <Filter>emulation\libc64\sid</Filter>
-    </ClCompile>
-    <ClCompile Include="..\emulation\libc64\sid\sid.cpp">
       <Filter>emulation\libc64\sid</Filter>
     </ClCompile>
     <ClCompile Include="..\emulation\libc64\sid\tables.cpp">
@@ -2600,6 +2606,15 @@
     </ClCompile>
     <ClCompile Include="..\emulation\libami\system\serial.cpp">
       <Filter>emulation\libami\system</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\sid\chamberlin.cpp">
+      <Filter>emulation\libc64\sid</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\sid\reSid24.cpp">
+      <Filter>emulation\libc64\sid</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\sid\reSid.cpp">
+      <Filter>emulation\libc64\sid</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

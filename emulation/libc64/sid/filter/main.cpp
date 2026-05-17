@@ -1,8 +1,6 @@
 
-//  This code is a modification of the reSID engine in VICE
-//  You can get a copy of the original here: https://sourceforge.net/projects/vice-emu/
+//  Modified by PiCiJi
 //  ---------------------------------------------------------------------------
-//  This file is part of VICE, the Versatile Commodore Emulator.
 //  This file is part of reSID, a MOS6581 SID emulator engine.
 //  Copyright (C) 2010  Dag Lem <resid@nimrod.no>
 //
@@ -21,14 +19,14 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //  ---------------------------------------------------------------------------
 
-#include "../sid.h"
+#include "../reSid.h"
 #include "build.cpp"
 #include "opamp.cpp"
 #include "separateInput.cpp"
 
 namespace LIBC64 {
 
-auto Sid::Filter::clock(int voice1, int voice2, int voice3) -> void {
+auto ReSid::Filter::clock(int voice1, int voice2, int voice3) -> void {
     Calculated& ca = calculated[ type ];
     // Skalierung: 20 bit * 14 bit = 34 / 18 = 16 bit
     v1 = (voice1 * ca.voiceScaleS14 >> 18) + ca.voiceDC;
@@ -77,7 +75,7 @@ auto Sid::Filter::clock(int voice1, int voice2, int voice3) -> void {
     Vhp = ca.summer[offset + ca.resonance[res][Vbp] + Vlp + Vi];
 }
 
-auto Sid::Filter::input(short sample) -> void {
+auto ReSid::Filter::input(short sample) -> void {
     // Scale to three times the peak-to-peak for one voice and add the op-amp
     // "zero" DC level.
     // NB! Adding the op-amp "zero" DC level is a (wildly inaccurate)
@@ -91,7 +89,7 @@ auto Sid::Filter::input(short sample) -> void {
     ve = (sample * ca.voiceScaleS14 * 3 >> 14) + ca.mixer[0];
 }
 
-auto Sid::Filter::output() -> short {
+auto ReSid::Filter::output() -> short {
 	// Der Mixer hat 7 Eingänge, 4 voices und 3 Filter.
 
 	// Mittels folgendem php Skript sind die 'case' labels generiert.

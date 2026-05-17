@@ -239,7 +239,7 @@ auto System::memoryDump(uint8_t page, uint8_t* dump) -> void {
                 *dump++ = sidManager.getSidByAdr( addr )->peekIO( addr );
         } else {
             for (unsigned addr = 0xd400; addr <= 0xd7ff; addr++ )
-                *dump++ = sidManager.sid->peekIO( addr );
+                *dump++ = sidManager.mainSid()->peekIO( addr );
         }
 
         uint8_t _l = vicII->lastReadPhase1() & ~0xf;

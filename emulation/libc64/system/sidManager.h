@@ -4,7 +4,8 @@
 #include <string>
 #include <vector>
 #include <functional>
-#include "../sid/sid.h"
+#include "../sid/reSid.h"
+#include "sid.h"
 #include "../sid/usbSidPico.h"
 #include "debuggerSnapshot.h"
 
@@ -24,6 +25,8 @@ struct SidManager {
     std::function<uint8_t ()> getPotY;
     USBSIDPico usbSIDPico;
 
+    static std::vector<std::string> adrOptions;
+
     System* system;
     bool audioOut;
     double leftSids;
@@ -32,10 +35,8 @@ struct SidManager {
     int sampleLimit;
     unsigned serializationSizeForSevenMoreSids;
     unsigned sysClock;
-    bool useExternalFilter;
-    bool useVolumeCorrection;
     bool extraSids;
-    int optionsInUse;
+    int engine;
 
     Callback callAlarm;
     Callback callPotUpdate;
@@ -51,13 +52,10 @@ struct SidManager {
     uint8_t potY;
 
     std::vector<Sid*> useSids;
+    Sid* sids[8];
 
-    Sid* sid;
-    Sid* sids[7];
-
-    auto updateOptionsInUse() -> void;
-    auto setExternalFilter(bool state) -> void;
-    template<int options> auto clockMultiChips(int cycles) -> void;
+    auto mainSid() -> Sid* { return sids[0]; }
+    template<bool _audioOut, bool _delayed> auto clockMultiChips(int cycles) -> void;
     auto getSidByAdr(uint16_t addr, bool ioArea = false) -> Sid*;
     auto writeSid(uint16_t addr, uint8_t value) -> void;
     auto writeSidIO(uint16_t addr, uint8_t value) -> void;
@@ -65,11 +63,10 @@ struct SidManager {
     auto isStereo() -> bool;
     auto setEnableFilterAll( bool state ) -> void;
     auto isEnableFilter( ) -> bool;
-    auto setFilterTypeAll( Sid::FilterType filterType ) -> void;
-    auto getFilterType( ) -> Sid::FilterType;
-    auto setFilterVolumeCorrection( bool state ) -> void;
-    auto setType( int nr, Sid::Type type ) -> void;
-    auto getType( int nr ) -> Sid::Type;
+    auto setEngineAll(int filterType ) -> void;
+    auto getEngine( ) -> int;
+    auto setType( int nr, ReSid::Type type ) -> void;
+    auto getType( int nr ) -> ReSid::Type;
     auto updateChamberlinFrequencyAll(double sampleRate) -> void;
     auto adjustFilterBias6581All(int value) -> void;
     auto adjustFilterBias8580All(int value) -> void;
@@ -95,7 +92,6 @@ struct SidManager {
     auto searializeActiveSids(Emulator::Serializer& s, bool light = false) -> void;
 
     auto updateClock() -> void;
-    template<int options> auto updateClockT() -> void;
     auto registerCallbacks() -> void;
     auto clone( uint8_t start, uint8_t end ) -> void;
 
@@ -107,8 +103,6 @@ struct SidManager {
     auto applyOffsetPseudoStereo() -> void;
     auto intensifyPseudoStereo(bool state) -> void;
     auto hasIntensifiedPseudoStereo() -> bool { return offsetPseudoStereo.allow; }
-    auto setSeparateFilterInputs(bool state) -> void;
-    auto hasSeparateFilterInputs() -> bool;
 
     auto enableUSBSID(bool state) -> void;
     auto setUSBSIDBuffSize(unsigned value) -> void;
@@ -118,7 +112,15 @@ struct SidManager {
     auto getUSBSIDBuffSize() -> unsigned { return usbSIDPico.buffSize; }
     auto getUSBSIDDiffSize() -> unsigned { return usbSIDPico.diffSize; }
 
+    auto adjustFilterRange6581All(int value) -> void;
+    auto getFilterRange6581() -> int;
+
+    auto setWaveformStrength(int value) -> void;
+    auto getWaveformStrength() -> int;
+
     auto updateSnapshot(DebuggerSnapshot& snap) -> void;
+
+    auto rebuildSids(bool cloneOld) -> void;
 };
 
 }

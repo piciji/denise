@@ -3,7 +3,7 @@
 #include "../input/input.h"
 #include "../prg/prg.h"
 #include "../vicII/base.h"
-#include "../sid/sid.h"
+#include "../sid/reSid.h"
 #include "keyBuffer.h"
 #include "../../tools/powersupply.h"
 #include "../../tools/serializer.h"
@@ -274,7 +274,7 @@ cpu(this, sysTimer, cia1, cia2, iecBus, traps) {
         if (sidManager.extraSids)
             return sidManager.writeSid( addr, value );
 
-        sidManager.sid->writeIO( addr, value );
+        sidManager.mainSid()->writeIO( addr, value );
     };
 
     writeDebugReg = [this](uint16_t addr, uint8_t value) {
@@ -286,7 +286,7 @@ cpu(this, sysTimer, cia1, cia2, iecBus, traps) {
         if (sidManager.extraSids)
             return sidManager.getSidByAdr( addr )->writeIO( addr, value );
 
-        sidManager.sid->writeIO(addr, value);
+        sidManager.mainSid()->writeIO(addr, value);
     };
 
     readSidReg = [this](uint16_t addr) {
@@ -296,7 +296,7 @@ cpu(this, sysTimer, cia1, cia2, iecBus, traps) {
         if (sidManager.extraSids)
             return sidManager.getSidByAdr( addr )->readIO( addr );
 
-        return sidManager.sid->readIO( addr );
+        return sidManager.mainSid()->readIO( addr );
     };
 
     peekSidReg = [this](uint16_t addr) {
@@ -306,7 +306,7 @@ cpu(this, sysTimer, cia1, cia2, iecBus, traps) {
         if (sidManager.extraSids)
             return sidManager.getSidByAdr( addr )->peekIO( addr );
 
-        return sidManager.sid->peekIO( addr );
+        return sidManager.mainSid()->peekIO( addr );
     };
 
     writeVicReg = [this](uint16_t addr, uint8_t value) {

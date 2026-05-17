@@ -3,7 +3,7 @@
  * this code is a modification of chamberlin filter engine in Hoxs64
  */
 
-#include "../sid.h"
+#include "../reSid.h"
 
 #ifndef M_PI 
 #define M_PI    3.14159265358979323846f 
@@ -11,10 +11,10 @@
 
 namespace LIBC64 {
 
-double* Sid::ChamberlinFilter::sinTable = nullptr;
-unsigned Sid::ChamberlinFilter::resolution = 131072L;
+double* ReSid::ChamberlinFilter::sinTable = nullptr;
+unsigned ReSid::ChamberlinFilter::resolution = 131072L;
     
-Sid::ChamberlinFilter::ChamberlinFilter(Sid::Filter& filter) : filter(filter) {
+ReSid::ChamberlinFilter::ChamberlinFilter(ReSid::Filter& filter) : filter(filter) {
 
     static bool initialized = false;
 
@@ -22,18 +22,16 @@ Sid::ChamberlinFilter::ChamberlinFilter(Sid::Filter& filter) : filter(filter) {
         init();
         initialized = true;
     }
-    
-    sampleRate = 982800.0;
 }
 
-auto Sid::ChamberlinFilter::reset() -> void {
+auto ReSid::ChamberlinFilter::reset(double sampleRate) -> void {
 
     lp = hp = bp = np = 0.0;
     
-    setSVF();
+    setSVF(sampleRate);
 }
     
-auto Sid::ChamberlinFilter::clock(double voice1, double voice2, double voice3) -> double {
+auto ReSid::ChamberlinFilter::clock(double voice1, double voice2, double voice3) -> double {
 
     double prefilter;
     double mixer;
@@ -107,7 +105,7 @@ auto Sid::ChamberlinFilter::clock(double voice1, double voice2, double voice3) -
     return mixer;
 }
     
-inline auto Sid::ChamberlinFilter::process(double sample) -> void {
+inline auto ReSid::ChamberlinFilter::process(double sample) -> void {
     static double min = 1.0e-300;
 
 	np  = sample - svfQ * bp;
@@ -130,7 +128,7 @@ inline auto Sid::ChamberlinFilter::process(double sample) -> void {
 	//	lp = bp = hp = np = 0;	
 }    
     
-auto Sid::ChamberlinFilter::setSVF( ) -> void {
+auto ReSid::ChamberlinFilter::setSVF( double sampleRate ) -> void {
     double a,b,f;
     
     double cutoff = (double)filter.fc * (5.8) + 30.0;
@@ -162,14 +160,7 @@ auto Sid::ChamberlinFilter::setSVF( ) -> void {
 	svfQ = a;
 }
 
-auto Sid::ChamberlinFilter::updateFrequency(double sampleRate) -> void {
-    
-    this->sampleRate = sampleRate;
-    
-    setSVF();
-}
-
-auto Sid::ChamberlinFilter::init() -> void {
+auto ReSid::ChamberlinFilter::init() -> void {
 
     double a;
     
@@ -181,7 +172,7 @@ auto Sid::ChamberlinFilter::init() -> void {
     }
 }
 
-auto Sid::ChamberlinFilter::getSin(double a) -> double {
+auto ReSid::ChamberlinFilter::getSin(double a) -> double {
     long i;
 
 	if (std::fabs(a) >= (2.0 * M_PI)) 
@@ -197,13 +188,6 @@ auto Sid::ChamberlinFilter::getSin(double a) -> double {
     		
     i = (long)((double)resolution * -a / (2.0 * M_PI));
     return -sinTable[i];	
-}
-
-Sid::ChamberlinFilter::~ChamberlinFilter() {
-    if (sinTable)
-        delete[] sinTable;
-        
-    sinTable = nullptr;
 }
 
 }

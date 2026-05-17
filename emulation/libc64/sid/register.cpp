@@ -1,9 +1,9 @@
 
-#include "sid.h"
+#include "reSid.h"
 
 namespace LIBC64 {
 
-auto Sid::peekIO( uint8_t addr ) -> uint8_t {
+auto ReSid::peekIO( uint8_t addr ) -> uint8_t {
     addr &= 0x1f;
 
     switch( addr ) {
@@ -24,7 +24,7 @@ auto Sid::peekIO( uint8_t addr ) -> uint8_t {
     return lastBusValue;
 }
 
-auto Sid::readIO( uint8_t addr ) -> uint8_t {
+auto ReSid::readIO( uint8_t addr ) -> uint8_t {
     addr &= 0x1f;
     
     switch( addr ) {
@@ -54,7 +54,7 @@ auto Sid::readIO( uint8_t addr ) -> uint8_t {
     return lastBusValue;
 }
 
-auto Sid::writeIO( uint8_t addr, uint8_t value ) -> void {
+auto ReSid::writeIO( uint8_t addr, uint8_t value ) -> void {
  
     addr &= 0x1f;
     lastBusValue = value;
@@ -156,21 +156,21 @@ auto Sid::writeIO( uint8_t addr, uint8_t value ) -> void {
     writeIOFilter( addr, value );
 }
 
-auto Sid::writeIOFilter( uint8_t addr, uint8_t value ) -> void {
+auto ReSid::writeIOFilter( uint8_t addr, uint8_t value ) -> void {
 	//addr &= 0x1f;
 	
 	switch(addr) {
 		case 0x15:
 			filter.writeFcLow( value );
-            chamberlinFilter.setSVF();
+            chamberlinFilter.setSVF(sampleRate);
 			break;
 		case 0x16:
 			filter.writeFcHi( value );
-            chamberlinFilter.setSVF();
+            chamberlinFilter.setSVF(sampleRate);
 			break;
 		case 0x17:
 			filter.writeResFilt( value );
-            chamberlinFilter.setSVF();
+            chamberlinFilter.setSVF(sampleRate);
 			break;
 		case 0x18:            
 			filter.writeModeVol( value );

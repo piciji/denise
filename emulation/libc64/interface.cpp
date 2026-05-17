@@ -26,7 +26,7 @@
 
 namespace LIBC64 {
 
-const std::string Interface::Version = "226";
+const std::string Interface::Version = "227";
     
 Interface::Interface() : Emulator::Interface( "C64" ) {
     
@@ -538,25 +538,24 @@ auto Interface::prepareModels() -> void {
 
 	// 0 - off, 1 - on, means software decides
     models.push_back({ModelIdFilter, "SID Filter", Model::Type::Switch, Model::Purpose::AudioSettings, 1});
-    // external Filter
-    models.push_back({ModelIdSidExternal, "SID External Filter", Model::Type::Switch, Model::Purpose::AudioSettings, 1});
 	// amplifies Sid 8580 digi sounds
 	models.push_back({ModelIdDigiboost, "SID 8580 Digi Boost", Model::Type::Switch, Model::Purpose::AudioSettings, 0});
     // strengthen pseudo stereo effect
     models.push_back({ModelIdIntensifyPseudoStereo, "intensify Pseudo Stereo", Model::Type::Switch, Model::Purpose::AudioSettings, 0});
-
-    models.push_back({ModelIdSidFilterType, "SID Filter Type", Model::Type::Combo, Model::Purpose::AudioSettings, 0, {0, 2},
-	{ "reSID", "reSID VICE 2.4", "Chamberlin" }});
-
-	// adjust center frequency for Sid 6581
-	models.push_back({ModelIdBias6581, "SID 6581 Bias", Model::Type::Slider, Model::Purpose::AudioSettings, 500, {-5000, 5000}, {}, 400, 1.0 });
-    // adjust center frequency for Sid 8580
-	models.push_back({ModelIdBias8580, "SID 8580 Bias", Model::Type::Slider, Model::Purpose::AudioSettings, 0, {-5000, 5000}, {}, 400, 1.0 });
+    // set reSIDfp waveform strength
+    models.push_back({ModelIdSidWaveformStrength, "Wave Strength", Model::Type::Combo, Model::Purpose::AudioSettings, 0, {0, 2}, {"Average", "Weak", "Strong"}});
+    // set SID driver
+    models.push_back({ModelIdSidEngine, "SID Engine", Model::Type::Combo, Model::Purpose::AudioSettings, 0, {0, 3},
+	{ "reSID", "residfp", "reSID old", "Chamberlin" }});
+	// adjust center frequency for SID 6581
+	models.push_back({ModelIdBias6581, "SID 6581 Curve", Model::Type::Slider, Model::Purpose::AudioSettings, 5500, {0, 10000}, {}, 400, 10000.0 });
+    // adjust range for SID 6581
+    models.push_back({ModelIdRange6581, "SID 6581 Range", Model::Type::Slider, Model::Purpose::AudioSettings, 5000, {0, 10000}, {}, 400, 10000.0 });
+    // adjust center frequency for SID 8580
+	models.push_back({ModelIdBias8580, "SID 8580 Curve", Model::Type::Slider, Model::Purpose::AudioSettings, 5000, {0, 10000}, {}, 400, 10000.0 });
     // use each 'x' sample. lower value means better quality but high cpu usage by resampler
     models.push_back({ModelIdSidSampleFetch, "Sample Interval", Model::Type::Radio, Model::Purpose::AudioResampler, 1, {0, 2}, {"Highest", "High", "Medium"}});
-    // equals volume of filter types
-    models.push_back({ModelIdSidFilterVolumeEqualizer, "SID Filter Equalizer", Model::Type::Switch, Model::Purpose::AudioSettings, 0});
-    // extra Sids    
+    // extra Sids
     models.push_back({ModelIdSidMulti, "Extra SIDs", Model::Type::Combo, Model::Purpose::AudioResampler, 0, {0, 7}, {"0", "1", "2", "3", "4", "5", "6", "7"}});
     
     models.push_back({ModelIdSidUsbPico, "USBSID-Pico", Model::Type::Switch, Model::Purpose::AudioExtern, 0});
@@ -566,42 +565,42 @@ auto Interface::prepareModels() -> void {
 	models.push_back({ModelIdSid, "SID 1", Model::Type::Radio, Model::Purpose::SoundChip, 0, {0, 1}, {"8580", "6581"} });	
     models.push_back({ModelIdSid1Left, "SID 1 Left Channel", Model::Type::Switch, Model::Purpose::AudioResampler, 1});
     models.push_back({ModelIdSid1Right, "SID 1 Right Channel", Model::Type::Switch, Model::Purpose::AudioResampler, 0});
-    models.push_back({ModelIdSid1Adr, "SID 1 Address", Model::Type::Combo, Model::Purpose::AudioSettings, 0, {0, (int)(Sid::adrOptions.size() - 1)}, Sid::adrOptions});
+    models.push_back({ModelIdSid1Adr, "SID 1 Address", Model::Type::Combo, Model::Purpose::AudioSettings, 0, {0, (int)(SidManager::adrOptions.size() - 1)}, SidManager::adrOptions});
 
     models.push_back({ModelIdSid2, "SID 2", Model::Type::Radio, Model::Purpose::AudioSettings, 0, {0, 1}, {"8580", "6581"} });	
     models.push_back({ModelIdSid2Left, "SID 2 Left Channel", Model::Type::Switch, Model::Purpose::AudioResampler, 0});
     models.push_back({ModelIdSid2Right, "SID 2 Right Channel", Model::Type::Switch, Model::Purpose::AudioResampler, 1});
-    models.push_back({ModelIdSid2Adr, "SID 2 Address", Model::Type::Combo, Model::Purpose::AudioSettings, 0, {0, (int)(Sid::adrOptions.size() - 1)}, Sid::adrOptions});
+    models.push_back({ModelIdSid2Adr, "SID 2 Address", Model::Type::Combo, Model::Purpose::AudioSettings, 0, {0, (int)(SidManager::adrOptions.size() - 1)}, SidManager::adrOptions});
     
     models.push_back({ModelIdSid3, "SID 3", Model::Type::Radio, Model::Purpose::AudioSettings, 0, {0, 1}, {"8580", "6581"} });	
     models.push_back({ModelIdSid3Left, "SID 3 Left Channel", Model::Type::Switch, Model::Purpose::AudioResampler, 1});
     models.push_back({ModelIdSid3Right, "SID 3 Right Channel", Model::Type::Switch, Model::Purpose::AudioResampler, 0});
-    models.push_back({ModelIdSid3Adr, "SID 3 Address", Model::Type::Combo, Model::Purpose::AudioSettings, 2, {0, (int)(Sid::adrOptions.size() - 1)}, Sid::adrOptions});
+    models.push_back({ModelIdSid3Adr, "SID 3 Address", Model::Type::Combo, Model::Purpose::AudioSettings, 2, {0, (int)(SidManager::adrOptions.size() - 1)}, SidManager::adrOptions});
     
     models.push_back({ModelIdSid4, "SID 4", Model::Type::Radio, Model::Purpose::AudioSettings, 0, {0, 1}, {"8580", "6581"} });	
     models.push_back({ModelIdSid4Left, "SID 4 Left Channel", Model::Type::Switch, Model::Purpose::AudioResampler, 0});
     models.push_back({ModelIdSid4Right, "SID 4 Right Channel", Model::Type::Switch, Model::Purpose::AudioResampler, 1});
-    models.push_back({ModelIdSid4Adr, "SID 4 Address", Model::Type::Combo, Model::Purpose::AudioSettings, 2, {0, (int)(Sid::adrOptions.size() - 1)}, Sid::adrOptions});
+    models.push_back({ModelIdSid4Adr, "SID 4 Address", Model::Type::Combo, Model::Purpose::AudioSettings, 2, {0, (int)(SidManager::adrOptions.size() - 1)}, SidManager::adrOptions});
     
     models.push_back({ModelIdSid5, "SID 5", Model::Type::Radio, Model::Purpose::AudioSettings, 0, {0, 1}, {"8580", "6581"} });	
     models.push_back({ModelIdSid5Left, "SID 5 Left Channel", Model::Type::Switch, Model::Purpose::AudioResampler, 1});
     models.push_back({ModelIdSid5Right, "SID 5 Right Channel", Model::Type::Switch, Model::Purpose::AudioResampler, 0});
-    models.push_back({ModelIdSid5Adr, "SID 5 Address", Model::Type::Combo, Model::Purpose::AudioSettings, 2, {0, (int)(Sid::adrOptions.size() - 1)}, Sid::adrOptions});
+    models.push_back({ModelIdSid5Adr, "SID 5 Address", Model::Type::Combo, Model::Purpose::AudioSettings, 2, {0, (int)(SidManager::adrOptions.size() - 1)}, SidManager::adrOptions});
     
     models.push_back({ModelIdSid6, "SID 6", Model::Type::Radio, Model::Purpose::AudioSettings, 0, {0, 1}, {"8580", "6581"} });	
     models.push_back({ModelIdSid6Left, "SID 6 Left Channel", Model::Type::Switch, Model::Purpose::AudioResampler, 0});
     models.push_back({ModelIdSid6Right, "SID 6 Right Channel", Model::Type::Switch, Model::Purpose::AudioResampler, 1});
-    models.push_back({ModelIdSid6Adr, "SID 6 Address", Model::Type::Combo, Model::Purpose::AudioSettings, 2, {0, (int)(Sid::adrOptions.size() - 1)}, Sid::adrOptions});
+    models.push_back({ModelIdSid6Adr, "SID 6 Address", Model::Type::Combo, Model::Purpose::AudioSettings, 2, {0, (int)(SidManager::adrOptions.size() - 1)}, SidManager::adrOptions});
     
     models.push_back({ModelIdSid7, "SID 7", Model::Type::Radio, Model::Purpose::AudioSettings, 0, {0, 1}, {"8580", "6581"} });	
     models.push_back({ModelIdSid7Left, "SID 7 Left Channel", Model::Type::Switch, Model::Purpose::AudioResampler, 1});
     models.push_back({ModelIdSid7Right, "SID 7 Right Channel", Model::Type::Switch, Model::Purpose::AudioResampler, 0});
-    models.push_back({ModelIdSid7Adr, "SID 7 Address", Model::Type::Combo, Model::Purpose::AudioSettings, 2, {0, (int)(Sid::adrOptions.size() - 1)}, Sid::adrOptions});
+    models.push_back({ModelIdSid7Adr, "SID 7 Address", Model::Type::Combo, Model::Purpose::AudioSettings, 2, {0, (int)(SidManager::adrOptions.size() - 1)}, SidManager::adrOptions});
     
     models.push_back({ModelIdSid8, "SID 8", Model::Type::Radio, Model::Purpose::AudioSettings, 0, {0, 1}, {"8580", "6581"} });	
     models.push_back({ModelIdSid8Left, "SID 8 Left Channel", Model::Type::Switch, Model::Purpose::AudioResampler, 0});
     models.push_back({ModelIdSid8Right, "SID 8 Right Channel", Model::Type::Switch, Model::Purpose::AudioResampler, 1});
-    models.push_back({ModelIdSid8Adr, "SID 8 Address", Model::Type::Combo, Model::Purpose::AudioSettings, 2, {0, (int)(Sid::adrOptions.size() - 1)}, Sid::adrOptions});
+    models.push_back({ModelIdSid8Adr, "SID 8 Address", Model::Type::Combo, Model::Purpose::AudioSettings, 2, {0, (int)(SidManager::adrOptions.size() - 1)}, SidManager::adrOptions});
 
     // c64c use custom ic instead of discrete glue logic
     models.push_back({ModelIdGlueLogic, "Custom IC Glue Logic", Model::Type::Switch, Model::Purpose::Misc, 0});
@@ -1508,11 +1507,8 @@ auto Interface::setModelValue(unsigned modelId, int value) -> void {
 		case ModelIdSid:
             system->sidManager.setType( 0, (value & 1) ? Sid::Type::MOS_6581 : Sid::Type::MOS_8580 );
             break;
-        case ModelIdSidFilterType:
-            system->sidManager.setFilterTypeAll( (Sid::FilterType)value );
-            break;   
-        case ModelIdSidFilterVolumeEqualizer:
-            system->sidManager.setFilterVolumeCorrection( value & 1 );
+        case ModelIdSidEngine:
+            system->sidManager.setEngineAll( value );
             break;
         case ModelIdFilter:
             system->sidManager.setEnableFilterAll( value & 1 );
@@ -1529,8 +1525,11 @@ auto Interface::setModelValue(unsigned modelId, int value) -> void {
         case ModelIdBias8580:
             system->sidManager.adjustFilterBias8580All( value );
 			break;
-        case ModelIdSidExternal:
-            system->sidManager.setExternalFilter(value & 1);
+        case ModelIdRange6581:
+            system->sidManager.adjustFilterRange6581All( value );
+            break;
+        case ModelIdSidWaveformStrength:
+            system->sidManager.setWaveformStrength( value );
             break;
         case ModelIdSidSampleFetch:
             system->sidManager.setResampleQuality( (uint8_t)value );
@@ -1688,10 +1687,8 @@ auto Interface::getModelValue(unsigned modelId) -> int {
     switch (modelId) {
 		case ModelIdSid:			
             return (system->sidManager.getType(0) == Sid::Type::MOS_6581) ? 1 : 0;
-        case ModelIdSidFilterType:
-            return (int)system->sidManager.getFilterType();
-        case ModelIdSidFilterVolumeEqualizer:
-            return system->sidManager.useVolumeCorrection;
+        case ModelIdSidEngine:
+            return (int)system->sidManager.getEngine();
         case ModelIdFilter:
             return system->sidManager.isEnableFilter();
 		case ModelIdDigiboost:
@@ -1702,8 +1699,10 @@ auto Interface::getModelValue(unsigned modelId) -> int {
 			return system->sidManager.getFilterBias6581();
         case ModelIdBias8580:
             return system->sidManager.getFilterBias8580();
-        case ModelIdSidExternal:
-            return (int)system->sidManager.useExternalFilter;
+        case ModelIdRange6581:
+            return system->sidManager.getFilterRange6581();
+        case ModelIdSidWaveformStrength:
+            return system->sidManager.getWaveformStrength();
         case ModelIdSidSampleFetch:
             return system->sidManager.getResampleQuality();
         case ModelIdCiaRev:

@@ -18,7 +18,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
 
 # copyright holders
 
-* SID emulation code, especially SID filter, is taken by VICE http://vice-emu.sourceforge.net
+* reSID from Dag Lem resid@nimrod.no
 * "VIC-II" cycle emulation code is based on VICE implementation http://vice-emu.sourceforge.net
 * cosine resampler by RetroArch https://github.com/libretro/RetroArch
 * sinc resampler by RetroArch https://github.com/libretro/RetroArch

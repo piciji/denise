@@ -1,9 +1,6 @@
 
-//  This code is a modification of the reSID engine in VICE
-//  You can get a copy of the original here: https://sourceforge.net/projects/vice-emu/
-
+//  Modified by PiCiJi
 //  ---------------------------------------------------------------------------
-//  This file is part of VICE, the Versatile Commodore Emulator.
 //  This file is part of reSID, a MOS6581 SID emulator engine.
 //  Copyright (C) 2010  Dag Lem <resid@nimrod.no>
 //
@@ -22,11 +19,11 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //  ---------------------------------------------------------------------------
 
-#include "../sid.h"
+#include "../reSid.h"
 
 namespace LIBC64 {
     
-Sid::ExternalFilter::ExternalFilter() {
+ReSid::ExternalFilter::ExternalFilter() {
     // Zwischen Ausgang am Sid und Ausgang C64 findet noch eine weitere Filterung statt.
     // Dabei werden nur Frequenzen zwischen 16 Hz u. 15.9 kHz durchgelassen.
     // Mittels 2 RC Gliedern findet zuerst die Tiefpass im Anschluß die Hochpass Filterung statt.
@@ -67,12 +64,12 @@ Sid::ExternalFilter::ExternalFilter() {
 	w0hp_1_s17 = int(1e-6 / (1e-6+1e3*1e-5) * (1 << 17) + 0.5);
 }
 
-auto Sid::ExternalFilter::reset() -> void {
+auto ReSid::ExternalFilter::reset() -> void {
     Vlp = 0;
     Vhp = 0;
 }
     
-inline auto Sid::ExternalFilter::clock( short Vi ) -> void {
+auto ReSid::ExternalFilter::clock( short Vi ) -> void {
     // deltas für beide Filter in jeder Mikro Sekunde
     // vi: Eingangsspannung (skaliert: 16 bit)
     // vlp: Ausgangsspannung Filter 1 (skaliert: 27 bit)
@@ -85,14 +82,6 @@ inline auto Sid::ExternalFilter::clock( short Vi ) -> void {
     
     Vlp += dVlp;
     Vhp += dVhp;
-}
-
-inline auto Sid::ExternalFilter::output() -> int {
-    
-    // 2. Tiefpass Filter wirkt durch Subtraktion wie ein Hochpass Filter.
-    // Skalierung: 27 - 11 = 16 bit
-    // Wertebereich umfasst 16 bit: 15 bit + Vorzeichenbit
-    return (Vlp - Vhp) >> 11;
 }
     
 }

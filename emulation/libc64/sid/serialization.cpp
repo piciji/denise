@@ -1,9 +1,10 @@
 
-#include "sid.h"
+#include "reSid.h"
 
 namespace LIBC64 {
     
-auto Sid::serialize(Emulator::Serializer& s, bool light) -> void {
+auto ReSid::serialize(Emulator::Serializer& s, bool light) -> void {
+    bool _load = s.mode() == Emulator::Serializer::Mode::Load;
 
     s.integer( leftChannel );
     s.integer( rightChannel );
@@ -11,7 +12,7 @@ auto Sid::serialize(Emulator::Serializer& s, bool light) -> void {
     s.integer( ioPos );
     
     s.integer( (uint8_t&) type );
-    s.integer( (uint8_t&) filterType );
+    s.integer( scaling );
     s.integer( filter.digiBoost );
     s.integer( lastBusValue );
     s.integer( databusDecay );
@@ -22,7 +23,6 @@ auto Sid::serialize(Emulator::Serializer& s, bool light) -> void {
     
     for ( unsigned i = 0; i < 3; i++ ) {
         Voice& v = voice[i];
-
         s.integer( (uint8_t&)v.type );
         s.integer( v.accumulator );
         s.integer( v.freq );
@@ -35,6 +35,7 @@ auto Sid::serialize(Emulator::Serializer& s, bool light) -> void {
         s.integer( v.test );
         s.integer( v.msbRising );
         s.integer( v.sync );
+        s.integer( v.contr );
         s.integer( v.shiftRegister );
         s.integer( v.noNoise );
         s.integer( v.noiseOutput );
@@ -42,17 +43,11 @@ auto Sid::serialize(Emulator::Serializer& s, bool light) -> void {
         s.integer( v.noPulse );
         s.integer( v.waveZero );
         s.integer( v.ringMsbMask );
-        
         s.integer( v.aging );
         s.integer( v.shiftReset );
         s.integer( v.shiftPipeline );
 
-        if (s.mode() == Emulator::Serializer::Mode::Load) {
-            v.setType( v.type, filterType == FilterType::Chamberlin ); // update pointer                
-        }
-
         Envelope& e = envelope[i];
-
         s.integer( (uint8_t&)e.state );
         s.integer( (uint8_t&)e.type );
         s.integer( e.counter );
@@ -70,8 +65,9 @@ auto Sid::serialize(Emulator::Serializer& s, bool light) -> void {
         s.integer( e.release );
         s.integer( e.delay );
         
-        if (s.mode() == Emulator::Serializer::Mode::Load) {
-            e.setType( e.type ); // update pointer                
+        if (_load) {
+            v.setType( v.type);
+            e.setType( e.type );
         }
     }
     
@@ -103,6 +99,8 @@ auto Sid::serialize(Emulator::Serializer& s, bool light) -> void {
     s.integer( filter.Vw_bias );
     s.integer( filter.VbpRes );
     s.integer( filter.w0 );
+    s.integer( filter.kVgt );
+    s.integer( filter.n_dac );
     s.integer( filter.nrXFilter );
     s.integer( filter.nrXMixer );
     
@@ -112,24 +110,15 @@ auto Sid::serialize(Emulator::Serializer& s, bool light) -> void {
     s.floatingpoint( chamberlinFilter.hp );
     s.floatingpoint( chamberlinFilter.bp );
     s.floatingpoint( chamberlinFilter.np );
-    
-    s.integer( filter.kVgt );
-    s.integer( filter.n_dac );
   
     if (!light) {
         s.integer( externalFilter.Vlp );
         s.integer( externalFilter.Vhp );
         s.integer( externalFilter.w0lp_1_s7 );
         s.integer( externalFilter.w0hp_1_s17 );
-    }
 
-    if (!s.memUsage()) {
-        if (s.mode() == Emulator::Serializer::Mode::Load) {
-            volumeCorrection(sidManager.useVolumeCorrection);
-
-            if (separateFilterInputs)
-                filter.prepareSeparate();
-        }
+        if (_load)
+            scaling = type == Type::MOS_8580 ? 2 : 1;
     }
 }
 

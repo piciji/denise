@@ -1,9 +1,6 @@
 
-//  This code is a modification of the reSID engine in VICE
-//  You can get a copy of the original here: https://sourceforge.net/projects/vice-emu/
-
+//  Modified by PiCiJi
 //  ---------------------------------------------------------------------------
-//  This file is part of VICE, the Versatile Commodore Emulator.
 //  This file is part of reSID, a MOS6581 SID emulator engine.
 //  Copyright (C) 2010  Dag Lem <resid@nimrod.no>
 //
@@ -22,7 +19,7 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //  ---------------------------------------------------------------------------
 
-#include "../sid.h"
+#include "../reSid.h"
 
 namespace LIBC64 {
 
@@ -190,7 +187,7 @@ namespace LIBC64 {
 // vi ---R1->--->-[A>----- vo
 //            vx
 
-auto Sid::Filter::solveOpamp(Opamp* opamp, double n, int vi, int& x, Calculated& ca) -> int {
+auto ReSid::Filter::solveOpamp(Opamp* opamp, double n, int vi, int& x, Calculated& ca) -> int {
     // Ausgehend von Kirchhoff's Gesetz gilt für die Stromstärke im Knotenpunkt 'vx' für die zufließenden Ströme:
     // IR1 + IR2 und für die abfließenden Ströme 0
     // Somit gilt: IR1 + IR2 = 0
@@ -332,7 +329,7 @@ auto Sid::Filter::solveOpamp(Opamp* opamp, double n, int vi, int& x, Calculated&
 // n_dac = n * dt/C
 // 'n' ist die Widerstandswirkung, welche sich aus der Grenzfrequenz ergiebt.
 
-inline auto Sid::Filter::solveIntegrate8580(int vi, int& vx, int& vc, Calculated& ca) -> int {
+inline auto ReSid::Filter::solveIntegrate8580(int vi, int& vx, int& vc, Calculated& ca) -> int {
 
     unsigned int Vgst = kVgt - vx;
     unsigned int Vgdt = (vi < kVgt) ? kVgt - vi : 0;  // triode/saturation mode
@@ -417,7 +414,7 @@ inline auto Sid::Filter::solveIntegrate8580(int vi, int& vx, int& vc, Calculated
 // Vddt - Vg = sqrt( ( (Vddt - vi)^2 + (Vddt - Vw)^2 ) / 2 )
 // Vg = Vddt - sqrt(((Vddt - vi)^2 + (Vddt - Vw)^2) / 2)
 
-inline auto Sid::Filter::solveIntegrate6581(int vi, int& vx, int& vc, Calculated& ca) -> int {
+inline auto ReSid::Filter::solveIntegrate6581(int vi, int& vx, int& vc, Calculated& ca) -> int {
 
     int Vddt = ca.kVddt;  // skaliert m*2^16
 

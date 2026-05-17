@@ -17,8 +17,8 @@ struct Interface : Emulator::Interface {
     enum ModelId {
         ModelIdSid, ModelIdFilter, ModelIdDigiboost, ModelIdBias6581,
         ModelIdCiaRev, ModelIdGlueLogic, ModelIdVicIIModel,
-		ModelIdDisableGreyDotBug, ModelIdSidFilterType, ModelIdSidSampleFetch, ModelIdBias8580,
-        ModelIdSidMulti, ModelIdSidExternal, ModelIdSidFilterVolumeEqualizer,
+		ModelIdDisableGreyDotBug, ModelIdSidEngine, ModelIdSidSampleFetch, ModelIdBias8580,
+        ModelIdSidMulti, ModelIdRange6581, ModelIdSidWaveformStrength,
                      ModelIdSid1Left, ModelIdSid1Right, ModelIdSid1Adr, ModelIdSid2, ModelIdSid2Left, ModelIdSid2Right, ModelIdSid2Adr,
         ModelIdSid3, ModelIdSid3Left, ModelIdSid3Right, ModelIdSid3Adr, ModelIdSid4, ModelIdSid4Left, ModelIdSid4Right, ModelIdSid4Adr,
         ModelIdSid5, ModelIdSid5Left, ModelIdSid5Right, ModelIdSid5Adr, ModelIdSid6, ModelIdSid6Left, ModelIdSid6Right, ModelIdSid6Adr,
@@ -30,7 +30,7 @@ struct Interface : Emulator::Interface {
         ModelIdReuRam, ModelIdGeoRam, ModelIdIntensifyPseudoStereo,
     	ModelIdEmulateDriveMechanics, ModelIdDriveStepperDelay, ModelIdDriveAcceleration, ModelIdDriveDeceleration,
     	ModelIdSuperCpuRam, ModelIdTrackZeroSensor, ModelId2Mhz,
-        ModelIdSidUsbPico, ModelIdSidUsbPicoBufferSize, ModelIdSidUsbPicoDiffSize,
+        ModelIdSidUsbPico, ModelIdSidUsbPicoBufferSize, ModelIdSidUsbPicoDiffSize
     };
     
     enum MediaGroupId {

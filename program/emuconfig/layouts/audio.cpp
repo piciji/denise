@@ -347,7 +347,7 @@ AudioLayout::AudioLayout(TabWindow* tabWindow) {
 
     std::vector<unsigned> dim;
     if (dynamic_cast<LIBC64::Interface*>(emulator))
-        dim = {5, 1, 1, 3, 4, 4, 4, 4, 4, 4, 4, 4};
+        dim = {5, 1, 1, 1, 2, 4, 4, 4, 4, 4, 4, 4, 4};
     else
         dim = {1,1};
 

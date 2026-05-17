@@ -103,7 +103,7 @@ set(headers
         sid/envelope.cpp
         sid/register.cpp
         sid/serialization.cpp
-        sid/sid.h
+        sid/reSid.h
         sid/tables.cpp
         sid/voice.cpp
         sid/usbSidPico.h
@@ -116,6 +116,7 @@ set(headers
         system/memory.h
         system/serialization.cpp
         system/sidManager.h
+        system/sid.h
         system/system.h
         system/testbench.h
         tape/counter.cpp
@@ -211,7 +212,10 @@ target_sources(coreC64 PRIVATE
         expansionPort/superCpu/superCpu.cpp
 
         system/clipboard.cpp
-        sid/sid.cpp
+        sid/reSid.cpp
+        sid/reSid24.cpp
+        sid/chamberlin.cpp
+        system/residfpHandler.cpp
         sid/usbSidPico.cpp
         system/sidManager.cpp
         sid/filter/chamberlin.cpp
@@ -248,4 +252,4 @@ if(ltoSupported)
    set_target_properties(coreC64 PROPERTIES INTERPROCEDURAL_OPTIMIZATION TRUE)
 endif()
 
-target_link_libraries(coreC64 PRIVATE cia ciaNew cpu65c02 cpu65816)
+target_link_libraries(coreC64 PRIVATE cia ciaNew cpu65c02 cpu65816 libresidfp)

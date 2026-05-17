@@ -238,7 +238,7 @@ auto ModelLayout::setEvents( ) -> void {
                         val = position * stepSize + _min;
                         displayText = std::to_string(val);
                         if (model->scaler != 1.0)
-                            displayText = GUIKIT::String::formatFloatingPoint( (float)val / model->scaler, 2);
+                            displayText = GUIKIT::String::formatFloatingPoint( (float)val / model->scaler, decimalPlaces(model->scaler));
                     } else {
                         if (position < options.size())
                             displayText = options[position];
@@ -386,10 +386,13 @@ auto ModelLayout::updateWidget( Line::Block* block ) -> void {
 
         if (!options.size()) {
             stepSize = range / model->steps;
-            pos = (val - _min) / stepSize;
+            if (stepSize == 0)
+                pos = 0;
+            else
+                pos = (val - _min) / stepSize;
             displayText = std::to_string(val);
             if (model->scaler != 1.0)
-                displayText = GUIKIT::String::formatFloatingPoint( (float) val / model->scaler, 2);
+                displayText = GUIKIT::String::formatFloatingPoint( (float) val / model->scaler, decimalPlaces(model->scaler));
 
         } else {
             if (pos < options.size())
@@ -435,6 +438,16 @@ auto ModelLayout::updateWidget( Line::Block* block ) -> void {
 		block->lineEdit->setText( GUIKIT::String::convertIntToHex( _val ) );
 	else
 		block->lineEdit->setValue( _val );
+}
+
+inline auto ModelLayout::decimalPlaces(float scaler) -> unsigned {
+    int places = 0;
+    float val = 1.0;
+    while (val < scaler) {
+        val *= 10.0f;
+        places++;
+    }
+    return places;
 }
 
 auto ModelLayout::setImageUri(Line::Block* block, float val) -> void {
@@ -622,7 +635,7 @@ auto ModelLayout::applyCustomStuff( Line::Block* block, Emulator::Interface::Mod
     if (dynamic_cast<LIBC64::Interface*> (this->emulator)) {
         
         switch(model->id) {
-            case LIBC64::Interface::ModelIdSidFilterType:
+            case LIBC64::Interface::ModelIdSidEngine:
                 updateBiasVisibillity();
                 break;
             case LIBC64::Interface::ModelIdSidMulti:
@@ -885,16 +898,22 @@ auto ModelLayout::hintDriveSettings() -> void {
 
 auto ModelLayout::updateBiasVisibillity() -> void {
     
-    int filter = emulator->getModelValue( LIBC64::Interface::ModelIdSidFilterType );
+    int filter = emulator->getModelValue( LIBC64::Interface::ModelIdSidEngine );
 
-    bool showBias6581 = filter == 0 || filter == 1;
-    bool showBias8580 = filter == 0;
+    bool showBias = filter == 0 || filter == 1;
+    bool showRange = filter == 1;
+    bool showStrength = filter == 1;
+
+    lines[0]->blocks[3]->setEnabled(showStrength);
     
-    if (lines[1]->enabled() != showBias6581 )
-        lines[1]->setEnabled( showBias6581 );
+    if (lines[1]->enabled() != showBias )
+        lines[1]->setEnabled( showBias );
 
-    if (lines[2]->enabled() != showBias8580 )
-        lines[2]->setEnabled( showBias8580 );
+    if (lines[2]->enabled() != showRange )
+        lines[2]->setEnabled( showRange );
+
+    if (lines[3]->enabled() != showBias )
+        lines[3]->setEnabled( showBias );
 }
 
 auto ModelLayout::updateExtraAudioChipsVisibillity() -> void {
@@ -917,16 +936,16 @@ auto ModelLayout::updateExtraAudioChipsVisibillity() -> void {
     for (unsigned i = 0; i < 8; i++) {
         
         if (i <= activeSids)
-            lines[i + 4]->setEnabled(true);
+            lines[i + 5]->setEnabled(true);
         else
-            lines[i + 4]->setEnabled(false);        
+            lines[i + 5]->setEnabled(false);
     }
     
     if (activeSids == 0) {
         controlLayout.setEnabled( false );
-        lines[4]->blocks[1]->setEnabled(false);
-        lines[4]->blocks[2]->setEnabled(false);
-        lines[4]->blocks[3]->setEnabled(false);
+        lines[5]->blocks[1]->setEnabled(false);
+        lines[5]->blocks[2]->setEnabled(false);
+        lines[5]->blocks[3]->setEnabled(false);
     } else
         controlLayout.setEnabled( true );
 }

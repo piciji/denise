@@ -1,9 +1,6 @@
 
-//  This code is a modification of the resid engine in VICE
-//  You can get a copy of the original here: https://sourceforge.net/projects/vice-emu/
-
+//  Modified by PiCiJi
 //  ---------------------------------------------------------------------------
-//  This file is part of VICE, the Versatile Commodore Emulator.
 //  This file is part of reSID, a MOS6581 SID emulator engine.
 //  Copyright (C) 2010  Dag Lem <resid@nimrod.no>
 //

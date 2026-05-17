@@ -1,9 +1,6 @@
 
-//  This code is a modification of the reSID engine in VICE
-//  You can get a copy of the original here: https://sourceforge.net/projects/vice-emu/
-
+//  Modified by PiCiJi
 //  ---------------------------------------------------------------------------
-//  This file is part of VICE, the Versatile Commodore Emulator.
 //  This file is part of reSID, a MOS6581 SID emulator engine.
 //  Copyright (C) 2010  Dag Lem <resid@nimrod.no>
 //
@@ -22,14 +19,14 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //  ---------------------------------------------------------------------------
 
-#include "../sid.h"
+#include "../reSid.h"
 
 #include <vector>
 #include <thread>
 
 namespace LIBC64 {
 
-doublePoint Sid::Filter::opamp6581[] = {
+doublePoint ReSid::Filter::opamp6581[] = {
 	{ 0.81, 10.31 }, // vmin, vmax
 	{ 0.81, 10.31 }, // Repeated point
 	{ 2.40, 10.31 },
@@ -67,7 +64,7 @@ doublePoint Sid::Filter::opamp6581[] = {
 	{ 10.31, 0.81 } // Repeated end point
 };
 
-doublePoint Sid::Filter::opamp8580[] = {
+doublePoint ReSid::Filter::opamp8580[] = {
 	{ 1.30, 8.91 }, // vmin, vmax
 	{ 1.30, 8.91 }, // Repeated end point
 	{ 4.76, 8.91 },
@@ -93,7 +90,7 @@ doublePoint Sid::Filter::opamp8580[] = {
 	{ 8.91, 1.30 } // Repeated end point
 };
 
-Sid::Filter::Parameter Sid::Filter::parameter[2] = {
+ReSid::Filter::Parameter ReSid::Filter::parameter[2] = {
 	{
 		opamp6581,
 		sizeof (opamp6581 ) / sizeof (*opamp6581 ),
@@ -142,35 +139,24 @@ Sid::Filter::Parameter Sid::Filter::parameter[2] = {
 	}
 };
 
-Sid::Filter::Calculated Sid::Filter::calculated[2] = { {0}, {0} };
+ReSid::Filter::Calculated ReSid::Filter::calculated[2] = { {0}, {0} };
 
-unsigned short Sid::Filter::vcr_kVg[1 << 16];
-unsigned short Sid::Filter::vcr_n_Ids_term[1 << 16];
+unsigned short ReSid::Filter::vcr_kVg[1 << 16];
+unsigned short ReSid::Filter::vcr_n_Ids_term[1 << 16];
 
-int Sid::Filter::n_snake = 0;
+int ReSid::Filter::n_snake = 0;
 
-Sid::Filter::Filter( Sid* sid ) {
-    this->sid = sid;
+ReSid::Filter::Filter( ReSid* sid ) {
 	static bool initialized = false;
-    digiBoost = false;
 
 	if ( !initialized ) {
-		std::thread t1(Sid::Filter::build, 0);
+		std::thread t1(ReSid::Filter::build, 0);
 		build(1);
 		t1.join();
 
 		initialized = true; // one time only, doesn't matter of instance count
 	}
 
-	v1P = &v1;
-	v2P = &v2;
-	v3P = &v3;
-	veP = &ve;
-	VhpP = &Vhp;
-	VlpP = &Vlp;
-	VbpP = &Vbp;
-	VbpResP = &VbpRes;
-	
 	Vw_bias = 0; 
     setEnable( true );
     setType( MOS_6581 );
@@ -181,7 +167,7 @@ Sid::Filter::Filter( Sid* sid ) {
     reset();    
 }
 
-auto Sid::Filter::build(int m) -> void {
+auto ReSid::Filter::build(int m) -> void {
 	unsigned int* voltages = new unsigned int[ 1 << 16 ];
 
 	//for ( unsigned m = 0; m < 2; m++ ) { // m = 0 -> 6581, m = 1 -> 8580
@@ -582,19 +568,19 @@ auto Sid::Filter::build(int m) -> void {
 
 // Register
 // untere 3 bit der Grenzfrequenz
-auto Sid::Filter::writeFcLow( uint8_t data ) -> void {
+auto ReSid::Filter::writeFcLow( uint8_t data ) -> void {
 	fc = (fc & 0x7f8) | (data & 7);
     
     updateFrequency();
 }
 // obere 8 bit der Grenzfrequenz
-auto Sid::Filter::writeFcHi( uint8_t data ) -> void {
+auto ReSid::Filter::writeFcHi( uint8_t data ) -> void {
 	fc = ((data << 3) & 0x7f8) | (fc & 7);
     
     updateFrequency();
 }
 // 4 bit - Resonanz, 4 bit - Filter / Mixer Auswahl
-auto Sid::Filter::writeResFilt( uint8_t data ) -> void {
+auto ReSid::Filter::writeResFilt( uint8_t data ) -> void {
 	// Resonanz für Bandpass Filter
 	res = ( data >> 4 ) & 0xf;
 	// Steuert für alle 4 voices ( 1 - 3 ) + externe voice ob diese in den Filter
@@ -606,7 +592,7 @@ auto Sid::Filter::writeResFilt( uint8_t data ) -> void {
 }
 
 // 4 bit - Lautstärke, 4 bit - voice 3 Abschaltung, filter Resultate mixen
-auto Sid::Filter::writeModeVol( uint8_t data ) -> void {
+auto ReSid::Filter::writeModeVol( uint8_t data ) -> void {
 	// Steuert welche Filter Ausgänge gemixt werden. Außerdem kann
 	// voice 3 komplett deaktivert werden, wenn in Register 0x17
 	// für voice 3 keine Filterung gewählt wird.
@@ -617,7 +603,7 @@ auto Sid::Filter::writeModeVol( uint8_t data ) -> void {
     updateSumMix();
 }
 
-auto Sid::Filter::updateFrequency() -> void {
+auto ReSid::Filter::updateFrequency() -> void {
     
     { // 6581
         Calculated& ca = calculated[0];
@@ -632,7 +618,7 @@ auto Sid::Filter::updateFrequency() -> void {
         
     { // 8580
         Calculated& ca = calculated[1];
-        // sklaiert: 13 + 5 = 18 bit
+        // skaliert: 13 + 5 = 18 bit
         int n_param = (int)(ca.tmp_n_param * 32 + 0.5);
 		// n = (ucox/2k * dt/C) * w/l
 		// geänderter Widerstand w/l wird mit unveränderbarer Konstante vorberechnet
@@ -643,7 +629,7 @@ auto Sid::Filter::updateFrequency() -> void {
     }
 }
 
-auto Sid::Filter::updateSumMix() -> void {
+auto ReSid::Filter::updateSumMix() -> void {
 	
     // Filter Eingänge: bit 0: v1 , bit 1: v2 , bit 2: v3 , bit 3: ve
 	// Übernahme der voices, welche in den Filter gelangen
@@ -678,31 +664,30 @@ auto Sid::Filter::updateSumMix() -> void {
     
     mix &= voiceMask;
 
-	if (sid->separateFilterInputs)
+#ifdef DEVELOP_USE_SEPARATE_INPUTS
 		prepareSeparate();
+#endif
 }
 
-auto Sid::Filter::setType( Type type ) -> void {
-    // Sid Modell auswählen
+auto ReSid::Filter::setType( Type type ) -> void {
 	this->type = type;
-	// Werte initialisieren, für den Fall das das Sid Model zur Laufzeit
-	// geändert wird.
 	Vhp = VbpRes = 0;
 	Vbp = Vbp_x = Vbp_vc = 0;
 	Vlp = Vlp_x = Vlp_vc = 0;
 
-	if (sid->separateFilterInputs)
+#ifdef DEVELOP_USE_SEPARATE_INPUTS
 		prepareSeparate();
+#endif
 }
 
 // Filter kann unabhängig von der Software deakiviert werden.
-auto Sid::Filter::setEnable( bool state ) -> void {
+auto ReSid::Filter::setEnable( bool state ) -> void {
 	enabled = state;
 	
 	updateSumMix();
 }
 
-auto Sid::Filter::setVoiceMask( uint8_t mask ) -> void {
+auto ReSid::Filter::setVoiceMask( uint8_t mask ) -> void {
     // Wird normalerweise dazu benuzt 've' zu deaktivieren.
     // Es können jedoch alle anderen voices ebenso deaktiviert
     // werden.
@@ -711,7 +696,7 @@ auto Sid::Filter::setVoiceMask( uint8_t mask ) -> void {
     updateSumMix();
 }
 
-auto Sid::Filter::reset() -> void {
+auto ReSid::Filter::reset() -> void {
     fc = 0;
     res = 0;
     filt = 0;
@@ -727,19 +712,19 @@ auto Sid::Filter::reset() -> void {
     updateSumMix();
 }
 
-auto Sid::Filter::adjustFilterBias6581(int value) -> void {
+auto ReSid::Filter::adjustFilterBias6581(int value) -> void {
     bias6581 = value;
     
-    double dac_bias = (double)value / 1000.0;
+    double dac_bias = (double)(value - 5000) / 1000.0;
 
 	Vw_bias = int( dac_bias * calculated[0].vo_N16);
 	updateFrequency();
 }
 
-auto Sid::Filter::adjustFilterBias8580(int value) -> void {
+auto ReSid::Filter::adjustFilterBias8580(int value) -> void {
     bias8580 = value;
     
-    double dac_bias = (double)value / 1000.0;    
+    double dac_bias = (double)(value - 5000) / 1000.0;
 
 	double Vg = 4.7975 * (dac_bias * 6./100. + 1.6);
 	double Vgt = parameter[1].k * (Vg - parameter[1].Vth);

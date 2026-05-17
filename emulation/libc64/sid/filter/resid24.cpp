@@ -1,9 +1,6 @@
 
-//  This code is the reSID engine from VICE 2.4
-//  You can get a copy of the original here: https://sourceforge.net/projects/vice-emu/
-
+//  Modified by PiCiJi
 //  ---------------------------------------------------------------------------
-//  This file is part of VICE, the Versatile Commodore Emulator.
 //  This file is part of reSID, a MOS6581 SID emulator engine.
 //  Copyright (C) 2010  Dag Lem <resid@nimrod.no>
 //
@@ -24,7 +21,7 @@
 
 namespace LIBC64 {
 
-auto Sid::Filter::clock24(int voice1, int voice2, int voice3) -> void {
+auto ReSid::Filter::clock24(int voice1, int voice2, int voice3) -> void {
     Calculated& ca = calculated[ Type::MOS_8580 ];
     v1 = (voice1 * ca.voiceScaleS14Old >> 18) + ca.voiceDCOld;
     v2 = (voice2 * ca.voiceScaleS14Old >> 18) + ca.voiceDCOld;
@@ -59,7 +56,7 @@ auto Sid::Filter::clock24(int voice1, int voice2, int voice3) -> void {
     Vhp = (Vbp * _1024_div_Q >> 10) - Vlp - Vi;
 }
 
-auto Sid::Filter::output24() -> short {
+auto ReSid::Filter::output24() -> short {
 // <?php
 //    $sOut = "";
 //    $aInputs = ['v1', 'v2', 'v3', 've', 'Vlp', 'Vbp', 'Vhp'];
@@ -221,7 +218,7 @@ auto Sid::Filter::output24() -> short {
     return (short) tmp;
 }
 
-auto Sid::Filter::updateQ() -> void {
+auto ReSid::Filter::updateQ() -> void {
     static const int _1024_div_Q_table[] = {
         1448, 1328, 1218, 1117, 1024, 939, 861, 790,
         724, 664, 609, 558, 512, 470, 431, 395

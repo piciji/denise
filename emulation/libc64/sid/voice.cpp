@@ -1,9 +1,6 @@
 
-//  This code is a modification of the resid engine in VICE
-//  You can get a copy of the original here: https://sourceforge.net/projects/vice-emu/
-
+//  Modified by PiCiJi
 //  ---------------------------------------------------------------------------
-//  This file is part of VICE, the Versatile Commodore Emulator.
 //  This file is part of reSID, a MOS6581 SID emulator engine.
 //  Copyright (C) 2010  Dag Lem <resid@nimrod.no>
 //
@@ -22,19 +19,19 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //  ---------------------------------------------------------------------------
 
-#include "sid.h"
+#include "reSid.h"
 
 namespace LIBC64 {
     
-uint16_t Sid::Voice::waveTable[ 2 ][ 8 ][ 1 << 12 ] = {
+uint16_t ReSid::Voice::waveTable[ 2 ][ 8 ][ 1 << 12 ] = {
     { {0}, {0}, {0}, {0}, {0}, {0}, {0}, {0} },
     { {0}, {0}, {0}, {0}, {0}, {0}, {0}, {0} }
 };
 
-Emulator::DAC<uint16_t> Sid::Voice::dac6581( 12, 2.20, false );
-Emulator::DAC<uint16_t> Sid::Voice::dac8580( 12, 2.00, true );
+Emulator::DAC<uint16_t> ReSid::Voice::dac6581( 12, 2.20, false );
+Emulator::DAC<uint16_t> ReSid::Voice::dac8580( 12, 2.00, true );
     
-Sid::Voice::Voice( ) {
+ReSid::Voice::Voice( ) {
     
     static bool waveTableCreated = false;
     
@@ -62,7 +59,7 @@ Sid::Voice::Voice( ) {
 	waveTemp = 0x555;		    
 }
 
-auto Sid::Voice::generateWaveTable() -> void {        
+auto ReSid::Voice::generateWaveTable() -> void {        
     
     #include "tables.cpp"
 	std::function<void ( std::vector<uint16_t>&, uint16_t* )> generate
@@ -84,42 +81,42 @@ auto Sid::Voice::generateWaveTable() -> void {
     generate( wave8580_PST, waveTable[1][7] );  
 }
 
-auto Sid::Voice::setFrequencyLo( uint8_t value ) -> void {
+auto ReSid::Voice::setFrequencyLo( uint8_t value ) -> void {
     
     freq = (freq & 0xff00) | value;
 }
 
-auto Sid::Voice::setFrequencyHi( uint8_t value ) -> void {
+auto ReSid::Voice::setFrequencyHi( uint8_t value ) -> void {
     
     freq = (value << 8) | (freq & 0x00ff);
 }
 
-auto Sid::Voice::setPwLo( uint8_t value ) -> void {
+auto ReSid::Voice::setPwLo( uint8_t value ) -> void {
     
     pw = (pw & 0xf00) | value;
     
     pulseOutput = (accumulator >> 12) >= pw ? 0xfff : 0x000;
 }
 
-auto Sid::Voice::setPwHi( uint8_t value ) -> void {
+auto ReSid::Voice::setPwHi( uint8_t value ) -> void {
     
     pw = ((value << 8) & 0xf00) | (pw & 0x0ff);
     
     pulseOutput = (accumulator >> 12) >= pw ? 0xfff : 0x000;
 }
 
-auto Sid::Voice::setType( Type type, bool useDigitalFilter ) -> void {
+auto ReSid::Voice::setType( Type type ) -> void {
     
     this->type = type;
     
     wave = waveTable[type][waveform & 0x7];
     
-    waveZero = type == Type::MOS_6581 ? 0x380 : ( useDigitalFilter ? 0x9e0 : 0x9e0 );
+    waveZero = type == Type::MOS_6581 ? 0x380 : 0x9e0;
 	
 	dac = type == Type::MOS_6581 ? &dac6581 : &dac8580;
 }
 
-auto Sid::Voice::setControl( uint8_t value ) -> void {
+auto ReSid::Voice::setControl( uint8_t value ) -> void {
     
     bool testPrev = test;
     test = !!(value & 0x8);
@@ -159,7 +156,7 @@ auto Sid::Voice::setControl( uint8_t value ) -> void {
         aging = type == Type::MOS_6581 ? 182000 : 4400000;
 }
 
-inline auto Sid::Voice::clock() -> void {    
+inline auto ReSid::Voice::clock() -> void {    
     
 	if(unlikely(test)) {
         if (unlikely(shiftReset) && unlikely(!--shiftReset)) {
@@ -193,7 +190,7 @@ inline auto Sid::Voice::clock() -> void {
 	} 	
 }
 
-inline auto Sid::Voice::setWaveformOutput() -> void {
+inline auto ReSid::Voice::setWaveformOutput() -> void {
 	
 	if (likely( waveform )) {
 		int ix = (accumulator ^ (~syncSource->accumulator & ringMsbMask)) >> 12;
@@ -232,17 +229,17 @@ inline auto Sid::Voice::setWaveformOutput() -> void {
 	pulseOutput = -((accumulator >> 12) >= pw) & 0xfff;
 }
 
-inline auto Sid::Voice::setSyncSource( Voice* source ) -> void {
+inline auto ReSid::Voice::setSyncSource( Voice* source ) -> void {
 	syncSource = source;
 	source->syncDest = this;
 }
 
-inline auto Sid::Voice::synchronize() -> void {
+inline auto ReSid::Voice::synchronize() -> void {
 	if ( unlikely(msbRising) && syncDest->sync && !(sync && syncSource->msbRising))
 		syncDest->accumulator = 0;
 }
 
-inline auto Sid::Voice::setNoiseOutput() -> void {
+inline auto ReSid::Voice::setNoiseOutput() -> void {
 	noiseOutput =
     ((shiftRegister & 0x100000) >> 9) |
     ((shiftRegister & 0x040000) >> 8) |
@@ -256,7 +253,7 @@ inline auto Sid::Voice::setNoiseOutput() -> void {
 	noNoiseOrNoiseOutput = noNoise | noiseOutput;
 }
 
-inline auto Sid::Voice::writeShiftRegister() -> void {
+inline auto ReSid::Voice::writeShiftRegister() -> void {
 
 	shiftRegister &=
     ~((1<<20)|(1<<18)|(1<<14)|(1<<11)|(1<<9)|(1<<5)|(1<<2)|(1<<0)) |
@@ -273,7 +270,7 @@ inline auto Sid::Voice::writeShiftRegister() -> void {
 	noNoiseOrNoiseOutput = noNoise | noiseOutput;
 }
 
-inline auto Sid::Voice::doPreWriteback( uint8_t waveformPrev ) -> bool {
+inline auto ReSid::Voice::doPreWriteback( uint8_t waveformPrev ) -> bool {
     // no writeback without combined waveforms
     if ( waveformPrev <= 0x8 )
         return false;
@@ -293,15 +290,15 @@ inline auto Sid::Voice::doPreWriteback( uint8_t waveformPrev ) -> bool {
     return true;
 }
 
-inline auto Sid::Voice::noisePulse6581(uint16_t noise) -> uint16_t {
+inline auto ReSid::Voice::noisePulse6581(uint16_t noise) -> uint16_t {
 	return (noise < 0xf00) ? 0x000 : noise & (noise << 1) & (noise << 2);
 }
 
-inline auto Sid::Voice::noisePulse8580(uint16_t noise) -> uint16_t {
+inline auto ReSid::Voice::noisePulse8580(uint16_t noise) -> uint16_t {
 	return (noise < 0xfc0) ? noise & (noise << 1) : 0xfc0;
 }
 
-auto Sid::Voice::reset() -> void {
+auto ReSid::Voice::reset() -> void {
     
     freq = 0;
     pw = 0;
@@ -321,11 +318,6 @@ auto Sid::Voice::reset() -> void {
     shiftReset = 0;
     shiftPipeline = 0;
     setNoiseOutput();
-}
-
-inline auto Sid::Voice::output() -> int {
-    
-    return (dac->get( waveformOutput ) - waveZero) * envelope->output();
 }
 
 }

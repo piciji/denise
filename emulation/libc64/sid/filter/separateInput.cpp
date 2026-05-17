@@ -1,7 +1,7 @@
 
 namespace LIBC64 {
 
-auto Sid::Filter::clockSeparate(int voice1, int voice2, int voice3) -> void {
+auto ReSid::Filter::clockSeparate(int voice1, int voice2, int voice3) -> void {
     Calculated& ca = calculated[ type ];
 	double c = 0.0;
 	double a = 1.0;
@@ -33,7 +33,7 @@ auto Sid::Filter::clockSeparate(int voice1, int voice2, int voice3) -> void {
 	Vhp = solveOpampSeparate( ca.opamp, a, c, nrXFilter, ca );
 }
 
-auto Sid::Filter::outputSeparate() -> short {
+auto ReSid::Filter::outputSeparate() -> short {
 	Calculated& ca = calculated[ this->type ];
 	double c = 0.0;
 	double a = 1.0;
@@ -55,7 +55,7 @@ auto Sid::Filter::outputSeparate() -> short {
 // vi1---R1->--->-[A>----- vo
 //            vx
 
-auto Sid::Filter::solveOpampSeparate(Opamp* opamp, double a, double c, int& x, Calculated& ca) -> int {
+auto ReSid::Filter::solveOpampSeparate(Opamp* opamp, double a, double c, int& x, Calculated& ca) -> int {
     // Ausgehend von Kirchhoff's Gesetz (siehe Glossar) gilt für die Stromstärke
     // im Knotenpunkt 'vx' für die zufließenden Ströme: '∑ count' IR1 + IR2
     // und für die abfließenden Ströme 0 (siehe Glossar: Impedanzwandler)
@@ -145,62 +145,62 @@ auto Sid::Filter::solveOpampSeparate(Opamp* opamp, double a, double c, int& x, C
 	}
 }
 
-auto Sid::Filter::prepareSeparate() -> void {
+auto ReSid::Filter::prepareSeparate() -> void {
     separateFlt.clear();
 	separateMix.clear();
 
 	// Filter inputs
 	SeparateInput mLF;
-	mLF.vi = VlpP;
+	mLF.vi = &Vlp;
 	mLF.n = 1.0; // opamp + Eingangspannung haben den gleichen Widerstand R2/R1 = 1
 
 	SeparateInput mBF;
-	mBF.vi = VbpResP;
+	mBF.vi = &VbpRes;
 	mBF.n = 1.0;
 
 	SeparateInput mV1F;
-	mV1F.vi = v1P;
+	mV1F.vi = &v1;
 	mV1F.n = 1.0;
 
 	SeparateInput mV2F;
-	mV2F.vi = v2P;
+	mV2F.vi = &v2;
 	mV2F.n = 1.0;
 
 	SeparateInput mV3F;
-	mV3F.vi = v3P;
+	mV3F.vi = &v3;
 	mV3F.n = 1.0;
 
 	SeparateInput mVEF;
-	mVEF.vi = veP;
+	mVEF.vi = &ve;
 	mVEF.n = type == Type::MOS_8580 ? (7.0/12.0) : 1.0; // fixme
 
 	// Mixer inputs (fixme: R2/R1)
 	SeparateInput mLM;
-	mLM.vi = VlpP;
+	mLM.vi = &Vlp;
 	mLM.n = type == Type::MOS_8580 ? (8.0/5.0) : (8.0/5.0);
 
 	SeparateInput mBM;
-	mBM.vi = VbpP;
+	mBM.vi = &Vbp;
 	mBM.n = type == Type::MOS_8580 ? (8.0/5.0) : (8.0/5.0);
 
 	SeparateInput mHM;
-	mHM.vi = VhpP;
+	mHM.vi = &Vhp;
 	mHM.n = type == Type::MOS_8580 ? (8.0/5.0) : (8.0/5.0);
 
 	SeparateInput mV1M;
-	mV1M.vi = v1P;
+	mV1M.vi = &v1;
 	mV1M.n = type == Type::MOS_8580 ? (8.0/5.0) : (8.0/6.0);
 
 	SeparateInput mV2M;
-	mV2M.vi = v2P;
+	mV2M.vi = &v2;
 	mV2M.n = type == Type::MOS_8580 ? (8.0/5.0) : (8.0/6.0);
 
 	SeparateInput mV3M;
-	mV3M.vi = v3P;
+	mV3M.vi = &v3;
 	mV3M.n = type == Type::MOS_8580 ? (8.0/5.0) : (8.0/6.0);
 
 	SeparateInput mVEM;
-	mVEM.vi = veP;
+	mVEM.vi = &ve;
 	mVEM.n = type == Type::MOS_8580 ? (8.0/9.0) : (8.0/6.0);
 
 	//
