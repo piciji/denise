@@ -338,6 +338,12 @@
     <Filter Include="program\helper">
       <UniqueIdentifier>{48a57f84-eb56-42b4-8022-802e2da4b53f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="deps\libresidfp">
+      <UniqueIdentifier>{56a03032-77b4-4225-9b02-3163d6425ff4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="deps\libresidfp\resample">
+      <UniqueIdentifier>{1d4d9960-beea-4888-a5f2-10c6d82b9561}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\emulation\interface.h">
@@ -1141,9 +1147,6 @@
     <ClInclude Include="..\guikit\tools\encode\images.h">
       <Filter>guikit\tools\encode</Filter>
     </ClInclude>
-    <ClInclude Include="..\emulation\libc64\sid\usbSidPico.h">
-      <Filter>emulation\libc64\sid</Filter>
-    </ClInclude>
     <ClInclude Include="..\deps\cgif\cgif.h">
       <Filter>deps\cgif</Filter>
     </ClInclude>
@@ -1323,6 +1326,87 @@
     </ClInclude>
     <ClInclude Include="..\emulation\libc64\sid\reSid.h">
       <Filter>emulation\libc64\sid</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libc64\system\residfpHandler.h">
+      <Filter>emulation\libc64\system</Filter>
+    </ClInclude>
+    <ClInclude Include="..\deps\libresidfp\src\Dac.h">
+      <Filter>deps\libresidfp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\deps\libresidfp\src\EnvelopeGenerator.h">
+      <Filter>deps\libresidfp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\deps\libresidfp\src\ExternalFilter.h">
+      <Filter>deps\libresidfp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\deps\libresidfp\src\Filter.h">
+      <Filter>deps\libresidfp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\deps\libresidfp\src\Filter6581.h">
+      <Filter>deps\libresidfp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\deps\libresidfp\src\Filter8580.h">
+      <Filter>deps\libresidfp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\deps\libresidfp\src\FilterModelConfig.h">
+      <Filter>deps\libresidfp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\deps\libresidfp\src\FilterModelConfig6581.h">
+      <Filter>deps\libresidfp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\deps\libresidfp\src\FilterModelConfig8580.h">
+      <Filter>deps\libresidfp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\deps\libresidfp\src\Integrator.h">
+      <Filter>deps\libresidfp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\deps\libresidfp\src\Integrator6581.h">
+      <Filter>deps\libresidfp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\deps\libresidfp\src\Integrator8580.h">
+      <Filter>deps\libresidfp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\deps\libresidfp\src\OpAmp.h">
+      <Filter>deps\libresidfp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\deps\libresidfp\src\SID.h">
+      <Filter>deps\libresidfp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\deps\libresidfp\src\siddefs-fp.h">
+      <Filter>deps\libresidfp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\deps\libresidfp\src\Spline.h">
+      <Filter>deps\libresidfp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\deps\libresidfp\src\Voice.h">
+      <Filter>deps\libresidfp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\deps\libresidfp\src\WaveformCalculator.h">
+      <Filter>deps\libresidfp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\deps\libresidfp\src\WaveformGenerator.h">
+      <Filter>deps\libresidfp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\deps\libresidfp\src\resample\Limiter.h">
+      <Filter>deps\libresidfp\resample</Filter>
+    </ClInclude>
+    <ClInclude Include="..\deps\libresidfp\src\resample\PassThrough.h">
+      <Filter>deps\libresidfp\resample</Filter>
+    </ClInclude>
+    <ClInclude Include="..\deps\libresidfp\src\resample\Resampler.h">
+      <Filter>deps\libresidfp\resample</Filter>
+    </ClInclude>
+    <ClInclude Include="..\deps\libresidfp\src\resample\SincResampler.h">
+      <Filter>deps\libresidfp\resample</Filter>
+    </ClInclude>
+    <ClInclude Include="..\deps\libresidfp\src\resample\TwoPassSincResampler.h">
+      <Filter>deps\libresidfp\resample</Filter>
+    </ClInclude>
+    <ClInclude Include="..\deps\libresidfp\src\resample\ZeroOrderResampler.h">
+      <Filter>deps\libresidfp\resample</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libc64\system\usbSidPico.h">
+      <Filter>emulation\libc64\system</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -2493,9 +2577,6 @@
     <ClCompile Include="..\guikit\tools\encode\images.cpp">
       <Filter>guikit\tools\encode</Filter>
     </ClCompile>
-    <ClCompile Include="..\emulation\libc64\sid\usbSidPico.cpp">
-      <Filter>emulation\libc64\sid</Filter>
-    </ClCompile>
     <ClCompile Include="..\deps\cgif\cgif.cpp">
       <Filter>deps\cgif</Filter>
     </ClCompile>
@@ -2615,6 +2696,63 @@
     </ClCompile>
     <ClCompile Include="..\emulation\libc64\sid\reSid.cpp">
       <Filter>emulation\libc64\sid</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\system\residfpHandler.cpp">
+      <Filter>emulation\libc64\system</Filter>
+    </ClCompile>
+    <ClCompile Include="..\deps\libresidfp\src\Dac.cpp">
+      <Filter>deps\libresidfp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\deps\libresidfp\src\EnvelopeGenerator.cpp">
+      <Filter>deps\libresidfp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\deps\libresidfp\src\ExternalFilter.cpp">
+      <Filter>deps\libresidfp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\deps\libresidfp\src\Filter.cpp">
+      <Filter>deps\libresidfp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\deps\libresidfp\src\Filter6581.cpp">
+      <Filter>deps\libresidfp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\deps\libresidfp\src\Filter8580.cpp">
+      <Filter>deps\libresidfp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\deps\libresidfp\src\FilterModelConfig.cpp">
+      <Filter>deps\libresidfp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\deps\libresidfp\src\FilterModelConfig6581.cpp">
+      <Filter>deps\libresidfp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\deps\libresidfp\src\FilterModelConfig8580.cpp">
+      <Filter>deps\libresidfp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\deps\libresidfp\src\Integrator6581.cpp">
+      <Filter>deps\libresidfp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\deps\libresidfp\src\Integrator8580.cpp">
+      <Filter>deps\libresidfp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\deps\libresidfp\src\OpAmp.cpp">
+      <Filter>deps\libresidfp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\deps\libresidfp\src\SID.cpp">
+      <Filter>deps\libresidfp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\deps\libresidfp\src\Spline.cpp">
+      <Filter>deps\libresidfp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\deps\libresidfp\src\WaveformCalculator.cpp">
+      <Filter>deps\libresidfp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\deps\libresidfp\src\WaveformGenerator.cpp">
+      <Filter>deps\libresidfp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\deps\libresidfp\src\resample\SincResampler.cpp">
+      <Filter>deps\libresidfp\resample</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\system\usbSidPico.cpp">
+      <Filter>emulation\libc64\system</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

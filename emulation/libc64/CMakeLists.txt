@@ -106,7 +106,7 @@ set(headers
         sid/reSid.h
         sid/tables.cpp
         sid/voice.cpp
-        sid/usbSidPico.h
+        system/usbSidPico.h
         system/clipboard.h
         system/expansion.cpp
         system/firmware.h
@@ -170,7 +170,7 @@ set(headers
         ../tools/string.h
 )
 
-SET_SOURCE_FILES_PROPERTIES(sid/usbSidPico.cpp
+SET_SOURCE_FILES_PROPERTIES(system/usbSidPico.cpp
         PROPERTIES INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/deps/USBSID-Pico")
 
 SET_SOURCE_FILES_PROPERTIES(sid/filter/chamberlin.cpp
@@ -180,7 +180,7 @@ set_source_files_properties(coreC64 ${headers}
         PROPERTIES HEADER_FILE_ONLY TRUE)
 
 if(LIBUSB_FOUND)
-    SET_SOURCE_FILES_PROPERTIES(sid/usbSidPico.cpp PROPERTIES COMPILE_FLAGS "-DLIBUSB")
+    SET_SOURCE_FILES_PROPERTIES(system/usbSidPico.cpp PROPERTIES COMPILE_FLAGS "-DLIBUSB")
     target_link_libraries(coreC64 PRIVATE pico)
 endif()
 
@@ -216,7 +216,7 @@ target_sources(coreC64 PRIVATE
         sid/reSid24.cpp
         sid/chamberlin.cpp
         system/residfpHandler.cpp
-        sid/usbSidPico.cpp
+        system/usbSidPico.cpp
         system/sidManager.cpp
         sid/filter/chamberlin.cpp
         tape/tape.cpp
@@ -247,6 +247,9 @@ target_sources(coreC64 PRIVATE
 )
 
 target_compile_options(coreC64 PRIVATE -Wno-shift-count-overflow)
+
+SET_SOURCE_FILES_PROPERTIES(system/residfpHandler.cpp
+        PROPERTIES INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/deps/libresidfp/src;")
 
 if(ltoSupported)
    set_target_properties(coreC64 PROPERTIES INTERPROCEDURAL_OPTIMIZATION TRUE)

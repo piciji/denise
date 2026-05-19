@@ -32,7 +32,7 @@ auto Chamberlin::clock(int cycles, int sampleCounter, int sampleLimit, bool audi
             externalFilter.clock((int16_t)Emulator::sclamp(16, (int)curSample));
 
             if (++sampleCounter == sampleLimit) {
-                system->audioRefresh( (int16_t)Emulator::sclamp( 16,(externalFilter.output() * 2) / 3 ) );
+                system->audioRefresh( (int16_t)Emulator::sclamp( 16,(externalFilter.output() * 4) / 5 ) );
                 sampleCounter = 0;
             }
         }

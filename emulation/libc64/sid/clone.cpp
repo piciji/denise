@@ -11,6 +11,14 @@ auto ReSid::clone(Sid* src, bool keepProps) -> void {
         ioPos = src->ioPos;
         ioMask = src->ioMask;
     }
+
+    // these props are same for all SID's
+    curve6581 = src->curve6581;
+    curve8580 = src->curve8580;
+    range6581 = src->range6581;
+    waveStrength = src->waveStrength;
+    digiBoost = src->digiBoost;
+    useFilter = src->useFilter;
     sampleRate = src->sampleRate;
 
     if (dynamic_cast<ReSid*>(src)) {
@@ -81,15 +89,12 @@ auto ReSid::clone(Sid* src, bool keepProps) -> void {
 
         auto& sf = _s->filter;
         if (!keepProps) {
-            filter.digiBoost = sf.digiBoost;
             filter.type = sf.type;
         }
+        filter.digiBoost = sf.digiBoost;
         filter.enabled = sf.enabled;
         if (!keepProps)
             filter.voiceMask = sf.voiceMask;
-
-        filter.bias6581 = sf.bias6581;
-        filter.bias8580 = sf.bias8580;
 
         filter.fc = sf.fc;
         filter.res = sf.res;
@@ -102,7 +107,7 @@ auto ReSid::clone(Sid* src, bool keepProps) -> void {
         if (!keepProps)
             filter.ve = sf.ve;
         else {
-            updateDigiBoost(filter.digiBoost && type == Type::MOS_8580);
+            updateDigiBoost(digiBoost && type == Type::MOS_8580);
         }
         filter.v3 = sf.v3;
         filter.v2 = sf.v2;
@@ -147,6 +152,14 @@ auto ReSid::clone(Sid* src, bool keepProps) -> void {
         externalFilter.Vhp = sExt.Vhp;
         externalFilter.w0lp_1_s7 = sExt.w0lp_1_s7;
         externalFilter.w0hp_1_s17 = sExt.w0hp_1_s17;
+    } else { // from foreign engine
+        enableFilter( src->useFilter );
+        adjustFilterCurve6581( curve6581 );
+        adjustFilterCurve8580( curve8580 );
+        setSampleRate(src->sampleRate);
+        setDigiBoost(src->digiBoost);
+        setType( type );
+        reset();
     }
 }
 
@@ -168,7 +181,7 @@ auto ReSid::updateSnapshot(DebuggerSnapshot& snap) -> void {
         sv.frequency = _sidV.freq;
         sv.pulseWidth = _sidV.pw;
         sv.attack = _sidE.attack;
-        sv.delay = _sidE.delay;
+        sv.decay = _sidE.decay;
         sv.sustain = _sidE.sustain;
         sv.release = _sidE.release;
         sv.control = _sidV.contr;

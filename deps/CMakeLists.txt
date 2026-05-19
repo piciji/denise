@@ -158,13 +158,16 @@ set(srcs
         libresidfp/src/Integrator6581.cpp
         libresidfp/src/Integrator8580.cpp
         libresidfp/src/OpAmp.cpp
+        libresidfp/src/SID.cpp
         libresidfp/src/Spline.cpp
         libresidfp/src/WaveformCalculator.cpp
         libresidfp/src/WaveformGenerator.cpp
         libresidfp/src/residfp/residfp.cpp
+
+        libresidfp/src/resample/SincResampler.cpp
 )
 
-SET_SOURCE_FILES_PROPERTIES(libresidfp/src/residfp/residfp.cpp
+SET_SOURCE_FILES_PROPERTIES(${srcs}
         PROPERTIES INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/deps/libresidfp/src;")
 
 target_sources(libresidfp PRIVATE ${srcs})

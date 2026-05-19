@@ -95,13 +95,17 @@ auto ReSid::Voice::setPwLo( uint8_t value ) -> void {
     
     pw = (pw & 0xf00) | value;
     
-    pulseOutput = (accumulator >> 12) >= pw ? 0xfff : 0x000;
+    updatePulseOutput();
 }
 
 auto ReSid::Voice::setPwHi( uint8_t value ) -> void {
     
     pw = ((value << 8) & 0xf00) | (pw & 0x0ff);
     
+    updatePulseOutput();
+}
+
+auto ReSid::Voice::updatePulseOutput() -> void {
     pulseOutput = (accumulator >> 12) >= pw ? 0xfff : 0x000;
 }
 

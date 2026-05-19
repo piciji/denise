@@ -3,7 +3,7 @@
 #include <USBSID.h>
 #endif
 #include "usbSidPico.h"
-#include "../system/system.h"
+#include "system.h"
 
 #ifdef LIBUSB
 USBSID_NS::USBSID_Class* usbsid = nullptr;

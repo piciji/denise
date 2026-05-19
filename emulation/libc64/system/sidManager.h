@@ -6,7 +6,7 @@
 #include <functional>
 #include "../sid/reSid.h"
 #include "sid.h"
-#include "../sid/usbSidPico.h"
+#include "usbSidPico.h"
 #include "debuggerSnapshot.h"
 
 namespace Emulator {
@@ -36,7 +36,9 @@ struct SidManager {
     unsigned serializationSizeForSevenMoreSids;
     unsigned sysClock;
     bool extraSids;
-    int engine;
+    uint8_t engine;
+
+    constexpr static int UpdateCycles = 200;
 
     Callback callAlarm;
     Callback callPotUpdate;
@@ -62,16 +64,16 @@ struct SidManager {
     auto updateSidUsage() -> void;
     auto isStereo() -> bool;
     auto setEnableFilterAll( bool state ) -> void;
-    auto isEnableFilter( ) -> bool;
-    auto setEngineAll(int filterType ) -> void;
-    auto getEngine( ) -> int;
-    auto setType( int nr, ReSid::Type type ) -> void;
-    auto getType( int nr ) -> ReSid::Type;
+    auto isFilterEnabled( ) -> bool;
+    auto setEngineAll(uint8_t newEngine ) -> void;
+    auto getEngine( ) -> uint8_t;
+    auto setType( int nr, Sid::Type type ) -> void;
+    auto getType( int nr ) -> Sid::Type;
     auto updateChamberlinFrequencyAll(double sampleRate) -> void;
-    auto adjustFilterBias6581All(int value) -> void;
-    auto adjustFilterBias8580All(int value) -> void;
-    auto getFilterBias6581() -> int;
-    auto getFilterBias8580() -> int;
+    auto adjustFilterCurve6581All(int value) -> void;
+    auto adjustFilterCurve8580All(int value) -> void;
+    auto getFilterCurve6581() -> int;
+    auto getFilterCurve8580() -> int;
     auto setDigiBoostAll( bool state ) -> void;
     auto getDigiBoost( ) -> bool;
     auto resetAll() -> void;
@@ -115,8 +117,8 @@ struct SidManager {
     auto adjustFilterRange6581All(int value) -> void;
     auto getFilterRange6581() -> int;
 
-    auto setWaveformStrength(int value) -> void;
-    auto getWaveformStrength() -> int;
+    auto setWaveformStrength(uint8_t value) -> void;
+    auto getWaveformStrength() -> uint8_t;
 
     auto updateSnapshot(DebuggerSnapshot& snap) -> void;
 

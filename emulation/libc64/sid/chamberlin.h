@@ -12,7 +12,7 @@ struct Chamberlin : ReSid {
 
     auto clock(int cycles, int sampleCounter, int sampleLimit, bool audioOut) -> int override;
 
-    auto getSample() -> float override { return static_cast<float>(externalFilter.output()) * 2.0f / 3.0f; }
+    auto getSample() -> float override { return static_cast<float>((externalFilter.output() * 4) / 5); }
 };
 
 }

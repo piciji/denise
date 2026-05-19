@@ -10,6 +10,13 @@ auto ReSid::serialize(Emulator::Serializer& s, bool light) -> void {
     s.integer( rightChannel );
     s.integer( ioMask );
     s.integer( ioPos );
+
+    s.integer( curve6581 );
+    s.integer( curve8580 );
+    s.integer( range6581 );
+    s.integer( waveStrength );
+    s.integer( digiBoost );
+    s.integer( useFilter );
     
     s.integer( (uint8_t&) type );
     s.integer( scaling );
@@ -74,8 +81,6 @@ auto ReSid::serialize(Emulator::Serializer& s, bool light) -> void {
     s.integer( (uint8_t&)filter.type );
     s.integer( filter.enabled );
     s.integer( filter.voiceMask );
-    s.integer( filter.bias6581 );
-    s.integer( filter.bias8580 );
     s.integer( filter.fc );
     s.integer( filter.res );
     s.integer( filter.filt );
@@ -118,7 +123,7 @@ auto ReSid::serialize(Emulator::Serializer& s, bool light) -> void {
         s.integer( externalFilter.w0hp_1_s17 );
 
         if (_load)
-            scaling = type == Type::MOS_8580 ? 2 : 1;
+            scaling = type == Type::MOS_8580 ? 5 : 3;
     }
 }
 

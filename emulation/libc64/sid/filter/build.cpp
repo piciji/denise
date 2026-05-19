@@ -713,8 +713,6 @@ auto ReSid::Filter::reset() -> void {
 }
 
 auto ReSid::Filter::adjustFilterBias6581(int value) -> void {
-    bias6581 = value;
-    
     double dac_bias = (double)(value - 5000) / 1000.0;
 
 	Vw_bias = int( dac_bias * calculated[0].vo_N16);
@@ -722,8 +720,6 @@ auto ReSid::Filter::adjustFilterBias6581(int value) -> void {
 }
 
 auto ReSid::Filter::adjustFilterBias8580(int value) -> void {
-    bias8580 = value;
-    
     double dac_bias = (double)(value - 5000) / 1000.0;
 
 	double Vg = 4.7975 * (dac_bias * 6./100. + 1.6);

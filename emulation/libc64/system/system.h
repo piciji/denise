@@ -365,6 +365,8 @@ struct System {
     auto cropFrame( Emulator::Interface::CropType type, Emulator::Interface::Crop _crop ) -> void;
 
     auto peekMemoryByIdent(uint16_t addr, unsigned id) -> uint8_t;
+
+    auto debugSID() -> bool { return debuggerSnapshot.themes & (unsigned)DebuggerTheme::SID; }
 };
 
 }

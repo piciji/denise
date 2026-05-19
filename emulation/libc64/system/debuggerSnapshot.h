@@ -144,13 +144,13 @@ struct DebuggerSnapshot : Emulator::Interface::DebuggerSnapshot {
         unsigned shiftCount;
     } via[2];
 
-    struct {
+    struct SID {
         struct {
             uint8_t wave;
             uint16_t frequency;
             uint16_t pulseWidth;
             uint8_t attack;
-            uint8_t delay;
+            uint8_t decay;
             uint8_t sustain;
             uint8_t release;
             uint8_t control;

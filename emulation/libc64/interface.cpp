@@ -26,7 +26,7 @@
 
 namespace LIBC64 {
 
-const std::string Interface::Version = "227";
+const std::string Interface::Version = "228";
     
 Interface::Interface() : Emulator::Interface( "C64" ) {
     
@@ -1508,7 +1508,7 @@ auto Interface::setModelValue(unsigned modelId, int value) -> void {
             system->sidManager.setType( 0, (value & 1) ? Sid::Type::MOS_6581 : Sid::Type::MOS_8580 );
             break;
         case ModelIdSidEngine:
-            system->sidManager.setEngineAll( value );
+            system->sidManager.setEngineAll( (uint8_t)value );
             break;
         case ModelIdFilter:
             system->sidManager.setEnableFilterAll( value & 1 );
@@ -1520,16 +1520,16 @@ auto Interface::setModelValue(unsigned modelId, int value) -> void {
             system->sidManager.intensifyPseudoStereo( value & 1);
             break;
         case ModelIdBias6581:
-            system->sidManager.adjustFilterBias6581All( value );
+            system->sidManager.adjustFilterCurve6581All( value );
 			break;
         case ModelIdBias8580:
-            system->sidManager.adjustFilterBias8580All( value );
+            system->sidManager.adjustFilterCurve8580All( value );
 			break;
         case ModelIdRange6581:
             system->sidManager.adjustFilterRange6581All( value );
             break;
         case ModelIdSidWaveformStrength:
-            system->sidManager.setWaveformStrength( value );
+            system->sidManager.setWaveformStrength( (uint8_t)value );
             break;
         case ModelIdSidSampleFetch:
             system->sidManager.setResampleQuality( (uint8_t)value );
@@ -1690,15 +1690,15 @@ auto Interface::getModelValue(unsigned modelId) -> int {
         case ModelIdSidEngine:
             return (int)system->sidManager.getEngine();
         case ModelIdFilter:
-            return system->sidManager.isEnableFilter();
+            return system->sidManager.isFilterEnabled();
 		case ModelIdDigiboost:
             return system->sidManager.getDigiBoost();
         case ModelIdIntensifyPseudoStereo:
             return system->sidManager.hasIntensifiedPseudoStereo();
         case ModelIdBias6581:
-			return system->sidManager.getFilterBias6581();
+			return system->sidManager.getFilterCurve6581();
         case ModelIdBias8580:
-            return system->sidManager.getFilterBias8580();
+            return system->sidManager.getFilterCurve8580();
         case ModelIdRange6581:
             return system->sidManager.getFilterRange6581();
         case ModelIdSidWaveformStrength:

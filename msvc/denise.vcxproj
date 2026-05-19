@@ -24,6 +24,31 @@
     <ClInclude Include="..\data\resource.h" />
     <ClInclude Include="..\deps\cgif\cgif.h" />
     <ClInclude Include="..\deps\cgif\cgif_raw.h" />
+    <ClInclude Include="..\deps\libresidfp\src\Dac.h" />
+    <ClInclude Include="..\deps\libresidfp\src\EnvelopeGenerator.h" />
+    <ClInclude Include="..\deps\libresidfp\src\ExternalFilter.h" />
+    <ClInclude Include="..\deps\libresidfp\src\Filter.h" />
+    <ClInclude Include="..\deps\libresidfp\src\Filter6581.h" />
+    <ClInclude Include="..\deps\libresidfp\src\Filter8580.h" />
+    <ClInclude Include="..\deps\libresidfp\src\FilterModelConfig.h" />
+    <ClInclude Include="..\deps\libresidfp\src\FilterModelConfig6581.h" />
+    <ClInclude Include="..\deps\libresidfp\src\FilterModelConfig8580.h" />
+    <ClInclude Include="..\deps\libresidfp\src\Integrator.h" />
+    <ClInclude Include="..\deps\libresidfp\src\Integrator6581.h" />
+    <ClInclude Include="..\deps\libresidfp\src\Integrator8580.h" />
+    <ClInclude Include="..\deps\libresidfp\src\OpAmp.h" />
+    <ClInclude Include="..\deps\libresidfp\src\resample\Limiter.h" />
+    <ClInclude Include="..\deps\libresidfp\src\resample\PassThrough.h" />
+    <ClInclude Include="..\deps\libresidfp\src\resample\Resampler.h" />
+    <ClInclude Include="..\deps\libresidfp\src\resample\SincResampler.h" />
+    <ClInclude Include="..\deps\libresidfp\src\resample\TwoPassSincResampler.h" />
+    <ClInclude Include="..\deps\libresidfp\src\resample\ZeroOrderResampler.h" />
+    <ClInclude Include="..\deps\libresidfp\src\SID.h" />
+    <ClInclude Include="..\deps\libresidfp\src\siddefs-fp.h" />
+    <ClInclude Include="..\deps\libresidfp\src\Spline.h" />
+    <ClInclude Include="..\deps\libresidfp\src\Voice.h" />
+    <ClInclude Include="..\deps\libresidfp\src\WaveformCalculator.h" />
+    <ClInclude Include="..\deps\libresidfp\src\WaveformGenerator.h" />
     <ClInclude Include="..\driver\audio\xaudio2\header27.h" />
     <ClInclude Include="..\driver\audio\xaudio2\header29.h" />
     <ClInclude Include="..\driver\audio\xaudio2\xaudio2.h" />
@@ -180,17 +205,18 @@
     <ClInclude Include="..\emulation\libc64\sid\chamberlin.h" />
     <ClInclude Include="..\emulation\libc64\sid\reSid.h" />
     <ClInclude Include="..\emulation\libc64\sid\reSid24.h" />
-    <ClInclude Include="..\emulation\libc64\sid\usbSidPico.h" />
     <ClInclude Include="..\emulation\libc64\system\clipboard.h" />
     <ClInclude Include="..\emulation\libc64\system\firmware.h" />
     <ClInclude Include="..\emulation\libc64\system\gluelogic.h" />
     <ClInclude Include="..\emulation\libc64\system\keyBuffer.h" />
     <ClInclude Include="..\emulation\libc64\system\memory.h" />
+    <ClInclude Include="..\emulation\libc64\system\residfpHandler.h" />
     <ClInclude Include="..\emulation\libc64\system\sid.h" />
     <ClInclude Include="..\emulation\libc64\system\sidManager.h" />
     <ClInclude Include="..\emulation\libc64\system\snapShots.h" />
     <ClInclude Include="..\emulation\libc64\system\system.h" />
     <ClInclude Include="..\emulation\libc64\system\testbench.h" />
+    <ClInclude Include="..\emulation\libc64\system\usbSidPico.h" />
     <ClInclude Include="..\emulation\libc64\tape\structure.h" />
     <ClInclude Include="..\emulation\libc64\tape\tape.h" />
     <ClInclude Include="..\emulation\libc64\traps\baseDevice.h" />
@@ -429,6 +455,38 @@
     <ClCompile Include="..\deps\lha\null_decoder.cpp" />
     <ClCompile Include="..\deps\lha\pm1_decoder.cpp" />
     <ClCompile Include="..\deps\lha\pm2_decoder.cpp" />
+    <ClCompile Include="..\deps\libresidfp\src\Dac.cpp" />
+    <ClCompile Include="..\deps\libresidfp\src\EnvelopeGenerator.cpp" />
+    <ClCompile Include="..\deps\libresidfp\src\ExternalFilter.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|win32'">$(IntDir)%(Filename)_residfp</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|win32'">$(IntDir)%(Filename)_residfp</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)%(Filename)_residfp</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(Filename)_residfp</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\deps\libresidfp\src\Filter.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|win32'">$(IntDir)%(Filename)_residfp</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|win32'">$(IntDir)%(Filename)_residfp</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)%(Filename)_residfp</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(Filename)_residfp</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\deps\libresidfp\src\Filter6581.cpp" />
+    <ClCompile Include="..\deps\libresidfp\src\Filter8580.cpp" />
+    <ClCompile Include="..\deps\libresidfp\src\FilterModelConfig.cpp" />
+    <ClCompile Include="..\deps\libresidfp\src\FilterModelConfig6581.cpp" />
+    <ClCompile Include="..\deps\libresidfp\src\FilterModelConfig8580.cpp" />
+    <ClCompile Include="..\deps\libresidfp\src\Integrator6581.cpp" />
+    <ClCompile Include="..\deps\libresidfp\src\Integrator8580.cpp" />
+    <ClCompile Include="..\deps\libresidfp\src\OpAmp.cpp" />
+    <ClCompile Include="..\deps\libresidfp\src\resample\SincResampler.cpp" />
+    <ClCompile Include="..\deps\libresidfp\src\SID.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|win32'">$(IntDir)%(Filename)_residfp</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|win32'">$(IntDir)%(Filename)_residfp</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)%(Filename)_residfp</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(Filename)_residfp</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\deps\libresidfp\src\Spline.cpp" />
+    <ClCompile Include="..\deps\libresidfp\src\WaveformCalculator.cpp" />
+    <ClCompile Include="..\deps\libresidfp\src\WaveformGenerator.cpp" />
     <ClCompile Include="..\deps\SPIRV-Cross\spirv_cfg.cpp" />
     <ClCompile Include="..\deps\SPIRV-Cross\spirv_cross.cpp" />
     <ClCompile Include="..\deps\SPIRV-Cross\spirv_cross_parsed_ir.cpp" />
@@ -1214,7 +1272,6 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|win32'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="..\emulation\libc64\sid\usbSidPico.cpp" />
     <ClCompile Include="..\emulation\libc64\sid\voice.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
@@ -1242,6 +1299,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|win32'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="..\emulation\libc64\system\residfpHandler.cpp" />
     <ClCompile Include="..\emulation\libc64\system\serialization.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
@@ -1250,6 +1308,7 @@
     </ClCompile>
     <ClCompile Include="..\emulation\libc64\system\sidManager.cpp" />
     <ClCompile Include="..\emulation\libc64\system\system.cpp" />
+    <ClCompile Include="..\emulation\libc64\system\usbSidPico.cpp" />
     <ClCompile Include="..\emulation\libc64\tape\counter.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
@@ -1992,12 +2051,12 @@
     <LinkIncremental>true</LinkIncremental>
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\out\</OutDir>
     <IntDir>$(Platform)\$(Configuration)\</IntDir>
-    <IncludePath>$(VC_IncludePath);$(ProjectDir)..\data\libs\include;$(ProjectDir)..\deps\glslang;$(ProjectDir)..\deps\lha;$(ProjectDir)..\deps\stb;$(ProjectDir)..\deps\cgif;$(IncludePath)</IncludePath>
+    <IncludePath>$(VC_IncludePath);$(ProjectDir)..\data\libs\include;$(ProjectDir)..\deps\glslang;$(ProjectDir)..\deps\lha;$(ProjectDir)..\deps\stb;$(ProjectDir)..\deps\cgif;$(ProjectDir)..\deps\libresidfp\src;$(IncludePath)</IncludePath>
     <LibraryPath>$(VC_LibraryPath_win32);$(ProjectDir)..\data\libs\static\$(PlatformTarget);$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(VC_IncludePath);$(ProjectDir)..\data\libs\include;$(ProjectDir)..\deps\glslang;$(ProjectDir)..\deps\lha;$(ProjectDir)..\deps\stb;$(ProjectDir)..\deps\cgif;$(IncludePath)</IncludePath>
+    <IncludePath>$(VC_IncludePath);$(ProjectDir)..\data\libs\include;$(ProjectDir)..\deps\glslang;$(ProjectDir)..\deps\lha;$(ProjectDir)..\deps\stb;$(ProjectDir)..\deps\cgif;$(ProjectDir)..\deps\libresidfp\src;$(IncludePath)</IncludePath>
     <LibraryPath>$(VC_LibraryPath_win32);$(ProjectDir)..\data\libs\static\$(PlatformTarget);$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\out\</OutDir>
     <IntDir>$(Platform)\$(Configuration)\</IntDir>
@@ -2005,13 +2064,13 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\out\</OutDir>
-    <IncludePath>$(VC_IncludePath);$(ProjectDir)..\data\libs\include;$(ProjectDir)..\deps\glslang;$(ProjectDir)..\deps\lha;$(ProjectDir)..\deps\stb;$(ProjectDir)..\deps\cgif;$(IncludePath)</IncludePath>
+    <IncludePath>$(VC_IncludePath);$(ProjectDir)..\data\libs\include;$(ProjectDir)..\deps\glslang;$(ProjectDir)..\deps\lha;$(ProjectDir)..\deps\stb;$(ProjectDir)..\deps\cgif;$(ProjectDir)..\deps\libresidfp\src;$(IncludePath)</IncludePath>
     <LibraryPath>$(VC_LibraryPath_x64);$(ProjectDir)..\data\libs\static\$(PlatformTarget);$(LibraryPath)</LibraryPath>
     <IntDir>$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(VC_IncludePath);$(ProjectDir)..\data\libs\include;$(ProjectDir)..\deps\glslang;$(ProjectDir)..\deps\lha;$(ProjectDir)..\deps\stb;$(ProjectDir)..\deps\cgif;$(IncludePath)</IncludePath>
+    <IncludePath>$(VC_IncludePath);$(ProjectDir)..\data\libs\include;$(ProjectDir)..\deps\glslang;$(ProjectDir)..\deps\lha;$(ProjectDir)..\deps\stb;$(ProjectDir)..\deps\cgif;$(ProjectDir)..\deps\libresidfp\src;$(IncludePath)</IncludePath>
     <LibraryPath>$(VC_LibraryPath_x64);$(ProjectDir)..\data\libs\static\$(PlatformTarget);$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\out\</OutDir>
     <IntDir>$(Platform)\$(Configuration)\</IntDir>

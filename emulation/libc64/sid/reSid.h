@@ -48,11 +48,10 @@ struct DebuggerSnapshot;
 typedef double doublePoint[2];
 
 struct ReSid : Sid {
-    ReSid( unsigned nr, System* system, SidManager& sidManager, Type type);
+    ReSid( unsigned nr, System* system, SidManager& sidManager, USBSIDPico& usbSIDPico, Type type);
 
     auto setType( Type type ) -> void;
     auto setDigiBoost( bool state ) -> void;
-    auto hasDigiBoost() -> bool;
     auto updateDigiBoost( bool state ) -> void;
     auto readIO( uint8_t addr ) -> uint8_t;
     auto peekIO( uint8_t addr ) -> uint8_t;
@@ -63,32 +62,28 @@ struct ReSid : Sid {
     auto clock() -> void;
     auto clockSilent() -> void override;
 
-    auto getSample() -> float override { return static_cast<float>(externalFilter.output() * scaling); }
+    auto getSample() -> float override { return static_cast<float>((externalFilter.output() * scaling) / 2); }
     auto serialize(Emulator::Serializer& s, bool light = false) -> void;
-    auto setIoMask(uint8_t pos) -> void;
-    auto useLeftChannel(bool state) -> void;
-    auto useRightChannel(bool state) -> void;
 
     auto enableFilter( bool state ) -> void;
-    auto filterEnabled() -> bool;
 
-    auto adjustFilterBias6581(int value) -> void;
-    auto adjustFilterBias8580(int value) -> void;
+    auto adjustFilterCurve6581(int value) -> void;
+    auto adjustFilterCurve8580(int value) -> void;
 
-    auto getFilterBias6581() -> int;
-    auto getFilterBias8580() -> int;
+    auto adjustFilterRange6581(int value) -> void;
+
+    auto setWaveformStrength(uint8_t value) -> void;
 
     auto processEnvVoice() -> void;
 
     auto setSampleRate(double sampleRate) -> void;
 
     Emulator::SystemTimer& sysTimer;
-    USBSIDPico& usbSIDPico;
 
     auto clone(Sid* src, bool keepProps) -> void;
     auto updateSnapshot(DebuggerSnapshot& snap) -> void;
 
-    int scaling = 2;
+    int scaling = 5;
 
     uint8_t lastBusValue;
     unsigned databusDecay;
@@ -144,6 +139,7 @@ struct ReSid : Sid {
         auto setPwHi( uint8_t value ) -> void;
         auto setControl( uint8_t value ) -> void;
         auto setType( Type type ) -> void;
+        auto updatePulseOutput() -> void;
         auto clock() -> void;
 		
 		auto setNoiseOutput() -> void;
@@ -220,8 +216,6 @@ struct ReSid : Sid {
         Type type;  // model
         bool enabled; // disable filter
         uint8_t voiceMask; // disable voices
-        int bias6581;
-        int bias8580;
         // Register
 		uint16_t fc; // cutoff frequency
 		uint8_t res; // Resonanz

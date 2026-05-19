@@ -206,7 +206,7 @@ auto SidDebugger::updateSID(LIBC64::DebuggerSnapshot& snap) -> void {
             updateReg( vL.pulseWidth.edit, voice.pulseWidth );
 
             updateReg( vL.adsr.editA, voice.attack );
-            updateReg( vL.adsr.editD, voice.delay );
+            updateReg( vL.adsr.editD, voice.decay );
             updateReg( vL.adsr.editS, voice.sustain );
             updateReg( vL.adsr.editR, voice.release );
 

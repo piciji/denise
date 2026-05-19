@@ -5,6 +5,7 @@
 #include "../sid/clone.cpp"
 #include "../sid/reSid24.h"
 #include "../sid/chamberlin.h"
+#include "residfpHandler.h"
 
 namespace LIBC64 {
 
@@ -16,7 +17,7 @@ std::vector<std::string> SidManager::adrOptions = {
 
 SidManager::SidManager(System* system) : system(system), usbSIDPico(*system) {
     for (unsigned i = 0; i < 8; i++)
-        sids[i] = new ReSid( i, system, *this, ReSid::Type::MOS_8580 );
+        sids[i] = new ReSid( i, system, *this, usbSIDPico, ReSid::Type::MOS_8580 );
 
     sampleCounter = 0;
     sampleLimit = 2;
@@ -62,7 +63,20 @@ auto SidManager::applyOffsetPseudoStereo() -> void {
 }
 
 auto SidManager::setIoMask(int nr, uint8_t pos) -> void {
-    sids[nr]->setIoMask(pos);
+    Sid* sid = sids[nr];
+    if (pos >= adrOptions.size())
+        return;
+
+    sid->ioPos = pos;
+
+    if (pos == 0) {
+        sid->ioMask = 0;
+        return;
+    }
+
+    auto str = adrOptions[pos];
+
+    sid->ioMask = std::stoul(str, nullptr, 16);
 }
 
 auto SidManager::getIoPos(int nr) -> int {
@@ -125,7 +139,7 @@ auto SidManager::writeIo(uint16_t addr, uint8_t value) -> void {
 }
 
 auto SidManager::updateClock() -> void {
-    system->sysTimer.add( &callAlarm, 200, Emulator::SystemTimer::Action::UpdateExisting );
+    system->sysTimer.add( &callAlarm, UpdateCycles, Emulator::SystemTimer::Action::UpdateExisting );
 
     int _delay = system->sysTimer.fallBackCycles( sysClock );
 
@@ -341,12 +355,12 @@ auto SidManager::setEnableFilterAll( bool state ) -> void {
         sid->enableFilter( state );
 }
 
-auto SidManager::isEnableFilter( ) -> bool {
+auto SidManager::isFilterEnabled( ) -> bool {
     return mainSid()->filterEnabled();
 }
 
-auto SidManager::setEngineAll( int value ) -> void {
-    engine = value;
+auto SidManager::setEngineAll( uint8_t newEngine ) -> void {
+    engine = newEngine;
     rebuildSids(true);
     updateSidUsage();
     system->history.reset();
@@ -360,14 +374,16 @@ auto SidManager::rebuildSids(bool cloneOld) -> void {
         switch (engine) {
             default:
             case 0:
+                newSid = new ReSid( i, system, *this, usbSIDPico, oldSid->type );
+                break;
             case 1:
-                newSid = new ReSid( i, system, *this, oldSid->type );
+                newSid = new ResidfpHandler(i, system, *this, usbSIDPico, oldSid->type);
                 break;
             case 2:
-                newSid = new ReSid24( i, system, *this, oldSid->type );
+                newSid = new ReSid24( i, system, *this, usbSIDPico, oldSid->type );
                 break;
             case 3:
-                newSid = new Chamberlin( i, system, *this, oldSid->type );
+                newSid = new Chamberlin( i, system, *this, usbSIDPico, oldSid->type );
                 break;
         }
 
@@ -378,16 +394,16 @@ auto SidManager::rebuildSids(bool cloneOld) -> void {
     }
 }
 
-auto SidManager::getEngine( ) -> int {
+auto SidManager::getEngine( ) -> uint8_t {
     return engine;
 }
 
-auto SidManager::setType( int nr, ReSid::Type type ) -> void {
+auto SidManager::setType( int nr, Sid::Type type ) -> void {
     sids[nr]->setType( type );
 }
 
-auto SidManager::getType(int nr) -> ReSid::Type {
-    return sids[nr]->type;
+auto SidManager::getType(int nr) -> Sid::Type {
+    return sids[nr]->getType();
 }
 
 auto SidManager::updateChamberlinFrequencyAll(double sampleRate) -> void {
@@ -396,40 +412,44 @@ auto SidManager::updateChamberlinFrequencyAll(double sampleRate) -> void {
     }
 }
 
-auto SidManager::adjustFilterBias6581All(int value) -> void {
+auto SidManager::adjustFilterCurve6581All(int value) -> void {
     for (auto sid : sids) {
-        sid->adjustFilterBias6581( value );
+        sid->adjustFilterCurve6581( value );
     }
 }
 
-auto SidManager::getFilterBias6581() -> int {
-    return mainSid()->getFilterBias6581();
+auto SidManager::getFilterCurve6581() -> int {
+    return mainSid()->getFilterCurve6581();
 }
 
-auto SidManager::adjustFilterBias8580All(int value) -> void {
+auto SidManager::adjustFilterCurve8580All(int value) -> void {
     for (auto sid : sids) {
-        sid->adjustFilterBias8580( value );
+        sid->adjustFilterCurve8580( value );
     }
 }
 
-auto SidManager::getFilterBias8580() -> int {
-    return mainSid()->getFilterBias8580();
+auto SidManager::getFilterCurve8580() -> int {
+    return mainSid()->getFilterCurve8580();
 }
 
 auto SidManager::adjustFilterRange6581All(int value) -> void {
-
+    for (auto sid : sids) {
+        sid->adjustFilterRange6581( value );
+    }
 }
 
 auto SidManager::getFilterRange6581() -> int {
-    return 0;
+    return mainSid()->getFilterRange6581();
 }
 
-auto SidManager::setWaveformStrength(int value) -> void {
-
+auto SidManager::setWaveformStrength(uint8_t value) -> void {
+    for (auto sid : sids) {
+        sid->setWaveformStrength( value );
+    }
 }
 
-auto SidManager::getWaveformStrength() -> int {
-    return 0;
+auto SidManager::getWaveformStrength() -> uint8_t {
+    return mainSid()->getWaveformStrength();
 }
 
 auto SidManager::setDigiBoostAll( bool state ) -> void {
@@ -445,7 +465,7 @@ auto SidManager::getDigiBoost( ) -> bool {
 auto SidManager::resetAll() -> void {
     sysClock = 0;
     potX = potY = 0xff;
-    system->sysTimer.add( &callAlarm, 300, Emulator::SystemTimer::Action::UpdateExisting );
+    system->sysTimer.add( &callAlarm, UpdateCycles, Emulator::SystemTimer::Action::UpdateExisting );
 
     if (usbSIDPico.enabled)
         usbSIDPico.reset();
@@ -536,7 +556,7 @@ auto SidManager::searializeActiveSids(Emulator::Serializer& s, bool light) -> vo
     s.integer( sysClock );
     s.integer( potX );
     s.integer( potY );
-    int _engine = engine;
+    uint8_t _engine = engine;
     s.integer( engine );
 
     if (_loadState && _engine != engine) {
@@ -575,9 +595,9 @@ auto SidManager::updateSnapshot(DebuggerSnapshot& snap) -> void {
         s.active = (i == 0) || (i <= system->requestedSids);
 
         if (s.active) {
+            sids[i]->updateSnapshot( snap );
             s.potX = _potX;
             s.potY = _potY;
-            sids[i]->updateSnapshot( snap );
         }
     }
 }

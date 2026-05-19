@@ -15,9 +15,8 @@
 
 namespace LIBC64 {
 
-ReSid::ReSid( unsigned nr, System* system, SidManager& sidManager, Type type ) :
-Sid( nr, system, sidManager, type ),
-usbSIDPico(sidManager.usbSIDPico),
+ReSid::ReSid( unsigned nr, System* system, SidManager& sidManager, USBSIDPico& usbSIDPico, Type type ) :
+Sid( nr, system, sidManager, usbSIDPico, type ),
 sysTimer(system->sysTimer),
 filter( this ),
 chamberlinFilter(filter) {
@@ -45,53 +44,27 @@ chamberlinFilter(filter) {
     sampleRate = 982800.0;
 }
 
-auto ReSid::useLeftChannel(bool state) -> void {
-    leftChannel = state;
-}
-
-auto ReSid::useRightChannel(bool state) -> void {
-    rightChannel = state;
-}
-
 auto ReSid::enableFilter( bool state ) -> void {
+    useFilter = state;
     filter.setEnable( state );
 }
 
-auto ReSid::filterEnabled() -> bool {
-    return filter.enabled;
-}
-
-auto ReSid::adjustFilterBias6581(int value) -> void {
+auto ReSid::adjustFilterCurve6581(int value) -> void {
+    curve6581 = value;
     filter.adjustFilterBias6581( value );
 }
 
-auto ReSid::adjustFilterBias8580(int value) -> void {
+auto ReSid::adjustFilterCurve8580(int value) -> void {
+    curve8580 = value;
     filter.adjustFilterBias8580( value );
 }
 
-auto ReSid::getFilterBias6581() -> int {
-    return filter.bias6581;
+auto ReSid::adjustFilterRange6581(int value) -> void {
+    range6581 = value; // unused, but remember when switching between SID engines
 }
 
-auto ReSid::getFilterBias8580() -> int {
-    return filter.bias8580;
-}
-
-auto ReSid::setIoMask( uint8_t pos ) -> void {
-
-    if (pos >= SidManager::adrOptions.size())
-        return;
-
-    ioPos = pos;
-
-    if (pos == 0) {
-        ioMask = 0;
-        return;
-    }
-
-    auto str = SidManager::adrOptions[pos];
-
-    ioMask = std::stoul(str, nullptr, 16);
+auto ReSid::setWaveformStrength(uint8_t value) -> void {
+    waveStrength = value; // unused, but remember when switching between SID engines
 }
 
 auto ReSid::setType( Type type ) -> void {
@@ -108,23 +81,20 @@ auto ReSid::setType( Type type ) -> void {
 
     // update digi boost
     // it will be applied for 8580 only
-    updateDigiBoost( filter.digiBoost && type == Type::MOS_8580 );
+    updateDigiBoost( digiBoost && type == Type::MOS_8580 );
 
-    scaling = type == Type::MOS_8580 ? 2 : 1;
+    scaling = type == Type::MOS_8580 ? 5 : 3;
 }
 
 auto ReSid::setDigiBoost( bool state ) -> void {
 
+    digiBoost = state;
     filter.digiBoost = state;
 
     if (type == Type::MOS_6581)
         return;
 
     updateDigiBoost( state );
-}
-
-auto ReSid::hasDigiBoost() -> bool {
-    return filter.digiBoost;
 }
 
 auto ReSid::updateDigiBoost( bool state ) -> void {
@@ -200,7 +170,7 @@ auto ReSid::clock(int cycles, int sampleCounter, int sampleLimit, bool audioOut)
 #endif
 
                 if (++sampleCounter == sampleLimit) {
-                    system->audioRefresh( (int16_t)Emulator::sclamp( 16,externalFilter.output() * scaling ) );
+                    system->audioRefresh( (int16_t)Emulator::sclamp( 16,(externalFilter.output() * scaling) / 2 ) );
                     sampleCounter = 0;
                 }
             }
