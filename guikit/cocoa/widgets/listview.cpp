@@ -55,10 +55,13 @@
     
     if (listView->onClick) {
         NSPoint point = [self convertPoint:[event locationInWindow] fromView:nil];
-        
         auto _row = [self rowAtPoint:point];
         auto _col = [self columnAtPoint:point];
-        listView->onClick(_row, _col);
+
+        NSPoint screenPoint = [NSEvent mouseLocation];
+        NSScreen* screen = [NSScreen mainScreen];
+        CGFloat flippedY = screen.frame.size.height - screenPoint.y;
+        listView->onClick(_row, _col, { (int)screenPoint.x, (int)flippedY });
     }
 }
 

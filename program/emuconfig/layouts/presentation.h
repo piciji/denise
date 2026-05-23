@@ -509,6 +509,7 @@ struct PresentationLayout : GUIKIT::HorizontalLayout {
     template<typename T> auto setSliderAction( SliderLayout* layout, std::string baseIdent, std::function<T ( unsigned position )> callTransfer = [](unsigned position) { return position; } ) -> void;
     auto vManager() -> VideoManager* { return VideoManager::getInstance(emulator); }
     auto openParameterEditor(unsigned row, unsigned offset, GUIKIT::Position& position) -> void;
+    auto closeParameterEditor() -> void;
     
     PresentationLayout(TabWindow* tabWindow);
 };

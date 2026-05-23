@@ -652,6 +652,8 @@ auto Debugger::updateWatchpointCondition(DbgWatcher& watcher) -> bool {
 }
 
 auto Debugger::openConditionView(DbgWatcher* watcher, GUIKIT::Position position) -> void {
+    if (conditionViewDebugger)
+        conditionViewDebugger->setVisible(false);
     delete conditionViewDebugger;
 
     conditionViewDebugger = new ConditionViewDebugger(this);

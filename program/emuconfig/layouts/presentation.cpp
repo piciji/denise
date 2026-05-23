@@ -1249,6 +1249,10 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
             }
         }
     };
+    
+    layParam.listView.onContext = [this](unsigned row, unsigned col, GUIKIT::Position position) {
+        closeParameterEditor();
+    };
 
     layPass.settings.filter.nearest.onActivate = [this]() {
         emuThread->lock();
@@ -2848,8 +2852,16 @@ auto PresentationLayout::checkHDR() -> void {
     layMotion.hdr.setEnabled( videoDriver->HDRsupport() );
 }
 
-auto PresentationLayout::openParameterEditor(unsigned row, unsigned offset, GUIKIT::Position& position) -> void {
+auto PresentationLayout::closeParameterEditor() -> void {
+    if (paramEditor)
+        paramEditor->setVisible(false);
+    
     delete paramEditor;
+    paramEditor = nullptr;
+}
+
+auto PresentationLayout::openParameterEditor(unsigned row, unsigned offset, GUIKIT::Position& position) -> void {
+    closeParameterEditor();
     paramEditor = new ParamEditor(this);
 
     auto preset = vManager()->getPreset();
@@ -2890,6 +2902,8 @@ sliderLay( "", false, true ) {
 
     unfocusTimer.onFinished = [this]() {
         unfocusTimer.setEnabled(false);
+        setVisible();
+        setFocused();
 
         onUnFocus = [this]() {
             if (this->visible())
@@ -3021,8 +3035,8 @@ auto ParamEditor::setMinimum(std::vector<float>& distances) -> void {
 
 auto ParamEditor::open() -> void {
     unfocusTimer.setEnabled();
-    setVisible();
-    setFocused();
+//    setVisible();
+  //  setFocused();
 }
 
 }

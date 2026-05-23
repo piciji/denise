@@ -676,7 +676,6 @@
 		9D8FAA902CB3F6EF006905BE /* slider.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = slider.h; sourceTree = "<group>"; };
 		9D8FAA962CB3F6EF006905BE /* config.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = config.cpp; sourceTree = "<group>"; };
 		9D8FAA972CB3F6EF006905BE /* archiveViewer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = archiveViewer.h; sourceTree = "<group>"; };
-		9D8FAA982CB3F6EF006905BE /* sliderAlt.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = sliderAlt.h; sourceTree = "<group>"; };
 		9D8FAA9A2CB3F6EF006905BE /* hotkeys.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = hotkeys.cpp; sourceTree = "<group>"; };
 		9D8FAA9B2CB3F6EF006905BE /* capture.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = capture.cpp; sourceTree = "<group>"; };
 		9D8FAA9C2CB3F6EF006905BE /* manager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = manager.h; sourceTree = "<group>"; };
@@ -1600,7 +1599,6 @@
 				9D8FAA912CB3F6EF006905BE /* layouts */,
 				9D8FAA962CB3F6EF006905BE /* config.cpp */,
 				9D8FAA972CB3F6EF006905BE /* archiveViewer.h */,
-				9D8FAA982CB3F6EF006905BE /* sliderAlt.h */,
 			);
 			path = config;
 			sourceTree = "<group>";
