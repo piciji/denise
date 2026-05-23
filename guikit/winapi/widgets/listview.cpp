@@ -458,13 +458,13 @@ auto pListView::onClick(LPARAM lparam, bool rightClick) -> void {
     LPNMLISTVIEW nmlistview = (LPNMLISTVIEW)lparam;
     unsigned selection = nmlistview->iItem;
     unsigned column = nmlistview->iSubItem;
+    POINT pt;
+    GetCursorPos(&pt);
 
     if (!rightClick) {
         if (listView.onClick)
-            listView.onClick(selection, column);
+            listView.onClick(selection, column, {static_cast<signed int>(pt.x), static_cast<signed int>(pt.y)});
     } else if (listView.onContext) {
-        POINT pt;
-        GetCursorPos(&pt);
         listView.onContext(selection, column, {static_cast<signed int>(pt.x), static_cast<signed int>(pt.y)});
     }
 }

@@ -3,6 +3,7 @@
 #include "input.h"
 #include "../config.h"
 #include "../../../data/icons.h"
+#include "../../../driver/tools/shaderpass.h"
 #include "../../tools/error.h"
 #include "../../tools/httpClient.h"
 #include "../../thread/emuThread.h"
@@ -10,6 +11,7 @@
 #include "../../view/status.h"
 #include "../../helper/fileHelper.h"
 #include "../../helper/settingsHelper.h"
+#include <cmath>
 
 #define _settings this->tabWindow->settings
 
@@ -279,14 +281,16 @@ VideoPassLayout::VideoPassLayout() {
 }
 
 VideoParamLayout::Control::Control() {
-    append(save, {0u, 0u});
     append(spacer, {~0u, 0u});
-    append(previous, {0u, 0u}, 20);
-    append(next, {0u, 0u});
+    append(save, {0u, 0u});
 }
 
 VideoParamLayout::VideoParamLayout() {
-    append(params, {~0u, ~0u}, 20);
+    listView.setHeaderText( {"", "value", "minimum", "maximum"} );
+    listView.setAlignment( {GUIKIT::ListView::Align::Left, GUIKIT::ListView::Align::Center, GUIKIT::ListView::Align::Right, GUIKIT::ListView::Align::Left} );
+    listView.setFont( GUIKIT::Font::system( 11 ) );
+    listView.setHeaderVisible( true );
+    append( listView, {~0u, ~0u}, 10 );
     append(control, {~0u, 0u});
 
     setPadding(8);
@@ -599,9 +603,8 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
     tviShader.setImage(imgFolderClosed);
     tviShader.setImageExpanded(imgFolderOpen);
 
-    tviParams.setUserData( (uintptr_t)3000 );
-    tviParams.setImage(imgFolderClosed);
-    tviParams.setImageExpanded(imgFolderOpen);
+    tviParams.setUserData( (uintptr_t)3 );
+    tviParams.setImage(imgDocument);
 
     moduleTree.append(tviBase);
     moduleTree.append(tviScreenText);
@@ -789,12 +792,7 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
         unsigned navIdent = (unsigned)item->userData();
 
         if (navIdent >= 3000) {
-            unsigned pos = navIdent - 3000;
             navIdent = 3;
-            if (pos < params.size()) {
-                selectedParamId = pos;
-                buildParams(params[pos]);
-            }
         } else if (navIdent >= 210 ) {
             ShaderPreset* preset = vManager()->getPreset();
             unsigned passPos = navIdent - 210;
@@ -1213,96 +1211,8 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
         tviPasses[selectedPassId]->setSelected();
     };
 
-    for(int i = 0; i < PARAMS_PER_PAGE; i++) {
-        SliderLayoutAlt* sliLayout = new SliderLayoutAlt(true);
-
-        sliLayout->updateWidget = [this, i](unsigned position) {
-            float val = 0.0;
-            auto preset = vManager()->getPreset();
-            if (!preset)
-                return val;
-
-            if (selectedParamId < params.size()) {
-                auto& tviParam = params[selectedParamId];
-                unsigned offset = tviParam.offsets[i];
-
-                if (offset < preset->params.size()) {
-                    ShaderPreset::Param& param = preset->params[offset];
-                    val = (float) position * param.step + param.minimum;
-                    vManager()->updateData(offset, val);
-                }
-            }
-            return val;
-        };
-
-        sliLayout->requestDefault = [this, i]() {
-            float val = 0.0;
-            auto preset = vManager()->getPreset();
-            if (!preset)
-                return val;
-
-            if (selectedParamId < params.size()) {
-                auto& tviParam = params[selectedParamId];
-                unsigned offset = tviParam.offsets[i];
-
-                if (offset < preset->params.size()) {
-                    ShaderPreset::Param& param = preset->params[offset];
-                    val = param.initialOverridden;
-                    vManager()->updateData(offset, val);
-                }
-            }
-            return val;
-        };
-
-        paramSliders[i] = sliLayout;
-    }
-
-    layParam.control.previous.onActivate = [this]() {
-        if (!selectedParamId || selectedParamId > params.size())
-            return;
-
-        selectedParamId -= 1;
-        auto& param = params[selectedParamId];
-
-        if (!param.tvi)
-            tviParams.setSelected();
-        else
-            param.tvi->setSelected();
-
-        buildParams(param);
-        moduleSwitch.setSelection( 3 );
-    };
-
-    layParam.control.next.onActivate = [this]() {
-        if (selectedParamId >= (params.size() - 1) )
-            return;
-
-        selectedParamId += 1;
-        auto& param = params[selectedParamId];
-
-        if (!param.tvi)
-            tviParams.setSelected();
-        else
-            param.tvi->setSelected();
-
-        buildParams(param);
-        moduleSwitch.setSelection( 3 );
-    };
-
     layShader.main.info.toParams.onActivate = [this]() {
-        selectedParamId = 0;
-        if (selectedParamId >= params.size())
-            return;
-
-        auto& param = params[selectedParamId];
-
-        tviParams.setExpanded();
-        if (!param.tvi)
-            tviParams.setSelected();
-        else
-            param.tvi->setSelected();
-
-        buildParams(param);
+        tviParams.setSelected();
         moduleSwitch.setSelection( 3 );
     };
 
@@ -1325,6 +1235,19 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
         if (emulator == activeEmulator)
             videoDriver->useShaderCache(checked);
         emuThread->unlock();
+    };
+
+    layParam.listView.onClick = [this](unsigned row, unsigned col, GUIKIT::Position position) {
+        auto preset = vManager()->getPreset();
+        if (!preset)
+            return;
+
+        for (const auto& param : params) {
+            if (param.first == row) {
+                openParameterEditor(param.first, param.second, position);
+                break;
+            }
+        }
     };
 
     layPass.settings.filter.nearest.onActivate = [this]() {
@@ -1968,15 +1891,7 @@ auto PresentationLayout::buildShaderUI(ShaderPreset* preset, bool selectIt) -> v
         delete tviPass;
     }
 
-    for(auto& param : params) {
-        if (param.tvi) {
-            tviParams.remove(*param.tvi);
-            delete param.tvi;
-        }
-    }
-
     tviPasses.clear();
-    params.clear();
     moduleTree.remove(tviParams);
     layShader.main.info.toParams.setEnabled(false);
     layPass.errorMessage.setText("");
@@ -2004,11 +1919,11 @@ auto PresentationLayout::buildShaderUI(ShaderPreset* preset, bool selectIt) -> v
         tviPasses.push_back(tviPass);
     }
 
-    GUIKIT::TreeViewItem* tviParam = nullptr;
-    unsigned pageElement = 0;
-    std::vector<unsigned> offsets;
-    bool isDescriptor;
-    unsigned countDescriptors = 0;
+    auto& plist = layParam.listView;
+    plist.lockRedraw();
+    plist.reset();
+    params.clear();
+    params.reserve( 200 );
 
     for(unsigned i = 0; i < preset->params.size(); i++) {
         auto& param = preset->params[i];
@@ -2016,64 +1931,25 @@ auto PresentationLayout::buildShaderUI(ShaderPreset* preset, bool selectIt) -> v
         if (GUIKIT::String::findString(param.id, "autoEmu_"))
             continue;
 
-        offsets.push_back(i);
-        isDescriptor = param.isDescriptor();
-        if (isDescriptor)
-            countDescriptors++;
+        auto _desc = param.desc;
+        int places = 0;
+        int decimalPlaces = 0;
+        countFloatingPoint(param, places, decimalPlaces);
 
-        int adjust = -3 + (countDescriptors >> 1);
-        if (adjust > 0)
-            adjust = 0;
+        std::string _val = GUIKIT::String::formatFloatingPoint(param.value, decimalPlaces, decimalPlaces == 0);
+        std::string _min = GUIKIT::String::formatFloatingPoint(param.minimum, decimalPlaces, decimalPlaces == 0);
+        std::string _max = GUIKIT::String::formatFloatingPoint(param.maximum, decimalPlaces, decimalPlaces == 0);
 
-        if (++pageElement == (PARAMS_PER_PAGE + adjust) ) {
-            if (isDescriptor) {
-                std::vector<unsigned> offsetsTemp;
-                for(int o = offsets.size() - 1; o >= 0; o--) {
-                    unsigned offset = offsets[o];
-                    auto& p = preset->params[offset];
-                    if (!p.isDescriptor()) {
-                        break;
-                    }
-
-                    GUIKIT::Vector::insert(offsetsTemp, offset, 0);
-                    offsets.pop_back();
-                }
-
-                params.push_back( {tviParam, offsets} );
-                offsets.clear();
-                offsets = offsetsTemp;
-                pageElement = countDescriptors = offsetsTemp.size();
-
-            } else {
-                params.push_back( {tviParam, offsets} );
-                pageElement = 0;
-                offsets.clear();
-                countDescriptors = 0;
-            }
-
-            tviParam = new GUIKIT::TreeViewItem;
-            tviParam->setUserData( (uintptr_t)(3000 + params.size() ) );
-            tviParam->setImage( imgDocument );
-        }
+        params.emplace_back(plist.rowCount(), i );
+        plist.append( {_desc, _val, _min, _max + " " }, true );
     }
 
-    if (pageElement)
-        params.push_back( {tviParam, offsets} );
-    else if (tviParam)
-        delete tviParam;
+    plist.autoSizeColumns();
+    plist.unlockRedraw();
 
-    for(auto& param : params) {
-        if (param.tvi) {
-            param.tvi->setText( preset->params[param.offsets[0]].desc );
-            tviParams.append(*param.tvi);
-        }
-    }
-
-    if (params.size()) {
+    if (plist.rowCount()) {
         moduleTree.append(tviParams);
         layShader.main.info.toParams.setEnabled();
-
-        tviParams.setExpanded();
     } else
         tviShader.setExpanded();
 
@@ -2081,59 +1957,6 @@ auto PresentationLayout::buildShaderUI(ShaderPreset* preset, bool selectIt) -> v
         tviShader.setSelected();
         moduleSwitch.setSelection( 2 );
     }
-}
-
-auto PresentationLayout::buildParams(TviParam& tviParam) -> void {
-    ShaderPreset* preset = vManager()->getPreset();
-    if (!preset)
-        return;
-    std::vector<SliderLayoutAlt*> sl;
-
-    for(int i = 0; i < PARAMS_PER_PAGE; i++) {
-        layParam.params.remove(*paramSliders[i]);
-    }
-
-    layParam.params.reset();
-    int placesMax = 0;
-    int decimalPlacesMax = 0;
-
-    for(int i = 0; i < tviParam.offsets.size(); i++) {
-        auto sliderLay = paramSliders[i];
-        int offset = tviParam.offsets[i];
-        if (offset >= preset->params.size())
-            break;
-
-        auto& shaderParam = preset->params[offset];
-
-        if (shaderParam.isDescriptor())
-            sliderLay->name.setFont(GUIKIT::Font::system("bold"));
-        else
-            sliderLay->name.setFont(GUIKIT::Font::system());
-
-        std::string _desc = shaderParam.desc;
-        if (GUIKIT::Application::isWinApi())
-            GUIKIT::String::replace(_desc, "&", "&&");
-        sliderLay->name.setText(_desc);
-
-        int places = 0;
-        int decimalPlaces = 0;
-        countFloatingPoint(shaderParam, places, decimalPlaces);
-        sliderLay->updateView(shaderParam.value, shaderParam.minimum, shaderParam.maximum, shaderParam.step, decimalPlaces);
-        placesMax = std::max(placesMax, places);
-        decimalPlacesMax = std::max(decimalPlacesMax, decimalPlaces);
-
-        sl.push_back(sliderLay);
-
-        layParam.params.append(*sliderLay, {~0u, 0u}, 10);
-    }
-
-    std::string s(placesMax + decimalPlacesMax + 1, '0');
-    SliderLayoutAlt::scale(sl, s);
-
-    layParam.control.previous.setEnabled(selectedParamId > 0);
-    layParam.control.next.setEnabled(selectedParamId < (params.size() - 1) );
-
-    layParam.params.synchronizeLayout();
 }
 
 auto PresentationLayout::buildPass(ShaderPreset* preset, ShaderPreset::Pass& pass) -> void {
@@ -2480,8 +2303,8 @@ auto PresentationLayout::translate() -> void {
 
     layParam.control.save.setText( trans->getA("save parameter") );
     layParam.control.save.setTooltip( trans->getA("save parameter tooltip") );
-    layParam.control.previous.setText( trans->getA("previous") );
-    layParam.control.next.setText( trans->getA("next") );
+    
+    layParam.listView.setHeaderText( {"", trans->getA("value"), trans->getA("minimum"), trans->getA("maximum")} );
 
     layScreenText.colorBox.setText( trans->getA("color selection") );
     layScreenText.colorBox.type.label.setText( trans->getA("selection", true) );
@@ -2561,10 +2384,6 @@ auto PresentationLayout::translate() -> void {
     layPass.generated.errorLabel.setText( trans->getA("error output", true) );
     layPass.generated.vertex.setText( trans->getA("native Vertex code") );
     layPass.generated.fragment.setText( trans->getA("native Fragment code") );
-
-    for(int i = 0; i < PARAMS_PER_PAGE; i++) {
-        paramSliders[i]->defaultButton.setText( trans->getA("default") );
-    }
 
     SliderLayout::scale({&layBase.view.saturation, &layBase.view.gamma, &layBase.view.brightness, &layBase.view.contrast, &layBase.view.phase, &layBase.view.scanlines, &layBase.view.interlace, &layBase.encoding.phaseError, &layBase.encoding.hanoverBars, &layBase.encoding.blur, &layBase.lumaDelay.lumaRise, &layBase.lumaDelay.lumaFall},
                         "-100 %");
@@ -3029,21 +2848,181 @@ auto PresentationLayout::checkHDR() -> void {
     layMotion.hdr.setEnabled( videoDriver->HDRsupport() );
 }
 
-auto PresentationLayout::jumpToParams() -> void {
-    selectedParamId = 0;
-    if (selectedParamId >= params.size())
-        return;
+auto PresentationLayout::openParameterEditor(unsigned row, unsigned offset, GUIKIT::Position& position) -> void {
+    delete paramEditor;
+    paramEditor = new ParamEditor(this);
 
-    auto& param = params[selectedParamId];
+    auto preset = vManager()->getPreset();
 
-    tviParams.setExpanded();
-    if (!param.tvi)
-        tviParams.setSelected();
+    if (offset < preset->params.size()) {
+        auto& shaderParam = preset->params[offset];
+
+        std::string _desc = shaderParam.desc;
+        GUIKIT::String::trim(_desc);
+
+        if (GUIKIT::String::foundSubStr(shaderParam.id, "EMPTY_LINE"))
+            return;
+
+        if (shaderParam.minimum == 0 && shaderParam.maximum == 0)
+            return;
+
+        if ((shaderParam.maximum == shaderParam.step) && (shaderParam.step <= 0.01))
+            return;
+
+        if (_desc.empty()) {
+            if (shaderParam.minimum == shaderParam.maximum)
+                return;
+
+            if (shaderParam.maximum == 1 && shaderParam.step == 1)
+                return;
+        }
+
+        paramEditor->create(shaderParam, row, offset, position);
+        paramEditor->open();
+    }
+}
+
+ParamEditor::ParamEditor(PresentationLayout* presentation) :
+GUIKIT::Window(GUIKIT::Window::Hints::No_Title),
+presentation(presentation),
+sliderLay( "", false, true ) {
+    unfocusTimer.setInterval(100);
+
+    unfocusTimer.onFinished = [this]() {
+        unfocusTimer.setEnabled(false);
+
+        onUnFocus = [this]() {
+            if (this->visible())
+                setVisible( false );
+        };
+    };
+
+    sliderLay.value.setFont( GUIKIT::Font::monospace(  ) );
+    backImg.loadPng((uint8_t*)Icons::back, sizeof(Icons::back));
+
+    sliderLay.setMargin( 10 );
+    radioLay.setMargin( 10 );
+    sliderLay.defaultButton.setImage( &backImg );
+    radioLay.defaultButton.setImage( &backImg );
+}
+
+auto ParamEditor::create(ShaderPreset::Param& param, unsigned row, unsigned offset, GUIKIT::Position& clickPosition) -> void {
+    int places = 0;
+    int decimalPlaces = 0;
+    presentation->countFloatingPoint(param, places, decimalPlaces);
+
+    int steps = ((param.maximum - param.minimum) / param.step) + 0.5f;
+    steps += 1;
+
+    for (auto& box : radioLay.boxes)
+        radioLay.remove(box);
+
+    radioLay.reset();
+    remove( sliderLay );
+    remove( radioLay );
+
+    if (steps <= MAX_RADIO_BOXES) {
+        auto& defaultButton = sliderLay.defaultButton;
+        std::vector<GUIKIT::RadioBox*> groupBoxes;
+        std::vector<float> distances;
+        float _minimum = param.minimum;
+
+        for(int i = 0; i < steps; i++) {
+            auto& box = radioLay.boxes[i];
+            radioLay.append( box, {0u, 0u}, 10 );
+            box.setText( GUIKIT::String::formatFloatingPoint(_minimum, decimalPlaces, decimalPlaces == 0) );
+            addDistances(distances, _minimum, param, false);
+            groupBoxes.push_back( &box );
+
+            box.onActivate = [this, i, param, row, offset, decimalPlaces]() {
+                float val = (float) i * param.step + param.minimum;
+                presentation->vManager()->updateData((int)offset, val);
+                auto text = GUIKIT::String::formatFloatingPoint(val, decimalPlaces, decimalPlaces == 0);
+                presentation->layParam.listView.setText( row, 1, text );
+            };
+        }
+
+        defaultButton.onActivate = [this, param, row, offset, decimalPlaces]() {
+            int steps = ((param.maximum - param.minimum) / param.step) + 0.5;
+            steps += 1;
+            std::vector<float> distances;
+            float _minimum = param.minimum;
+
+            for(int i = 0; i < std::min(steps, MAX_RADIO_BOXES); i++) {
+                addDistances(distances, _minimum, param, true);
+            }
+            setMinimum( distances );
+            presentation->vManager()->updateData((int)offset, param.initialOverridden);
+
+            auto text = GUIKIT::String::formatFloatingPoint(param.initialOverridden, decimalPlaces, decimalPlaces == 0);
+            presentation->layParam.listView.setText( row, 1, text );
+        };
+
+        radioLay.append(defaultButton, {0u, 0u});
+        GUIKIT::RadioBox::setGroup(groupBoxes);
+        setMinimum( distances );
+        radioLay.setAlignment( 0.5 );
+        append( radioLay );
+    } else {
+        auto& slider = sliderLay.slider;
+        auto& defaultButton = sliderLay.defaultButton;
+
+        slider.onChange = [this, param, row, offset, decimalPlaces](unsigned position) {
+            float val = (float) position * param.step + param.minimum;
+            presentation->vManager()->updateData((int)offset, val);
+            auto text = GUIKIT::String::formatFloatingPoint(val, decimalPlaces, decimalPlaces == 0);
+            sliderLay.value.setText(text);
+            presentation->layParam.listView.setText( row, 1, text );
+        };
+
+        defaultButton.onActivate = [this, param, row, offset, decimalPlaces]() {
+            unsigned position = (unsigned) ((param.initialOverridden - param.minimum) / param.step);
+            presentation->vManager()->updateData((int)offset, param.initialOverridden);
+            sliderLay.slider.setPosition(position);
+            auto text = GUIKIT::String::formatFloatingPoint(param.initialOverridden, decimalPlaces, decimalPlaces == 0);
+            sliderLay.value.setText(text);
+            presentation->layParam.listView.setText( row, 1, text );
+        };
+
+        slider.setLength(steps);
+        unsigned position = (unsigned) ((param.value - param.minimum) / param.step);
+        slider.setPosition(position);
+        sliderLay.value.setText(GUIKIT::String::formatFloatingPoint(param.value, decimalPlaces, decimalPlaces == 0));
+
+        std::string s(places + decimalPlaces + 1, '0');
+        GUIKIT::Label test;
+        test.setFont( GUIKIT::Font::monospace(  ) );
+        test.setText( s );
+
+        sliderLay.children[ 1 ].size.width = test.minimumSize().width;
+
+        append( sliderLay );
+    }
+
+    setGeometry( {clickPosition.x + 30, clickPosition.y - 10, 350, 40} );
+    setTitle( param.desc );
+    synchronizeLayout();
+}
+
+auto ParamEditor::addDistances(std::vector<float>& distances, float& _minimum, const ShaderPreset::Param& param, bool init) -> void {
+    if (init)
+        distances.push_back( std::fabs(param.initialOverridden - _minimum) );
     else
-        param.tvi->setSelected();
+        distances.push_back( std::fabs(param.value - _minimum) );
+    _minimum += param.step;
+}
 
-    buildParams(param);
-    moduleSwitch.setSelection( 3 );
+auto ParamEditor::setMinimum(std::vector<float>& distances) -> void {
+    auto it = std::min_element(distances.begin(), distances.end());
+    unsigned minimumPos = std::distance(distances.begin(), it);
+
+    radioLay.boxes[minimumPos].setChecked();
+}
+
+auto ParamEditor::open() -> void {
+    unfocusTimer.setEnabled();
+    setVisible();
+    setFocused();
 }
 
 }

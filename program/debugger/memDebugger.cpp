@@ -237,7 +237,7 @@ auto MemDebugger::buildTheme() -> GUIKIT::Layout* {
         emuThread->unlock();
     };
 
-    memory->pageList.onClick = [this](unsigned row, unsigned col) {
+    memory->pageList.onClick = [this](unsigned row, unsigned col, GUIKIT::Position position) {
         if (col == 0)
             return;
 

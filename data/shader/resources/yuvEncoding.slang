@@ -32,20 +32,22 @@ layout(std140, set = 0, binding = 0) uniform UBO
     mat4 MVP;
 } global;
 
-#pragma parameter Encoding_head         "[YUV/YIC ENCODING]"    0 0 0.001 0.001
-#pragma parameter phaseErrorPAL         "Phase Error PAL"       22.5 -45 45 0.5
-#pragma parameter phaseErrorNTSC        "Phase Error NTSC"      0 -45 45 0.5
-#pragma parameter autoEmu_cropTop       "Crop Top"              1 0 100 1
-#pragma parameter autoEmu_cropLeft      "Crop Left"             6 0 100 1
-#pragma parameter autoEmu_pal           "PAL"                   1 0 1 1
-#pragma parameter autoEmu_lace          "Interlace"             0 0 1 1
+#pragma parameter label0                "[YUV/YIC ENCODING]"        0 0 0.001 0.001
+#pragma parameter phaseErrorPAL         "  Phase Error PAL"         22.5 -45 45 0.5
+#pragma parameter phaseErrorNTSC        "  Phase Error NTSC"        0 -45 45 0.5
+#pragma parameter autoEmu_cropTop       "Crop Top"                  1 0 100 1
+#pragma parameter autoEmu_cropLeft      "Crop Left"                 6 0 100 1
+#pragma parameter empty0                " "                         0 0 0.001 0.001
+#pragma parameter autoEmu_pal           "PAL"                       1 0 1 1
+#pragma parameter autoEmu_lace          "Interlace"                 0 0 1 1
 #pragma parameter Glitches_head         "[VIC-II Glitches (ignore for Amiga)]" 0 0 0.001 0.001
-#pragma parameter vic_glitches          "enable next 5 options" 0 0 1 1
-#pragma parameter glitch_aec            "AEC"                   10.5 0 25 0.1
-#pragma parameter glitch_ba             "BA"                    10.5 0 25 0.1
-#pragma parameter glitch_phi            "PHI"                   10.5 0 25 0.1
-#pragma parameter glitch_ras            "RAS"                   10.5 0 25 0.1
-#pragma parameter glitch_cas            "CAS"                   10.5 0 25 0.1
+#pragma parameter vic_glitches          "  enable next 5 options"   0 0 1 1
+#pragma parameter glitch_aec            "    AEC"                   10.5 0 25 0.1
+#pragma parameter glitch_ba             "    BA"                    10.5 0 25 0.1
+#pragma parameter glitch_phi            "    PHI"                   10.5 0 25 0.1
+#pragma parameter glitch_ras            "    RAS"                   10.5 0 25 0.1
+#pragma parameter glitch_cas            "    CAS"                   10.5 0 25 0.1
+#pragma parameter empty1                " "                         0 0 0.001 0.001
 
 #pragma stage vertex
 layout(location = 0) in vec4 Position;

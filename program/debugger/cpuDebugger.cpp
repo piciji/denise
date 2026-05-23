@@ -207,7 +207,7 @@ auto CpuDebugger::buildTheme() -> GUIKIT::Layout* {
             cpu->watcher.excAdder.exceptionCombo.append( debuggerException.ident, (int)debuggerException.vector );
     }
 
-    cpu->instructionLayout.list.onClick = [this](unsigned row, unsigned column) {
+    cpu->instructionLayout.list.onClick = [this](unsigned row, unsigned column, GUIKIT::Position position) {
         auto& instructionList = cpu->instructionLayout.list;
 
         if (column == 0) {
@@ -259,7 +259,7 @@ auto CpuDebugger::buildTheme() -> GUIKIT::Layout* {
     };
 
 
-    cpu->watcher.list.onClick = [this](unsigned row, unsigned column) {
+    cpu->watcher.list.onClick = [this](unsigned row, unsigned column, GUIKIT::Position position) {
         if (row >= watcherHelper.elements())
             return;
 

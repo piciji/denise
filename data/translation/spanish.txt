@@ -979,3 +979,5 @@ step next copper = Ir a la siguiente instrucción Copper
 step next blitter = Ir al siguiente ciclo del Blitter
 Serial Plugin = Complemento serie
 Joyport Dongle = Adaptador de puerto de juegos
+Minimum = Minimum
+Maximum = Maximum

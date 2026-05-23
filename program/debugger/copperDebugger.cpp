@@ -115,7 +115,7 @@ auto CopperDebugger::buildTheme() -> GUIKIT::Layout* {
     for (auto& list : copper->lists) {
         Copper::List* lPtr = &list;
 
-        list.listView.onClick = [this, lPtr](unsigned row, unsigned column) {
+        list.listView.onClick = [this, lPtr](unsigned row, unsigned column, GUIKIT::Position position) {
             if (column == 0) {
                 emuThread->lock();
                 auto& inst = lPtr->instructions[row];
@@ -205,7 +205,7 @@ auto CopperDebugger::buildTheme() -> GUIKIT::Layout* {
         }
     };
 
-    copper->watcher.listView.onClick = [this](unsigned row, unsigned column) {
+    copper->watcher.listView.onClick = [this](unsigned row, unsigned column, GUIKIT::Position position) {
         if (row >= watcherHelper.elements())
             return;
 
