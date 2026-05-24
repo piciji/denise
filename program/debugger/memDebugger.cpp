@@ -237,22 +237,22 @@ auto MemDebugger::buildTheme() -> GUIKIT::Layout* {
         emuThread->unlock();
     };
 
-    memory->pageList.onClick = [this](unsigned row, unsigned col) {
+    memory->pageList.onClick = [this](unsigned row, unsigned col, GUIKIT::Position position) {
         if (col == 0)
-            return;
+            return false;
 
         uint32_t addr = memory->bankList.selection();
 
         if (isAmiga()) {
             if (col == 9)
-                return;
+                return false;
 
             addr = (addr & 0xff) << 16;
             addr |= row * 16 + ((col - 1) << 1);
 
         } else {
             if (col == 17)
-                return;
+                return false;
 
             if (getTheme() == DebuggerTheme::MemorySCPU) {
                 addr = (addr & 0xff) << 16;
@@ -264,6 +264,8 @@ auto MemDebugger::buildTheme() -> GUIKIT::Layout* {
         }
 
         memory->options.address.edit.setText( GUIKIT::String::convertToHex( addr ) );
+        
+        return false;
     };
 
     std::memset(bankListStore, 0, sizeof(bankListStore));

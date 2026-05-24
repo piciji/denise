@@ -120,6 +120,7 @@ struct pWindow {
     static auto addCustomFont( CustomFont& customFont ) -> bool;
 
     pWindow(Window& window, Window::Hints hints = Window::Hints::Default);
+	~pWindow();
 };
 
 struct pStatusBar {

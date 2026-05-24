@@ -979,3 +979,5 @@ step next copper = zur nächsten Copper Instruktion springen
 step next blitter = zum nächsten Blitter Zyklus springen
 Serial Plugin = Serial Plugin
 Joyport Dongle = Joyport Dongle
+Minimum = Minimum
+Maximum = Maximum

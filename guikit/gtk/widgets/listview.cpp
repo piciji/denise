@@ -345,7 +345,7 @@ auto pListView::onPress(GtkTreeView* treeView, GdkEventButton* event, ListView* 
 		if (self->onContext)
 			self->onContext(_sel, colPos.has_value() ? colPos.value() : 0, {(int)event->x_root, (int)event->y_root} );
 	} else if (self->onClick)
-		self->onClick(_sel, colPos.has_value() ? colPos.value() : 0 );
+		self->onClick(_sel, colPos.has_value() ? colPos.value() : 0, {(int)event->x_root, (int)event->y_root} );
 
     return true;
 }

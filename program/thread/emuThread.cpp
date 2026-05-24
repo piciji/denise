@@ -83,8 +83,10 @@ auto EmuThread::unlockDebugger() -> void {
 }
 
 auto EmuThread::lock(bool unlockDebugging) -> bool {
-    if (unlockDebugging)
+    if (unlockDebugging) {
+        Debugger::lock = true;
         unlockDebugger();
+    }
 
     if  (!enabled || acknowledged /* check for nesting */ )
         return false;
@@ -99,6 +101,7 @@ auto EmuThread::lock(bool unlockDebugging) -> bool {
 }
 
 auto EmuThread::unlock() -> void {
+    Debugger::lock = false;
     acknowledged = false;
 }
 

@@ -86,6 +86,7 @@ struct Debugger : GUIKIT::Window {
     Emulator::Interface::DebuggerSnapshot* snapshot = nullptr;
     static GUIKIT::Timer* timerVisibility;
     GUIKIT::VerticalLayout layout;
+    static bool lock;
 
     ConditionViewDebugger* conditionViewDebugger = nullptr;
 

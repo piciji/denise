@@ -810,20 +810,11 @@ auto ShaderParser::fetchShaderSource(const std::string& path, ShaderPreset::Pass
                     param.id = id;
                     param.desc = desc;
 
-                    if (GUIKIT::String::foundSubStr(param.id, "EMPTY_LINE"))
-                        goto End;
-
-                    GUIKIT::String::trim(param.desc);
+                    std::string _desc = desc;
+                    GUIKIT::String::trim(_desc);
 
                     if (filled == 5)
-                        param.step  = 0.1f * (param.maximum - param.minimum);
-
-                    if (param.desc.empty()) {
-                        if (param.isDescriptor())
-                            goto End;
-                        if (param.maximum == param.step == 1)
-                            goto End;
-                    }
+                        param.step = 0.1f * (param.maximum - param.minimum);
 
                     param.value = param.initialOverridden = rootSettings.get<float>(param.id, param.initial);
                     addParameter(param);
