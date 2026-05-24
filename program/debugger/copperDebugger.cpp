@@ -147,6 +147,7 @@ auto CopperDebugger::buildTheme() -> GUIKIT::Layout* {
                     lPtr->control.addrEdit.setText( GUIKIT::String::convertToHex( inst.addr ) );
                 }
             }
+            return false;
         };
 
         list.listView.onContext = [this, lPtr](unsigned row, unsigned column, GUIKIT::Position position ) {
@@ -207,10 +208,10 @@ auto CopperDebugger::buildTheme() -> GUIKIT::Layout* {
 
     copper->watcher.listView.onClick = [this](unsigned row, unsigned column, GUIKIT::Position position) {
         if (row >= watcherHelper.elements())
-            return;
+            return false;
 
         if (column != 0 && column != 3)
-            return;
+            return false;
 
         emuThread->lock();
         auto& watcher = watcherHelper.getWatcher(row);
@@ -248,6 +249,7 @@ auto CopperDebugger::buildTheme() -> GUIKIT::Layout* {
         }
 
         emuThread->unlock();
+        return false;
     };
 
     copper->watcher.adder.add.onActivate = [this]() {

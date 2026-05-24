@@ -49,6 +49,9 @@
         
     [listView->p.tooltip orderOut:nil];
 }
+- (BOOL)shouldDelayWindowOrderingForEvent:(NSEvent *)event {
+    return YES;
+}
 
 -(void) mouseDown:(NSEvent *)event {
     [super mouseDown:event];
@@ -61,7 +64,8 @@
         NSPoint screenPoint = [NSEvent mouseLocation];
         NSScreen* screen = [NSScreen mainScreen];
         CGFloat flippedY = screen.frame.size.height - screenPoint.y;
-        listView->onClick(_row, _col, { (int)screenPoint.x, (int)flippedY });
+        if (listView->onClick(_row, _col, { (int)screenPoint.x, (int)flippedY }))
+            [NSApp preventWindowOrdering];
     }
 }
 

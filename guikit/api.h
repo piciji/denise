@@ -792,7 +792,7 @@ struct ProgressBar : Widget {
 struct ListView : Widget {
     std::function<void ()> onActivate = nullptr;
     std::function<void ()> onChange = nullptr;
-    std::function<void (unsigned row, unsigned column, Position position)> onClick = nullptr;
+    std::function<bool (unsigned row, unsigned column, Position position)> onClick = nullptr;
     std::function<void (unsigned row, unsigned column, Position position)> onContext = nullptr;
     enum class Align { Left, Right, Center } ;
 

@@ -234,6 +234,7 @@ auto CpuDebugger::buildTheme() -> GUIKIT::Layout* {
             auto& inst = instructions[row];
             cpu->state.options.address.edit.setText( GUIKIT::String::convertToHex( inst.addr ) );
         }
+        return false;
     };
 
     cpu->instructionLayout.list.onContext = [this](unsigned row, unsigned column, GUIKIT::Position position ) {
@@ -261,10 +262,10 @@ auto CpuDebugger::buildTheme() -> GUIKIT::Layout* {
 
     cpu->watcher.list.onClick = [this](unsigned row, unsigned column, GUIKIT::Position position) {
         if (row >= watcherHelper.elements())
-            return;
+            return false;
 
         if (column != 0 && column != 3)
-            return;
+            return false;
 
         auto& watcher = watcherHelper.getWatcher(row);
         std::optional<unsigned> instRow = std::nullopt;
@@ -297,6 +298,7 @@ auto CpuDebugger::buildTheme() -> GUIKIT::Layout* {
         }
 
         emuThread->unlock();
+        return false;
     };
 
     cpu->watcher.excAdder.add.onActivate = [this]() {

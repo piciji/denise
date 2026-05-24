@@ -1240,14 +1240,16 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
     layParam.listView.onClick = [this](unsigned row, unsigned col, GUIKIT::Position position) {
         auto preset = vManager()->getPreset();
         if (!preset)
-            return;
+            return false;
 
         for (const auto& param : params) {
             if (param.first == row) {
+                bool visibleBefore = paramEditor && paramEditor->visible();
                 openParameterEditor(param.first, param.second, position);
-                break;
+                return visibleBefore;
             }
         }
+        return false;
     };
     
     layParam.listView.onContext = [this](unsigned row, unsigned col, GUIKIT::Position position) {
@@ -2902,8 +2904,6 @@ sliderLay( "", false, true ) {
 
     unfocusTimer.onFinished = [this]() {
         unfocusTimer.setEnabled(false);
-        setVisible();
-        setFocused();
 
         onUnFocus = [this]() {
             if (this->visible())
@@ -3035,8 +3035,8 @@ auto ParamEditor::setMinimum(std::vector<float>& distances) -> void {
 
 auto ParamEditor::open() -> void {
     unfocusTimer.setEnabled();
-//    setVisible();
-  //  setFocused();
+    setVisible();
+    setFocused();
 }
 
 }
