@@ -16,6 +16,7 @@
 #include <bitset>
 
 GUIKIT::Timer* Debugger::timerVisibility = nullptr;
+bool Debugger::lock = false;
 
 Debugger::~Debugger() {
     timerVisibility->setEnabled( false );
@@ -336,7 +337,7 @@ auto Debugger::updateToolboxVisibility() -> void {
 }
 
 auto Debugger::Callback(Emulator::Interface::DebuggerSnapshot* snapshot) -> void {
-    if (program->quitInProgress || !emuThread->enabled) {
+    if (program->quitInProgress || !emuThread->enabled || lock) {
         snapshot->mutex.unlock();
         return;
     }
