@@ -97,6 +97,7 @@ namespace DRIVER {
     unsigned lastTime;
     unsigned subFrame;
     unsigned totalFrames;
+    AppData appData;
 
     unsigned frameCount;
     unsigned progressDegree;
@@ -899,7 +900,7 @@ namespace DRIVER {
            {(uintptr_t)(&programs[0].feedbackTarget.view), &programs[0].feedbackTarget.size, sizeof(D3DProgram), MAX_SHADERS},
            {(uintptr_t)(&luts[0].view), &luts[0].size, sizeof(D3DTexture), MAX_TEXTURES},
         }, {nullptr, nullptr, &frame.size, nullptr, &frameDirection, &deltaTime, &settings.vrrSpeed, &settings.rotation,
-            &viewport.ratio, &viewport.ratioRot, &totalFrames, &subFrame, &historySize} };
+            &viewport.ratio, &viewport.ratioRot, &totalFrames, &subFrame, &historySize, &appData.ledDrive} };
 
         shaderPasses = 0;
         for(int i = programsTemp.size() - 1; i >= 0; i--) {
@@ -2044,6 +2045,8 @@ namespace DRIVER {
         settings.lightFrames = frames - settings.darkFrames;
         updateVRR();
     }
+
+    auto getAppData() -> AppData* { return &appData; }
 
     auto HDRsupport() -> bool { return true; }
 };

@@ -507,6 +507,8 @@ struct WGL : Video, GL3, RenderThread {
     auto setScreenshotCallback(ScreenshotCallback callback) -> void {
         GL3::setScreenshotCallback(callback);
     }
+
+    auto getAppData() -> AppData* { return &appData; }
 };
 
 }

@@ -53,6 +53,10 @@ struct ScreenTextDescription {
 	int marginVertical;
 };
 
+struct AppData {
+    float ledDrive = 0.0;
+};
+
 enum Options { OPT_HoldFrame = 1, OPT_Interlace = 2, OPT_DisallowShader = 4, OPT_TakeScreenshot = 8,
                 OPT_DisallowFilter = 0x10, OPT_Pause = 0x20, OPT_Rewind = 0x40, OPT_RGB10 = 0x80 };
 enum Rotation { ROT_0, ROT_90, ROT_180, ROT_270 };
@@ -107,6 +111,8 @@ struct Video {
     virtual auto setVRR(bool state, float speed = 0.0) -> void {}
     virtual auto hasVRR() -> bool { return false; }
     virtual auto changeThreadPriorityToRealtime(bool state) -> void {}
+
+    virtual auto getAppData() -> AppData* { return nullptr; }
 
     virtual auto setAspectRatio(int mode, bool _integerScaling) -> void {} // mode: 0: off, 1: TV, 2: Native, 3: Native Alt
     virtual auto getAspectRatio() -> int { return 0; }

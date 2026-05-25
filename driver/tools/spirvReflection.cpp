@@ -403,6 +403,12 @@ auto SpirvReflection::bindUniforms(SpirvBuffer& spirvBuffer, ShaderPreset* prese
         } if (var.name == "CurrentSubFrame") {
             semVar.data = map.uniforms[SemanticMap::CurrentSubFrame];
             goto Next;
+        // not in RA
+        } if (var.name == "LedDriveEnabled") {
+            semVar.data = map.uniforms[SemanticMap::LedDriveEnabled];
+            goto Next;
+
+        // ########
         } if (var.name == "OriginalSize") {
             semVar.data = map.textures[SemanticMap::History].size;
             goto Next;

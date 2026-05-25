@@ -649,6 +649,8 @@ struct CGL : public Video, GL3, RenderThread {
     }
 
     auto canHardSync() -> bool { return true; }
+
+    auto getAppData() -> AppData* { return &appData; }
     
     auto innerUpdate() -> void {
         if (oldResizeBehaviour) {

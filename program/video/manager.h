@@ -161,7 +161,6 @@ struct VideoManager {
 
     DmaColor* dmaColors = nullptr;
 
-    ShaderPreset::Param* driveLedParam = nullptr;
     uint8_t frameOptions = 0;
     bool colorTableUpdated = false;
     auto needUpdate() -> bool { return !colorTableUpdated; }

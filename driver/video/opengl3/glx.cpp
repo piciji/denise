@@ -644,6 +644,8 @@ struct GLX : public Video, GL3, RenderThread {
 
     auto hasVRR() -> bool { return settings.vrr; }
 
+    auto getAppData() -> AppData* { return &appData; }
+
     auto getShaderNativeVertexCode(std::string& slang, std::string& out) -> bool {
         return GLUtility::translate(version, slang, out, false);
     }
