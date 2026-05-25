@@ -805,7 +805,7 @@ End:
             {(uintptr_t)(&programs[0].feedbackTarget.view), &programs[0].feedbackTarget.size, sizeof(GLProgram), MAX_SHADERS},
             {(uintptr_t)(&luts[0].view), &luts[0].size, sizeof(GLTexture), MAX_TEXTURES},
        }, {nullptr, nullptr, &frame.size, nullptr, &frameDirection, &deltaTime, &settings.vrrSpeed, &settings.rotation,
-            &viewport.ratio, &viewport.ratioRot, &totalFrames, &subFrame, &historySize, &appData.ledDrive} };
+            &viewport.ratio, &viewport.ratioRot, &totalFrames, &subFrame, &historySize, &appData.ledDriveState} };
 
         shaderPasses = 0;
         for(int i = programsTemp.size() - 1; i >= 0; i--) {

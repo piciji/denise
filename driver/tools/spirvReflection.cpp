@@ -404,8 +404,8 @@ auto SpirvReflection::bindUniforms(SpirvBuffer& spirvBuffer, ShaderPreset* prese
             semVar.data = map.uniforms[SemanticMap::CurrentSubFrame];
             goto Next;
         // not in RA
-        } if (var.name == "LedDriveEnabled") {
-            semVar.data = map.uniforms[SemanticMap::LedDriveEnabled];
+        } if (var.name == "LedDriveState") {
+            semVar.data = map.uniforms[SemanticMap::LedDriveState];
             goto Next;
 
         // ########

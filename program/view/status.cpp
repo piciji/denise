@@ -564,7 +564,7 @@ auto StatusHandler::update() -> void {
 
                     auto appData = videoDriver->getAppData();
                     if (appData)
-                        appData->ledDrive = (_led & 3) ? 1.0 : 0.0;
+                        appData->ledDriveState = (_led & 3) ? 1.0 : 0.0;
 
                     updateImage(media->id * 2 + 2, image);
 

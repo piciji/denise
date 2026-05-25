@@ -1245,7 +1245,8 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
         for (const auto& param : params) {
             if (param.first == row) {
                 bool visibleBefore = paramEditor && paramEditor->visible();
-                layParam.listView.setSelected(false);
+                if (GUIKIT::Application::isCocoa())
+                    layParam.listView.setSelected(false);
                 openParameterEditor(param.first, param.second, position);
                 return visibleBefore;
             }
