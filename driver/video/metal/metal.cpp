@@ -75,6 +75,7 @@ namespace DRIVER {
     CAMetalLayer* layer;
     id<MTLCommandQueue> commandQueue;
     MTLClearColor clearColor;
+    AppData appData;
     
     id<MTLRenderPipelineState> outputPipelineState;
     id<MTLRenderPipelineState> messagePipelineState;
@@ -723,6 +724,8 @@ namespace DRIVER {
     }
     
     auto canHardSync() -> bool { return true; }
+        
+    auto getAppData() -> AppData* { return &appData; }
         
     auto setSplashScreen(uint8_t* _data, unsigned _width, unsigned _height, unsigned showFrames) -> void {
             splashScreen.setImage(_data, _width, _height, showFrames);
@@ -1642,7 +1645,7 @@ namespace DRIVER {
            {(uintptr_t)(&programs[0].feedbackTarget.view), &programs[0].feedbackTarget.size, sizeof(MTLProgram), MAX_SHADERS},
            {(uintptr_t)(&luts[0].view), &luts[0].size, sizeof(MTLTexture), MAX_TEXTURES},
         }, {nullptr, nullptr, &frame.size, nullptr, &frameDirection, &deltaTime, &settings.vrrSpeed, &settings.rotation,
-            &viewport.ratio, &viewport.ratioRot, &totalFrames, &subFrame, &historySize} };
+            &viewport.ratio, &viewport.ratioRot, &totalFrames, &subFrame, &historySize, &appData.ledDrive} };
 
         shaderPasses = 0;
         for(int i = programsTemp.size() - 1; i >= 0; i--) {
