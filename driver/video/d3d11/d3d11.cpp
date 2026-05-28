@@ -397,8 +397,8 @@ namespace DRIVER {
         _h = viewScreen.scaling.height >> 1;
     }
 
-    auto setSplashScreen(uint8_t* _data, unsigned _width, unsigned _height, unsigned showFrames) -> void {
-        splashScreen.setImage(_data, _width, _height, showFrames);
+    auto showSplashScreen(unsigned frames, SplashscreenCallback callback) -> void {
+        splashScreen.prepare(frames, callback);
     }
 
     auto hideSplashScreen() -> void {
@@ -409,8 +409,8 @@ namespace DRIVER {
         return splashScreen.isVisible();
     }
 
-    auto setDragnDropOverlay(uint8_t* _data, unsigned _width, unsigned _height, unsigned line = 0) -> void {
-        dndOverlay.setDragnDropOverlay(_data, _width, _height, line);
+    auto setDragnDropOverlayCallback(DnDOverlayCallback callback) -> void {
+        dndOverlay.callback = callback;
     }
 
     auto setDragnDropOverlaySlots(unsigned slots) -> void {
@@ -1352,8 +1352,10 @@ namespace DRIVER {
 #endif
 
         if (splashScreen.enable) {
-            if (buildSplashscreenTexture())
+            if (buildSplashscreenTexture()) {
+                context->ClearRenderTargetView(rtv, clearColor);
                 blendRect<false, true>(splash);
+            }
         }
 
         if (dndOverlay.enabled()) {
@@ -1751,8 +1753,8 @@ namespace DRIVER {
 
         if (!splash.texture.ptr || (s == SplashScreen::TEXTURE_UPDATE)) {
             D3D11Utility::releaseTexture(splash.texture);
-            splash.texture.desc.Width = splashScreen.bitmap.scaledWidth;
-            splash.texture.desc.Height = splashScreen.bitmap.scaledHeight;
+            splash.texture.desc.Width = splashScreen.viewport.width;
+            splash.texture.desc.Height = splashScreen.viewport.height;
             splash.texture.desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 
             if(!D3D11Utility::initTexture(device, splash.texture, false)) {
@@ -1762,7 +1764,7 @@ namespace DRIVER {
         }
 
         if (s == SplashScreen::TEXTURE_UPDATE || s == SplashScreen::DATA_UPDATE) {
-            if (!D3D11Utility::buildTexture(context, splash.texture, splashScreen.bitmap.scaledData)) {
+            if (!D3D11Utility::buildTexture(context, splash.texture, splashScreen.screenData)) {
                 splashScreen.finish();
                 return false;
             }
@@ -1773,12 +1775,19 @@ namespace DRIVER {
             splashScreen.finish();
             return false;
         }
+        float screenx = 2.0f / (float)viewport.width, screeny = 2.0f / (float)viewport.height;
+
+        float x = -1.0 + (float)splashScreen.viewport.x * screenx;
+        float y = 1.0 - (float)splashScreen.viewport.y * screeny;
+
+        float w = (float)splashScreen.viewport.width * screenx;
+        float h = (float)splashScreen.viewport.height * screeny;
 
         float box[4][4] = {
-            {-1.0f,  1.0f, 0.0f, 0.0f},
-            { 1.0f,  1.0f, 1.0f, 0.0f},
-            {-1.0f, -1.0f, 0.0f, 1.0f},
-            { 1.0f, -1.0f, 1.0f, 1.0f}
+        {x,     y,     0, 0},
+        {x + w, y,     1, 0},
+        {x,     y - h, 0, 1},
+        {x + w, y - h, 1, 1}
         };
         D3DVertex* vertex = (D3DVertex*) mappedVbo.pData;
 

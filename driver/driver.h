@@ -63,6 +63,8 @@ enum Rotation { ROT_0, ROT_90, ROT_180, ROT_270 };
 
 struct Video {
     using ScreenshotCallback = std::function<void (uint8_t* _data, unsigned _width, unsigned _height)>;
+    using SplashscreenCallback = std::function<uint8_t* (Viewport& viewport, bool hide )>;
+    using DnDOverlayCallback = std::function<uint8_t* (Viewport& viewport, unsigned line )>;
 
     virtual auto init(uintptr_t handle) -> bool { return true; }
     virtual auto term() -> void {}
@@ -99,12 +101,13 @@ struct Video {
     virtual auto prepareResizing() -> void {}
     virtual auto endResizing() -> void {}
 
+    virtual auto setDragnDropOverlayCallback(DnDOverlayCallback callback) -> void {}
     virtual auto setDragnDropOverlay(uint8_t* _data, unsigned _width, unsigned _height, unsigned line = 0) -> void {}
     virtual auto setDragnDropOverlaySlots(unsigned slots) -> void {}
     virtual auto enableDragnDropOverlay(bool state) -> void {}
     virtual auto sendDragnDropOverlayCoordinates(int x, int y) -> int { return 0; }
 
-    virtual auto setSplashScreen(uint8_t* _data, unsigned _width, unsigned _height, unsigned showFrames) -> void {}
+    virtual auto showSplashScreen(unsigned frames, SplashscreenCallback callback) -> void {}
     virtual auto hideSplashScreen() -> void {}
     virtual auto visibleSplashScreen() -> bool { return false; }
 

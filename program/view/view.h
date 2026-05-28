@@ -22,6 +22,8 @@ struct View : GUIKIT::Window {
 	bool grabMouseLeft = false;
 	bool useFullscreenRefreshAsEmuSpeed = false;
 	ImageViewer* imageViewer = nullptr;
+    GUIKIT::Image placeholder;
+    GUIKIT::Image dndOverlays[2];
 
     struct {        
         std::string path;

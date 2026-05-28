@@ -37,7 +37,6 @@
     <ClInclude Include="..\driver\input\dinput\v8.h" />
     <ClInclude Include="..\driver\tools\chronos.h" />
     <ClInclude Include="..\driver\tools\crc32.h" />
-    <ClInclude Include="..\driver\tools\font.h" />
     <ClInclude Include="..\driver\tools\glslang.h" />
     <ClInclude Include="..\driver\tools\hid.h" />
     <ClInclude Include="..\driver\tools\ShaderCache.h" />
@@ -240,6 +239,7 @@
     <ClInclude Include="..\guikit\tools\file\chunk.h" />
     <ClInclude Include="..\guikit\tools\file\directory.h" />
     <ClInclude Include="..\guikit\tools\file\tar.h" />
+    <ClInclude Include="..\guikit\tools\resize.h" />
     <ClInclude Include="..\guikit\winapi\dirent.h" />
     <ClInclude Include="..\guikit\winapi\doubleBuffer.h" />
     <ClInclude Include="..\guikit\winapi\main.h" />
@@ -494,12 +494,6 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="..\driver\input\rawinput\mouse.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|win32'">true</ExcludedFromBuild>
-    </ClCompile>
-    <ClCompile Include="..\driver\tools\fonts.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|win32'">true</ExcludedFromBuild>
@@ -1415,6 +1409,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|win32'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="..\guikit\tools\resize.cpp" />
     <ClCompile Include="..\guikit\tools\setting.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>

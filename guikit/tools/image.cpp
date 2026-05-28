@@ -3,6 +3,7 @@
 #include "encode/png.h"
 #include "decode/images.h"
 #include "encode/images.h"
+#include "resize.h"
 
 Image::Image(unsigned width, unsigned height, uint8_t* src, Format format)
 : format(format) {
@@ -243,6 +244,8 @@ auto Image::alphaMultiply() -> void {
 auto Image::free() -> void {
     if(data) delete[] data;
     data = nullptr;
+    delete [] resizedData;
+    resizedData = nullptr;
 }
 
 auto Image::create(unsigned _width, unsigned _height, uint8_t* src) -> void {
@@ -322,6 +325,15 @@ auto Image::setResourceId( int rId ) -> void {
 
 auto Image::channels() -> unsigned {
     return format == RGB ? 3 : 4;
+}
+
+auto Image::resize(unsigned outputWidth, unsigned outputHeight) -> uint8_t* {
+    delete[] resizedData;
+    resizedData = new uint8_t[outputWidth * outputHeight * 4];
+    if (ImageResize::decode(data, width, height, resizedData, outputWidth, outputHeight))
+        return resizedData;
+    delete[] resizedData;
+    return nullptr;
 }
 
 auto Image::scaleNearest(unsigned outputWidth, unsigned outputHeight) -> void {

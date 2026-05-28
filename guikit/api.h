@@ -73,6 +73,7 @@ struct Image {
     unsigned width;
     unsigned height;
     uint8_t* data = nullptr;
+    uint8_t* resizedData = nullptr;
     bool keepDataOnDestruction = false;
     bool alphaBlendApplied = false;
     int resourceId = -1; // win xp only 
@@ -98,6 +99,8 @@ struct Image {
     auto scaleLinearWidth(unsigned outputWidth) -> void;
     auto scaleLinearHeight(unsigned outputHeight) -> void;
     auto scaleLinearBoth(unsigned outputWidth, unsigned outputHeight) -> void;
+
+    auto resize(unsigned outputWidth, unsigned outputHeight) -> uint8_t*;
 
     auto switchBetweenBGRandRGB() -> void;
     auto empty() -> bool;

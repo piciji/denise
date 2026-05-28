@@ -29,12 +29,12 @@ struct GLSplashScreen : SplashScreen {
             GLUtility::glParameters(GL_CLAMP_TO_EDGE, GL_LINEAR, GL_LINEAR);
             glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, bitmap.scaledWidth, bitmap.scaledHeight, 0, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8_REV, bitmap.scaledData);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, viewport.width, viewport.height, 0, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8_REV, screenData);
 
         } else if (s == SplashScreen::DATA_UPDATE) {
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, tex);
-            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, bitmap.scaledWidth, bitmap.scaledHeight, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8_REV, bitmap.scaledData );
+            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, viewport.width, viewport.height, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8_REV, screenData );
         }
 
         return true;
@@ -52,11 +52,19 @@ struct GLSplashScreen : SplashScreen {
         glBindVertexArray(vao);
         glBindBuffer(GL_ARRAY_BUFFER, vbo);
 
+        float screenx = 2.0f / _viewport.width, screeny = 2.0f / _viewport.height;
+
+        float x = -1.0 + (float)viewport.x * screenx;
+        float y = 1.0 - (float)viewport.y * screeny;
+
+        float w = (float)viewport.width * screenx;
+        float h = (float)viewport.height * screeny;
+
         GLfloat box[4][4] = {
-            {-1.0f,  1.0f, 0.0f, 0.0f},
-            { 1.0f,  1.0f, 1.0f, 0.0f},
-            {-1.0f, -1.0f, 0.0f, 1.0f},
-            { 1.0f, -1.0f, 1.0f, 1.0f}
+            {x, y, 0, 0},
+            {x + w, y, 1, 0},
+            {x, y - h, 0, 1},
+            {x + w, y - h, 1, 1}
         };
 
         glBufferData(GL_ARRAY_BUFFER, sizeof box, box, GL_DYNAMIC_DRAW);

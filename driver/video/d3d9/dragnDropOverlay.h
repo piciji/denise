@@ -34,12 +34,15 @@ struct D3d9DragndropOverlay : DragndropOverlay {
         if (surface) {
             surface->LockRect(&d3dlr, 0, D3DLOCK_NOSYSLOCK | D3DLOCK_DISCARD);
 
+            unsigned _col;
             for(int h = 0; h < texHeight; h++) {
                 uint32_t* src = (uint32_t*)(buffer + h * texWidth * 4);
                 uint32_t* dest = (uint32_t*)((uint8_t*)d3dlr.pBits + h * d3dlr.Pitch);
 
-                for(int w = 0; w < texWidth; w++)
-                    *dest++ = *src++;
+                for(int w = 0; w < texWidth; w++) {
+                    _col = *src++;
+                    *dest++ = (_col & 0xff00ff00) | ((_col >> 16) & 0xff) | ((_col & 0xff) << 16);
+                }
             }
 
             surface->UnlockRect();
@@ -111,13 +114,5 @@ struct D3d9DragndropOverlay : DragndropOverlay {
         viewport.height = 0;
 
         return initialized = true;
-    }
-
-    auto setDragnDropOverlay(uint8_t* _data, unsigned _width, unsigned _height, unsigned line) -> void {
-        if (line >= MAX_LINES)
-            line = 0;
-
-        Image& bitmap = lines[line].bitmap;
-        bitmap.setData(_data, _width, _height, true);
     }
 };

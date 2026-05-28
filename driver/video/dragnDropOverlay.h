@@ -1,7 +1,7 @@
 
 #include <mutex>
 #include <atomic>
-#include "../tools/image.h"
+#include <cstring>
 
 namespace DRIVER {
 
@@ -38,12 +38,15 @@ struct DragndropOverlay {
     };
 
     struct Line {
-        Image bitmap;
+        uint8_t* imgData = nullptr;
+        unsigned imgWidth = 0;
+        unsigned imgHeight = 0;
         Slot slots[MAX_SLOTS];
     } lines[MAX_LINES];
 
     bool initialized = false;
     std::atomic<bool> enable;
+    Video::DnDOverlayCallback callback = nullptr;
 
     unsigned texX = 0;
     unsigned texY = 0;
@@ -62,8 +65,7 @@ struct DragndropOverlay {
 
         for (int l = 0; l < MAX_LINES; l++) {
             Line& line = lines[l];
-            Image& bitmap = line.bitmap;
-            if (bitmap.empty())
+            if (line.imgData == nullptr)
                 continue;
 
             for (int s = 0; s < slotCount; s++) {
@@ -93,13 +95,12 @@ struct DragndropOverlay {
 
         for (int l = 0; l < MAX_LINES; l++) {
             Line& line = lines[l];
-            Image& bitmap = line.bitmap;
-            if (bitmap.empty())
+            if (line.imgData == nullptr)
                 continue;
 
             for (int s = 0; s < slotCount; s++) {
                 Slot& slot = line.slots[s];
-                bufferChanged |= setAlpha(bitmap, slot);
+                bufferChanged |= setAlpha(line, slot);
             }
         }
 
@@ -109,7 +110,7 @@ struct DragndropOverlay {
         return bufferChanged;
     }
 
-    auto setAlpha(Image& bitmap, Slot& slot) -> bool {
+    auto setAlpha(Line& line, Slot& slot) -> bool {
         if (slot.alphaIncrease) {
             if (slot.alpha < 1.0) slot.alpha += 0.05;
             else return false;
@@ -119,7 +120,7 @@ struct DragndropOverlay {
         }
 
         for (unsigned h = 0; h < slot.height; h++) {
-            uint8_t* src = bitmap.scaledData + h * (bitmap.scaledWidth * 4);
+            uint8_t* src = line.imgData + h * (line.imgWidth * 4);
             uint8_t* dest = buffer + (slot.y + h) * texWidth * 4 + slot.x * 4;
 
             for (unsigned w = 0; w < slot.width; w++) {
@@ -135,6 +136,9 @@ struct DragndropOverlay {
     virtual auto updateBuffer() -> void {}
 
     auto update(Viewport& _viewport) -> void {
+        if (!callback)
+            return;
+
         if ((viewport.width == _viewport.width) && (viewport.height == _viewport.height))
             return;
 
@@ -166,13 +170,16 @@ struct DragndropOverlay {
         else if (bufferWidth > viewport.width)
             bufferWidth = viewport.width;
 
-        for (auto& line: lines) {
-            Image& bitmap = line.bitmap;
-            if (bitmap.empty())
-                continue;
-            bitmap.scale(slotWidth, bitmap.height * slotWidth / bitmap.width);
+        int linePos = 0;
+        for (auto& line : lines) {
+            Viewport imgVp;
+            imgVp.width = line.imgWidth = slotWidth;
 
-            bufferHeight += bitmap.scaledHeight + lineSpace;
+            line.imgData = callback(imgVp, linePos++);
+
+            line.imgHeight = imgVp.height;
+
+            bufferHeight += line.imgHeight + lineSpace;
         }
 
         bufferHeight -= lineSpace;
@@ -190,8 +197,7 @@ struct DragndropOverlay {
 
         int y = 0;
         for (auto& line: lines) {
-            Image& bitmap = line.bitmap;
-            if (bitmap.empty())
+            if (line.imgData == nullptr)
                 continue;
 
             int x = 0;
@@ -201,18 +207,18 @@ struct DragndropOverlay {
                 slot.y = y;
                 slot.alpha = 0.5;
                 slot.alphaIncrease = false;
-                slot.height = bitmap.scaledHeight;
-                slot.width = bitmap.scaledWidth;
+                slot.height = line.imgHeight;
+                slot.width = line.imgWidth;
 
                 if ((slot.height + slot.y) > bufferHeight)
                     slot.height = bufferHeight - slot.y;
                 if ((slot.width + slot.x) > bufferWidth)
                     slot.width = bufferWidth - slot.x;
 
-                x += bitmap.scaledWidth + slotSpace;
+                x += line.imgWidth + slotSpace;
 
                 for (int h = 0; h < slot.height; h++) {
-                    uint32_t* src = (uint32_t*) (bitmap.scaledData + h * (bitmap.scaledWidth * 4));
+                    uint32_t* src = (uint32_t*) (line.imgData + h * (line.imgWidth * 4));
                     uint32_t* dest = (uint32_t*) (buffer + (h + slot.y) * bufferWidth * 4 + slot.x * 4);
 
                     for (int w = 0; w < slot.width; w++) {
@@ -220,9 +226,15 @@ struct DragndropOverlay {
                         *dest++ = (argb & 0xffffff) | ((argb >> 25) << 24);
                     }
                 }
+
+                if (x >= bufferWidth)
+                    break;
             }
 
-            y += bitmap.scaledHeight + lineSpace;
+            y += line.imgHeight + lineSpace;
+
+            if (y >= bufferHeight)
+                break;
         }
 
         texWidth = bufferWidth;
@@ -273,14 +285,6 @@ struct DragndropOverlay {
         viewport.width = 0;
         viewport.height = 0;
         updateMutex.unlock();
-    }
-
-    virtual auto setDragnDropOverlay(uint8_t* _data, unsigned _width, unsigned _height, unsigned line) -> void {
-        if (line >= MAX_LINES)
-            line = 0;
-
-        Image& bitmap = lines[line].bitmap;
-        bitmap.setData(_data, _width, _height);
     }
 
     virtual auto term() -> void {
