@@ -1995,6 +1995,19 @@ auto View::buildMenu() -> void {
         };
         diskControlMenu.menu.append( diskControlMenu.eject );
 
+        diskControlMenu.resetAndEject.setIcon( powerImage );
+
+        diskControlMenu.resetAndEject.onActivate = [i]() {
+            emuThread->lock(true);
+            auto media = activeEmulator->getEnabledDisk( i );
+            if (media)
+                fileloader->eject( activeEmulator, media );
+            program->power(activeEmulator);
+            emuThread->unlock();
+        };
+
+        diskControlMenu.menu.append( diskControlMenu.resetAndEject );
+
         diskControlMenu.menu.append( *GUIKIT::MenuSeparator::getInstance() );
 
         diskControlMenu.clearSave.setIcon( delImage );
@@ -2364,7 +2377,8 @@ auto View::translate() -> void {
 
     for (auto& diskControlMenu : diskControlMenus) {
         diskControlMenu.insert.setText( trans->get("insert") );
-            diskControlMenu.eject.setText( trans->get("eject") );
+        diskControlMenu.eject.setText( trans->get("eject") );
+        diskControlMenu.resetAndEject.setText( trans->get("Hard Reset + Eject") );
         diskControlMenu.reset.setText( trans->get("Reset Floppy") );
         diskControlMenu.inactive.setText( trans->get("inactive until reset") );
         diskControlMenu.clearSave.setText( trans->get("clear save file") );

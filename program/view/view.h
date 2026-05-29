@@ -233,6 +233,7 @@ struct View : GUIKIT::Window {
         GUIKIT::Menu menu;
         GUIKIT::MenuItem insert;
         GUIKIT::MenuItem eject;
+        GUIKIT::MenuItem resetAndEject;
         GUIKIT::MenuItem reset;
         GUIKIT::MenuItem inactive;
     	GUIKIT::MenuItem clearSave;
