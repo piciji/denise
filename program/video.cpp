@@ -117,10 +117,8 @@ auto Program::initVideo(bool driverChange) -> void {
     videoDriver->setScreenshotCallback([this](uint8_t* _data, unsigned _width, unsigned _height) {
         takeScreenshot(_data, _width, _height);
     } );
-    
-    if (activeEmulator) {
-        videoDriver->useShaderCache( Program::getSettings( activeEmulator )->get<bool>("shader_cache", true) );
-    }
+
+    videoDriver->useShaderCache(true );
 
     updateOnScreenText();
 

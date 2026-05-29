@@ -77,7 +77,6 @@ struct VideoShaderLayout : GUIKIT::VerticalLayout {
             GUIKIT::Button unload;
             GUIKIT::Widget spacer;
             GUIKIT::CheckBox yuvEncoding;
-            GUIKIT::CheckBox manuell;
             GUIKIT::ImageView downloadShader;
             GUIKIT::Button loadOldShader;
 
@@ -92,7 +91,6 @@ struct VideoShaderLayout : GUIKIT::VerticalLayout {
             GUIKIT::Label label;
             GUIKIT::Label loaded;
             GUIKIT::Button imgReplacer;
-            GUIKIT::CheckBox shaderCache;
             GUIKIT::Button clearCache;
             GUIKIT::Button toParams;
 

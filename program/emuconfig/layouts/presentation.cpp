@@ -134,8 +134,7 @@ VideoShaderLayout::Main::Control::Control() {
     append(unload,{0u, 0u});
     append(spacer, { ~0u, 0u });
     append(yuvEncoding, { 0u, 0u }, 10);
-    append(downloadShader, { 0u, 0u }, 5);
-    append(manuell, { 0u, 0u }, 15);
+    append(downloadShader, { 0u, 0u }, 15);
 
     append(loadOldShader,{0u, 0u}, 10);
     append(prependPreset,{0u, 0u}, 10);
@@ -153,7 +152,6 @@ VideoShaderLayout::Main::Info::Info() {
     append(label,{0u, 0u}, 5);
     append(loaded,{~0u, 0u});
     append(imgReplacer, { 0u, 0u }, 10);
-    append(shaderCache, {0u, 0u}, 10);
     append(clearCache,{0u, 0u}, 10);
     append(toParams,{0u, 0u});
 
@@ -656,11 +654,6 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
 
     layShader.main.control.downloadShader.onClick = [&]() {
         std::string uri = "https://buildbot.libretro.com/assets/frontend/shaders_slang.zip";
-
-        if (layShader.main.control.manuell.checked()) {
-            layShader.main.control.downloadShader.setUri(uri);
-            return;
-        }
 
         if (!layShader.main.control.downloadShader.enabled())
             return;
@@ -1227,14 +1220,6 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
             view->imageViewer->build();
         }
         view->imageViewer->setVisible();
-    };
-
-    layShader.main.info.shaderCache.onToggle = [this](bool checked) {
-        emuThread->lock();
-        _settings->set<bool>("shader_cache", checked);
-        if (emulator == activeEmulator)
-            videoDriver->useShaderCache(checked);
-        emuThread->unlock();
     };
 
     layParam.listView.onClick = [this](unsigned row, unsigned col, GUIKIT::Position position) {
@@ -2273,9 +2258,6 @@ auto PresentationLayout::translate() -> void {
     layShader.main.control.appendPreset.setText( trans->getA("append preset") );
     layShader.main.control.appendPreset.setTooltip( trans->getA("combine shader") );
 
-    layShader.main.control.manuell.setText(trans->getA("manual"));
-    layShader.main.control.manuell.setTooltip(trans->getA("manual shader update tooltip"));
-
     layShader.main.control.downloadShader.setTooltip(trans->getA("download shader tooltip"));
 
     layShader.main.control.unload.setText( trans->getA("unload") );
@@ -2292,7 +2274,6 @@ auto PresentationLayout::translate() -> void {
 
     layShader.main.info.label.setText( trans->getA("loaded", true) );
     layShader.main.info.clearCache.setText( trans->getA("clear cache") );
-    layShader.main.info.shaderCache.setText( trans->get("shader cache") );
     layShader.main.info.toParams.setText( trans->getA("Parameter") );
     layShader.favourite.control.add.setText( trans->getA("add") );
     layShader.favourite.control.remove.setText( trans->getA("remove") );
@@ -2470,8 +2451,6 @@ auto PresentationLayout::loadSettings(bool init) -> void {
     updatePresets(!init, true);
 
     layBase.view.option.linearInterpolation.setChecked( _settings->get<bool>("video_filter", true) );
-
-    layShader.main.info.shaderCache.setChecked( _settings->get<bool>("shader_cache", true) );
 
     unsigned tr = _settings->get<unsigned>("threaded_renderer", 0);
     switch(tr) {
