@@ -462,7 +462,6 @@ struct GLX : public Video, GL3, RenderThread {
 
         if (splashScreen.enable) {
             if (splashScreen.updateTex( viewport )) {
-                GL3::clear();
                 splashScreen.show( viewport );
             }
         }

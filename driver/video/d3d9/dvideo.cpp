@@ -510,7 +510,6 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
 
         if (splashScreen.enable) {
             if (splashScreen.updateTex(viewport)) {
-                _clear();
                 splashScreen.updateCoord(viewport, vertexBufferSplashScreen);
                 lpD3DDevice->SetStreamSource(0, vertexBufferSplashScreen, 0, sizeof (d3d9vertex));
                 lpD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
@@ -606,7 +605,6 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
 
         if (splashScreen.enable) {
             if (splashScreen.updateTex(viewport)) {
-                _clear();
                 splashScreen.updateCoord(viewport, vertexBufferSplashScreen);
                 lpD3DDevice->SetStreamSource(0, vertexBufferSplashScreen, 0, sizeof (d3d9vertex));
                 lpD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);

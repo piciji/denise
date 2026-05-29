@@ -1353,7 +1353,6 @@ namespace DRIVER {
 
         if (splashScreen.enable) {
             if (buildSplashscreenTexture()) {
-                context->ClearRenderTargetView(rtv, clearColor);
                 blendRect<false, true>(splash);
             }
         }
