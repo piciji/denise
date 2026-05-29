@@ -1010,8 +1010,6 @@ namespace DRIVER {
             
             if (splashScreen.enable) {
                 if(buildSplashScreenTexture()) {
-                    rpd.colorAttachments[0].clearColor = clearColor;
-                    rpd.colorAttachments[0].loadAction = MTLLoadActionClear;
                     showSplashScreen(rce);
                 }
             }
@@ -1209,10 +1207,10 @@ namespace DRIVER {
         float w = (float)splashScreen.viewport.width * screenx;
         float h = (float)splashScreen.viewport.height * screeny;
 
-        verticesDndOverlay[0] = {simd_make_float2(x    , y),      simd_make_float2(0, 0)};
-        verticesDndOverlay[1] = {simd_make_float2(x + w, y),      simd_make_float2(1, 0)};
-        verticesDndOverlay[2] = {simd_make_float2(x    , y - h),  simd_make_float2(0, 1)};
-        verticesDndOverlay[3] = {simd_make_float2(x + w, y - h),  simd_make_float2(1, 1)};
+        verticesSplashScreen[0] = {simd_make_float2(x    , y),      simd_make_float2(0, 0)};
+        verticesSplashScreen[1] = {simd_make_float2(x + w, y),      simd_make_float2(1, 0)};
+        verticesSplashScreen[2] = {simd_make_float2(x    , y - h),  simd_make_float2(0, 1)};
+        verticesSplashScreen[3] = {simd_make_float2(x + w, y - h),  simd_make_float2(1, 1)};
         
         return true;
     }
