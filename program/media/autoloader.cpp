@@ -19,10 +19,10 @@
 
 Autoloader* autoloader = nullptr;
 
-auto Autoloader::init( std::vector<std::string> files, bool silentError, Mode mode, unsigned selection, std::string fileName ) -> void {
+auto Autoloader::init( std::vector<std::string> files, Mode mode, unsigned selection, std::string fileName ) -> void {
     ddControl.emulator = nullptr;
     ddControl.mediaGroups.clear();
-    ddControl.silentError = silentError;
+    ddControl.errorLevel = 0;
     ddControl.mode = mode;
     ddControl.selection = selection;
     ddControl.fileName = fileName;
@@ -49,7 +49,7 @@ auto Autoloader::overrideSpeeder() -> void {
 
 auto Autoloader::postProcessing() -> void {
 
-    if (ddControl.silentError)
+    if (ddControl.errorLevel >= 1)
         filePool->unloadOrphaned();
     
     auto emuView = EmuConfigView::TabWindow::getView( ddControl.emulator );
@@ -66,7 +66,7 @@ auto Autoloader::postProcessing() -> void {
     }
     
     if (ddControl.mediaGroups.size() == 0) {
-        if (ddControl.silentError)
+        if (ddControl.errorLevel == 2)
             program->exit(1);
         
         return;
@@ -334,7 +334,7 @@ auto Autoloader::loadFiles() -> void {
         return loadFiles();
 
     if (!file->exists()) {
-        if (!ddControl.silentError)
+        if (ddControl.errorLevel == 0)
             FileHelper::errorFileSize(MAX_MEDIUM_SIZE, file->getPath(), view->message);
 
         return loadFiles();
@@ -489,7 +489,7 @@ auto Autoloader::loadFile( GUIKIT::File* file, GUIKIT::File::Item* item ) -> voi
 	}
 
 errorOpen:
-	if (!ddControl.silentError)
+	if (ddControl.errorLevel == 0)
 		FileHelper::errorOpen(file, item, view->message);
 
 	return loadFiles();

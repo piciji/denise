@@ -350,6 +350,7 @@
     <ClInclude Include="..\program\media\fileloader.h" />
     <ClInclude Include="..\program\media\media.h" />
     <ClInclude Include="..\program\media\recentFiles.h" />
+    <ClInclude Include="..\program\monitor\binaryMonitor.h" />
     <ClInclude Include="..\program\program.h" />
     <ClInclude Include="..\program\states\states.h" />
     <ClInclude Include="..\program\thread\emuThread.h" />
@@ -367,6 +368,7 @@
     <ClInclude Include="..\program\tools\mathVector.h" />
     <ClInclude Include="..\program\tools\shortcuts.h" />
     <ClInclude Include="..\program\tools\sincFirFilter.h" />
+    <ClInclude Include="..\program\tools\socket.h" />
     <ClInclude Include="..\program\video\manager.h" />
     <ClInclude Include="..\program\video\palette.h" />
     <ClInclude Include="..\program\video\shaderParser.h" />
@@ -1421,7 +1423,12 @@
     <ClCompile Include="..\emulation\tools\m93c86.cpp" />
     <ClCompile Include="..\emulation\tools\mx29lv640eb.cpp" />
     <ClCompile Include="..\emulation\tools\pia.cpp" />
-    <ClCompile Include="..\emulation\tools\socket.cpp" />
+    <ClCompile Include="..\emulation\tools\socket.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|win32'">$(IntDir)%(Filename)_emu</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|win32'">$(IntDir)%(Filename)_emu</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)%(Filename)_emu</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(Filename)_emu</ObjectFileName>
+    </ClCompile>
     <ClCompile Include="..\emulation\tools\uuid.cpp" />
     <ClCompile Include="..\emulation\tools\watcher.cpp" />
     <ClCompile Include="..\emulation\wdc\65816\alu.cpp">
@@ -1928,11 +1935,18 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|win32'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="..\program\monitor\binaryMonitor.cpp" />
     <ClCompile Include="..\program\program.cpp" />
     <ClCompile Include="..\program\states\states.cpp" />
     <ClCompile Include="..\program\thread\emuThread.cpp" />
     <ClCompile Include="..\program\tools\diskGuesser.cpp" />
     <ClCompile Include="..\program\tools\httpClient.cpp" />
+    <ClCompile Include="..\program\tools\socket.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|win32'">$(IntDir)</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|win32'">$(IntDir)</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)</ObjectFileName>
+    </ClCompile>
     <ClCompile Include="..\program\video.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>

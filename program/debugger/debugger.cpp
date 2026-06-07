@@ -13,6 +13,7 @@
 #include "watcherHelper.h"
 #include "../helper/settingsHelper.h"
 #include "../view/view.h"
+#include "../monitor/binaryMonitor.h"
 #include <bitset>
 
 GUIKIT::Timer* Debugger::timerVisibility = nullptr;
@@ -351,6 +352,10 @@ auto Debugger::Callback(Emulator::Interface::DebuggerSnapshot* snapshot) -> void
     snapshot->mutex.unlock();
 
     if (snapshot->callbackAction != DebuggerAction::AutoUpdate) {
+        if (program->binaryMonitor.clientConnected()) {
+            program->binaryMonitor.responseStopped( static_cast<LIBC64::DebuggerSnapshot*>(snapshot) );
+        }
+
         emuThread->lockDebugger();
     }
 }

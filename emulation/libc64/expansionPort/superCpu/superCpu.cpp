@@ -1587,6 +1587,7 @@ auto SuperCpu::updateSnapshot(DebuggerSnapshot& snap) -> void {
     snap.regS = s;
     snap.pbr = pbr;
     snap.dbr = dbr;
+    snap.regD = d;
     snap.flags = p;
     snap.modeE = modeE;
 }

@@ -169,12 +169,27 @@ auto pApplication::initialize() -> void {
     if ((_v > Windows10) || ((_v == Windows10) && (_b >= 19041)))
         Application::canSwitchDark = true;
 
-    HWND consoleWnd = GetConsoleWindow();
-    if (!consoleWnd) {
-        // -mwindows (GUI APP)
-        if (AttachConsole(ATTACH_PARENT_PROCESS)) // attach to console (when run from console)
-            freopen("CON", "w", stderr);
+    setConsoleOutput();
+}
+
+auto pApplication::setConsoleOutput() -> bool {
+    static bool isAttached = false;
+
+    if (!isAttached) {
+        HWND consoleWnd = GetConsoleWindow();
+
+        if (!consoleWnd) {
+            if (AttachConsole(ATTACH_PARENT_PROCESS)) {
+                // attach to console (when run from console)
+                freopen("CON", "w", stderr);
+                freopen("CON", "w", stdout);
+                isAttached = true;
+            }
+        } else
+            isAttached = true;
     }
+
+    return isAttached;
 }
 
 auto pApplication::hasAppThemed() -> bool {

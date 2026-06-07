@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Filter Include="Ressourcendateien">
@@ -343,6 +343,9 @@
     </Filter>
     <Filter Include="deps\libresidfp\resample">
       <UniqueIdentifier>{1d4d9960-beea-4888-a5f2-10c6d82b9561}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="program\monitor">
+      <UniqueIdentifier>{a2d9dd64-7181-46d0-87e6-7141bf21de97}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -1410,6 +1413,12 @@
     </ClInclude>
     <ClInclude Include="..\guikit\tools\resize.h">
       <Filter>guikit\tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\program\tools\socket.h">
+      <Filter>program\tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\program\monitor\binaryMonitor.h">
+      <Filter>program\monitor</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -2759,6 +2768,12 @@
     </ClCompile>
     <ClCompile Include="..\guikit\tools\resize.cpp">
       <Filter>guikit\tools</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\tools\socket.cpp">
+      <Filter>program\tools</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\monitor\binaryMonitor.cpp">
+      <Filter>program\monitor</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -11,6 +11,7 @@
 #include "../media/fileloader.h"
 #include "../view/status.h"
 #include "../emuconfig/layouts/audio.h"
+#include "../monitor/binaryMonitor.h"
 
 EmuThread* emuThread = nullptr;
 
@@ -79,16 +80,21 @@ auto EmuThread::unlockDebugger() -> void {
     if (debugging) {
         debugging = false;
         acknowledged = false;
+        if (program->binaryMonitor.clientConnected())
+            program->binaryMonitor.sendResume();
     }
 }
 
 auto EmuThread::lock(bool unlockDebugging) -> bool {
+    if  (!enabled)
+        return false;
+
     if (unlockDebugging) {
         Debugger::lock = true;
         unlockDebugger();
     }
 
-    if  (!enabled || acknowledged /* check for nesting */ )
+    if  (acknowledged /* check for nesting */ )
         return false;
 
     freeContext = true;

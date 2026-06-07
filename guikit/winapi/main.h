@@ -97,6 +97,7 @@ struct pApplication {
     static auto getUtf8CmdLine(std::vector<std::string>& out) -> bool;
     static auto initDarkTheme(bool force) -> void;
     static auto setDarkMode(Application::DarkMode darkMode) -> void;
+    static auto setConsoleOutput() -> bool;
 	
     static std::string cwd; //current working directory
 
