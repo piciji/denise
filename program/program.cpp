@@ -157,10 +157,20 @@ auto Program::finishStartup() -> void {
     if (GUIKIT::Application::exitCode || GUIKIT::Application::isQuit)
         return;
 
+    Socket::init();
+    if (cmd->binaryMonitor) {
+        binaryMonitor.setServer( cmd->binaryMonitorAddress );
+    }
+
     if (!activeEmulator)
-        power(getLastUsedEmu(), false);
+        power(binaryMonitor.clientConnected() ? getEmulator("C64") : getLastUsedEmu(), false);
 
 	initUserInterface();
+
+    if (binaryMonitor.clientConnected()) {
+        activeEmulator->debuggerAdd( DebuggerTheme::Unspecified, DebuggerAction::UIRequestedStop, 0 );
+    }
+
     initialized = true;
 }
 
@@ -223,7 +233,7 @@ auto Program::init() -> void {
         GUIKIT::Application::setDarkMode((GUIKIT::Application::DarkMode)style);
 
         if (view && !loadTranslation(globalSettings->get<std::string>("translation", getSystemLangFile()))) {
-            view->message->error("language plugin not found");
+            GUIKIT::System::printToCmd( "language plugin not found\n" );
         }
     }
     
@@ -532,6 +542,10 @@ auto Program::loopUserInterface() -> void {
     focused = view->focused();
     emuThread->handleStatusUpdate();
     emuThread->handleUIEvents();
+
+    if (binaryMonitor.clientConnected()) {
+        binaryMonitor.update();
+    }
 }
 
 auto Program::hasFocus() -> bool {
@@ -604,6 +618,7 @@ auto Program::quit() -> void {
 
     // in case of exit request from emulation core
     GUIKIT::Application::loop = nullptr;
+    Socket::clean();
 }
 
 auto Program::loadTranslation(std::string file) -> bool {
@@ -958,7 +973,7 @@ auto Program::getSettings( Emulator::Interface* emulator ) -> GUIKIT::Settings* 
 }
 
 auto Program::debugger(Emulator::Interface::DebuggerSnapshot* snapshot) -> void {
-    if (hasActiveDebugger()) {
+    if (hasActiveDebugger() || binaryMonitor.clientConnected()) {
         Debugger::Callback( snapshot );
     }
 }

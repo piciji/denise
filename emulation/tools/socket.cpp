@@ -134,7 +134,7 @@ namespace Emulator {
     }
 
     auto Socket::init() -> void {
-
+        return;
         static bool init = false;
 
         if (init)
@@ -150,6 +150,7 @@ namespace Emulator {
     }
 
     auto Socket::clean() -> void {
+        return;
 #if defined(_WIN32)
         WSACleanup();
 #endif

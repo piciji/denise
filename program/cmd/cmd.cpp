@@ -71,6 +71,8 @@ Cmd::Cmd(int argc, char** argv) {
             configIdent = "Amiga";
         else if ( arg == "-fullscreen" )
             startInFullscreen = true;
+        else if ( arg == "-binarymonitor" )
+            binaryMonitor = true;
 		else
             arguments.push_back(arg);
 
@@ -79,6 +81,9 @@ Cmd::Cmd(int argc, char** argv) {
             appendedArg = "";
         }
     }
+
+    if (debug)
+        binaryMonitor = false;
 }
 
 auto Cmd::checkForValidOptions(std::string& arg, std::string& arg2) -> bool {
@@ -185,6 +190,9 @@ auto Cmd::prepareOptions() -> void {
 	options.push_back({"-autostart-prg", "Set autostart mode for PRG files (1: Inject, 2: Disk image)", "<value>"});
 	options.push_back({"-aggressive-warp", "aggressive Warp mode (emulates VIC sequencer every 15 frames only)", ""});
 	options.push_back({"-fast-testbench", "analyze passed options and then decides on the use of aggressive warp and/or PRG memory injection", ""});
+
+    options.push_back({"-binarymonitor", "Enable binary monitor", ""});
+    options.push_back({"-binarymonitoraddress", "The local address the binary monitor should bind to", "<address>"});
 }
 
 auto Cmd::printInvalidParam() -> void {
@@ -230,6 +238,7 @@ auto Cmd::parse() -> void {
 	bool georamSizeNext = false;
     bool screenshotPathNext = false;
 	bool autostartPrgNext = false;
+    bool binaryMonitorNext = false;
 	bool fastTestbench = false;
     typedef Emulator::Interface EmuInt;
 	auto emuC64 = program->getEmulator("C64");
@@ -276,6 +285,12 @@ auto Cmd::parse() -> void {
 			setAutoStartPrg( arg );
             continue;
 		}
+
+        if (binaryMonitorNext) {
+            binaryMonitorNext = false;
+            binaryMonitorAddress = arg;
+            continue;
+        }
 
         if (attachMedia) {
             attachments.push_back({(Emulator::Interface*)attachMedia->guid, attachMedia, GUIKIT::String::trim(arg)});
@@ -339,7 +354,9 @@ auto Cmd::parse() -> void {
 		}
         else if (arg == "-autostart-prg") {
             autostartPrgNext = true;
-
+        }
+        else if (arg == "-binarymonitoraddress") {
+            binaryMonitorNext = true;
         } else if (arg == "-attach8") {
             attachMedia = emuC64->getDisk(0);
             attachMedia->guid = (uintptr_t)emuC64;
@@ -549,13 +566,15 @@ auto Cmd::autoloadImages() -> void {
     }
 
     if (debug) {
-        autoloader->init( arguments, true, Autoloader::Mode::AutoStart, 1 );
+        autoloader->init( arguments, Autoloader::Mode::AutoStart, 1 );
     } else {
         if (!diskListing.empty() && GUIKIT::String::isNumber(diskListing))
-            autoloader->init( arguments, true, Autoloader::Mode::AutoStart, std::stoi(diskListing) );
+            autoloader->init( arguments, Autoloader::Mode::AutoStart, std::stoi(diskListing) );
         else
-            autoloader->init( arguments, true, Autoloader::Mode::AutoStart, 0, diskListing );
+            autoloader->init( arguments, Autoloader::Mode::AutoStart, 0, diskListing );
     }
+
+    autoloader->setErrorLevel(2);
 
     autoloader->loadFiles();
 

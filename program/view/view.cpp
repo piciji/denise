@@ -269,7 +269,7 @@ auto View::build() -> void {
             return;
 
         emuThread->lock();
-        autoloader->init( {fileName}, false, Autoloader::Mode::AutoStart );
+        autoloader->init( {fileName}, Autoloader::Mode::AutoStart );
         
         autoloader->loadFiles();
         
@@ -488,7 +488,7 @@ auto View::setDragnDrop() -> void {
         emuThread->lock();
         dropZone = 0;
         videoDriver->enableDragnDropOverlay(false);
-        autoloader->init( files, false, mode, selection );
+        autoloader->init( files, mode, selection );
         autoloader->loadFiles();
 
         bool activeCore = globalSettings->get<bool>("core_" + activeEmulator->ident, true);
@@ -658,7 +658,7 @@ auto View::updateRecentList(Emulator::Interface* emulator) -> void {
             item = new GUIKIT::MenuItem;
             item->onActivate = [this, item]() {
                 emuThread->lock();
-                autoloader->init({ GUIKIT::File::resolveRelativePath(item->filePath()) }, false, Autoloader::Mode::DragnDrop);
+                autoloader->init({ GUIKIT::File::resolveRelativePath(item->filePath()) }, Autoloader::Mode::DragnDrop);
                 autoloader->loadFiles();
                 emuThread->unlock();
             };

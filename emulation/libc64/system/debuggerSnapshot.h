@@ -11,6 +11,7 @@ struct DebuggerSnapshot : Emulator::Interface::DebuggerSnapshot {
     uint16_t regX;
     uint16_t regY;
     uint16_t regS;
+    uint16_t regD;
     uint16_t pc;
     uint32_t pcEdge;
 
@@ -39,7 +40,7 @@ struct DebuggerSnapshot : Emulator::Interface::DebuggerSnapshot {
     Emulator::Interface::DebuggerDma debuggerDma[65];
     uint8_t lineCycles;
 
-    struct {
+    struct Drive {
         uint16_t regA;
         uint16_t regX;
         uint16_t regY;

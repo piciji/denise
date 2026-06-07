@@ -13,7 +13,7 @@ struct Autoloader {
 	struct {
 		Emulator::Interface* emulator;
 		std::vector<Emulator::Interface::MediaGroup*> mediaGroups;
-		bool silentError = false;
+		unsigned errorLevel = 0;
 		Mode mode = Mode::AutoStart;
 		std::vector<std::string> files;
 		unsigned selection = 0;
@@ -30,7 +30,7 @@ struct Autoloader {
     };
     std::vector<Used> used;
 
-	auto init( std::vector<std::string> files, bool silentError, Mode mode, unsigned selection = 0, std::string fileName = "") -> void;
+	auto init( std::vector<std::string> files, Mode mode, unsigned selection = 0, std::string fileName = "") -> void;
     auto setEmulator(Emulator::Interface* emulator) -> void;
     auto overrideSpeeder() -> void;
 	auto postProcessing() -> void;
@@ -46,6 +46,8 @@ struct Autoloader {
     auto get(Emulator::Interface* emulator, bool& trapped, unsigned& selection) -> Emulator::Interface::Media*;
     auto getLatestDrive(Emulator::Interface* emulator) -> Emulator::Interface::Media*;
 	auto shouldCaptureMouse(Emulator::Interface* emulator, GUIKIT::Settings* settings) -> bool;
+    auto setErrorLevel(unsigned level) -> void { ddControl.errorLevel = level; }
+    auto hasLoaded() const -> bool { return !ddControl.mediaGroups.empty(); }
 };
 
 extern Autoloader* autoloader;

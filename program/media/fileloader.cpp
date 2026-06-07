@@ -227,7 +227,7 @@ auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore 
             settings->set<std::string>("anyload_path", GUIKIT::File::getPath( filePath ) );
 
             emuThread->lock(true);
-            autoloader->init( {filePath}, false, Autoloader::Mode::AutoStartDblClick, selection );
+            autoloader->init( {filePath}, Autoloader::Mode::AutoStartDblClick, selection );
             autoloader->setEmulator( emulator );
             if (this->fileDialogPtr->hasChecked() && dynamic_cast<LIBC64::Interface*>(emulator))
                 autoloader->overrideSpeeder();
@@ -301,7 +301,7 @@ auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore 
         settings->set<std::string>("anyload_path", GUIKIT::File::getPath( filePath ) );
 
         emuThread->lock(true);
-        autoloader->init( filePaths, false, Autoloader::Mode::Open );
+        autoloader->init( filePaths, Autoloader::Mode::Open );
         autoloader->setEmulator( emulator );
         if (this->fileDialogPtr->hasChecked() && dynamic_cast<LIBC64::Interface*>(emulator))
             autoloader->overrideSpeeder();
@@ -325,7 +325,7 @@ auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore 
             settings->set<std::string>("anyload_path", GUIKIT::File::getPath( filePath ) );
 
             emuThread->lock(true);
-            autoloader->init( {filePath}, false, Autoloader::Mode::AutoStartSecondary, selection );
+            autoloader->init( {filePath}, Autoloader::Mode::AutoStartSecondary, selection );
             autoloader->setEmulator( emulator );
             if (this->fileDialogPtr->hasChecked() && dynamic_cast<LIBC64::Interface*>(emulator))
                 autoloader->overrideSpeeder();
@@ -349,7 +349,7 @@ auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore 
                 settings->set<std::string>("anyload_path", GUIKIT::File::getPath( filePath ) );
 
                 emuThread->lock(true);
-                autoloader->init( {filePath}, false, Autoloader::Mode::AutoStartPrimary, selection );
+                autoloader->init( {filePath}, Autoloader::Mode::AutoStartPrimary, selection );
                 autoloader->setEmulator( emulator );
                 if (this->fileDialogPtr->hasChecked() && dynamic_cast<LIBC64::Interface*>(emulator))
                     autoloader->overrideSpeeder();
@@ -371,7 +371,7 @@ auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore 
             settings->set<std::string>("anyload_path", GUIKIT::File::getPath(filePath));
 
             emuThread->lock(true);
-            autoloader->init(filePaths, false, Autoloader::Mode::AutoStartDblClick, selection);
+            autoloader->init(filePaths, Autoloader::Mode::AutoStartDblClick, selection);
             autoloader->setEmulator( emulator );
             if (this->fileDialogPtr->hasChecked() && dynamic_cast<LIBC64::Interface*>(emulator))
                 autoloader->overrideSpeeder();
@@ -437,7 +437,7 @@ auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore 
         settings->set<std::string>("anyload_path", GUIKIT::File::getPath( filePaths[0] ) );
 
         emuThread->lock(true);
-        autoloader->init( filePaths, false, Autoloader::Mode::AutoStartDblClick, fileDialogPtr ? fileDialogPtr->getContentViewSelection() : 0 );
+        autoloader->init( filePaths, Autoloader::Mode::AutoStartDblClick, fileDialogPtr ? fileDialogPtr->getContentViewSelection() : 0 );
         autoloader->setEmulator( emulator );
         if (fileDialogPtr->hasChecked() && dynamic_cast<LIBC64::Interface*>(emulator))
             autoloader->overrideSpeeder();

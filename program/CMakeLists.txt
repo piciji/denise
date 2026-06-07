@@ -52,6 +52,7 @@ set(headers
         tools/shortcuts.h
         tools/sincFirFilter.h
         tools/httpClient.h
+        tools/socket.h
         video/luts.cpp
         video/manager.h
         video/palette.h
@@ -69,6 +70,7 @@ set(headers
         helper/fileHelper.h
         helper/miscHelper.h
         helper/settingsHelper.h
+        monitor/binaryMonitor.h
 )
 
 set_source_files_properties(${PROJECT_NAME} ${headers}
@@ -134,9 +136,11 @@ set(srcs
         view/imageViewer.cpp
         tools/httpClient.cpp
         tools/diskGuesser.cpp
+        tools/socket.cpp
         helper/fileHelper.cpp
         helper/miscHelper.cpp
         helper/settingsHelper.cpp
+        monitor/binaryMonitor.cpp
         
         ${headers}
 )
@@ -187,3 +191,10 @@ endif()
 target_sources(${PROJECT_NAME} PUBLIC ${srcs} )
 
 target_link_libraries(${PROJECT_NAME} PUBLIC guikit driver coreC64 coreAmiga logos icons)
+
+add_custom_command(
+        TARGET ${PROJECT_NAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+        "${CMAKE_SOURCE_DIR}/builds/release/program/denise.exe"
+        "${CMAKE_SOURCE_DIR}/builds/release/program/x64denise.exe"
+)

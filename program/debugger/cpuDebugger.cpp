@@ -139,16 +139,26 @@ CpuDebugger::CPU::State::Options::Options(Debugger* debugger)
 CpuDebugger::CPU::State::State(Debugger* debugger)
 : flags(debugger), options( debugger ) {
     int i = 0;
-    registers.resize( debugger->isAmiga() ? 11 : (debugger->isDriveCpu() ? 3 : 4 ));
+    unsigned elements = 11; // Amiga
+    if (debugger->isC64()) {
+        if (debugger->isDriveCpu())
+            elements = 3;
+        else if (debugger->getTheme() == DebuggerTheme::SCPU)
+            elements = 5;
+        else
+            elements = 4;
+    }
+
+    registers.resize( elements );
 
     for (auto& reg : registers) {
         reg = new Registers(debugger);
         i++;
 
         if (debugger->isAmiga())
-            append(*reg, {0u, 0u}, (i == 8 || i == 11) ? 20 : 5);
+            append(*reg, {0u, 0u}, (i == 8 || i == elements) ? 20 : 5);
         else
-            append(*reg, {0u, 0u}, (i == 4) ? 20 : 5);
+            append(*reg, {0u, 0u}, (i == elements) ? 20 : 5);
     }
 
     append(flags, {0u, 0u}, 20);
@@ -805,11 +815,14 @@ auto CpuDebugger::update65816(LIBC64::DebuggerSnapshot& s) -> void {
                 break;
             case 2:
                 updateReg(reg->leftVal, s.regA);
-                updateReg(reg->rightVal, s.modeE);
+                updateReg(reg->rightVal, s.regD);
                 break;
             case 3:
                 updateReg(reg->leftVal, s.pbr);
                 updateReg(reg->rightVal, s.dbr);
+                break;
+            case 4:
+                updateReg(reg->leftVal, s.modeE);
                 break;
         }
     }
@@ -856,12 +869,14 @@ auto CpuDebugger::translateTheme() -> void {
             } else if (i == 2) {
                 reg->left.setText( "A" );
                 if (!isDriveCpu())
-                    reg->right.setText( getTheme() == DebuggerTheme::SCPU ? "M-E" : "I/O" );
+                    reg->right.setText( getTheme() == DebuggerTheme::SCPU ? "D" : "I/O" );
             } else if (i == 3) {
                 if (!isDriveCpu()) {
                     reg->left.setText( getTheme() == DebuggerTheme::SCPU ? "PBR" : "POR" );
                     reg->right.setText( getTheme() == DebuggerTheme::SCPU ? "DBR" : "DDR" );
                 }
+            } else if (i == 4) {
+                reg->left.setText( getTheme() == DebuggerTheme::SCPU ? "M-E" : "" );
             }
 
             i++;

@@ -17,7 +17,7 @@ struct Error : std::exception {
     }
 };
 
-#define _inform(msg, ...) fprintf(stderr, msg "\n", ##__VA_ARGS__)
+#define _inform(msg, ...) fprintf(stdout, msg "\n", ##__VA_ARGS__)
 
 #define _warn(msg, ...) fprintf(stderr, "Warning: " msg "\n", ##__VA_ARGS__)
 

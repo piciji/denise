@@ -1,6 +1,5 @@
 
 #pragma once
-#include "debugger/debugger.h"
 
 #ifndef APP_NAME
 #define APP_NAME "Denise"
@@ -43,6 +42,8 @@
 #include "../emulation/libc64/interface.h"
 #include "../driver/driver.h"
 #include "video/manager.h"
+#include "debugger/debugger.h"
+#include "monitor/binaryMonitor.h"
 #include "tools/logger.h"
 #include "tools/shortcuts.h"
 
@@ -70,6 +71,7 @@ struct Program : Emulator::Interface::Bind {
 
 	unsigned loopFrames = 0;
     GUIKIT::Timer fpsChangeTimer;
+    BinaryMonitor binaryMonitor;
 
 	struct Warp {
 	    enum Mode { Off, Normal, Aggressive, FastForward } mode = Mode::Off;

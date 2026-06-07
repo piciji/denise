@@ -46,6 +46,9 @@ struct Cmd {
 	std::string invalidParam;
 	bool ambiguousParam = false;
 
+    bool binaryMonitor = false;
+    std::string binaryMonitorAddress;
+
     auto parse() -> void;
     
     auto autoloadImages() -> void;
