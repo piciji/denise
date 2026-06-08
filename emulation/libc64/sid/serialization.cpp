@@ -121,9 +121,6 @@ auto ReSid::serialize(Emulator::Serializer& s, bool light) -> void {
         s.integer( externalFilter.Vhp );
         s.integer( externalFilter.w0lp_1_s7 );
         s.integer( externalFilter.w0hp_1_s17 );
-
-        if (_load)
-            scaling = type == Type::MOS_8580 ? 5 : 3;
     }
 }
 

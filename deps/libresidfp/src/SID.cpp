@@ -142,7 +142,8 @@ SID::SID() :
     filter6581(new Filter6581()),
     filter8580(new Filter8580()),
     resampler(nullptr),
-    cws(AVERAGE)
+    cws(AVERAGE),
+    p(new Params)
 {
     voice[0].setOtherVoices(voice[2], voice[1]);
     voice[1].setOtherVoices(voice[0], voice[2]);
@@ -156,20 +157,24 @@ SID::~SID()
 {
     delete filter6581;
     delete filter8580;
+    delete p;
 }
 
 void SID::setFilter6581Curve(double filterCurve)
 {
+    p->filterCurve6581 = filterCurve;
     filter6581->setFilterCurve(filterCurve);
 }
 
 void SID::setFilter6581Range(double adjustment)
 {
+    p->filterRange6581 = adjustment;
     filter6581->setFilterRange(adjustment);
 }
 
 void SID::setFilter8580Curve(double filterCurve)
 {
+    p->filterCurve8580 = filterCurve;
     filter8580->setFilterCurve(filterCurve);
 }
 
@@ -181,6 +186,7 @@ void SID::enableFilter(bool enable)
 
 void SID::enableOld6581caps(bool enable)
 {
+    p->old6581caps = enable;
     filter6581->enableOldCaps(enable);
 }
 
@@ -241,8 +247,8 @@ void SID::setChipModel(ChipModel new_model)
     model = new_model;
 
     // calculate waveform-related tables
-    matrix_t* wavetables = WaveformCalculator::getInstance()->getWaveTable();
-    matrix_t* pulldowntables = WaveformCalculator::getInstance()->buildPulldownTable(model, cws);
+    rc_matrix_t wavetables = WaveformCalculator::getInstance()->getWaveTable();
+    rc_matrix_t pulldowntables = WaveformCalculator::getInstance()->buildPulldownTable(model, cws);
 
     // calculate envelope DAC table
     {
@@ -299,7 +305,7 @@ void SID::setCombinedWaveforms(CombinedWaveforms new_cws)
     cws = new_cws;
 
     // rebuild waveform-related tables
-    matrix_t* pulldowntables = WaveformCalculator::getInstance()->buildPulldownTable(model, cws);
+    rc_matrix_t pulldowntables = WaveformCalculator::getInstance()->buildPulldownTable(model, cws);
 
     for (int i = 0; i < 3; i++)
     {
@@ -334,7 +340,7 @@ void SID::input(int value)
     filter8580->input(value);
 }
 
-unsigned char SID::read(int offset)
+uint8_t SID::read(int offset)
 {
     switch (offset)
     {
@@ -369,7 +375,7 @@ unsigned char SID::read(int offset)
     return busValue;
 }
 
-void SID::write(int offset, unsigned char value)
+void SID::write(int offset, uint8_t value)
 {
     busValue = value;
     busValueTtl = modelTTL;
@@ -509,6 +515,10 @@ void SID::setSamplingParameters(double clockFrequency, SamplingMethod method, do
     default:
         throw SIDError("Unknown sampling method");
     }
+
+    p->method = method;
+    p->clockFrequency = clockFrequency;
+    p->samplingFrequency = samplingFrequency;
 }
 
 void SID::clockSilent(unsigned int cycles)

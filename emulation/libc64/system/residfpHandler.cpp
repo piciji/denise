@@ -15,11 +15,13 @@ residfp(*(new reSIDfp::SID) ) {
     ioPos = 1;
     residfp.setSamplingParameters( sampleRate, reSIDfp::SamplingMethod::NONE, sampleRate );
     buffer = new short[SidManager::UpdateCycles << 1];
+    stateBuffer = new uint8_t[sizeof(reSIDfp::State)];
 }
 
 ResidfpHandler::~ResidfpHandler() {
     delete &residfp;
     delete[] buffer;
+    delete[] stateBuffer;
 }
 
 auto ResidfpHandler::reset() -> void {
@@ -138,7 +140,32 @@ auto ResidfpHandler::setSampleRate(double sampleRate) -> void {
 }
 
 auto ResidfpHandler::serialize(Emulator::Serializer& s, bool light) -> void {
+    // if (s.mode() == Emulator::Serializer::Mode::Save) {
+    //     auto state = reSIDfp::State::saveState(residfp);
+    //
+    //     std::memcpy(stateBuffer, &state, sizeof(reSIDfp::State));
+    //     s.array( stateBuffer, sizeof(reSIDfp::State) );
+    //
+    // } else if (s.mode() == Emulator::Serializer::Mode::Load) {
+    //     reSIDfp::State state;
+    //
+    //     s.array( stateBuffer, sizeof(reSIDfp::State) );
+    //     std::memcpy(&state, stateBuffer, sizeof(reSIDfp::State));
+    //
+    //     reSIDfp::State::restoreState(residfp, state);
+    // } else {
+    //     s.array( stateBuffer, sizeof(reSIDfp::State) );
+    // }
 
+
+    reSIDfp::State state;
+    if (s.mode() == Emulator::Serializer::Mode::Save)
+        state = reSIDfp::State::saveState(residfp);
+
+    s.buffer(reinterpret_cast<uint8_t*>(&state), sizeof(reSIDfp::State));
+
+    if(s.mode() == Emulator::Serializer::Mode::Load)
+        reSIDfp::State::restoreState(residfp, state);
 }
 
 auto ResidfpHandler::clone(Sid* src, bool keepProps) -> void {

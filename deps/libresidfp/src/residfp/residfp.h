@@ -167,7 +167,7 @@ public:
      * using chosen output resampling algorithm.
      *
      * @param buf audio output buffer
-     * @param bufSize the buffer size in 16bit samples
+     * @param bufSize the buffer size as number of 16bit samples
      * @return number of c64 clocks run
      */
     int clock(short* buf, int bufSize);
@@ -220,6 +220,27 @@ public:
      *               false to use the standard 470pF caps.
      */
     void enableOld6581caps(bool enable);
+
+    /**
+     * Get the save-state size in bytes.
+     *
+     * @since 1.1
+     */
+    int stateSize() const;
+
+    /**
+     * Save current state.
+     *
+     * @since 1.1
+     */
+    void saveState(char* buffer) const;
+
+    /**
+     * Restore saved state.
+     *
+     * @since 1.1
+     */
+    void restoreState(char* buffer);
 };
 
 }

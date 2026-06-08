@@ -6,6 +6,7 @@
 #include "../sid/reSid24.h"
 #include "../sid/chamberlin.h"
 #include "residfpHandler.h"
+#include "../../../deps/libresidfp/src/State.h"
 
 namespace LIBC64 {
 
@@ -487,7 +488,13 @@ auto SidManager::calcSerializationSizeForSevenMoreSids() -> void {
 
     mainSid()->serialize( s, false );
 
-    serializationSizeForSevenMoreSids = s.size() * 7;
+    auto s1 = s.size();
+    auto s2 = sizeof(reSIDfp::State);
+
+    if (s2 > s1)
+        s1 = s2;
+
+    serializationSizeForSevenMoreSids = s1 * 7;
 }
 
 auto SidManager::useLeftChannel(int nr, bool state) -> void {

@@ -23,6 +23,9 @@
 #include "residfp.h"
 
 #include "SID.h"
+#include "State.h"
+
+#include <cstring>
 
 using namespace reSIDfp;
 
@@ -140,4 +143,19 @@ void residfp::enableFilter(bool enable)
 void residfp::enableOld6581caps(bool enable)
 {
     sid.enableOld6581caps(enable);
+}
+
+int residfp::stateSize() const { return sizeof(reSIDfp::State); }
+
+void residfp::saveState(char* buffer) const
+{
+    State s = State::saveState(sid);
+    std::memcpy(buffer, &s, sizeof(reSIDfp::State));
+}
+
+void residfp::restoreState(char* buffer)
+{
+    State s;
+    std::memcpy(&s, buffer, sizeof(reSIDfp::State));
+    State::restoreState(sid, s);
 }

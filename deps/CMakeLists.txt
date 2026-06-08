@@ -162,6 +162,7 @@ set(srcs
         libresidfp/src/Spline.cpp
         libresidfp/src/WaveformCalculator.cpp
         libresidfp/src/WaveformGenerator.cpp
+        libresidfp/src/State.cpp
         libresidfp/src/residfp/residfp.cpp
 
         libresidfp/src/resample/SincResampler.cpp

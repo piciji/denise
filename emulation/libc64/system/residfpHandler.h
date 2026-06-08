@@ -16,6 +16,7 @@ struct ResidfpHandler : Sid {
     reSIDfp::SID& residfp;
 
     short* buffer = nullptr;
+    uint8_t* stateBuffer = nullptr;
 
     Emulator::SystemTimer& sysTimer;
 

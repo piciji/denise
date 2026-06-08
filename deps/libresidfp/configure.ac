@@ -1,6 +1,6 @@
 m4_define([lib_major], [1])
-m4_define([lib_minor], [0])
-m4_define([lib_level], [1])
+m4_define([lib_minor], [1])
+m4_define([lib_level], [0a])
 m4_define([lib_version], [lib_major.lib_minor.lib_level])
 
 AC_PREREQ([2.62])
@@ -8,12 +8,14 @@ AC_INIT([libresidfp],[lib_version],[],[],[https://github.com/libsidplayfp/libres
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_MACRO_DIRS([m4])
 AC_CONFIG_SRCDIR([src/SID.cpp])
-AM_INIT_AUTOMAKE
+AM_INIT_AUTOMAKE([1.11])
+
+AM_SILENT_RULES([yes])
 
 LIB_MAJOR=lib_major
 LIB_MINOR=lib_minor
 LIB_LEVEL=lib_level
-AC_SUBST([LIB_MAJOR])
+AC_SUBST([LIB_MAJOR])NEWS.md
 AC_SUBST([LIB_MINOR])
 AC_SUBST([LIB_LEVEL])
 
@@ -71,6 +73,12 @@ AS_IF([test $ac_cv_sizeof_int -lt 4],
   [AC_MSG_ERROR([only 32 bit or better CPUs are supported])]
 )
 
+AC_CHECK_TYPES([int8_t, uint8_t, int16_t, uint16_t, int32_t, uint32_t],
+    [],
+    [AC_MSG_ERROR([missing fixed width integer types])],
+    [[#include <cstdint>]]
+)
+
 dnl libtool-style version-info number
 #
 # https://autotools.io/libtool/version.html
@@ -82,7 +90,7 @@ dnl libtool-style version-info number
 # Increase the age value only if the changes made to the ABI are backward compatible.
 
 LIBRESIDFPCUR=0
-LIBRESIDFPREV=2
+LIBRESIDFPREV=3
 LIBRESIDFPAGE=0
 LIBRESIDFPVERSION=$LIBRESIDFPCUR:$LIBRESIDFPREV:$LIBRESIDFPAGE
 

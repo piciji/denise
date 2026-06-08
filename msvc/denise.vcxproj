@@ -46,6 +46,7 @@
     <ClInclude Include="..\deps\libresidfp\src\SID.h" />
     <ClInclude Include="..\deps\libresidfp\src\siddefs-fp.h" />
     <ClInclude Include="..\deps\libresidfp\src\Spline.h" />
+    <ClInclude Include="..\deps\libresidfp\src\State.h" />
     <ClInclude Include="..\deps\libresidfp\src\Voice.h" />
     <ClInclude Include="..\deps\libresidfp\src\WaveformCalculator.h" />
     <ClInclude Include="..\deps\libresidfp\src\WaveformGenerator.h" />
@@ -485,6 +486,7 @@
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(Filename)_residfp</ObjectFileName>
     </ClCompile>
     <ClCompile Include="..\deps\libresidfp\src\Spline.cpp" />
+    <ClCompile Include="..\deps\libresidfp\src\State.cpp" />
     <ClCompile Include="..\deps\libresidfp\src\WaveformCalculator.cpp" />
     <ClCompile Include="..\deps\libresidfp\src\WaveformGenerator.cpp" />
     <ClCompile Include="..\deps\SPIRV-Cross\spirv_cfg.cpp" />

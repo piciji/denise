@@ -74,6 +74,18 @@ struct Serializer {
         
         return *this;
     }
+
+    auto buffer(uint8_t* buf, unsigned size) -> Serializer& {
+        if(_mode == Save) {
+            std::memcpy(_data + _size, buf, size);
+
+        } else if(_mode == Load) {
+            std::memcpy(buf, _data + _size, size);
+        }
+
+        _size += size;
+        return *this;
+    }
     
     template<typename T, unsigned N> auto array(T (&array)[N]) -> Serializer& {
         for( unsigned n = 0; n < N; n++ )

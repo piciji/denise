@@ -1,3 +1,14 @@
+1.1.0 2026-06-xx
+* Reduced the 6581 filter curve parameter range to avoid overflows (#19)
+* Enabled silent make rules
+
+
+1.0.3 2026-05-15
+* Link with pthread (#15)
+* Fixed a bunch of shadow warnings (#16)
+* Restore pre-c++17 compatibility (#16)
+
+
 1.0.1 2026-05-01
 * Minor cleanups
 

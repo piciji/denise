@@ -1408,6 +1408,9 @@
     <ClInclude Include="..\emulation\libc64\system\usbSidPico.h">
       <Filter>emulation\libc64\system</Filter>
     </ClInclude>
+    <ClInclude Include="..\deps\libresidfp\src\State.h">
+      <Filter>deps\libresidfp</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\emulation\cia\base.cpp">
@@ -2753,6 +2756,9 @@
     </ClCompile>
     <ClCompile Include="..\emulation\libc64\system\usbSidPico.cpp">
       <Filter>emulation\libc64\system</Filter>
+    </ClCompile>
+    <ClCompile Include="..\deps\libresidfp\src\State.cpp">
+      <Filter>deps\libresidfp</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
