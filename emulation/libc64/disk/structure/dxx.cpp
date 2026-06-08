@@ -331,7 +331,11 @@ auto DiskStructure::prepareDxx() -> void {
     uint8_t id2 = buffer[0xa3];
     doubleSideFlag = !!(buffer[3] & 0x80);
 
+    uint8_t* temp;
+    uint8_t* ptr;
+
     for( uint8_t side = 0; side < sides; side++ ) {
+        unsigned disalign = 0;
 
         for (uint8_t track = 1; track <= MAX_TRACKS; track++) {
             // tracks count from 1 upwards and are stored in memory as half tracks
@@ -353,15 +357,17 @@ auto DiskStructure::prepareDxx() -> void {
 
             trackPtr->size = trackSize;
             trackPtr->bits = trackSize * 8;
-            uint8_t* ptr = trackPtr->data;
-
-            std::memset(ptr, 0x55, trackSize); // clear track
+            ptr = trackPtr->data;
 
             if (track <= tracksInDxx) {
+
+                ptr = temp = new uint8_t[trackSize];
 
                 uint8_t gaps = gapSize(track);
 
                 unsigned sectorsInTrack = countSectors(track);
+
+                memset(ptr, 0x55, trackSize);
 
                 for (unsigned sector = 0; sector < sectorsInTrack; sector++) {
 
@@ -388,9 +394,22 @@ auto DiskStructure::prepareDxx() -> void {
                     // + speedzone dependant gap
                     ptr += 340 + 9 + gaps + 5;
                 }
-                // a D64 doesn't contain track alignment. we use typical CBM DOS track alignment (format disc)
-                disalignTrack(*trackPtr, track - 1);
-            }
+                // Lately, there have repeatedly been problems with the measured alignment values,
+                // when used without emulation of the motor mechanics. e.g. fairlight, Colors (Lethargy), phonics stereo
+                // users do not usually activate motor mechanics
+                // most demos are tested using VICE. That is why we use the same track alignment.
+                disalign += (ptr - temp) - gaps;
+                disalign += (trackSize * 100) / 270;
+                disalign %= trackSize;
+
+                ptr = trackPtr->data;
+                std::memcpy(ptr + disalign, temp, trackSize - disalign);
+                if (disalign)
+                    std::memcpy(ptr, temp + (trackSize - disalign), disalign);
+                delete[] temp;
+            } else
+                std::memset(ptr, 0x55, trackSize); // clear track
+
             // half tracks are not supported by D64
             trackPtr = &mTracks[side][++halfTrack];
 
