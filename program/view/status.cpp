@@ -562,8 +562,9 @@ auto StatusHandler::update() -> void {
                         }
                     }
 
-                    if (activeVideoManager->driveLedParam)
-                        activeVideoManager->driveLedParam->value = (_led & 3) ? 1 : 0;
+                    auto appData = videoDriver->getAppData();
+                    if (appData)
+                        appData->ledDriveState = (_led & 3) ? 1.0 : 0.0;
 
                     updateImage(media->id * 2 + 2, image);
 
@@ -582,9 +583,6 @@ auto StatusHandler::update() -> void {
                         else
                             image = (_led & 1) ? &(view->ledYellowImage) : &(view->ledGreen2Image);
                     }
-
-                    if (activeVideoManager->driveLedParam)
-                        activeVideoManager->driveLedParam->value = (_led & 3) ? 1 : 0;
 
                     updateImage(media->id * 2 + 20, image);
                             

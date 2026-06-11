@@ -1,8 +1,8 @@
 
 auto View::loadDragnDropOverlay() -> void {
     for(int line = 0; line < 2; line++) {
-        GUIKIT::Image mediaImage;
         GUIKIT::File file(program->imgFolder() + "mediaSlot" + std::to_string(line) + ".png");
+        GUIKIT::Image& dndOverlay = dndOverlays[line];
 
         if (!file.open())
             return;
@@ -12,11 +12,19 @@ auto View::loadDragnDropOverlay() -> void {
         if (!data)
             return;
 
-        if (!mediaImage.loadPng(data, file.getSize()))
+        if (!dndOverlay.loadPng(data, file.getSize()))
             return;
-
-        videoDriver->setDragnDropOverlay(mediaImage.data, mediaImage.width, mediaImage.height, line);
     }
+
+    DRIVER::Video::DnDOverlayCallback cb;
+    cb = [this](DRIVER::Viewport& vp, unsigned line) -> uint8_t* {
+        GUIKIT::Image& dndOverlay = dndOverlays[line];
+
+        vp.height = (dndOverlay.height * vp.width) / dndOverlay.width;
+
+        return dndOverlay.resize( vp.width, vp.height );
+    };
+    videoDriver->setDragnDropOverlayCallback( cb );
 }
 
 auto View::loadPlaceholder() -> void {
@@ -34,13 +42,36 @@ auto View::loadPlaceholder() -> void {
 	if (!data)
 		return;	
 
-    GUIKIT::Image placeholder;
 	if (!placeholder.loadPng( data, file.getSize() ))
 		return;
 
     unsigned frames = dynamic_cast<LIBC64::Interface*>(program->getLastUsedEmu()) ? 110 : 220;
 
-    videoDriver->setSplashScreen(placeholder.data, placeholder.width, placeholder.height, frames);
+    DRIVER::Video::SplashscreenCallback cb;
+    cb = [this](DRIVER::Viewport& vp, bool hide) -> uint8_t* {
+        if (hide) {
+            placeholder.free();
+            return nullptr;
+        }
+        auto& winVp = videoDriver->getViewport();
+
+        float targetRatio = (float)placeholder.width / (float)placeholder.height;
+
+        vp.width = winVp.width;
+        vp.height = static_cast<int>(winVp.width / targetRatio);
+
+        if (vp.height > winVp.height) {
+            vp.height = winVp.height;
+            vp.width = static_cast<int>(winVp.height * targetRatio);
+        }
+
+        vp.x = (winVp.width - vp.width) / 2;
+        vp.y = (winVp.height - vp.height) / 2;
+
+        return placeholder.resize(vp.width, vp.height);
+    };
+
+    videoDriver->showSplashScreen(frames, cb);
 }
 
 auto View::renderPlaceholder(uint8_t gpuOptions) -> bool {

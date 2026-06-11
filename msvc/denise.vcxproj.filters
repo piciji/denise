@@ -673,9 +673,6 @@
     <ClInclude Include="..\driver\tools\crc32.h">
       <Filter>driver\tools</Filter>
     </ClInclude>
-    <ClInclude Include="..\driver\tools\font.h">
-      <Filter>driver\tools</Filter>
-    </ClInclude>
     <ClInclude Include="..\driver\tools\hid.h">
       <Filter>driver\tools</Filter>
     </ClInclude>
@@ -1410,6 +1407,8 @@
     </ClInclude>
     <ClInclude Include="..\deps\libresidfp\src\State.h">
       <Filter>deps\libresidfp</Filter>
+    <ClInclude Include="..\guikit\tools\resize.h">
+      <Filter>guikit\tools</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -1808,9 +1807,6 @@
     </ClCompile>
     <ClCompile Include="..\driver\driver.cpp">
       <Filter>driver</Filter>
-    </ClCompile>
-    <ClCompile Include="..\driver\tools\fonts.c">
-      <Filter>driver\tools</Filter>
     </ClCompile>
     <ClCompile Include="..\driver\audio\dsound.cpp">
       <Filter>driver\audio</Filter>
@@ -2759,6 +2755,8 @@
     </ClCompile>
     <ClCompile Include="..\deps\libresidfp\src\State.cpp">
       <Filter>deps\libresidfp</Filter>
+    <ClCompile Include="..\guikit\tools\resize.cpp">
+      <Filter>guikit\tools</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -24,7 +24,6 @@ set(headers
         config/archiveViewer.h
         config/config.h
         config/slider.h
-        config/sliderAlt.h
         emuconfig/config.h
         emuconfig/layouts/model.h
         emuconfig/layouts/presentation.h

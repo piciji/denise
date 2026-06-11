@@ -3,7 +3,6 @@
 
 #include "../../../guikit/api.h"
 #include "../../program.h"
-#include "../../config/sliderAlt.h"
 #include "model.h"
 
 namespace EmuConfigView {

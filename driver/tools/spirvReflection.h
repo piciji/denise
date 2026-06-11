@@ -40,7 +40,11 @@ struct SemanticTexture {
 
 struct SemanticMap {
     enum TexTypes { History = 0, PassOutput, PassFeedback, PassLuts, TextureNum };
-    enum UniformTypes { MVP, Output, FinalViewport, FrameCount, FrameDirection, FrameTimeDelta, OriginalFPS, Rotation, OriginalAspect, OriginalAspectRot, TotalSubFrames, CurrentSubFrame, HistorySize, UniformNum };
+    enum UniformTypes {
+        MVP, Output, FinalViewport, FrameCount, FrameDirection, FrameTimeDelta, OriginalFPS, Rotation, OriginalAspect, OriginalAspectRot, TotalSubFrames, CurrentSubFrame, HistorySize,
+        LedDriveState,
+        UniformNum
+    };
 
     struct ImageMap {
         uintptr_t image;

@@ -155,9 +155,9 @@ PaletteLayout::PaletteLayout(TabWindow* tabWindow) {
     colorLines.push_back(colorLine);
     paletteLayout.append(*colorLine,{~0u, 0u}, 10);
 
-    main.append( listView, { GUIKIT::Font::scale( 180 ), paletteLayout.minimumSize().height - 10}, 10 );
+    main.append( listView, { GUIKIT::Font::scale( 180 ), ~0u}, 10 );
     main.append( paletteLayout, {~0u, 0u} );
-    append(main, {~0u, 0u}, 10);
+    append(main, {~0u, ~0u}, 10);
 
     listView.onChange = [this]() {
 

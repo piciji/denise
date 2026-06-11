@@ -1,37 +1,36 @@
 
-#include "../tools/image.h"
-
 namespace DRIVER {
 
 struct SplashScreen {
-    Image bitmap;
     std::atomic<unsigned> showFrames;
     float alpha;
     bool enable;
-    bool toggleRGB_BGR = false;
     bool initialized = false;
+    Video::SplashscreenCallback callback;
     static constexpr float stepLength = 0.04f;
 
     enum Status { NO_UPDATE = 0, TEXTURE_UPDATE = 1, DATA_UPDATE = 2, FINISH = 3 };
 
+    Viewport prevViewport;
     Viewport viewport;
+    uint8_t* screenData;
 
-    SplashScreen(bool toggleRGB_BGR = false) {
-        this->toggleRGB_BGR = toggleRGB_BGR;
+    SplashScreen() {
         this->enable = false;
         this->initialized = false;
+        this->screenData = nullptr;
     }
 
     auto update(Viewport& _viewport) -> Status {
         Status status = NO_UPDATE;
 
-        if ((viewport.width != _viewport.width) || (viewport.height != _viewport.height)) {
-            viewport = _viewport;
-            bitmap.scale( viewport.width, viewport.height );
+        if ((prevViewport.width != _viewport.width) || (prevViewport.height != _viewport.height)) {
+            prevViewport = _viewport;
+            this->screenData = callback( viewport, false );
             status = Status::TEXTURE_UPDATE;
         }
 
-        if (!bitmap.scaledData) {
+        if (!screenData) {
             finish();
             return Status::FINISH;
         }
@@ -56,10 +55,10 @@ struct SplashScreen {
         if (alpha <= 0.0f)
             return false;
 
-        for (unsigned h = 0; h < bitmap.scaledHeight; h++) {
-            uint8_t* src = bitmap.scaledData + h * (bitmap.scaledWidth * 4);
+        for (unsigned h = 0; h < viewport.height; h++) {
+            uint8_t* src = screenData + h * (viewport.width * 4);
 
-            for (unsigned w = 0; w < bitmap.scaledWidth; w++) {
+            for (unsigned w = 0; w < viewport.width; w++) {
                 src[3] = alpha * 255.0;
                 src += 4;
             }
@@ -70,13 +69,14 @@ struct SplashScreen {
 
     auto finish() -> void {
         enable = false;
+        this->screenData = callback( viewport, true );
     }
 
-    auto setImage(uint8_t* _data, unsigned _width, unsigned _height, unsigned showFrames) -> void {
+    auto prepare(unsigned frames, Video::SplashscreenCallback callback) -> void {
         if (!initialized)
             return;
-        this->showFrames = showFrames;
-        bitmap.setData(_data, _width, _height, toggleRGB_BGR);
+        this->showFrames = frames;
+        this->callback = callback;
         alpha = 1.0;
         enable = true;
     }

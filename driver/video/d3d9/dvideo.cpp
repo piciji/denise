@@ -91,8 +91,8 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
         dxRelease(vertexBufferSplashScreen)
     }
 
-    auto setDragnDropOverlay(uint8_t* _data, unsigned _width, unsigned _height, unsigned line = 0) -> void {
-        dndOverlay.setDragnDropOverlay(_data, _width, _height, line);
+    auto setDragnDropOverlayCallback(Video::DnDOverlayCallback callback) -> void {
+        dndOverlay.callback = callback;
     }
 
     auto setDragnDropOverlaySlots(unsigned slots) -> void {
@@ -107,8 +107,8 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
         return dndOverlay.sendDragnDropOverlayCoordinates(x, y);
     }
 
-    auto setSplashScreen(uint8_t* _data, unsigned _width, unsigned _height, unsigned showFrames) -> void {
-        splashScreen.setImage(_data, _width, _height, showFrames);
+    auto showSplashScreen(unsigned frames, SplashscreenCallback callback) -> void {
+        splashScreen.prepare(frames, callback);
     }
 
     auto hideSplashScreen() -> void {

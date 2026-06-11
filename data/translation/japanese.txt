@@ -975,3 +975,6 @@ step next copper = 次のCopper命令へジャンプ
 step next blitter = 次のBlitterサイクルへジャンプ
 Serial Plugin = シリアルポート・ドングル
 Joyport Dongle = ジョイポート・ドングル
+Minimum = Minimum
+Maximum = Maximum
+Hard Reset + Eject = Hard Reset + Eject

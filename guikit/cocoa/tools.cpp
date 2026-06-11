@@ -264,7 +264,8 @@ auto pFont::system(unsigned size, std::string style, bool monospaced) -> std::st
         if(size == 0) {
             CGFloat defaultFontSize = [NSFont systemFontSize];
             size = defaultFontSize / 1.5;
-        }
+        } else if (size)
+            size -= 1;
         return family + ", " + std::to_string(size) + ", " + style;
     }
 }

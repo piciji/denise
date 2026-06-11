@@ -56,10 +56,6 @@ struct ShaderPreset {
         float step;
         std::string id;
         std::string desc;
-
-        auto isDescriptor() -> bool {
-            return (minimum == maximum) || ((maximum == step) && (step <= 0.01));
-        }
     };
     std::vector<Param> params;
 

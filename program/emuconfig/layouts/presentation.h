@@ -1,13 +1,12 @@
 
 #pragma once
 
-#define PARAMS_PER_PAGE 11
 #define SCALE_BOXES 5
+#define MAX_RADIO_BOXES 7
 
 #include "../../../guikit/api.h"
 #include "../../program.h"
 #include "../../config/slider.h"
-#include "../../config/sliderAlt.h"
 
 namespace EmuConfigView {
 
@@ -78,7 +77,6 @@ struct VideoShaderLayout : GUIKIT::VerticalLayout {
             GUIKIT::Button unload;
             GUIKIT::Widget spacer;
             GUIKIT::CheckBox yuvEncoding;
-            GUIKIT::CheckBox manuell;
             GUIKIT::ImageView downloadShader;
             GUIKIT::Button loadOldShader;
 
@@ -93,7 +91,6 @@ struct VideoShaderLayout : GUIKIT::VerticalLayout {
             GUIKIT::Label label;
             GUIKIT::Label loaded;
             GUIKIT::Button imgReplacer;
-            GUIKIT::CheckBox shaderCache;
             GUIKIT::Button clearCache;
             GUIKIT::Button toParams;
 
@@ -199,14 +196,11 @@ struct VideoPassLayout : GUIKIT::FramedVerticalLayout {
 };
 
 struct VideoParamLayout : GUIKIT::FramedVerticalLayout {
-    GUIKIT::VerticalLayout params;
+    GUIKIT::ListView listView;
 
     struct Control : GUIKIT::HorizontalLayout {
-        GUIKIT::Button save;
         GUIKIT::Widget spacer;
-        GUIKIT::Button previous;
-        GUIKIT::Button next;
-
+        GUIKIT::Button save;
         Control();
     } control;
 
@@ -396,6 +390,29 @@ struct DisplayFont {
     }
 };
 
+struct PresentationLayout;
+
+struct ParamEditor : GUIKIT::Window {
+    ParamEditor(PresentationLayout* presentation);
+
+    PresentationLayout* presentation;
+    GUIKIT::Timer unfocusTimer;
+    SliderLayout sliderLay;
+
+    struct RadioLayout : GUIKIT::HorizontalLayout {
+        GUIKIT::RadioBox boxes[MAX_RADIO_BOXES];
+        GUIKIT::Button defaultButton;
+    } radioLay;
+
+    GUIKIT::Image backImg;
+
+    auto create(ShaderPreset::Param& param, unsigned row, unsigned offset, GUIKIT::Position& clickPosition) -> void;
+    auto open() -> void;
+
+    auto addDistances(std::vector<float>& distances, float& _minimum, const ShaderPreset::Param& param, bool init) -> void;
+    auto setMinimum(std::vector<float>& distances) -> void;
+};
+
 struct PresentationLayout : GUIKIT::HorizontalLayout {
 
     TabWindow* tabWindow;
@@ -448,14 +465,8 @@ struct PresentationLayout : GUIKIT::HorizontalLayout {
     unsigned selectedPassId;
     unsigned selectedParamId;
     static std::vector<DisplayFont> displayFonts;
-
-    struct TviParam {
-        GUIKIT::TreeViewItem* tvi;
-        std::vector<unsigned> offsets;
-    };
-    std::vector<TviParam> params;
-
-    SliderLayoutAlt* paramSliders[PARAMS_PER_PAGE];
+    std::vector<std::pair<unsigned, unsigned>> params;
+    ParamEditor* paramEditor = nullptr;
     	
     auto translate() -> void;
     auto sliderIdent() -> std::string;
@@ -464,7 +475,6 @@ struct PresentationLayout : GUIKIT::HorizontalLayout {
     auto loadSettings(bool init = false) -> void;
     auto buildShaderUI(ShaderPreset* preset, bool selectIt = true) -> void;
     auto buildPass(ShaderPreset* preset, ShaderPreset::Pass& pass) -> void;
-    auto buildParams(TviParam& tviParam) -> void;
     auto countFloatingPoint(ShaderPreset::Param& param, int& places, int& decimalPlaces) -> void;
     auto updateMoveImg() -> void;
     auto clearErrors() -> void;
@@ -493,10 +503,11 @@ struct PresentationLayout : GUIKIT::HorizontalLayout {
     auto appendFavourite(std::string& path) -> void;
     auto sortFavourites() -> void;
     auto listFavourites() -> void;
-    auto jumpToParams() -> void;
     
     template<typename T> auto setSliderAction( SliderLayout* layout, std::string baseIdent, std::function<T ( unsigned position )> callTransfer = [](unsigned position) { return position; } ) -> void;
     auto vManager() -> VideoManager* { return VideoManager::getInstance(emulator); }
+    auto openParameterEditor(unsigned row, unsigned offset, GUIKIT::Position& position) -> void;
+    auto closeParameterEditor() -> void;
     
     PresentationLayout(TabWindow* tabWindow);
 };

@@ -75,6 +75,7 @@ namespace DRIVER {
     CAMetalLayer* layer;
     id<MTLCommandQueue> commandQueue;
     MTLClearColor clearColor;
+    AppData appData;
     
     id<MTLRenderPipelineState> outputPipelineState;
     id<MTLRenderPipelineState> messagePipelineState;
@@ -724,8 +725,10 @@ namespace DRIVER {
     
     auto canHardSync() -> bool { return true; }
         
-    auto setSplashScreen(uint8_t* _data, unsigned _width, unsigned _height, unsigned showFrames) -> void {
-            splashScreen.setImage(_data, _width, _height, showFrames);
+    auto getAppData() -> AppData* { return &appData; }
+        
+    auto showSplashScreen(unsigned frames, SplashscreenCallback callback) -> void {
+        splashScreen.prepare(frames, callback);
     }
 
     auto hideSplashScreen() -> void {
@@ -736,8 +739,8 @@ namespace DRIVER {
         return splashScreen.isVisible();
     }
     
-    auto setDragnDropOverlay(uint8_t* _data, unsigned _width, unsigned _height, unsigned line = 0) -> void {
-        dndOverlay.setDragnDropOverlay(_data, _width, _height, line);
+    auto setDragnDropOverlayCallback(DnDOverlayCallback callback) -> void {
+        dndOverlay.callback = callback;
     }
 
     auto setDragnDropOverlaySlots(unsigned slots) -> void {
@@ -1006,8 +1009,9 @@ namespace DRIVER {
 #endif
             
             if (splashScreen.enable) {
-                if(buildSplashScreenTexture())
+                if(buildSplashScreenTexture()) {
                     showSplashScreen(rce);
+                }
             }
             
             if (dndOverlay.enabled()) {
@@ -1184,7 +1188,7 @@ namespace DRIVER {
             return false;
         
         if (splashScreenTex.view == nil || s == SplashScreen::TEXTURE_UPDATE) {
-            MTLUtility::initTexture(splashScreenTex, splashScreen.bitmap.scaledWidth, splashScreen.bitmap.scaledHeight, MTLPixelFormatRGBA8Unorm, device);
+            MTLUtility::initTexture(splashScreenTex, splashScreen.viewport.width, splashScreen.viewport.height, MTLPixelFormatRGBA8Unorm, device);
             
             if (splashScreenTex.view == nil) {
                 splashScreen.finish();
@@ -1193,13 +1197,20 @@ namespace DRIVER {
         }
         
         if (s == SplashScreen::DATA_UPDATE || s == SplashScreen::TEXTURE_UPDATE) {
-            [splashScreenTex.view replaceRegion:MTLRegionMake2D(0, 0, (NSUInteger)splashScreen.bitmap.scaledWidth, (NSUInteger)splashScreen.bitmap.scaledHeight) mipmapLevel:0 withBytes:splashScreen.bitmap.scaledData bytesPerRow: splashScreen.bitmap.scaledWidth * 4];
+            [splashScreenTex.view replaceRegion:MTLRegionMake2D(0, 0, (NSUInteger)splashScreen.viewport.width, (NSUInteger)splashScreen.viewport.height) mipmapLevel:0 withBytes:splashScreen.screenData bytesPerRow: splashScreen.viewport.width * 4];
         }
         
-        verticesSplashScreen[0] = {simd_make_float2(-1.0,  1.0), simd_make_float2(0, 0)};
-        verticesSplashScreen[1] = {simd_make_float2( 1.0,  1.0), simd_make_float2(1, 0)};
-        verticesSplashScreen[2] = {simd_make_float2(-1.0, -1.0), simd_make_float2(0, 1)};
-        verticesSplashScreen[3] = {simd_make_float2( 1.0, -1.0), simd_make_float2(1, 1)};
+        float screenx = 2.0f / (float)viewport.width, screeny = 2.0f / (float)viewport.height;
+        float x = -1.0 + (float)splashScreen.viewport.x * screenx;
+        float y = 1.0 - (float)splashScreen.viewport.y * screeny;
+
+        float w = (float)splashScreen.viewport.width * screenx;
+        float h = (float)splashScreen.viewport.height * screeny;
+
+        verticesSplashScreen[0] = {simd_make_float2(x    , y),      simd_make_float2(0, 0)};
+        verticesSplashScreen[1] = {simd_make_float2(x + w, y),      simd_make_float2(1, 0)};
+        verticesSplashScreen[2] = {simd_make_float2(x    , y - h),  simd_make_float2(0, 1)};
+        verticesSplashScreen[3] = {simd_make_float2(x + w, y - h),  simd_make_float2(1, 1)};
         
         return true;
     }
@@ -1642,7 +1653,7 @@ namespace DRIVER {
            {(uintptr_t)(&programs[0].feedbackTarget.view), &programs[0].feedbackTarget.size, sizeof(MTLProgram), MAX_SHADERS},
            {(uintptr_t)(&luts[0].view), &luts[0].size, sizeof(MTLTexture), MAX_TEXTURES},
         }, {nullptr, nullptr, &frame.size, nullptr, &frameDirection, &deltaTime, &settings.vrrSpeed, &settings.rotation,
-            &viewport.ratio, &viewport.ratioRot, &totalFrames, &subFrame, &historySize} };
+            &viewport.ratio, &viewport.ratioRot, &totalFrames, &subFrame, &historySize, &appData.ledDriveState} };
 
         shaderPasses = 0;
         for(int i = programsTemp.size() - 1; i >= 0; i--) {

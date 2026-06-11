@@ -887,4 +887,10 @@ auto pWindow::setFullScreen(bool fullScreen) -> void {
     }
 }
 
+pWindow::~pWindow() {
+    gtk_widget_destroy(menu);
+    gtk_widget_destroy(contextMenu);
+    gtk_widget_destroy(widget);
+}
+
 }

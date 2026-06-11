@@ -73,6 +73,7 @@ struct Image {
     unsigned width;
     unsigned height;
     uint8_t* data = nullptr;
+    uint8_t* resizedData = nullptr;
     bool keepDataOnDestruction = false;
     bool alphaBlendApplied = false;
     int resourceId = -1; // win xp only 
@@ -98,6 +99,8 @@ struct Image {
     auto scaleLinearWidth(unsigned outputWidth) -> void;
     auto scaleLinearHeight(unsigned outputHeight) -> void;
     auto scaleLinearBoth(unsigned outputWidth, unsigned outputHeight) -> void;
+
+    auto resize(unsigned outputWidth, unsigned outputHeight) -> uint8_t*;
 
     auto switchBetweenBGRandRGB() -> void;
     auto empty() -> bool;
@@ -792,7 +795,7 @@ struct ProgressBar : Widget {
 struct ListView : Widget {
     std::function<void ()> onActivate = nullptr;
     std::function<void ()> onChange = nullptr;
-    std::function<void (unsigned row, unsigned column)> onClick = nullptr;
+    std::function<bool (unsigned row, unsigned column, Position position)> onClick = nullptr;
     std::function<void (unsigned row, unsigned column, Position position)> onContext = nullptr;
     enum class Align { Left, Right, Center } ;
 

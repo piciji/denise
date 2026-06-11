@@ -616,7 +616,6 @@ template<typename T, uint8_t options> auto VideoManager::renderFrame(const T* sr
             setData("autoEmu_subRegion", emulator->getSubRegion());
             setData("autoEmu_palGamma", (float)( pal && (colorSpectrum == 2)));
             setData("autoEmu_lumaChroma", (float)(shaderLumaChromaInput()));
-            setData("autoEmu_driveLED", (float)0);
             videoDriver->setShader( &parser->shaderPreset);
         } else
             videoDriver->setShader(nullptr);
@@ -1555,7 +1554,6 @@ auto VideoManager::loadPreset(const std::string& path, std::vector<std::string>&
     rebuildShader = true;
     requestUpdate(); // check for FP mode
     applyMeta();
-    driveLedParam = getData("autoEmu_driveLED");
 
     return &parser->shaderPreset;
 }
@@ -1581,7 +1579,6 @@ auto VideoManager::addPreset(std::string path, bool prepend, std::vector<std::st
     rebuildShader = true;
     requestUpdate(); // check for FP mode
     applyMeta();
-    driveLedParam = getData("autoEmu_driveLED");
     return &parser->shaderPreset;
 }
 
@@ -1617,7 +1614,6 @@ auto VideoManager::clearPreset() -> void {
     videoDriver->waitRenderThread();
     parser->clear();
     applyMeta();
-    driveLedParam = nullptr;
     rebuildShader = true;
     if (locked) // avoid releasing a lock prematurely, when locked before
         emuThread->unlock();

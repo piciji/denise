@@ -28,19 +28,23 @@ layout(std140, set = 0, binding = 0) uniform UBO
     mat4 MVP;
 } global;
 
-#pragma parameter desaturation_head     "[PAL de-saturation]" 0 0 0.001 0.001
-#pragma parameter hanoverBars           "Hanover Bars (PAL only)" 0 -50 50 1
-#pragma parameter gamma                 "Gamma"               100 30 280 1
-#pragma parameter Luma_delay_head       "[Luminance delay]"   0 0 0.001 0.001
-#pragma parameter lumaRise              "Luma Rise"           2.0 1.0 4.0 0.1
-#pragma parameter lumaFall              "Luma Fall"           1.2 1.0 4.0 0.1
-#pragma parameter chromaSubsampling     "Chroma Subsampling"  0 0 1 1
-#pragma parameter firTaps               "Chroma Bandwidth"    5 1 21 2
-#pragma parameter autoEmu_cropTop       "Crop Top"            1 0 100 1
-#pragma parameter autoEmu_palGamma      "PAL Gamma"           0 0 1 1
-#pragma parameter autoEmu_pal           "PAL"                 1 0 1 1
-#pragma parameter autoEmu_lace          "Interlace"           0 0 1 1
-#pragma parameter autoEmu_subRegion     "Sub Region"          0 0 3 1
+#pragma parameter label1                "[PAL de-saturation]"       0 0 0.001 0.001
+#pragma parameter hanoverBars           "  Hanover Bars (PAL only)" 0 -50 50 1
+#pragma parameter empty2                " "                         0 0 0.001 0.001
+#pragma parameter gamma                 "[Gamma]"                   100 30 280 1
+#pragma parameter empty3                " "                         0 0 0.001 0.001
+#pragma parameter label2               "[Luminance delay]"          0 0 0.001 0.001
+#pragma parameter lumaRise              "  Luma Rise"               2.0 1.0 4.0 0.1
+#pragma parameter lumaFall              "  Luma Fall"               1.2 1.0 4.0 0.1
+#pragma parameter empty4                " "                         0 0 0.001 0.001
+#pragma parameter chromaSubsampling     "[Chroma Subsampling]"      0 0 1 1
+#pragma parameter firTaps               "  Chroma Bandwidth"        5 1 21 2
+#pragma parameter empty5                " "                         0 0 0.001 0.001
+#pragma parameter autoEmu_cropTop       "Crop Top"                  1 0 100 1
+#pragma parameter autoEmu_palGamma      "PAL Gamma"                 0 0 1 1
+#pragma parameter autoEmu_pal           "PAL"                       1 0 1 1
+#pragma parameter autoEmu_lace          "Interlace"                 0 0 1 1
+#pragma parameter autoEmu_subRegion     "Sub Region"                0 0 3 1
 
 #define lutBandwidthTexWidth 74.0
 #define lutBandwidthTexHeight 88.0

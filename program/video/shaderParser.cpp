@@ -691,7 +691,6 @@ auto ShaderParser::fetchShaderSource(const std::string& path, ShaderPreset::Pass
     static const std::string pragmaPrefix = "#pragma";
     static const std::string endifPrefix = "#endif";
     static const std::string paramPrefix = "#pragma parameter";
-    static const std::string paramDenisePrefix = "#pragma parameter_denise";
     static const std::string namePrefix = "#pragma name";
     static const std::string formatPrefix = "#pragma format";
     static const std::string stagePrefix = "#pragma stage";
@@ -788,12 +787,9 @@ auto ShaderParser::fetchShaderSource(const std::string& path, ShaderPreset::Pass
                 addLineToStage(stages, line, pass);
          //       addLineToStage<true>(stages, "#line " + std::to_string(pos + 1) + " \"" + GUIKIT::String::getFileName(path) + "\"\n", pass);
 
-                if (GUIKIT::String::startsWith(line, paramPrefix) || GUIKIT::String::startsWith(line, paramDenisePrefix)) {
+                if (GUIKIT::String::startsWith(line, paramPrefix)) {
                     ShaderPreset::Param param;
                     std::string _pre = paramPrefix;
-                    if ( GUIKIT::String::startsWith(line, paramDenisePrefix))
-                        _pre = paramDenisePrefix;
-
                     _pre += " %63s \"%63[^\"]\" %f %f %f %f";
 
                     char id[64];
@@ -810,20 +806,11 @@ auto ShaderParser::fetchShaderSource(const std::string& path, ShaderPreset::Pass
                     param.id = id;
                     param.desc = desc;
 
-                    if (GUIKIT::String::foundSubStr(param.id, "EMPTY_LINE"))
-                        goto End;
-
-                    GUIKIT::String::trim(param.desc);
+                    std::string _desc = desc;
+                    GUIKIT::String::trim(_desc);
 
                     if (filled == 5)
-                        param.step  = 0.1f * (param.maximum - param.minimum);
-
-                    if (param.desc.empty()) {
-                        if (param.isDescriptor())
-                            goto End;
-                        if (param.maximum == param.step == 1)
-                            goto End;
-                    }
+                        param.step = 0.1f * (param.maximum - param.minimum);
 
                     param.value = param.initialOverridden = rootSettings.get<float>(param.id, param.initial);
                     addParameter(param);

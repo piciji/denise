@@ -22,6 +22,8 @@ struct View : GUIKIT::Window {
 	bool grabMouseLeft = false;
 	bool useFullscreenRefreshAsEmuSpeed = false;
 	ImageViewer* imageViewer = nullptr;
+    GUIKIT::Image placeholder;
+    GUIKIT::Image dndOverlays[2];
 
     struct {        
         std::string path;
@@ -231,6 +233,7 @@ struct View : GUIKIT::Window {
         GUIKIT::Menu menu;
         GUIKIT::MenuItem insert;
         GUIKIT::MenuItem eject;
+        GUIKIT::MenuItem resetAndEject;
         GUIKIT::MenuItem reset;
         GUIKIT::MenuItem inactive;
     	GUIKIT::MenuItem clearSave;

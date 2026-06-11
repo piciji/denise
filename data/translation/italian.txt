@@ -975,3 +975,6 @@ step next copper = jump to the next Copper instruction
 step next blitter = jump to the next Blitter cycle
 Serial Plugin = Plugin Seriale
 Joyport Dongle = Chiavetta Joyport
+Minimum = Minimum
+Maximum = Maximum
+Hard Reset + Eject = Hard Reset + Eject

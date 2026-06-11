@@ -975,3 +975,6 @@ step next copper = ugrás a következő Copper utasításra
 step next blitter = ugrás a következő Blitter-ciklusra
 Serial Plugin = Soros Beépülő
 Joyport Dongle = Joyport Dongle
+Minimum = Minimum
+Maximum = Maximum
+Hard Reset + Eject = Hard Reset + Eject

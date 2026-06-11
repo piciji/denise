@@ -1,7 +1,7 @@
 
 struct D3d9SplashScreen : SplashScreen {
 
-    D3d9SplashScreen() : SplashScreen(true) {
+    D3d9SplashScreen() : SplashScreen() {
         surface = nullptr;
         texture = nullptr;
         texStorageWidth = 0;
@@ -46,8 +46,8 @@ struct D3d9SplashScreen : SplashScreen {
 
             D3DCAPS9 d3dcaps;
             lpD3DDevice->GetDeviceCaps(&d3dcaps);
-            texStorageWidth = roundUpPowerOfTwo( bitmap.scaledWidth );
-            texStorageHeight = roundUpPowerOfTwo( bitmap.scaledHeight );
+            texStorageWidth = roundUpPowerOfTwo( viewport.width );
+            texStorageHeight = roundUpPowerOfTwo( viewport.height );
 
             if(d3dcaps.MaxTextureWidth < texStorageWidth)
                 texStorageWidth = d3dcaps.MaxTextureWidth;
@@ -67,12 +67,15 @@ struct D3d9SplashScreen : SplashScreen {
             if (surface) {
                 surface->LockRect(&d3dlr, 0, D3DLOCK_NOSYSLOCK | D3DLOCK_DISCARD);
 
-                for(int h = 0; h < bitmap.scaledHeight; h++) {
-                    uint32_t* src = (uint32_t*)(bitmap.scaledData + h * bitmap.scaledWidth * 4);
+                unsigned _col;
+                for(int h = 0; h < viewport.height; h++) {
+                    uint32_t* src = (uint32_t*)(screenData + h * viewport.width * 4);
                     uint32_t* dest = (uint32_t*)((uint8_t*)d3dlr.pBits + h * d3dlr.Pitch);
 
-                    for(int w = 0; w < bitmap.scaledWidth; w++)
-                        *dest++ = *src++;
+                    for(int w = 0; w < viewport.width; w++) {
+                        _col = *src++;
+                        *dest++ = (_col & 0xff00ff00) | ((_col >> 16) & 0xff) | ((_col & 0xff) << 16);
+                    }
                 }
 
                 surface->UnlockRect();
@@ -87,14 +90,14 @@ struct D3d9SplashScreen : SplashScreen {
         return true;
     }
 
-    auto updateCoord(Viewport& viewport, LPDIRECT3DVERTEXBUFFER9& vertexBuffer) -> void {
+    auto updateCoord(Viewport& _viewport, LPDIRECT3DVERTEXBUFFER9& vertexBuffer) -> void {
         LPDIRECT3DVERTEXBUFFER9* vertexPtr;
         d3d9vertex vertex[4];
 
-        vertex[0].x = vertex[2].x = ((float) (viewport.x) - 0.5f);
-        vertex[1].x = vertex[3].x = ((float) (viewport.x) + (float) bitmap.scaledWidth - 0.5f);
-        vertex[0].y = vertex[1].y = ((float) (viewport.y) - 0.5f);
-        vertex[2].y = vertex[3].y = ((float) (viewport.y) + (float) bitmap.scaledHeight - 0.5f);
+        vertex[0].x = vertex[2].x = ((float) (_viewport.x + viewport.x) - 0.5f);
+        vertex[1].x = vertex[3].x = ((float) (_viewport.x + viewport.x) + (float) viewport.width - 0.5f);
+        vertex[0].y = vertex[1].y = ((float) (_viewport.y + viewport.y) - 0.5f);
+        vertex[2].y = vertex[3].y = ((float) (_viewport.y + viewport.y) + (float) viewport.height - 0.5f);
 
         vertex[0].z = vertex[1].z = 1.0;
         vertex[2].z = vertex[3].z = 1.0;
@@ -102,9 +105,9 @@ struct D3d9SplashScreen : SplashScreen {
         vertex[2].rhw = vertex[3].rhw = 1.0;
 
         vertex[0].u = vertex[2].u = 0.0f;
-        vertex[1].u = vertex[3].u = ((float) (bitmap.scaledWidth) - 0.5f) / (float) texStorageWidth;
+        vertex[1].u = vertex[3].u = ((float) (viewport.width) - 0.5f) / (float) texStorageWidth;
         vertex[0].v = vertex[1].v = 0.0f;
-        vertex[2].v = vertex[3].v = ((float) (bitmap.scaledHeight) - 0.5f) / (float) texStorageHeight;
+        vertex[2].v = vertex[3].v = ((float) (viewport.height) - 0.5f) / (float) texStorageHeight;
 
         vertexBuffer->Lock(0, sizeof (d3d9vertex) * 4, (void**) &vertexPtr, 0);
         std::memcpy(vertexPtr, vertex, sizeof (d3d9vertex) * 4);
