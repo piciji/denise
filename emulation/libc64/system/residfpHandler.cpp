@@ -153,10 +153,10 @@ auto ResidfpHandler::serialize(Emulator::Serializer& s, bool light) -> void {
     //     std::memcpy(&state, stateBuffer, sizeof(reSIDfp::State));
     //
     //     reSIDfp::State::restoreState(residfp, state);
+    //
     // } else {
     //     s.array( stateBuffer, sizeof(reSIDfp::State) );
     // }
-
 
     reSIDfp::State state;
     if (s.mode() == Emulator::Serializer::Mode::Save)

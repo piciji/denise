@@ -22,6 +22,7 @@
 #define STATE_H
 
 #include "EnvelopeGenerator.h"
+#include "resample/TwoPassSincResampler.h"
 #include "residfp/residfp_defs.h"
 
 #include <cstdint>
@@ -129,14 +130,32 @@ struct State
     double filterCurve8580;
     bool   old6581caps;
 
+    // Integrators
+    int32_t vx[2][2];
+    int32_t vc[2][2];
+    uint32_t nVddt_Vw_2[2];
+    uint16_t nVgt[2];
+    uint16_t n_dac[2];
+
     /// External filter
     int32_t exVlp;
     int32_t exVhp;
 
-    // resampler
+    // Resampler
     double clockFrequency;
     double samplingFrequency;
     SamplingMethod method;
+    // ZeroOrder
+    int32_t zor_cachedSample;
+    int32_t zor_outputValue;
+    int zor_sampleOffset;
+    //  PassThrough
+    int pt_outputValue;
+    // TwoPassSinc
+    int tp_sampleIndex[2];
+    int tp_sampleOffset[2];
+    int32_t tp_outputValue[2];
+    int32_t tp_sample[SincResampler::RINGSIZE * 2][2];
 };
 
 

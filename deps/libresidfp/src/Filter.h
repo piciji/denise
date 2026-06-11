@@ -73,7 +73,7 @@ private:
     int32_t Ve = 0;
 
     /// Filter cutoff frequency.
-    uint8_t fc = 0;
+    uint16_t fc = 0;
 
     /// Routing to filter or outside filter
     //@{
@@ -140,7 +140,7 @@ protected:
      */
     inline unsigned int getFC() const { return static_cast<unsigned int>(fc); }
 
-    virtual int solveIntegrators() = 0;
+    virtual int32_t solveIntegrators() = 0;
 
 public:
     Filter(FilterModelConfig& fmc);

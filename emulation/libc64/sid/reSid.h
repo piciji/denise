@@ -63,7 +63,7 @@ struct ReSid : Sid {
     auto clockSilent() -> void override;
 
     auto getSample() -> float override { return static_cast<float>((externalFilter.output() * scaling) / 2); }
-    auto serialize(Emulator::Serializer& s, bool light = false) -> void;
+    auto serialize(Emulator::Serializer& s, bool light) -> void;
 
     auto enableFilter( bool state ) -> void;
 

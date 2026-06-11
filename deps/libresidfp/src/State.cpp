@@ -23,6 +23,11 @@
 #include "SID.h"
 #include "Filter6581.h"
 #include "Filter8580.h"
+#include "Filter8580.h"
+#include "resample/ZeroOrderResampler.h"
+#include "resample/PassThrough.h"
+
+#include <cstring>
 
 namespace reSIDfp
 {
@@ -110,6 +115,17 @@ State State::saveState(SID &s)
     state.filterCurve8580 = s.p->filterCurve8580;
     state.old6581caps = s.p->old6581caps;
 
+    state.vx[0][0] = s.filter6581->hpIntegrator.vx;
+    state.vx[0][1] = s.filter6581->bpIntegrator.vx;
+    state.vx[1][0] = s.filter8580->hpIntegrator.vx;
+    state.vx[1][1] = s.filter8580->bpIntegrator.vx;
+    state.nVddt_Vw_2[0] = s.filter6581->hpIntegrator.nVddt_Vw_2;
+    state.nVddt_Vw_2[1] = s.filter6581->bpIntegrator.nVddt_Vw_2;
+    state.nVgt[0] = s.filter8580->hpIntegrator.nVgt;
+    state.nVgt[1] = s.filter8580->bpIntegrator.nVgt;
+    state.n_dac[0] = s.filter8580->hpIntegrator.n_dac;
+    state.n_dac[1] = s.filter8580->bpIntegrator.n_dac;
+
     state.exVlp = s.externalFilter.Vlp;
     state.exVhp = s.externalFilter.Vhp;
 
@@ -117,6 +133,30 @@ State State::saveState(SID &s)
     state.clockFrequency = s.p->clockFrequency;
     state.samplingFrequency = s.p->samplingFrequency;
 
+    switch (s.p->method)
+    {
+    case DECIMATE: {
+        ZeroOrderResampler *zor = static_cast<ZeroOrderResampler*>(s.resampler.get());
+        state.zor_cachedSample = zor->cachedSample;
+        state.zor_sampleOffset = zor->sampleOffset;
+        state.zor_outputValue = zor->outputValue;
+        } break;
+    case RESAMPLE: {
+        TwoPassSincResampler *tp = static_cast<TwoPassSincResampler*>(s.resampler.get());
+        for (int i=0; i<2; i++)
+        {
+            SincResampler *sr = (i == 0) ? tp->s1.get(): tp->s2.get();
+            state.tp_sampleIndex[i] = sr->sampleIndex;
+            state.tp_sampleOffset[i] = sr->sampleOffset;
+            state.tp_outputValue[i] = sr->outputValue;
+            std::memcpy(state.tp_sample[i], sr->sample, sizeof(sr->sample));
+        }
+        } break;
+    case NONE: {
+        PassThrough *pt = static_cast<PassThrough*>(s.resampler.get());
+        state.pt_outputValue = pt->outputValue;
+        } break;
+    }
     return state;
 }
 
@@ -156,6 +196,17 @@ void State::restoreState(SID &s, const State& state)
     s.setFilter8580Curve(state.filterCurve8580);
     s.enableOld6581caps(state.old6581caps);
 
+    s.filter6581->hpIntegrator.vx = state.vx[0][0];
+    s.filter6581->bpIntegrator.vx = state.vx[0][1];
+    s.filter8580->hpIntegrator.vx = state.vx[1][0];
+    s.filter8580->bpIntegrator.vx = state.vx[1][1];
+    s.filter6581->hpIntegrator.nVddt_Vw_2 = state.nVddt_Vw_2[0];
+    s.filter6581->bpIntegrator.nVddt_Vw_2 = state.nVddt_Vw_2[1];
+    s.filter8580->hpIntegrator.nVgt = state.nVgt[0];
+    s.filter8580->bpIntegrator.nVgt = state.nVgt[1];
+    s.filter8580->hpIntegrator.n_dac = state.n_dac[0];
+    s.filter8580->bpIntegrator.n_dac = state.n_dac[1];
+
     s.externalFilter.Vlp = state.exVlp;
     s.externalFilter.Vhp = state.exVhp;
 
@@ -187,6 +238,9 @@ void State::restoreState(SID &s, const State& state)
         wave->test_or_reset = state.test_or_reset[i];
         wave->msb_rising = state.msb_rising[i];
 
+        wave->setWave();
+        wave->setPulldown();
+
         EnvelopeGenerator* const envelope = s.voice[i].envelope();
         envelope->lfsr = state.lfsr[i];
         envelope->rate = state.rate[i];
@@ -207,8 +261,31 @@ void State::restoreState(SID &s, const State& state)
         envelope->sustain = state.sustain[i];
         envelope->release = state.release[i];
         envelope->env3 = state.env3[i];
+    }
 
-        wave->wave = (*wave->model_wave)[wave->waveform & 0x3];
+    switch (s.p->method)
+    {
+    case DECIMATE: {
+        ZeroOrderResampler *zor = static_cast<ZeroOrderResampler*>(s.resampler.get());
+        zor->cachedSample = state.zor_cachedSample;
+        zor->sampleOffset = state.zor_sampleOffset;
+        zor->outputValue = state.zor_outputValue;
+        } break;
+    case RESAMPLE: {
+        TwoPassSincResampler *tp = static_cast<TwoPassSincResampler*>(s.resampler.get());
+        for (int i=0; i<2; i++)
+        {
+            SincResampler *sr = (i == 0) ? tp->s1.get(): tp->s2.get();
+            sr->sampleIndex = state.tp_sampleIndex[i];
+            sr->sampleOffset = state.tp_sampleOffset[i];
+            sr->outputValue = state.tp_outputValue[i];
+            std::memcpy(sr->sample, state.tp_sample[i], sizeof(sr->sample));
+        }
+        } break;
+    case NONE: {
+        PassThrough *pt = static_cast<PassThrough*>(s.resampler.get());
+        pt->outputValue = state.pt_outputValue;
+        } break;
     }
 }
 
