@@ -32,7 +32,7 @@
 namespace reSIDfp
 {
 
-State State::saveState(SID &s)
+int State::saveState(SID &s, char* buffer, int size)
 {
     State state;
 
@@ -119,6 +119,10 @@ State State::saveState(SID &s)
     state.vx[0][1] = s.filter6581->bpIntegrator.vx;
     state.vx[1][0] = s.filter8580->hpIntegrator.vx;
     state.vx[1][1] = s.filter8580->bpIntegrator.vx;
+    state.vc[0][0] = s.filter6581->hpIntegrator.vc;
+    state.vc[0][1] = s.filter6581->bpIntegrator.vc;
+    state.vc[1][0] = s.filter8580->hpIntegrator.vc;
+    state.vc[1][1] = s.filter8580->bpIntegrator.vc;
     state.nVddt_Vw_2[0] = s.filter6581->hpIntegrator.nVddt_Vw_2;
     state.nVddt_Vw_2[1] = s.filter6581->bpIntegrator.nVddt_Vw_2;
     state.nVgt[0] = s.filter8580->hpIntegrator.nVgt;
@@ -149,7 +153,6 @@ State State::saveState(SID &s)
             state.tp_sampleIndex[i] = sr->sampleIndex;
             state.tp_sampleOffset[i] = sr->sampleOffset;
             state.tp_outputValue[i] = sr->outputValue;
-            std::memcpy(state.tp_sample[i], sr->sample, sizeof(sr->sample));
         }
         } break;
     case NONE: {
@@ -157,12 +160,38 @@ State State::saveState(SID &s)
         state.pt_outputValue = pt->outputValue;
         } break;
     }
-    return state;
+
+    int cnt = sizeof(reSIDfp::State);
+    if (size < cnt)
+        return 0;
+    std::memcpy(buffer, &state, cnt);
+
+    if (state.method == RESAMPLE)
+    {
+        TwoPassSincResampler *tp = static_cast<TwoPassSincResampler*>(s.resampler.get());
+        for (int i=0; i<2; i++)
+        {
+            SincResampler *sr = (i == 0) ? tp->s1.get(): tp->s2.get();
+            int spl = sizeof(sr->sample);
+            if (size < cnt+spl)
+                return 0;
+            std::memcpy(buffer+cnt, sr->sample, spl);
+            cnt += spl;
+        }
+    }
+
+    return cnt;
 }
 
 
-void State::restoreState(SID &s, const State& state)
+void State::restoreState(SID &s, char* buffer, int size)
 {
+    int cnt = sizeof(reSIDfp::State);
+    if (size < cnt)
+        return;
+    State state;
+    std::memcpy(&state, buffer, cnt);
+
     s.busValue = state.bus_value;
     s.busValueTtl = state.bus_value_ttl;
     s.nextVoiceSync = state.nextVoiceSync;
@@ -200,6 +229,10 @@ void State::restoreState(SID &s, const State& state)
     s.filter6581->bpIntegrator.vx = state.vx[0][1];
     s.filter8580->hpIntegrator.vx = state.vx[1][0];
     s.filter8580->bpIntegrator.vx = state.vx[1][1];
+    s.filter6581->hpIntegrator.vc = state.vc[0][0];
+    s.filter6581->bpIntegrator.vc = state.vc[0][1];
+    s.filter8580->hpIntegrator.vc = state.vc[1][0];
+    s.filter8580->bpIntegrator.vc = state.vc[1][1];
     s.filter6581->hpIntegrator.nVddt_Vw_2 = state.nVddt_Vw_2[0];
     s.filter6581->bpIntegrator.nVddt_Vw_2 = state.nVddt_Vw_2[1];
     s.filter8580->hpIntegrator.nVgt = state.nVgt[0];
@@ -279,7 +312,6 @@ void State::restoreState(SID &s, const State& state)
             sr->sampleIndex = state.tp_sampleIndex[i];
             sr->sampleOffset = state.tp_sampleOffset[i];
             sr->outputValue = state.tp_outputValue[i];
-            std::memcpy(sr->sample, state.tp_sample[i], sizeof(sr->sample));
         }
         } break;
     case NONE: {
@@ -287,6 +319,30 @@ void State::restoreState(SID &s, const State& state)
         pt->outputValue = state.pt_outputValue;
         } break;
     }
+
+    if (state.method == RESAMPLE)
+    {
+        TwoPassSincResampler *tp = static_cast<TwoPassSincResampler*>(s.resampler.get());
+        for (int i=0; i<2; i++)
+        {
+            SincResampler *sr = (i == 0) ? tp->s1.get(): tp->s2.get();
+            int spl = sizeof(sr->sample);
+            if (size < cnt+spl)
+                return;
+            std::memcpy(sr->sample, buffer+cnt, spl);
+            cnt += spl;
+        }
+    }
+}
+
+int State::size(SID &s)
+{
+    int cnt = sizeof(reSIDfp::State);
+    if (s.p->method == RESAMPLE)
+    {
+        cnt += sizeof(SincResampler::sample) * 2;
+    }
+    return cnt;
 }
 
 } // namespace reSIDfp

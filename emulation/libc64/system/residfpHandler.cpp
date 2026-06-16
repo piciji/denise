@@ -92,7 +92,7 @@ auto ResidfpHandler::clock(int cycles, int sampleCounter, int sampleLimit, bool 
             }
         }
     } else
-        residfp.clockSilent( cycles );
+        residfp.clockDigital( cycles );
 
     return sampleCounter;
 }
@@ -102,7 +102,7 @@ auto ResidfpHandler::clock() -> void {
 }
 
 auto ResidfpHandler::clockSilent() -> void {
-    residfp.clockSilent( 1 );
+    residfp.clockDigital( 1 );
 }
 
 auto ResidfpHandler::getSample() -> float {
@@ -140,32 +140,28 @@ auto ResidfpHandler::setSampleRate(double sampleRate) -> void {
 }
 
 auto ResidfpHandler::serialize(Emulator::Serializer& s, bool light) -> void {
-    // if (s.mode() == Emulator::Serializer::Mode::Save) {
-    //     auto state = reSIDfp::State::saveState(residfp);
-    //
-    //     std::memcpy(stateBuffer, &state, sizeof(reSIDfp::State));
-    //     s.array( stateBuffer, sizeof(reSIDfp::State) );
-    //
-    // } else if (s.mode() == Emulator::Serializer::Mode::Load) {
-    //     reSIDfp::State state;
-    //
-    //     s.array( stateBuffer, sizeof(reSIDfp::State) );
-    //     std::memcpy(&state, stateBuffer, sizeof(reSIDfp::State));
-    //
-    //     reSIDfp::State::restoreState(residfp, state);
-    //
-    // } else {
-    //     s.array( stateBuffer, sizeof(reSIDfp::State) );
-    // }
+    s.integer( leftChannel );
+    s.integer( rightChannel );
+    s.integer( ioMask );
+    s.integer( ioPos );
 
-    reSIDfp::State state;
+    s.integer( curve6581 );
+    s.integer( curve8580 );
+    s.integer( range6581 );
+    s.integer( waveStrength );
+    s.integer( digiBoost );
+    s.integer( useFilter );
+
+    s.integer( (uint8_t&) type );
+
+    int reserve = reSIDfp::State::size(residfp);
+    uint8_t* ptr = s.bufferPtr( reserve );
+
     if (s.mode() == Emulator::Serializer::Mode::Save)
-        state = reSIDfp::State::saveState(residfp);
-
-    s.buffer(reinterpret_cast<uint8_t*>(&state), sizeof(reSIDfp::State));
+        reSIDfp::State::saveState(residfp, reinterpret_cast<char*>(ptr), reserve);
 
     if(s.mode() == Emulator::Serializer::Mode::Load)
-        reSIDfp::State::restoreState(residfp, state);
+        reSIDfp::State::restoreState(residfp, reinterpret_cast<char*>(ptr), reserve);
 }
 
 auto ResidfpHandler::clone(Sid* src, bool keepProps) -> void {

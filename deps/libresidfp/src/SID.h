@@ -298,6 +298,8 @@ public:
      */
     void clockSilent(unsigned int cycles);
 
+    void clockDigital(unsigned int cycles);
+
     /**
      * Set filter curve parameter for 6581 model.
      *

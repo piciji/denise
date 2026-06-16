@@ -23,7 +23,6 @@ SidManager::SidManager(System* system) : system(system), usbSIDPico(*system) {
     sampleCounter = 0;
     sampleLimit = 2;
     audioOut = true;
-    serializationSizeForSevenMoreSids = 0;
     sysClock = 0;
     potX = 0xff;
     potY = 0xff;
@@ -39,6 +38,8 @@ SidManager::SidManager(System* system) : system(system), usbSIDPico(*system) {
     extraSids = false;
     leftSids = 0;
     rightSids = 0;
+
+    calcSerializationSizeForSevenMoreSids();
 }
 
 auto SidManager::intensifyPseudoStereo(bool state) -> void {
@@ -393,6 +394,7 @@ auto SidManager::rebuildSids(bool cloneOld) -> void {
         sids[i] = newSid;
         delete oldSid;
     }
+    calcSerializationSizeForSevenMoreSids();
 }
 
 auto SidManager::getEngine( ) -> uint8_t {
@@ -488,13 +490,7 @@ auto SidManager::calcSerializationSizeForSevenMoreSids() -> void {
 
     mainSid()->serialize( s, false );
 
-    auto s1 = s.size();
-    auto s2 = sizeof(reSIDfp::State);
-
-    if (s2 > s1)
-        s1 = s2;
-
-    serializationSizeForSevenMoreSids = s1 * 7;
+    serializationSizeForSevenMoreSids = s.size() * 7;
 }
 
 auto SidManager::useLeftChannel(int nr, bool state) -> void {

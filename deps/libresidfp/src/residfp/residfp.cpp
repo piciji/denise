@@ -145,17 +145,17 @@ void residfp::enableOld6581caps(bool enable)
     sid.enableOld6581caps(enable);
 }
 
-int residfp::stateSize() const { return sizeof(reSIDfp::State); }
-
-void residfp::saveState(char* buffer) const
+int residfp::stateSize() const
 {
-    State s = State::saveState(sid);
-    std::memcpy(buffer, &s, sizeof(reSIDfp::State));
+    return State::size(sid);
 }
 
-void residfp::restoreState(char* buffer)
+int residfp::saveState(char* buffer, int size) const
 {
-    State s;
-    std::memcpy(&s, buffer, sizeof(reSIDfp::State));
-    State::restoreState(sid, s);
+    return State::saveState(sid, buffer, size);
+}
+
+void residfp::restoreState(char* buffer, int size)
+{
+    State::restoreState(sid, buffer, size);
 }

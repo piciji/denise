@@ -86,6 +86,12 @@ struct Serializer {
         _size += size;
         return *this;
     }
+
+    auto bufferPtr(unsigned size) -> uint8_t* {
+        uint8_t* p = _data + _size;
+        _size += size;
+        return p;
+    }
     
     template<typename T, unsigned N> auto array(T (&array)[N]) -> Serializer& {
         for( unsigned n = 0; n < N; n++ )
