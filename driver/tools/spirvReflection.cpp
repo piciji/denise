@@ -458,7 +458,7 @@ auto SpirvReflection::bindUniforms(SpirvBuffer& spirvBuffer, ShaderPreset* prese
                             if (!pass.inUse)
                                 continue;
 
-                            semVar.data = (void*)((uintptr_t)map.textures[n].size + index * map.textures[n].stride);
+                            semVar.data = (void*)((uintptr_t)map.textures[n].size + p * map.textures[n].stride);
                             goto Next;
                         }
                     }
