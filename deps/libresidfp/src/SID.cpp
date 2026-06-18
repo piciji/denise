@@ -287,6 +287,8 @@ void SID::setChipModel(ChipModel new_model)
         voice[i].wave()->setWaveformModels(wavetables);
         voice[i].wave()->setPulldownModels(pulldowntables);
     }
+
+    filter->restart();
 }
 
 void SID::setCombinedWaveforms(CombinedWaveforms new_cws)
@@ -340,17 +342,38 @@ void SID::input(int value)
     filter8580->input(value);
 }
 
+uint8_t SID::peek(int offset) const
+{
+    switch (offset)
+    {
+    case 0x19: // X value of paddle
+        return 0xff;
+
+    case 0x1a: // Y value of paddle
+        return 0xff;
+
+    case 0x1b: // Voice #3 waveform output
+        return voice[2].wave()->readOSC();
+
+    case 0x1c: // Voice #3 ADSR output
+        return voice[2].envelope()->readENV();
+
+    default:
+        return busValue;
+    }
+}
+
 uint8_t SID::read(int offset)
 {
     switch (offset)
     {
     case 0x19: // X value of paddle
-        busValue = 0xff;
+        busValue = paddleX;
         busValueTtl = modelTTL;
         break;
 
     case 0x1a: // Y value of paddle
-        busValue = 0xff;
+        busValue = paddleY;
         busValueTtl = modelTTL;
         break;
 
@@ -521,6 +544,37 @@ void SID::setSamplingParameters(double clockFrequency, SamplingMethod method, do
     p->samplingFrequency = samplingFrequency;
 }
 
+void SID::clockDigital(unsigned int cycles)
+{
+    ageBusValue(cycles);
+
+    while (cycles != 0)
+    {
+        int delta_t = std::min(nextVoiceSync, cycles);
+
+        if (delta_t > 0)
+        {
+            for (int i = 0; i < delta_t; i++)
+            {
+                clockWaveGen();
+                clockEnvGen();
+
+                voice[0].wave()->output();
+                voice[1].wave()->output();
+                voice[2].wave()->output();
+            }
+
+            cycles -= delta_t;
+            nextVoiceSync -= delta_t;
+        }
+
+        if (nextVoiceSync == 0)
+        {
+            voiceSync(true);
+        }
+    }
+}
+
 void SID::clockSilent(unsigned int cycles)
 {
     ageBusValue(cycles);
@@ -555,35 +609,10 @@ void SID::clockSilent(unsigned int cycles)
     }
 }
 
-void SID::clockDigital(unsigned int cycles)
+void SID::setPaddle(uint8_t x, uint8_t y)
 {
-    ageBusValue(cycles);
-
-    while (cycles != 0)
-    {
-        int delta_t = std::min(nextVoiceSync, cycles);
-
-        if (delta_t > 0)
-        {
-            for (int i = 0; i < delta_t; i++)
-            {
-                clockWaveGen();
-                clockEnvGen();
-
-                voice[0].wave()->output();
-                voice[1].wave()->output();
-                voice[2].wave()->output();
-            }
-
-            cycles -= delta_t;
-            nextVoiceSync -= delta_t;
-        }
-
-        if (nextVoiceSync == 0)
-        {
-            voiceSync(true);
-        }
-    }
+    paddleX = x;
+    paddleY = y;
 }
 
 } // namespace reSIDfp

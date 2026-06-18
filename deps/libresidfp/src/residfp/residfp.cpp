@@ -78,6 +78,11 @@ void residfp::input(int value)
     sid.input(value);
 }
 
+unsigned char residfp::peek(int offset) const
+{
+    return sid.peek(offset);
+}
+
 unsigned char residfp::read(int offset)
 {
     return sid.read(offset);
@@ -115,6 +120,11 @@ int residfp::clock( short* buf, int bufSize)
     return sid.clock(buf, bufSize);
 }
 
+void residfp::clockDigital(unsigned int cycles)
+{
+    sid.clockDigital(cycles);
+}
+
 void residfp::clockSilent(unsigned int cycles)
 {
     sid.clockSilent(cycles);
@@ -145,6 +155,7 @@ void residfp::enableOld6581caps(bool enable)
     sid.enableOld6581caps(enable);
 }
 
+
 int residfp::stateSize() const
 {
     return State::size(sid);
@@ -159,3 +170,9 @@ void residfp::restoreState(char* buffer, int size)
 {
     State::restoreState(sid, buffer, size);
 }
+
+void residfp::setPaddle(unsigned char x, unsigned char y)
+{
+    sid.setPaddle(x, y);
+}
+

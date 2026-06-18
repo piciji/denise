@@ -85,6 +85,16 @@ public:
     void input(int value);
 
     /**
+     * Read registers without altering state.
+     *
+     * @param offset SID register to read
+     * @return value read from chip
+     *
+     * @since 1.1
+     */
+    unsigned char peek(int offset) const;
+
+    /**
      * Read registers.
      *
      * Reading a write only register returns the last char written to any SID register.
@@ -174,6 +184,17 @@ public:
 
     /**
      * Clock SID forward with no audio production.
+     * Only the digital parts are emulated,
+     * the analog stage is ignored.
+     *
+     * @param cycles c64 clocks to clock.
+     *
+     * @since 1.1
+     */
+    void clockDigital(unsigned int cycles);
+
+    /**
+     * Clock SID forward with no audio production.
      *
      * @note
      * You can't mix this method of clocking with the audio-producing
@@ -222,7 +243,10 @@ public:
     void enableOld6581caps(bool enable);
 
     /**
+
      * Get the save-state size in bytes.
+     *
+     * @note: the size may depend on configuration.
      *
      * @since 1.1
      */
@@ -230,6 +254,9 @@ public:
 
     /**
      * Save current state.
+     *
+     * @note: the save state is not portable across different builds
+     * and may change in future versions.
      *
      * @param buffer the buffer where state will be saved to
      * @param size size of the buffer in bytes
@@ -247,6 +274,13 @@ public:
      * @since 1.1
      */
     void restoreState(char* buffer, int size);
+    /**
+     * Set paddle coordinates.
+     *
+     * @since 1.1
+     */
+    void setPaddle(unsigned char x, unsigned char y);
+
 };
 
 }

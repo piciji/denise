@@ -107,6 +107,12 @@ private:
     /// Last written value
     uint8_t busValue;
 
+    /// Paddle coordinates.
+    //@{
+    uint8_t paddleX = 0xff;
+    uint8_t paddleY = 0xff;
+    //@}
+
     /**
      * Emulated nonlinearity of the envelope DAC.
      *
@@ -209,6 +215,14 @@ public:
     void input(int value);
 
     /**
+     * Read registers without altering state.
+     *
+     * @param offset SID register to read
+     * @return value read from chip
+     */
+    uint8_t peek(int offset) const;
+
+    /**
      * Read registers.
      *
      * Reading a write only register returns the last char written to any SID register.
@@ -288,6 +302,15 @@ public:
 
     /**
      * Clock SID forward with no audio production.
+     * Only the digital parts are emulated,
+     * the analog stage is ignored.
+     *
+     * @param cycles c64 clocks to clock.
+     */
+    void clockDigital(unsigned int cycles);
+
+    /**
+     * Clock SID forward with no audio production.
      *
      * @note:
      * You can't mix this method of clocking with the audio-producing
@@ -297,8 +320,6 @@ public:
      * @param cycles c64 clocks to clock.
      */
     void clockSilent(unsigned int cycles);
-
-    void clockDigital(unsigned int cycles);
 
     /**
      * Set filter curve parameter for 6581 model.
@@ -332,6 +353,11 @@ public:
      * Enable/disable old caps (2200pF) for 6581 model.
      */
     void enableOld6581caps(bool enable);
+
+    /**
+     * Set paddle coordinates.
+     */
+    void setPaddle(uint8_t x, uint8_t y);
 };
 
 } // namespace reSIDfp

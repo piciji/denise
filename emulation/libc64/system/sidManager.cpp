@@ -23,6 +23,7 @@ SidManager::SidManager(System* system) : system(system), usbSIDPico(*system) {
     sampleCounter = 0;
     sampleLimit = 2;
     audioOut = true;
+    serializationSizeForSevenMoreSids = 0;
     sysClock = 0;
     potX = 0xff;
     potY = 0xff;
@@ -38,8 +39,6 @@ SidManager::SidManager(System* system) : system(system), usbSIDPico(*system) {
     extraSids = false;
     leftSids = 0;
     rightSids = 0;
-
-    calcSerializationSizeForSevenMoreSids();
 }
 
 auto SidManager::intensifyPseudoStereo(bool state) -> void {
@@ -394,7 +393,6 @@ auto SidManager::rebuildSids(bool cloneOld) -> void {
         sids[i] = newSid;
         delete oldSid;
     }
-    calcSerializationSizeForSevenMoreSids();
 }
 
 auto SidManager::getEngine( ) -> uint8_t {
@@ -486,11 +484,26 @@ auto SidManager::resetAll() -> void {
 
 auto SidManager::calcSerializationSizeForSevenMoreSids() -> void {
 
-    Emulator::Serializer s;
+    Emulator::Serializer s1;
 
-    mainSid()->serialize( s, false );
+    mainSid()->serialize( s1, false );
 
-    serializationSizeForSevenMoreSids = s.size() * 7;
+    unsigned _s1 = s1.size();
+
+    Emulator::Serializer s2;
+
+    auto testfp = new ResidfpHandler(0, system, *this, usbSIDPico, Sid::Type::MOS_8580);
+
+    testfp->serialize( s2, false );
+
+    unsigned _s2 = s2.size();
+
+    if (_s2 > _s1)
+        _s1 = _s2;
+
+    serializationSizeForSevenMoreSids = _s1 * 7;
+
+    delete testfp;
 }
 
 auto SidManager::useLeftChannel(int nr, bool state) -> void {

@@ -45,25 +45,20 @@ auto ResidfpHandler::setDigiBoost( bool state ) -> void {
 auto ResidfpHandler::readIO( uint8_t addr ) -> uint8_t {
     addr &= 0x1f;
 
-    switch( addr ) {
-        case 0x19:
-        case 0x1a:
-            if (!sysTimer.has( &sidManager.callPotUpdate )) {
-                sidManager.potX = sidManager.getPotX();
-                sidManager.potY = sidManager.getPotY();
-                sysTimer.add( &sidManager.callPotUpdate, 512, Emulator::SystemTimer::Action::WhenNotExistsOnly );
-            }
-            return addr == 0x19 ? sidManager.potX : sidManager.potY;
-
-        default:
-            break;
+    if (addr == 0x19 || addr == 0x1a) {
+        if (!sysTimer.has( &sidManager.callPotUpdate )) {
+            sidManager.potX = sidManager.getPotX();
+            sidManager.potY = sidManager.getPotY();
+            residfp.setPaddle( sidManager.potX, sidManager.potY );
+            sysTimer.add( &sidManager.callPotUpdate, 512, Emulator::SystemTimer::Action::WhenNotExistsOnly );
+        }
     }
 
     return residfp.read(addr);
 }
 
 auto ResidfpHandler::peekIO( uint8_t addr ) -> uint8_t {
-    return 0xff;
+    return residfp.peek(addr);
 }
 
 auto ResidfpHandler::writeIO( uint8_t addr, uint8_t value ) -> void {
@@ -160,7 +155,7 @@ auto ResidfpHandler::serialize(Emulator::Serializer& s, bool light) -> void {
     if (s.mode() == Emulator::Serializer::Mode::Save)
         reSIDfp::State::saveState(residfp, reinterpret_cast<char*>(ptr), reserve);
 
-    if(s.mode() == Emulator::Serializer::Mode::Load)
+    else if(s.mode() == Emulator::Serializer::Mode::Load)
         reSIDfp::State::restoreState(residfp, reinterpret_cast<char*>(ptr), reserve);
 }
 
