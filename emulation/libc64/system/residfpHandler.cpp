@@ -76,8 +76,8 @@ auto ResidfpHandler::clock(int cycles, int sampleCounter, int sampleLimit, bool 
     if (audioOut) {
         int samples = residfp.clock( cycles, buffer );
 
-        if (samples != cycles)
-            fprintf( stderr, "residfp cycles <> samples " );
+       // if (samples != cycles)
+         //   fprintf( stderr, "residfp cycles <> samples " );
 
         for (int c = 0; c < cycles; c++) {
 

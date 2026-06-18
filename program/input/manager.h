@@ -69,7 +69,7 @@ struct InputMapping {
 struct Hotkey {
     enum Id : unsigned { Pause, Fullscreen, CaptureMouse, DiskSwapper, Software, Configurations,
 		Savestate, Loadstate, IncSlot, DecSlot, ToggleMenu, ToggleStatus, 
-		ToggleSidFilter, SwapSid, DigiBoost, AdjustBiasUp, AdjustBiasDown,
+		ToggleSidFilter, SwapSid, DigiBoost, AdjustSidCurveUp, AdjustSidCurveDown,
 		PlayTape, RecordTape, StopTape, ForwardTape, RewindTape, ResetTapeCounter,
 		FloppyAccess,
 		DiskSwap0, DiskSwap1, DiskSwap2, DiskSwap3, DiskSwap4, DiskSwap5, DiskSwap6,

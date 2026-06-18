@@ -153,9 +153,9 @@ inline auto System::serializeDiskIdle(Emulator::Serializer& s) -> void {
 auto System::serialize(Emulator::Serializer& s) -> void {
     
     serializeDiskIdle( s );
-    
-    s.array( ram, 64 * 1024 );
-    s.array( colorRam, 1 * 1024 );    
+
+    s.buffer( ram, 64 * 1024 );
+    s.buffer( colorRam, 1 * 1024 );
     s.integer( serializationSize );
     s.integer( serializationSizeLight );
     s.integer( mode );

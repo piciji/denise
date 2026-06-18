@@ -552,13 +552,11 @@ auto ModelLayout::stepRange(unsigned id, int step) -> int {
                     return newValue;
                     
                 } else if (model->isSlider()) {
-                    // todo apply model scaler
-
                     unsigned pos = newValue;
 
                     if (!model->options.size()) {
                         int stepSize = range / model->steps;
-                        pos = (newValue + _max) / stepSize;
+                        pos = (newValue - _min) / stepSize;
                     }
 
                     block->sliderLayout->slider.setPosition(pos);

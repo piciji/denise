@@ -102,8 +102,8 @@ auto InputManager::setCustomHotkeys() -> void {
 		customHotkeys.push_back( {Hotkey::Id::ToggleSidFilter, "sid_filter_toggle", false} );
 		customHotkeys.push_back( {Hotkey::Id::SwapSid, "Swap_sid", false} );
 		customHotkeys.push_back( {Hotkey::Id::DigiBoost, "Digi_boost", false} );	
-		customHotkeys.push_back( {Hotkey::Id::AdjustBiasUp, "adjust_bias_up", false} );	
-		customHotkeys.push_back( {Hotkey::Id::AdjustBiasDown, "adjust_bias_down", false} );	
+		customHotkeys.push_back( {Hotkey::Id::AdjustSidCurveUp, "adjust_curve_up", false} );
+		customHotkeys.push_back( {Hotkey::Id::AdjustSidCurveDown, "adjust_curve_down", false} );
 		
 		customHotkeys.push_back( {Hotkey::Id::PlayTape, "tape_play_key", false} );
 		customHotkeys.push_back( {Hotkey::Id::StopTape, "tape_stop_key", false} );
@@ -748,8 +748,8 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
             }
             statusHandler->setMessage(trans->get(state ? "sid_filter_on" : "sid_filter_off"), false, true);
         } break;
-        case Hotkey::AdjustBiasUp:
-        case Hotkey::AdjustBiasDown: {
+        case Hotkey::AdjustSidCurveUp:
+        case Hotkey::AdjustSidCurveDown: {
             if (!activeEmulator || !dynamic_cast<LIBC64::Interface*>(activeEmulator))
                 break;
             
@@ -759,7 +759,7 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
 
             if (emuView && emuView->audioLayout) {
                 state = emuView->audioLayout->settingsLayout.stepRange( _sid == 0 ? C64Interface::ModelIdBias8580 : C64Interface::ModelIdBias6581,
-                        id == Hotkey::AdjustBiasUp ? 100: -100 );
+                        id == Hotkey::AdjustSidCurveUp ? 100: -100 );
 
                 emuThread->lock();
             } else {
@@ -768,13 +768,13 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
 
                 if (model) {
                     state = activeEmulator->getModelValue( model->id );
-                    state += id == Hotkey::AdjustBiasUp ? 100: -100;
+                    state += id == Hotkey::AdjustSidCurveUp ? 100: -100;
                     state = std::max( model->range[0], std::min( state, model->range[1] ) );
                     settings->set<int>( _underscore(model->name), state );
                     activeEmulator->setModelValue( model->id, state );
                 }
             }
-            statusHandler->setMessage(trans->get("sid_bias_change", { {"%state%", std::to_string(state) } }), false, true);
+            statusHandler->setMessage(trans->get("sid_curve_change", { {"%state%", GUIKIT::String::formatFloatingPoint( double(state) / 10000.0 ) } }), false, true);
         } break;
         
         case Hotkey::Id::FloppyAccess: {
