@@ -11,6 +11,7 @@ struct Cart : ExpansionPort {
     Cart(System* system, bool game = true, bool exrom = false);
         
     uint16_t version;
+    uint8_t cartridgeRevision;
     uint8_t cartName[32];
     
     struct Chip {

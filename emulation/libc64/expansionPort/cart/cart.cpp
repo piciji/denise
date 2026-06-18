@@ -22,6 +22,7 @@ Cart::Cart(System* system, bool game, bool exrom) : ExpansionPort(system) {
     size = 0;
     binFormat = false;
     version = 0;
+    cartridgeRevision = 0;
 }
 
 auto Cart::setRom(Emulator::Interface::Media* media, uint8_t* rom, unsigned romSize) -> void {
@@ -110,6 +111,7 @@ auto Cart::readHeader( ) -> bool {
     std::memcpy(&cartName[0], &header[0x20], sizeof cartName);
     
     version = Emulator::copyBufferToIntBigEndian<uint16_t>(&header[0x14]);
+    cartridgeRevision = header[0x1A];
     exRom = header[0x18] & 1;
     game = header[0x19] & 1;
     binFormat = false;
