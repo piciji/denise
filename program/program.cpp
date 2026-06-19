@@ -671,6 +671,10 @@ auto Program::shaderFolder() -> std::string {
     return installFolder() + SHADER_FOLDER;
 }
 
+auto Program::presetFolder() -> std::string {
+    return installFolder() + PRESET_FOLDER;
+}
+
 auto Program::imgFolder() -> std::string {
     return installFolder() + IMAGES_FOLDER;
 }

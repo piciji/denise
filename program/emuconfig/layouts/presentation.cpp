@@ -758,6 +758,8 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
                             _s->set<std::string>("slang_folder", shaderPath);
                     }
 
+                    copyCustomPresets();
+
                     layShader.main.progress.label.setForegroundColorThreaded(SUCCESS_COLOR);
                     layShader.main.progress.label.setTextThreaded(trans->getA("complete"));
 
@@ -3018,6 +3020,27 @@ auto ParamEditor::open() -> void {
     unfocusTimer.setEnabled();
     setVisible();
     setFocused();
+}
+
+auto PresentationLayout::copyCustomPresets() -> void {
+    std::string srcPath = program->presetFolder();
+    std::string targetPath = FileHelper::generatedFolder("shaders");
+
+    auto files = GUIKIT::File::getFileList( srcPath );
+
+    for (auto& file : files) {
+       //  fprintf( stderr, "%s\n", file.c_str() );
+        GUIKIT::File::xcopy(srcPath + file, targetPath + file );
+    }
+
+    // plugins
+    std::string pluginFolder = "bezel/koko-aio/config/plugins/";
+
+    GUIKIT::File::createDir( targetPath + pluginFolder + "enabled" );
+
+    GUIKIT::File::xcopy(targetPath + pluginFolder + "disabled/led1.txt", targetPath + pluginFolder + "enabled/led1.txt");
+    GUIKIT::File::xcopy(targetPath + pluginFolder + "disabled/led2.txt", targetPath + pluginFolder + "enabled/led2.txt");
+    GUIKIT::File::xcopy(targetPath + pluginFolder + "disabled/led3.txt", targetPath + pluginFolder + "enabled/led3.txt");
 }
 
 }

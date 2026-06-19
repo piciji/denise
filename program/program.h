@@ -17,6 +17,9 @@
 #ifndef SHADER_FOLDER
 #define SHADER_FOLDER "shader/"
 #endif
+#ifndef PRESET_FOLDER
+#define PRESET_FOLDER "presets/"
+#endif
 #ifndef IMAGES_FOLDER
 #define IMAGES_FOLDER "images/"
 #endif
@@ -96,6 +99,7 @@ struct Program : Emulator::Interface::Bind {
 	auto imgFolder() -> std::string;
     auto soundFolder() -> std::string;
     auto shaderFolder() -> std::string;
+    auto presetFolder() -> std::string;
 	auto appFolder() -> std::string;
     auto getSystemLangFile() -> std::string;
     auto settingsFile( std::string ident = "" ) -> std::string;

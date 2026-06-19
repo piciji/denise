@@ -1,0 +1,21 @@
+#reference "monitor-bloom-bezel.slangp"
+
+DO_BG_IMAGE = "1.0"
+	BG_IMAGE_OVER = "1.0"
+	
+bg_over = "../textures/transparent_over_amiga.png"
+
+DO_AMBILIGHT = 0.000000
+IN_GLOW_POWER = 2.05
+S_POSITION_X = -0.400000
+S_POSITION_Y = 0.000000
+S_SIZE = 0.450000
+S_POWER = 0.110000
+
+LED3_SIZE = 0.210000
+LED3_SHAPE = 0.500000
+LED3_ASPECT = 0.900000
+LED3_EXPOSURE = -0.900000
+LED3_HUE = 0.16
+LED3_X = 0.9095
+LED3_Y = 0.8900

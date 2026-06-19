@@ -503,6 +503,7 @@ struct PresentationLayout : GUIKIT::HorizontalLayout {
     auto appendFavourite(std::string& path) -> void;
     auto sortFavourites() -> void;
     auto listFavourites() -> void;
+    auto copyCustomPresets() -> void;
     
     template<typename T> auto setSliderAction( SliderLayout* layout, std::string baseIdent, std::function<T ( unsigned position )> callTransfer = [](unsigned position) { return position; } ) -> void;
     auto vManager() -> VideoManager* { return VideoManager::getInstance(emulator); }

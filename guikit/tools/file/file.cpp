@@ -684,6 +684,46 @@ auto File::getFolderList( std::string path, const std::string& subStr ) -> std::
     return list;
 }
 
+auto File::getFileList(const std::string& path, const std::string& subPath ) -> std::vector<std::string> {
+    std::vector<std::string> list;
+    std::string fullPath = path + subPath;
+
+#ifdef GUIKIT_WINAPI
+    _WDIR* dir = _wopendir ( utf16_t( fullPath ) );
+#else
+    DIR* dir = opendir ( fullPath.c_str() );
+#endif
+
+    if (dir == nullptr)
+        return {};
+
+    std::string name;
+
+#ifdef GUIKIT_WINAPI
+    struct _wdirent* ent;
+    while ((ent = _wreaddir (dir)) != NULL) {
+        name = utf8_t( ent->d_name );
+#else
+    struct dirent* ent;
+    while ((ent = readdir (dir)) != NULL) {
+        name = (std::string)ent->d_name;
+#endif
+
+        if (name.empty() || name == "." || name == "..")
+            continue;
+
+        Info info;
+        setStats( beautifyPath(path) + subPath + name, info );
+
+        if (info.isDir) {
+            Vector::combine( list, getFileList(path, subPath + name + "/") );
+        } else
+            list.push_back( subPath + name );
+    }
+
+    return list;
+}
+
 auto File::setStats(std::string path, Info& info) -> void {
     if (path.empty()) return;
     struct tm* _tm = nullptr;
