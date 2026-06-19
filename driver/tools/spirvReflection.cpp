@@ -407,6 +407,27 @@ auto SpirvReflection::bindUniforms(SpirvBuffer& spirvBuffer, ShaderPreset* prese
         } if (var.name == "LedDriveState") {
             semVar.data = map.uniforms[SemanticMap::LedDriveState];
             goto Next;
+        } if (var.name == "AppCropTop") {
+            semVar.data = map.uniforms[SemanticMap::AppCropTop];
+            goto Next;
+        } if (var.name == "AppCropLeft") {
+            semVar.data = map.uniforms[SemanticMap::AppCropLeft];
+            goto Next;
+        } if (var.name == "AppInterlace") {
+            semVar.data = map.uniforms[SemanticMap::AppInterlace];
+            goto Next;
+        } if (var.name == "AppHires") {
+            semVar.data = map.uniforms[SemanticMap::AppHires];
+            goto Next;
+        } if (var.name == "AppPAL") {
+            semVar.data = map.uniforms[SemanticMap::AppPAL];
+            goto Next;
+        } if (var.name == "AppSubRegion") {
+            semVar.data = map.uniforms[SemanticMap::AppSubRegion];
+            goto Next;
+        } if (var.name == "AppFlags") {
+            semVar.data = map.uniforms[SemanticMap::AppFlags];
+            goto Next;
 
         // ########
         } if (var.name == "OriginalSize") {

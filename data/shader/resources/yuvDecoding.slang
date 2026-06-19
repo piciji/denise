@@ -11,12 +11,12 @@ layout(push_constant) uniform Push
     vec4 SourceSize;
 
     float hanoverBars;
-    float autoEmu_cropTop;
+    float AppCropTop;
     float gamma;
-    float autoEmu_palGamma;
-    float autoEmu_lace;
-    float autoEmu_pal;
-    float autoEmu_subRegion;
+    float AppInterlace;
+    float AppPAL;
+    float AppFlags;
+    float AppSubRegion;
     float lumaFall;
     float lumaRise;
     float chromaSubsampling;
@@ -37,14 +37,10 @@ layout(std140, set = 0, binding = 0) uniform UBO
 #pragma parameter lumaRise              "  Luma Rise"               2.0 1.0 4.0 0.1
 #pragma parameter lumaFall              "  Luma Fall"               1.2 1.0 4.0 0.1
 #pragma parameter empty4                " "                         0 0 0.001 0.001
-#pragma parameter chromaSubsampling     "[Chroma Subsampling]"      0 0 1 1
+#pragma parameter label3                "[Chroma Subsampling]"      0 0 0.001 0.001
+#pragma parameter chromaSubsampling     "  Enable"                  0 0 1 1
 #pragma parameter firTaps               "  Chroma Bandwidth"        5 1 21 2
 #pragma parameter empty5                " "                         0 0 0.001 0.001
-#pragma parameter autoEmu_cropTop       "Crop Top"                  1 0 100 1
-#pragma parameter autoEmu_palGamma      "PAL Gamma"                 0 0 1 1
-#pragma parameter autoEmu_pal           "PAL"                       1 0 1 1
-#pragma parameter autoEmu_lace          "Interlace"                 0 0 1 1
-#pragma parameter autoEmu_subRegion     "Sub Region"                0 0 3 1
 
 #define lutBandwidthTexWidth 74.0
 #define lutBandwidthTexHeight 88.0
@@ -139,7 +135,7 @@ float bandwidth( float pos, float posY ) {
 vec2 calcBandwidth( vec2 chroma, float lineOffset ) {
 
     int n = 1;
-    float offsetY = int(params.autoEmu_subRegion) * 22 + int(params.firTaps);
+    float offsetY = int(params.AppSubRegion) * 22 + int(params.firTaps);
 
     int rounds = int(texture(lutChromaBandwidth, vec2( lutBandwidthTexRoundsStorageOffset / lutBandwidthTexWidth, offsetY / lutBandwidthTexHeight) ).r * 255.0);
 
@@ -166,16 +162,16 @@ void main() {
     if (params.lumaRise > 1.0 || params.lumaFall > 1.0)
         yuv.x = lumaLatency();
 
-    if (bool(params.autoEmu_pal)) {
-        int oddLine = ((int(params.autoEmu_cropTop) >> int(params.autoEmu_lace)) & 1) ^ 1;
-        int lineFactor = int(floor(mod(floor(vTexCoord.y * params.OutputSize.y / float( 1 << int(params.autoEmu_lace) )), 2.0)));
+    if (bool(params.AppPAL)) {
+        int oddLine = ((int(params.AppCropTop) >> int(params.AppInterlace)) & 1) ^ 1;
+        int lineFactor = int(floor(mod(floor(vTexCoord.y * params.OutputSize.y / float( 1 << int(params.AppInterlace) )), 2.0)));
         float _hanoverBars = (100.0 - abs(params.hanoverBars)) / 100.0;
         float _hanoverBarsAlt = 1.0;
         if (params.hanoverBars > 0)
             _hanoverBarsAlt = (100.0 + params.hanoverBars) / 100.0;
 
         vec3 yuvLineBefore;
-        float yOffset = float( 1 << int(params.autoEmu_lace) ) / params.OutputSize.y;
+        float yOffset = float( 1 << int(params.AppInterlace) ) / params.OutputSize.y;
 
         if (vTexCoord.y < yOffset) {
             // no hidden delay line
@@ -193,7 +189,7 @@ void main() {
         vec2 merged = vec2(yuv.y + yuvLineBefore.y, yuv.z + yuvLineBefore.z) * mix(_hanoverBars, _hanoverBarsAlt, lineFactor ^ int(oddLine)) * 0.5;
         color = vec3(yuv.x, merged.x, merged.y) * mat3(1.0,0.0,1.140251,1.0,-0.39393070,-0.58080921,1.0,2.0283976,0.0);
 
-        if (bool(params.autoEmu_palGamma) )
+        if (bool(params.AppFlags) )
             _gamma *= 2.8 / 2.2;
 
     } else {

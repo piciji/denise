@@ -9,7 +9,7 @@
 layout(push_constant) uniform Push
 {
     vec4 OutputSize;
-    float autoEmu_subRegion;
+    float AppSubRegion;
     float firTaps;
 
 } params;
@@ -19,7 +19,6 @@ layout(std140, set = 0, binding = 0) uniform UBO
     mat4 MVP;
 } global;
 
-#pragma parameter autoEmu_subRegion     "Sub Region"   0 0 3 1
 #pragma parameter firTaps               "Bandwidth"    9 1 21 2
 
 #define lutBandwidthTexWidth 74.0
@@ -55,7 +54,7 @@ float bandwidth( float pos, float posY ) {
 
 void main() {
     int n = 1;
-    float offsetY = int(params.autoEmu_subRegion) * 22 + int(params.firTaps);
+    float offsetY = int(params.AppSubRegion) * 22 + int(params.firTaps);
 
     int rounds = int(texture(lutBandwidth, vec2( lutBandwidthTexRoundsStorageOffset / lutBandwidthTexWidth, offsetY / lutBandwidthTexHeight) ).r * 255.0);
 

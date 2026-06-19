@@ -1653,7 +1653,8 @@ namespace DRIVER {
            {(uintptr_t)(&programs[0].feedbackTarget.view), &programs[0].feedbackTarget.size, sizeof(MTLProgram), MAX_SHADERS},
            {(uintptr_t)(&luts[0].view), &luts[0].size, sizeof(MTLTexture), MAX_TEXTURES},
         }, {nullptr, nullptr, &frame.size, nullptr, &frameDirection, &deltaTime, &settings.vrrSpeed, &settings.rotation,
-            &viewport.ratio, &viewport.ratioRot, &totalFrames, &subFrame, &historySize, &appData.ledDriveState} };
+            &viewport.ratio, &viewport.ratioRot, &totalFrames, &subFrame, &historySize,
+            &appData.ledDriveState, &appData.cropTop, &appData.cropLeft, &appData.lace, &appData.hires, &appData.pal, &appData.subRegion, &appData.flags} };
 
         shaderPasses = 0;
         for(int i = programsTemp.size() - 1; i >= 0; i--) {

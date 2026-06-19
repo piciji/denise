@@ -14,10 +14,10 @@ layout(push_constant) uniform Push
 
     float phaseErrorPAL;
     float phaseErrorNTSC;
-    float autoEmu_cropTop;
-    float autoEmu_cropLeft;
-    float autoEmu_lace;
-    float autoEmu_pal;
+    float AppCropTop;
+    float AppCropLeft;
+    float AppInterlace;
+    float AppPAL;
 
     float vic_glitches;
     float glitch_cas;
@@ -35,11 +35,7 @@ layout(std140, set = 0, binding = 0) uniform UBO
 #pragma parameter label0                "[YUV/YIC ENCODING]"        0 0 0.001 0.001
 #pragma parameter phaseErrorPAL         "  Phase Error PAL"         22.5 -45 45 0.5
 #pragma parameter phaseErrorNTSC        "  Phase Error NTSC"        0 -45 45 0.5
-#pragma parameter autoEmu_cropTop       "Crop Top"                  1 0 100 1
-#pragma parameter autoEmu_cropLeft      "Crop Left"                 6 0 100 1
 #pragma parameter empty0                " "                         0 0 0.001 0.001
-#pragma parameter autoEmu_pal           "PAL"                       1 0 1 1
-#pragma parameter autoEmu_lace          "Interlace"                 0 0 1 1
 #pragma parameter Glitches_head         "[VIC-II Glitches (ignore for Amiga)]" 0 0 0.001 0.001
 #pragma parameter vic_glitches          "  enable next 5 options"   0 0 1 1
 #pragma parameter glitch_aec            "    AEC"                   10.5 0 25 0.1
@@ -79,7 +75,7 @@ float vicGlitches(float luma, int flags) {
     ySrc.g = (float((_col >> 10) & 1023) - 256.0) / 255.0;
     ySrc.r = (float((_col >> 20) & 1023) - 256.0) / 255.0;
 
-    if (bool(params.autoEmu_pal))
+    if (bool(params.AppPAL))
         _y = ySrc.r * 0.299 + ySrc.g * 0.587 + ySrc.b * 0.114;
     else
         _y = ySrc.r * 0.23485876230514607 + ySrc.g * 0.6335007388077467 + ySrc.b * 0.13164049888710716;
@@ -95,7 +91,7 @@ float vicGlitches(float luma, int flags) {
 
     float xposF = vTexCoord.x * params.SourceSize.x;
     int xpos = int(xposF);
-    xpos += int(params.autoEmu_cropLeft) + (2 << (int(params.autoEmu_pal) ^ 1)) + 4;
+    xpos += int(params.AppCropLeft) + (2 << (int(params.AppPAL) ^ 1)) + 4;
 
     xpos &= 7;
     luma *= 1.0 - ((flags & 1) * BA);
@@ -122,17 +118,17 @@ void main() {
     color.g = (float((_col >> 10) & 1023) - 256.0) / 255.0;
     color.r = (float((_col >> 20) & 1023) - 256.0) / 255.0;
 
-    if (bool(params.autoEmu_pal)) {
+    if (bool(params.AppPAL)) {
         float _phaseError = params.phaseErrorPAL * PI / 180.0;
         float rotU = cos(_phaseError);
         float rotV = sin(_phaseError);
-        int oddLine = ((int(params.autoEmu_cropTop) >> int(params.autoEmu_lace)) & 1) ^ 1;
+        int oddLine = ((int(params.AppCropTop) >> int(params.AppInterlace)) & 1) ^ 1;
 
         lumaChroma = vec3(color.rgb * mat3(0.299,0.587,0.114,-0.147407,-0.289391,0.436798,0.614777,-0.514799,-0.099978));
         vec3 yuvEven = vec3(lumaChroma.x, lumaChroma.y * rotU - lumaChroma.z * rotV, lumaChroma.z * rotU + lumaChroma.y * rotV);
         vec3 yuvOdd = vec3(lumaChroma.x, lumaChroma.y * rotU - lumaChroma.z * rotV * -1, lumaChroma.z * rotU + lumaChroma.y * rotV * -1);
 
-        int oddLineFrame = int(floor(mod(floor(vTexCoord.y * params.OutputSize.y / float( 1 << int(params.autoEmu_lace) )), 2.0)));
+        int oddLineFrame = int(floor(mod(floor(vTexCoord.y * params.OutputSize.y / float( 1 << int(params.AppInterlace) )), 2.0)));
         color = vec4( mix(yuvOdd, yuvEven, (oddLineFrame ^ int(oddLine)) ), 1.0 );
     } else {
         float _phaseError = params.phaseErrorNTSC * PI / 180.0;

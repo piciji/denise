@@ -137,10 +137,8 @@ auto ShaderParser::savePreset(std::string path) -> bool {
 
     for (auto& param : shaderPreset.params) {
         if ( (simplePreset ? param.initialOverridden : param.initial) != param.value) {
-            if (!GUIKIT::String::findString(param.id, "autoEmu_")) {
-                out = param.id + " = " + std::to_string(param.value) + "\n";
-                fputs( out.c_str(), fp );
-            }
+            out = param.id + " = " + std::to_string(param.value) + "\n";
+            fputs( out.c_str(), fp );
         }
     }
 
@@ -812,6 +810,7 @@ auto ShaderParser::fetchShaderSource(const std::string& path, ShaderPreset::Pass
                     if (filled == 5)
                         param.step = 0.1f * (param.maximum - param.minimum);
 
+                    adjustInitials(param, path);
                     param.value = param.initialOverridden = rootSettings.get<float>(param.id, param.initial);
                     addParameter(param);
 
@@ -839,6 +838,12 @@ End:
         pos++;
     }
     return true;
+}
+
+inline auto ShaderParser::adjustInitials(ShaderPreset::Param& param, const std::string& path) -> void {
+    if (param.id == "IN_GLOW_WARPSHARP_X" && GUIKIT::String::findString( path, "koko-aio" )) {
+        param.initial = 0.0;
+    }
 }
 
 auto ShaderParser::fetchShaderSource(ShaderPreset::Pass& pass) -> bool {

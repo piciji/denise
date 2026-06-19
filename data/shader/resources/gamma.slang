@@ -9,9 +9,9 @@ layout(push_constant) uniform Push
 {
     vec4 OutputSize;
 
-    float autoEmu_pal;
+    float AppPAL;
     float gamma;
-    float autoEmu_palGamma;
+    float AppFlags;
 } params;
 
 layout(std140, set = 0, binding = 0) uniform UBO
@@ -20,8 +20,6 @@ layout(std140, set = 0, binding = 0) uniform UBO
 } global;
 
 #pragma parameter gamma            "Gamma"              100 30 280 1
-#pragma parameter autoEmu_palGamma "PAL Gamma"          0 0 1 1
-#pragma parameter autoEmu_pal      "PAL"                1 0 1 1
 
 #pragma stage vertex
 layout(location = 0) in vec4 Position;
@@ -43,7 +41,7 @@ void main() {
     vec3 color = texture(Source, vTexCoord).rgb;
 
     float _gamma = params.gamma / 100.0;
-    if (bool(params.autoEmu_palGamma))
+    if (bool(params.AppFlags))
         _gamma *= 2.8 / 2.2;
 
     color = clamp(color, 0.0, 1.0);

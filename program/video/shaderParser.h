@@ -88,5 +88,7 @@ struct ShaderParser {
     static auto buildLutMask() -> void;
     static auto buildLutBandwidth() -> void;
     static auto writeLut(const std::string& path, uint8_t* data, unsigned width, unsigned height) -> void;
+
+    auto adjustInitials(ShaderPreset::Param& param, const std::string& path) -> void;
 };
 

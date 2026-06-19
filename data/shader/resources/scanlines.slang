@@ -9,11 +9,11 @@ layout(push_constant) uniform Push
 {
     vec4 OutputSize;
 
-    float autoEmu_pal;
-    float autoEmu_lace;
+    float AppPAL;
+    float AppInterlace;
     float scanlineShade;
     float gamma;
-    float autoEmu_palGamma;
+    float AppFlags;
 } params;
 
 layout(std140, set = 0, binding = 0) uniform UBO
@@ -24,9 +24,6 @@ layout(std140, set = 0, binding = 0) uniform UBO
 #pragma parameter scanline_head    "[SCANLINES AND GAMMA]"  0 0 0.001 0.001
 #pragma parameter scanlineShade    "Scanline Shade"         20 0 100 1
 #pragma parameter gamma            "Gamma"                  100 30 280 1
-#pragma parameter autoEmu_palGamma "PAL Gamma"              0 0 1 1
-#pragma parameter autoEmu_pal      "PAL"                    1 0 1 1
-#pragma parameter autoEmu_lace     "Interlace"              0 0 1 1
 
 #pragma stage vertex
 layout(location = 0) in vec4 Position;
@@ -50,11 +47,11 @@ void main() {
     vec3 colorDown = texture(Source, vTexCoord.xy + vec2( 0.0, 1.0 / params.OutputSize.y ) ).rgb;
     float shade = 1.0 - (params.scanlineShade / 100.0);
     float _gamma = params.gamma / 100.0;
-    if (bool(params.autoEmu_palGamma))
+    if (bool(params.AppFlags))
         _gamma *= 2.8 / 2.2;
 
     int lineFactor = 0;
-    if ((int(params.autoEmu_lace) == 0) && (params.scanlineShade > 0.0))
+    if ((int(params.AppInterlace) == 0) && (params.scanlineShade > 0.0))
         lineFactor = int(floor(mod(vTexCoord.y * params.OutputSize.y, 2.0)));
 
     color = clamp(color, 0.0, 1.0);

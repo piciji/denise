@@ -55,6 +55,13 @@ struct ScreenTextDescription {
 
 struct AppData {
     float ledDriveState = 0.0;
+    float cropTop = 0.0;
+    float cropLeft = 0.0;
+    float lace = 0.0;
+    float hires = 0.0;
+    float pal = 0.0;
+    float subRegion = 0.0;
+    float flags = 0.0; // free to use
 };
 
 enum Options { OPT_HoldFrame = 1, OPT_Interlace = 2, OPT_DisallowShader = 4, OPT_TakeScreenshot = 8,

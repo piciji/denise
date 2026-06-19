@@ -1923,9 +1923,6 @@ auto PresentationLayout::buildShaderUI(ShaderPreset* preset, bool selectIt) -> v
     for(unsigned i = 0; i < preset->params.size(); i++) {
         auto& param = preset->params[i];
 
-        if (GUIKIT::String::findString(param.id, "autoEmu_"))
-            continue;
-
         auto _desc = param.desc;
         int places = 0;
         int decimalPlaces = 0;

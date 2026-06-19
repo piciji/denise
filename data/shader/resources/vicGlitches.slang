@@ -14,8 +14,8 @@ layout(push_constant) uniform Push
     float glitch_phi;
     float glitch_aec;
     float glitch_ba;
-    float autoEmu_cropLeft;
-    float autoEmu_pal;
+    float AppCropLeft;
+    float AppPAL;
 } params;
 
 layout(std140, set = 0, binding = 0) uniform UBO
@@ -37,8 +37,6 @@ layout(std140, set = 0, binding = 0) uniform UBO
 #pragma parameter glitch_phi            "PHI"                10.5 0 25 0.1
 #pragma parameter glitch_ras            "RAS"                10.5 0 25 0.1
 #pragma parameter glitch_cas            "CAS"                10.5 0 25 0.1
-#pragma parameter autoEmu_cropLeft      "Crop Left"          6 0 100 1
-#pragma parameter autoEmu_pal           "PAL"                1 0 1 1
 
 
 #pragma stage vertex
@@ -71,7 +69,7 @@ void main() {
     if (_y > 0.0) {
         float xposF = vTexCoord.x * params.SourceSize.x;
         int xpos = int(xposF);
-        xpos += int(params.autoEmu_cropLeft) + 4 + (2 << (int(params.autoEmu_pal) ^ 1));
+        xpos += int(params.AppCropLeft) + 4 + (2 << (int(params.AppPAL) ^ 1));
 
         xpos &= 7;
         int flags = int( color.w * 255.0 ) >> 6;

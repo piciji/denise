@@ -5,8 +5,12 @@
 auto VideoManager::usePal(bool state) -> void {
 	pal = state;
     requestUpdate();
-    setData("autoEmu_pal", (float)pal);
-    setData("autoEmu_subRegion", emulator->getSubRegion());
+
+    auto appData = videoDriver->getAppData();
+    if (appData) {
+        appData->pal = (float)pal;
+        appData->subRegion = (float)emulator->getSubRegion();
+    }
 }
 
 auto VideoManager::useColorSpectrum(unsigned state) -> void {
@@ -242,7 +246,9 @@ auto VideoManager::reloadSettings(bool reloadPreset) -> void {
     useColorSpectrum(_useSpectrum);
     setCrtMode( (CrtMode)_crtMode );
 
-    setData("autoEmu_palGamma", (float)(pal && (colorSpectrum == 2)));
+    auto appData = videoDriver->getAppData();
+    if (appData)
+        appData->flags = (float)( pal && (colorSpectrum == 2));
 
     if (reloadPreset)
         loadPreset();

@@ -17,7 +17,7 @@ layout(push_constant) uniform Push
     float luminance;
     float light_center;
     float light_distance;
-    float autoEmu_hires;
+    float AppHires;
 } params;
 
 layout(std140, set = 0, binding = 0) uniform UBO
@@ -29,7 +29,6 @@ layout(std140, set = 0, binding = 0) uniform UBO
 #pragma parameter mask_layer        "Mask Layer 0 (Aperture) 1 (Shadow) 2 (Slot) 3 (Off)"   0 0 3 1
 #pragma parameter mask_level        "Mask Level"                                            45 0 100 1
 #pragma parameter mask_dpi          "Mask DPI"                                              124 1 200 1
-#pragma parameter autoEmu_hires     "Hires"                                                 0 0 1 1
 #pragma parameter mask_pitch        "Mask Pitch"                                            0.31 0.01 1.0 0.01
 #pragma parameter mask_pitch_hires  "Mask Pitch Hires"                                      0.41 0.01 1.0 0.01
 #pragma parameter luminance         "Luminance"                                             100 5 500 5
@@ -58,9 +57,9 @@ layout(set = 0, binding = 5) uniform sampler2D lutMaskSlot;
 
 void main() {
     vec3 color = texture(Source, vTexCoord).xyz;
-    float sizeX = int(params.OriginalSize.x) >> int(params.autoEmu_hires);
+    float sizeX = int(params.OriginalSize.x) >> int(params.AppHires);
     float pitch = params.mask_pitch;
-    if (bool(params.autoEmu_hires)) {
+    if (bool(params.AppHires)) {
         pitch = params.mask_pitch_hires;
     }
 

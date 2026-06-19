@@ -608,22 +608,28 @@ template<typename T, uint8_t options> auto VideoManager::renderFrame(const T* sr
     bool cropCoordUpdated = emulator->cropCoordUpdated(cropTop, cropLeft);
     if (rebuildShader) {
         if (crtMode == CrtMode::Gpu) {
-            setData("autoEmu_cropTop", (float)cropTop);
-            setData("autoEmu_cropLeft", (float)cropLeft);
-            setData("autoEmu_lace", (float)interlace);
-            setData("autoEmu_hires", (float)hires);
-            setData("autoEmu_pal", (float)pal);
-            setData("autoEmu_subRegion", emulator->getSubRegion());
-            setData("autoEmu_palGamma", (float)( pal && (colorSpectrum == 2)));
-            setData("autoEmu_lumaChroma", (float)(shaderLumaChromaInput()));
+            auto appData = videoDriver->getAppData();
+            if (appData) {
+                appData->cropTop = (float)cropTop;
+                appData->cropLeft = (float)cropLeft;
+                appData->lace = (float)interlace;
+                appData->hires = (float)hires;
+                appData->pal = (float)pal;
+                appData->subRegion = (float)emulator->getSubRegion();
+                appData->flags = (float)( pal && (colorSpectrum == 2));
+            }
+
             videoDriver->setShader( &parser->shaderPreset);
         } else
             videoDriver->setShader(nullptr);
 
         rebuildShader  = false;
     } else if (cropCoordUpdated) {
-        setData("autoEmu_cropTop", (float)cropTop);
-        setData("autoEmu_cropLeft", (float)cropLeft);
+        auto appData = videoDriver->getAppData();
+        if (appData) {
+            appData->cropTop = (float)cropTop;
+            appData->cropLeft = (float)cropLeft;
+        }
     }
 
     frameOptions &= ~0x80; // init lace toggle
@@ -635,8 +641,12 @@ template<typename T, uint8_t options> auto VideoManager::renderFrame(const T* sr
             iHold = false;
         }
 
-        setData("autoEmu_lace", (float)interlace);
-        setData("autoEmu_hires", (float)hires);
+        auto appData = videoDriver->getAppData();
+        if (appData) {
+            appData->lace = (float)interlace;
+            appData->hires = (float)hires;
+        }
+
         frameOptions |= (hires << 1) | interlace;
     }
 
