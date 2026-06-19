@@ -171,5 +171,8 @@ set(srcs
 SET_SOURCE_FILES_PROPERTIES(${srcs}
         PROPERTIES INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/deps/libresidfp/src;")
 
-target_sources(libresidfp PRIVATE ${srcs})
+if(ltoSupported)
+    set_target_properties(libresidfp PROPERTIES INTERPROCEDURAL_OPTIMIZATION TRUE)
+endif()
 
+target_sources(libresidfp PRIVATE ${srcs})
