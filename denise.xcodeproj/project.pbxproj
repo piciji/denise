@@ -512,7 +512,7 @@
 		9DFA8D4F2E6F062C00DDD746 /* presentation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DFA8D3D2E6F062C00DDD746 /* presentation.cpp */; };
 		9DFA8D502E6F062C00DDD746 /* presentation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DFA8D3D2E6F062C00DDD746 /* presentation.cpp */; };
 		9DFEB1B62FC8D30700528A40 /* resize.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DFEB1B42FC8D30700528A40 /* resize.cpp */; settings = {COMPILER_FLAGS = "-I$(PROJECT_DIR)/deps/stb/"; }; };
-		9DFEB1B72FC8D30700528A40 /* resize.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DFEB1B42FC8D30700528A40 /* resize.cpp */; };
+		9DFEB1B72FC8D30700528A40 /* resize.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DFEB1B42FC8D30700528A40 /* resize.cpp */; settings = {COMPILER_FLAGS = "-I$(PROJECT_DIR)/deps/stb/"; }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
