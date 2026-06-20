@@ -248,7 +248,7 @@ target_sources(coreC64 PRIVATE
 
 target_compile_options(coreC64 PRIVATE -Wno-shift-count-overflow)
 
-SET_SOURCE_FILES_PROPERTIES(system/residfpHandler.cpp system/sidManager.cpp
+SET_SOURCE_FILES_PROPERTIES(system/residfpHandler.cpp
         PROPERTIES INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/deps/libresidfp/src;")
 
 if(ltoSupported)
