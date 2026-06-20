@@ -50,38 +50,38 @@ typedef double doublePoint[2];
 struct ReSid : Sid {
     ReSid( unsigned nr, System* system, SidManager& sidManager, USBSIDPico& usbSIDPico, Type type);
 
-    auto setType( Type type ) -> void;
-    auto setDigiBoost( bool state ) -> void;
+    auto setType( Type type ) -> void override;
+    auto setDigiBoost( bool state ) -> void override;
     auto updateDigiBoost( bool state ) -> void;
-    auto readIO( uint8_t addr ) -> uint8_t;
-    auto peekIO( uint8_t addr ) -> uint8_t;
-    auto writeIO( uint8_t addr, uint8_t value ) -> void;
+    auto readIO( uint8_t addr ) -> uint8_t override;
+    auto peekIO( uint8_t addr ) -> uint8_t override;
+    auto writeIO( uint8_t addr, uint8_t value ) -> void override;
 	auto writeIOFilter( uint8_t addr, uint8_t value ) -> void;
-    auto reset() -> void;
-    auto clock(int cycles, int sampleCounter, int sampleLimit, bool audioOut) -> int;
-    auto clock() -> void;
+    auto reset() -> void override;
+    auto clock(int cycles, int sampleCounter, int sampleLimit, bool audioOut) -> int override;
+    auto clock() -> void override;
     auto clockSilent() -> void override;
 
     auto getSample() -> float override { return static_cast<float>((externalFilter.output() * scaling) / 2); }
-    auto serialize(Emulator::Serializer& s, bool light) -> void;
+    auto serialize(Emulator::Serializer& s, bool light) -> void override;
 
-    auto enableFilter( bool state ) -> void;
+    auto enableFilter( bool state ) -> void override;
 
-    auto adjustFilterCurve6581(int value) -> void;
-    auto adjustFilterCurve8580(int value) -> void;
+    auto adjustFilterCurve6581(int value) -> void override;
+    auto adjustFilterCurve8580(int value) -> void override;
 
-    auto adjustFilterRange6581(int value) -> void;
+    auto adjustFilterRange6581(int value) -> void override;
 
-    auto setWaveformStrength(uint8_t value) -> void;
+    auto setWaveformStrength(uint8_t value) -> void override;
 
     auto processEnvVoice() -> void;
 
-    auto setSampleRate(double sampleRate) -> void;
+    auto setSampleRate(double sampleRate) -> void override;
 
     Emulator::SystemTimer& sysTimer;
 
-    auto clone(Sid* src, bool keepProps) -> void;
-    auto updateSnapshot(DebuggerSnapshot& snap) -> void;
+    auto clone(Sid* src, bool keepProps) -> void override;
+    auto updateSnapshot(DebuggerSnapshot& snap) -> void override;
 
     int scaling = 5;
 

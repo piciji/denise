@@ -74,7 +74,7 @@ auto ResidfpHandler::writeIO( uint8_t addr, uint8_t value ) -> void {
 
 auto ResidfpHandler::clock(int cycles, int sampleCounter, int sampleLimit, bool audioOut) -> int {
     if (audioOut) {
-        int samples = residfp.clock( cycles, buffer );
+        residfp.clock( cycles, buffer );
 
        // if (samples != cycles)
          //   fprintf( stderr, "residfp cycles <> samples " );

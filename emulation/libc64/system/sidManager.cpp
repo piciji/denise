@@ -6,7 +6,6 @@
 #include "../sid/reSid24.h"
 #include "../sid/chamberlin.h"
 #include "residfpHandler.h"
-#include "../../../deps/libresidfp/src/State.h"
 
 namespace LIBC64 {
 

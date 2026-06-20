@@ -191,7 +191,6 @@
 		9D8FAE822CB40DF9006905BE /* vicII.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FADC72CB40DF8006905BE /* vicII.cpp */; };
 		9D8FAE832CB40DF9006905BE /* vicIIFast.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FADCB2CB40DF8006905BE /* vicIIFast.cpp */; };
 		9D8FAE882CB40DF9006905BE /* base.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FADD02CB40DF8006905BE /* base.cpp */; };
-		9D8FAE8F2CB40DFA006905BE /* sid.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FADDA2CB40DF8006905BE /* sid.cpp */; };
 		9D8FAE942CB40DFA006905BE /* chamberlin.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FADE02CB40DF8006905BE /* chamberlin.cpp */; };
 		9D8FAE9B2CB40DFA006905BE /* m6526.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FADEC2CB40DF8006905BE /* m6526.cpp */; };
 		9D8FAE9C2CB40DFA006905BE /* base.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FADED2CB40DF8006905BE /* base.cpp */; };
@@ -232,6 +231,60 @@
 		9D9D55862F8C2099007A10D6 /* drivers.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D9D55812F8C2099007A10D6 /* drivers.cpp */; };
 		9D9D55872F8C2099007A10D6 /* drivers.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D9D55812F8C2099007A10D6 /* drivers.cpp */; };
 		9DA70F462E101AF000F1DC5B /* scp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DA70F452E101AF000F1DC5B /* scp.cpp */; };
+		9DA75D402FE6F12B00766658 /* reSid.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DA75D3A2FE6F12A00766658 /* reSid.cpp */; };
+		9DA75D412FE6F12B00766658 /* reSid.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DA75D3A2FE6F12A00766658 /* reSid.cpp */; };
+		9DA75D422FE6F12B00766658 /* chamberlin.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DA75D3C2FE6F12A00766658 /* chamberlin.cpp */; };
+		9DA75D432FE6F12B00766658 /* chamberlin.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DA75D3C2FE6F12A00766658 /* chamberlin.cpp */; };
+		9DA75D442FE6F12B00766658 /* reSid24.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DA75D3D2FE6F12A00766658 /* reSid24.cpp */; };
+		9DA75D452FE6F12B00766658 /* reSid24.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DA75D3D2FE6F12A00766658 /* reSid24.cpp */; };
+		9DA75D4C2FE6F17B00766658 /* usbSidPico.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DA75D482FE6F17A00766658 /* usbSidPico.cpp */; };
+		9DA75D4D2FE6F17B00766658 /* usbSidPico.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DA75D482FE6F17A00766658 /* usbSidPico.cpp */; };
+		9DA75D4E2FE6F17B00766658 /* residfpHandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DA75D4A2FE6F17B00766658 /* residfpHandler.cpp */; };
+		9DA75D4F2FE6F17B00766658 /* residfpHandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DA75D4A2FE6F17B00766658 /* residfpHandler.cpp */; };
+		9DA75E0C2FE6FD6B00766658 /* presets in Resources */ = {isa = PBXBuildFile; fileRef = 9DA75E0B2FE6FD6B00766658 /* presets */; };
+		9DA75E0D2FE6FD6B00766658 /* presets in Resources */ = {isa = PBXBuildFile; fileRef = 9DA75E0B2FE6FD6B00766658 /* presets */; };
+		9DA75E2D2FE7027A00766658 /* residfp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DA75E2A2FE7027A00766658 /* residfp.cpp */; settings = {COMPILER_FLAGS = "-I$(PROJECT_DIR)/deps/libresidfp/src/"; }; };
+		9DA75E2E2FE7027A00766658 /* residfp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DA75E2A2FE7027A00766658 /* residfp.cpp */; settings = {COMPILER_FLAGS = "-I$(PROJECT_DIR)/deps/libresidfp/src/"; }; };
+		9DA75E362FE702BD00766658 /* SincResampler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DA75E312FE702BD00766658 /* SincResampler.cpp */; };
+		9DA75E372FE702BD00766658 /* SincResampler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DA75E312FE702BD00766658 /* SincResampler.cpp */; };
+		9DA75E602FE702E200766658 /* Filter6581.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DA75E3C2FE702E100766658 /* Filter6581.cpp */; };
+		9DA75E612FE702E200766658 /* Filter6581.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DA75E3C2FE702E100766658 /* Filter6581.cpp */; };
+		9DA75E622FE702E200766658 /* WaveformCalculator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DA75E3D2FE702E100766658 /* WaveformCalculator.cpp */; };
+		9DA75E632FE702E200766658 /* WaveformCalculator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DA75E3D2FE702E100766658 /* WaveformCalculator.cpp */; };
+		9DA75E642FE702E200766658 /* Spline.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DA75E3F2FE702E100766658 /* Spline.cpp */; };
+		9DA75E652FE702E200766658 /* Spline.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DA75E3F2FE702E100766658 /* Spline.cpp */; };
+		9DA75E662FE702E200766658 /* Integrator6581.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DA75E412FE702E100766658 /* Integrator6581.cpp */; };
+		9DA75E672FE702E200766658 /* Integrator6581.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DA75E412FE702E100766658 /* Integrator6581.cpp */; };
+		9DA75E682FE702E200766658 /* Integrator8580.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DA75E452FE702E100766658 /* Integrator8580.cpp */; };
+		9DA75E692FE702E200766658 /* Integrator8580.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DA75E452FE702E100766658 /* Integrator8580.cpp */; };
+		9DA75E6A2FE702E200766658 /* ExternalFilter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DA75E462FE702E100766658 /* ExternalFilter.cpp */; };
+		9DA75E6B2FE702E200766658 /* ExternalFilter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DA75E462FE702E100766658 /* ExternalFilter.cpp */; };
+		9DA75E6C2FE702E200766658 /* WaveformGenerator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DA75E4A2FE702E100766658 /* WaveformGenerator.cpp */; };
+		9DA75E6D2FE702E200766658 /* WaveformGenerator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DA75E4A2FE702E100766658 /* WaveformGenerator.cpp */; };
+		9DA75E6E2FE702E200766658 /* FilterModelConfig.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DA75E4B2FE702E100766658 /* FilterModelConfig.cpp */; };
+		9DA75E6F2FE702E200766658 /* FilterModelConfig.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DA75E4B2FE702E100766658 /* FilterModelConfig.cpp */; };
+		9DA75E702FE702E200766658 /* Dac.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DA75E4C2FE702E100766658 /* Dac.cpp */; };
+		9DA75E712FE702E200766658 /* Dac.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DA75E4C2FE702E100766658 /* Dac.cpp */; };
+		9DA75E722FE702E200766658 /* Filter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DA75E502FE702E100766658 /* Filter.cpp */; };
+		9DA75E732FE702E200766658 /* Filter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DA75E502FE702E100766658 /* Filter.cpp */; };
+		9DA75E742FE702E200766658 /* README in Resources */ = {isa = PBXBuildFile; fileRef = 9DA75E512FE702E100766658 /* README */; };
+		9DA75E752FE702E200766658 /* README in Resources */ = {isa = PBXBuildFile; fileRef = 9DA75E512FE702E100766658 /* README */; };
+		9DA75E762FE702E200766658 /* Filter8580.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DA75E522FE702E100766658 /* Filter8580.cpp */; };
+		9DA75E772FE702E200766658 /* Filter8580.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DA75E522FE702E100766658 /* Filter8580.cpp */; };
+		9DA75E782FE702E200766658 /* FilterModelConfig8580.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DA75E532FE702E100766658 /* FilterModelConfig8580.cpp */; };
+		9DA75E792FE702E200766658 /* FilterModelConfig8580.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DA75E532FE702E100766658 /* FilterModelConfig8580.cpp */; };
+		9DA75E7A2FE702E200766658 /* OpAmp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DA75E542FE702E200766658 /* OpAmp.cpp */; };
+		9DA75E7B2FE702E200766658 /* OpAmp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DA75E542FE702E200766658 /* OpAmp.cpp */; };
+		9DA75E7C2FE702E200766658 /* State.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DA75E562FE702E200766658 /* State.cpp */; };
+		9DA75E7D2FE702E200766658 /* State.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DA75E562FE702E200766658 /* State.cpp */; };
+		9DA75E7E2FE702E200766658 /* version.cc in Sources */ = {isa = PBXBuildFile; fileRef = 9DA75E572FE702E200766658 /* version.cc */; };
+		9DA75E7F2FE702E200766658 /* version.cc in Sources */ = {isa = PBXBuildFile; fileRef = 9DA75E572FE702E200766658 /* version.cc */; };
+		9DA75E802FE702E200766658 /* FilterModelConfig6581.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DA75E582FE702E200766658 /* FilterModelConfig6581.cpp */; };
+		9DA75E812FE702E200766658 /* FilterModelConfig6581.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DA75E582FE702E200766658 /* FilterModelConfig6581.cpp */; };
+		9DA75E822FE702E200766658 /* EnvelopeGenerator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DA75E592FE702E200766658 /* EnvelopeGenerator.cpp */; };
+		9DA75E832FE702E200766658 /* EnvelopeGenerator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DA75E592FE702E200766658 /* EnvelopeGenerator.cpp */; };
+		9DA75E842FE702E200766658 /* SID.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DA75E5E2FE702E200766658 /* SID.cpp */; };
+		9DA75E852FE702E200766658 /* SID.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DA75E5E2FE702E200766658 /* SID.cpp */; };
 		9DBA88382ED0B94400DF0756 /* dasmHandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DBA88362ED0B94300DF0756 /* dasmHandler.cpp */; };
 		9DBA88392ED0B94400DF0756 /* dasmHandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DBA88362ED0B94300DF0756 /* dasmHandler.cpp */; };
 		9DBA88432ED0C7D400DF0756 /* debugger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DBA88412ED0C7D400DF0756 /* debugger.cpp */; };
@@ -250,7 +303,6 @@
 		9DC455A52FA10935004C6482 /* viaDebugger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DC455A12FA10934004C6482 /* viaDebugger.cpp */; };
 		9DC455A82FA10977004C6482 /* m65Debugger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DC455A62FA10977004C6482 /* m65Debugger.cpp */; };
 		9DC455A92FA10977004C6482 /* m65Debugger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DC455A62FA10977004C6482 /* m65Debugger.cpp */; };
-		9DD0A0B62E3B943B0018DA68 /* usbSidPico.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DD0A0B42E3B943B0018DA68 /* usbSidPico.cpp */; settings = {COMPILER_FLAGS = "-DLIBUSB -I$(PROJECT_DIR)/deps/USBSID-Pico/"; }; };
 		9DD0A0BA2E3B94AF0018DA68 /* USBSID.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DD0A0B92E3B94AF0018DA68 /* USBSID.cpp */; settings = {COMPILER_FLAGS = "-DHAVE_ALIGNED_ALLOC -I$(PROJECT_DIR)/data/libs/include/"; }; };
 		9DD0A0BC2E3B9A220018DA68 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9DD0A0BB2E3B9A220018DA68 /* Security.framework */; };
 		9DD306D82DFAFF2200B8F12F /* httpClient.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DD306D62DFAFF2200B8F12F /* httpClient.cpp */; };
@@ -280,7 +332,6 @@
 		9DECF9262E45F309005C0BBA /* fileloader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAAF62CB3F6EF006905BE /* fileloader.cpp */; };
 		9DECF9272E45F309005C0BBA /* m68000.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FACC22CB40DF6006905BE /* m68000.cpp */; };
 		9DECF9282E45F309005C0BBA /* manager.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAA9F2CB3F6EF006905BE /* manager.cpp */; };
-		9DECF9292E45F309005C0BBA /* sid.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FADDA2CB40DF8006905BE /* sid.cpp */; };
 		9DECF92A2E45F309005C0BBA /* bass.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAAC22CB3F6EF006905BE /* bass.cpp */; };
 		9DECF92B2E45F309005C0BBA /* paula.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FACF82CB40DF7006905BE /* paula.cpp */; };
 		9DECF92C2E45F309005C0BBA /* cosinePrecise.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAAB62CB3F6EF006905BE /* cosinePrecise.cpp */; };
@@ -396,7 +447,6 @@
 		9DECF99B2E45F309005C0BBA /* lh5_decoder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D07CCDF2E296CD000A9787E /* lh5_decoder.cpp */; };
 		9DECF99C2E45F309005C0BBA /* null_decoder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D07CCD52E296CD000A9787E /* null_decoder.cpp */; };
 		9DECF99D2E45F309005C0BBA /* expansionPort.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D6404342DCDEE1C00624A00 /* expansionPort.cpp */; };
-		9DECF99E2E45F309005C0BBA /* usbSidPico.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DD0A0B42E3B943B0018DA68 /* usbSidPico.cpp */; settings = {COMPILER_FLAGS = "-DLIBUSB -I$(PROJECT_DIR)/deps/USBSID-Pico/"; }; };
 		9DECF99F2E45F309005C0BBA /* reverb.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAAC42CB3F6EF006905BE /* reverb.cpp */; };
 		9DECF9A02E45F309005C0BBA /* system.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAD8C2CB40DF7006905BE /* system.cpp */; };
 		9DECF9A12E45F309005C0BBA /* config.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAA962CB3F6EF006905BE /* config.cpp */; };
@@ -1102,7 +1152,6 @@
 		9D8FADD42CB40DF8006905BE /* serialization.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = serialization.cpp; sourceTree = "<group>"; };
 		9D8FADD72CB40DF8006905BE /* base.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = base.h; sourceTree = "<group>"; };
 		9D8FADD92CB40DF8006905BE /* voice.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = voice.cpp; sourceTree = "<group>"; };
-		9D8FADDA2CB40DF8006905BE /* sid.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = sid.cpp; sourceTree = "<group>"; };
 		9D8FADDB2CB40DF8006905BE /* tables.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = tables.cpp; sourceTree = "<group>"; };
 		9D8FADDC2CB40DF8006905BE /* register.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = register.cpp; sourceTree = "<group>"; };
 		9D8FADDD2CB40DF8006905BE /* serialization.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = serialization.cpp; sourceTree = "<group>"; };
@@ -1113,7 +1162,6 @@
 		9D8FADE32CB40DF8006905BE /* external.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = external.cpp; sourceTree = "<group>"; };
 		9D8FADE42CB40DF8006905BE /* build.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = build.cpp; sourceTree = "<group>"; };
 		9D8FADE52CB40DF8006905BE /* main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
-		9D8FADE62CB40DF8006905BE /* sid.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = sid.h; sourceTree = "<group>"; };
 		9D8FADE72CB40DF8006905BE /* envelope.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = envelope.cpp; sourceTree = "<group>"; };
 		9D8FADE82CB40DF8006905BE /* interface.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = interface.h; sourceTree = "<group>"; };
 		9D8FADEA2CB40DF8006905BE /* m8520.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = m8520.h; sourceTree = "<group>"; };
@@ -1157,6 +1205,70 @@
 		9DA70F442E101AF000F1DC5B /* scp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = scp.h; sourceTree = "<group>"; };
 		9DA70F452E101AF000F1DC5B /* scp.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = scp.cpp; sourceTree = "<group>"; };
 		9DA70F472E101AFF00F1DC5B /* scp.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = scp.cpp; sourceTree = "<group>"; };
+		9DA75D3A2FE6F12A00766658 /* reSid.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = reSid.cpp; sourceTree = "<group>"; };
+		9DA75D3B2FE6F12A00766658 /* reSid.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = reSid.h; sourceTree = "<group>"; };
+		9DA75D3C2FE6F12A00766658 /* chamberlin.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = chamberlin.cpp; sourceTree = "<group>"; };
+		9DA75D3D2FE6F12A00766658 /* reSid24.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = reSid24.cpp; sourceTree = "<group>"; };
+		9DA75D3E2FE6F12A00766658 /* reSid24.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = reSid24.h; sourceTree = "<group>"; };
+		9DA75D3F2FE6F12A00766658 /* chamberlin.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = chamberlin.h; sourceTree = "<group>"; };
+		9DA75D462FE6F17A00766658 /* residfpHandler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = residfpHandler.h; sourceTree = "<group>"; };
+		9DA75D472FE6F17A00766658 /* sid.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = sid.h; sourceTree = "<group>"; };
+		9DA75D482FE6F17A00766658 /* usbSidPico.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = usbSidPico.cpp; sourceTree = "<group>"; };
+		9DA75D492FE6F17B00766658 /* debuggerSnapshot.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = debuggerSnapshot.h; sourceTree = "<group>"; };
+		9DA75D4A2FE6F17B00766658 /* residfpHandler.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = residfpHandler.cpp; sourceTree = "<group>"; };
+		9DA75D4B2FE6F17B00766658 /* usbSidPico.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = usbSidPico.h; sourceTree = "<group>"; };
+		9DA75E0B2FE6FD6B00766658 /* presets */ = {isa = PBXFileReference; lastKnownFileType = folder; name = presets; path = data/presets; sourceTree = "<group>"; };
+		9DA75E292FE7027A00766658 /* sidversion.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = sidversion.h; path = deps/libresidfp/src/residfp/sidversion.h; sourceTree = "<group>"; };
+		9DA75E2A2FE7027A00766658 /* residfp.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = residfp.cpp; path = deps/libresidfp/src/residfp/residfp.cpp; sourceTree = "<group>"; };
+		9DA75E2B2FE7027A00766658 /* residfp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = residfp.h; path = deps/libresidfp/src/residfp/residfp.h; sourceTree = "<group>"; };
+		9DA75E2C2FE7027A00766658 /* residfp_defs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = residfp_defs.h; path = deps/libresidfp/src/residfp/residfp_defs.h; sourceTree = "<group>"; };
+		9DA75E2F2FE702BD00766658 /* TwoPassSincResampler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TwoPassSincResampler.h; path = deps/libresidfp/src/resample/TwoPassSincResampler.h; sourceTree = "<group>"; };
+		9DA75E302FE702BD00766658 /* PassThrough.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PassThrough.h; path = deps/libresidfp/src/resample/PassThrough.h; sourceTree = "<group>"; };
+		9DA75E312FE702BD00766658 /* SincResampler.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SincResampler.cpp; path = deps/libresidfp/src/resample/SincResampler.cpp; sourceTree = "<group>"; };
+		9DA75E322FE702BD00766658 /* Resampler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Resampler.h; path = deps/libresidfp/src/resample/Resampler.h; sourceTree = "<group>"; };
+		9DA75E332FE702BD00766658 /* SincResampler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SincResampler.h; path = deps/libresidfp/src/resample/SincResampler.h; sourceTree = "<group>"; };
+		9DA75E342FE702BD00766658 /* ZeroOrderResampler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ZeroOrderResampler.h; path = deps/libresidfp/src/resample/ZeroOrderResampler.h; sourceTree = "<group>"; };
+		9DA75E352FE702BD00766658 /* Limiter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Limiter.h; path = deps/libresidfp/src/resample/Limiter.h; sourceTree = "<group>"; };
+		9DA75E382FE702E000766658 /* Voice.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Voice.h; path = deps/libresidfp/src/Voice.h; sourceTree = "<group>"; };
+		9DA75E392FE702E000766658 /* ExternalFilter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ExternalFilter.h; path = deps/libresidfp/src/ExternalFilter.h; sourceTree = "<group>"; };
+		9DA75E3A2FE702E100766658 /* Integrator6581.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Integrator6581.h; path = deps/libresidfp/src/Integrator6581.h; sourceTree = "<group>"; };
+		9DA75E3B2FE702E100766658 /* OpAmp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = OpAmp.h; path = deps/libresidfp/src/OpAmp.h; sourceTree = "<group>"; };
+		9DA75E3C2FE702E100766658 /* Filter6581.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Filter6581.cpp; path = deps/libresidfp/src/Filter6581.cpp; sourceTree = "<group>"; };
+		9DA75E3D2FE702E100766658 /* WaveformCalculator.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = WaveformCalculator.cpp; path = deps/libresidfp/src/WaveformCalculator.cpp; sourceTree = "<group>"; };
+		9DA75E3E2FE702E100766658 /* Integrator8580.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Integrator8580.h; path = deps/libresidfp/src/Integrator8580.h; sourceTree = "<group>"; };
+		9DA75E3F2FE702E100766658 /* Spline.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Spline.cpp; path = deps/libresidfp/src/Spline.cpp; sourceTree = "<group>"; };
+		9DA75E402FE702E100766658 /* Integrator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Integrator.h; path = deps/libresidfp/src/Integrator.h; sourceTree = "<group>"; };
+		9DA75E412FE702E100766658 /* Integrator6581.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Integrator6581.cpp; path = deps/libresidfp/src/Integrator6581.cpp; sourceTree = "<group>"; };
+		9DA75E422FE702E100766658 /* FilterModelConfig.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FilterModelConfig.h; path = deps/libresidfp/src/FilterModelConfig.h; sourceTree = "<group>"; };
+		9DA75E432FE702E100766658 /* FilterModelConfig6581.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FilterModelConfig6581.h; path = deps/libresidfp/src/FilterModelConfig6581.h; sourceTree = "<group>"; };
+		9DA75E442FE702E100766658 /* WaveformGenerator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = WaveformGenerator.h; path = deps/libresidfp/src/WaveformGenerator.h; sourceTree = "<group>"; };
+		9DA75E452FE702E100766658 /* Integrator8580.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Integrator8580.cpp; path = deps/libresidfp/src/Integrator8580.cpp; sourceTree = "<group>"; };
+		9DA75E462FE702E100766658 /* ExternalFilter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ExternalFilter.cpp; path = deps/libresidfp/src/ExternalFilter.cpp; sourceTree = "<group>"; };
+		9DA75E472FE702E100766658 /* EnvelopeGenerator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = EnvelopeGenerator.h; path = deps/libresidfp/src/EnvelopeGenerator.h; sourceTree = "<group>"; };
+		9DA75E482FE702E100766658 /* SID.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SID.h; path = deps/libresidfp/src/SID.h; sourceTree = "<group>"; };
+		9DA75E492FE702E100766658 /* FilterModelConfig8580.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FilterModelConfig8580.h; path = deps/libresidfp/src/FilterModelConfig8580.h; sourceTree = "<group>"; };
+		9DA75E4A2FE702E100766658 /* WaveformGenerator.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = WaveformGenerator.cpp; path = deps/libresidfp/src/WaveformGenerator.cpp; sourceTree = "<group>"; };
+		9DA75E4B2FE702E100766658 /* FilterModelConfig.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FilterModelConfig.cpp; path = deps/libresidfp/src/FilterModelConfig.cpp; sourceTree = "<group>"; };
+		9DA75E4C2FE702E100766658 /* Dac.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Dac.cpp; path = deps/libresidfp/src/Dac.cpp; sourceTree = "<group>"; };
+		9DA75E4D2FE702E100766658 /* Filter8580.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Filter8580.h; path = deps/libresidfp/src/Filter8580.h; sourceTree = "<group>"; };
+		9DA75E4E2FE702E100766658 /* Dac.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Dac.h; path = deps/libresidfp/src/Dac.h; sourceTree = "<group>"; };
+		9DA75E4F2FE702E100766658 /* WaveformCalculator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = WaveformCalculator.h; path = deps/libresidfp/src/WaveformCalculator.h; sourceTree = "<group>"; };
+		9DA75E502FE702E100766658 /* Filter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Filter.cpp; path = deps/libresidfp/src/Filter.cpp; sourceTree = "<group>"; };
+		9DA75E512FE702E100766658 /* README */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = README; path = deps/libresidfp/src/README; sourceTree = "<group>"; };
+		9DA75E522FE702E100766658 /* Filter8580.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Filter8580.cpp; path = deps/libresidfp/src/Filter8580.cpp; sourceTree = "<group>"; };
+		9DA75E532FE702E100766658 /* FilterModelConfig8580.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FilterModelConfig8580.cpp; path = deps/libresidfp/src/FilterModelConfig8580.cpp; sourceTree = "<group>"; };
+		9DA75E542FE702E200766658 /* OpAmp.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = OpAmp.cpp; path = deps/libresidfp/src/OpAmp.cpp; sourceTree = "<group>"; };
+		9DA75E552FE702E200766658 /* siddefs-fp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "siddefs-fp.h"; path = "deps/libresidfp/src/siddefs-fp.h"; sourceTree = "<group>"; };
+		9DA75E562FE702E200766658 /* State.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = State.cpp; path = deps/libresidfp/src/State.cpp; sourceTree = "<group>"; };
+		9DA75E572FE702E200766658 /* version.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = version.cc; path = deps/libresidfp/src/version.cc; sourceTree = "<group>"; };
+		9DA75E582FE702E200766658 /* FilterModelConfig6581.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FilterModelConfig6581.cpp; path = deps/libresidfp/src/FilterModelConfig6581.cpp; sourceTree = "<group>"; };
+		9DA75E592FE702E200766658 /* EnvelopeGenerator.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = EnvelopeGenerator.cpp; path = deps/libresidfp/src/EnvelopeGenerator.cpp; sourceTree = "<group>"; };
+		9DA75E5A2FE702E200766658 /* Filter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Filter.h; path = deps/libresidfp/src/Filter.h; sourceTree = "<group>"; };
+		9DA75E5B2FE702E200766658 /* State.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = State.h; path = deps/libresidfp/src/State.h; sourceTree = "<group>"; };
+		9DA75E5C2FE702E200766658 /* Spline.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Spline.h; path = deps/libresidfp/src/Spline.h; sourceTree = "<group>"; };
+		9DA75E5D2FE702E200766658 /* Filter6581.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Filter6581.h; path = deps/libresidfp/src/Filter6581.h; sourceTree = "<group>"; };
+		9DA75E5E2FE702E200766658 /* SID.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SID.cpp; path = deps/libresidfp/src/SID.cpp; sourceTree = "<group>"; };
+		9DA75E5F2FE702E200766658 /* array.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = array.h; path = deps/libresidfp/src/array.h; sourceTree = "<group>"; };
 		9DBA88362ED0B94300DF0756 /* dasmHandler.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = dasmHandler.cpp; sourceTree = "<group>"; };
 		9DBA88372ED0B94400DF0756 /* dasmHandler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = dasmHandler.h; sourceTree = "<group>"; };
 		9DBA883A2ED0B95700DF0756 /* disassembler.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = disassembler.cpp; sourceTree = "<group>"; };
@@ -1190,8 +1302,6 @@
 		9DC455A12FA10934004C6482 /* viaDebugger.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = viaDebugger.cpp; sourceTree = "<group>"; };
 		9DC455A62FA10977004C6482 /* m65Debugger.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = m65Debugger.cpp; sourceTree = "<group>"; };
 		9DC455A72FA10977004C6482 /* m65Debugger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = m65Debugger.h; sourceTree = "<group>"; };
-		9DD0A0B42E3B943B0018DA68 /* usbSidPico.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = usbSidPico.cpp; sourceTree = "<group>"; };
-		9DD0A0B52E3B943B0018DA68 /* usbSidPico.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = usbSidPico.h; sourceTree = "<group>"; };
 		9DD0A0B82E3B94AF0018DA68 /* USBSID.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = USBSID.h; path = "deps/USBSID-Pico/USBSID.h"; sourceTree = SOURCE_ROOT; };
 		9DD0A0B92E3B94AF0018DA68 /* USBSID.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = USBSID.cpp; path = "deps/USBSID-Pico/USBSID.cpp"; sourceTree = SOURCE_ROOT; };
 		9DD0A0BB2E3B9A220018DA68 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
@@ -2533,6 +2643,12 @@
 		9D8FAD832CB40DF7006905BE /* system */ = {
 			isa = PBXGroup;
 			children = (
+				9DA75D492FE6F17B00766658 /* debuggerSnapshot.h */,
+				9DA75D4A2FE6F17B00766658 /* residfpHandler.cpp */,
+				9DA75D462FE6F17A00766658 /* residfpHandler.h */,
+				9DA75D472FE6F17A00766658 /* sid.h */,
+				9DA75D482FE6F17A00766658 /* usbSidPico.cpp */,
+				9DA75D4B2FE6F17B00766658 /* usbSidPico.h */,
 				9D8FAD842CB40DF7006905BE /* firmware.cpp */,
 				9D8FAD852CB40DF7006905BE /* keyBuffer.cpp */,
 				9D8FAD862CB40DF7006905BE /* sidManager.cpp */,
@@ -2687,16 +2803,18 @@
 		9D8FADD82CB40DF8006905BE /* sid */ = {
 			isa = PBXGroup;
 			children = (
-				9DD0A0B42E3B943B0018DA68 /* usbSidPico.cpp */,
-				9DD0A0B52E3B943B0018DA68 /* usbSidPico.h */,
+				9DA75D3C2FE6F12A00766658 /* chamberlin.cpp */,
+				9DA75D3F2FE6F12A00766658 /* chamberlin.h */,
+				9DA75D3A2FE6F12A00766658 /* reSid.cpp */,
+				9DA75D3B2FE6F12A00766658 /* reSid.h */,
+				9DA75D3D2FE6F12A00766658 /* reSid24.cpp */,
+				9DA75D3E2FE6F12A00766658 /* reSid24.h */,
 				9D8FADD92CB40DF8006905BE /* voice.cpp */,
-				9D8FADDA2CB40DF8006905BE /* sid.cpp */,
 				9D8FADDB2CB40DF8006905BE /* tables.cpp */,
 				9D8FADDC2CB40DF8006905BE /* register.cpp */,
 				9D8FADDD2CB40DF8006905BE /* serialization.cpp */,
 				9D8FADDE2CB40DF8006905BE /* clone.cpp */,
 				9D8FADDF2CB40DF8006905BE /* filter */,
-				9D8FADE62CB40DF8006905BE /* sid.h */,
 				9D8FADE72CB40DF8006905BE /* envelope.cpp */,
 			);
 			path = sid;
@@ -2745,6 +2863,7 @@
 		9D8FB4D52CB472A7006905BE /* deps */ = {
 			isa = PBXGroup;
 			children = (
+				9DA75E252FE7022100766658 /* libresidfp */,
 				9D7B48562E40D7640010B152 /* cgif */,
 				9DD0A0B72E3B94900018DA68 /* USBSID-Pico */,
 				9D07CD172E29703800A9787E /* depsSlang.cpp */,
@@ -2758,6 +2877,7 @@
 		9D8FB4DF2CB4751F006905BE /* data */ = {
 			isa = PBXGroup;
 			children = (
+				9DA75E0B2FE6FD6B00766658 /* presets */,
 				9D0C38272CB5A66F00363301 /* images */,
 				9D0C38232CB59D9B00363301 /* data */,
 				9D0C38122CB586BE00363301 /* sounds */,
@@ -2778,6 +2898,88 @@
 				9DA70F452E101AF000F1DC5B /* scp.cpp */,
 			);
 			path = scp;
+			sourceTree = "<group>";
+		};
+		9DA75E252FE7022100766658 /* libresidfp */ = {
+			isa = PBXGroup;
+			children = (
+				9DA75E262FE7023700766658 /* src */,
+			);
+			name = libresidfp;
+			sourceTree = "<group>";
+		};
+		9DA75E262FE7023700766658 /* src */ = {
+			isa = PBXGroup;
+			children = (
+				9DA75E5F2FE702E200766658 /* array.h */,
+				9DA75E4C2FE702E100766658 /* Dac.cpp */,
+				9DA75E4E2FE702E100766658 /* Dac.h */,
+				9DA75E592FE702E200766658 /* EnvelopeGenerator.cpp */,
+				9DA75E472FE702E100766658 /* EnvelopeGenerator.h */,
+				9DA75E462FE702E100766658 /* ExternalFilter.cpp */,
+				9DA75E392FE702E000766658 /* ExternalFilter.h */,
+				9DA75E502FE702E100766658 /* Filter.cpp */,
+				9DA75E5A2FE702E200766658 /* Filter.h */,
+				9DA75E3C2FE702E100766658 /* Filter6581.cpp */,
+				9DA75E5D2FE702E200766658 /* Filter6581.h */,
+				9DA75E522FE702E100766658 /* Filter8580.cpp */,
+				9DA75E4D2FE702E100766658 /* Filter8580.h */,
+				9DA75E4B2FE702E100766658 /* FilterModelConfig.cpp */,
+				9DA75E422FE702E100766658 /* FilterModelConfig.h */,
+				9DA75E582FE702E200766658 /* FilterModelConfig6581.cpp */,
+				9DA75E432FE702E100766658 /* FilterModelConfig6581.h */,
+				9DA75E532FE702E100766658 /* FilterModelConfig8580.cpp */,
+				9DA75E492FE702E100766658 /* FilterModelConfig8580.h */,
+				9DA75E402FE702E100766658 /* Integrator.h */,
+				9DA75E412FE702E100766658 /* Integrator6581.cpp */,
+				9DA75E3A2FE702E100766658 /* Integrator6581.h */,
+				9DA75E452FE702E100766658 /* Integrator8580.cpp */,
+				9DA75E3E2FE702E100766658 /* Integrator8580.h */,
+				9DA75E542FE702E200766658 /* OpAmp.cpp */,
+				9DA75E3B2FE702E100766658 /* OpAmp.h */,
+				9DA75E512FE702E100766658 /* README */,
+				9DA75E5E2FE702E200766658 /* SID.cpp */,
+				9DA75E482FE702E100766658 /* SID.h */,
+				9DA75E552FE702E200766658 /* siddefs-fp.h */,
+				9DA75E3F2FE702E100766658 /* Spline.cpp */,
+				9DA75E5C2FE702E200766658 /* Spline.h */,
+				9DA75E562FE702E200766658 /* State.cpp */,
+				9DA75E5B2FE702E200766658 /* State.h */,
+				9DA75E572FE702E200766658 /* version.cc */,
+				9DA75E382FE702E000766658 /* Voice.h */,
+				9DA75E3D2FE702E100766658 /* WaveformCalculator.cpp */,
+				9DA75E4F2FE702E100766658 /* WaveformCalculator.h */,
+				9DA75E4A2FE702E100766658 /* WaveformGenerator.cpp */,
+				9DA75E442FE702E100766658 /* WaveformGenerator.h */,
+				9DA75E282FE7024900766658 /* residfp */,
+				9DA75E272FE7024200766658 /* resample */,
+			);
+			name = src;
+			sourceTree = "<group>";
+		};
+		9DA75E272FE7024200766658 /* resample */ = {
+			isa = PBXGroup;
+			children = (
+				9DA75E352FE702BD00766658 /* Limiter.h */,
+				9DA75E302FE702BD00766658 /* PassThrough.h */,
+				9DA75E322FE702BD00766658 /* Resampler.h */,
+				9DA75E312FE702BD00766658 /* SincResampler.cpp */,
+				9DA75E332FE702BD00766658 /* SincResampler.h */,
+				9DA75E2F2FE702BD00766658 /* TwoPassSincResampler.h */,
+				9DA75E342FE702BD00766658 /* ZeroOrderResampler.h */,
+			);
+			name = resample;
+			sourceTree = "<group>";
+		};
+		9DA75E282FE7024900766658 /* residfp */ = {
+			isa = PBXGroup;
+			children = (
+				9DA75E2C2FE7027A00766658 /* residfp_defs.h */,
+				9DA75E2A2FE7027A00766658 /* residfp.cpp */,
+				9DA75E2B2FE7027A00766658 /* residfp.h */,
+				9DA75E292FE7027A00766658 /* sidversion.h */,
+			);
+			name = residfp;
 			sourceTree = "<group>";
 		};
 		9DBA88402ED0C7D400DF0756 /* debugger */ = {
@@ -2916,11 +3118,13 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				9DA75E742FE702E200766658 /* README in Resources */,
 				9D0C38132CB586BE00363301 /* sounds in Resources */,
 				9D0C380B2CB584D800363301 /* denise.icns in Resources */,
 				9D0C380F2CB5865B00363301 /* shader in Resources */,
 				9D0C38112CB586AD00363301 /* translation in Resources */,
 				9D0C38242CB59D9B00363301 /* data in Resources */,
+				9DA75E0C2FE6FD6B00766658 /* presets in Resources */,
 				9D0C38282CB5A66F00363301 /* images in Resources */,
 				9D0C380D2CB5861C00363301 /* fonts in Resources */,
 			);
@@ -2930,11 +3134,13 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				9DA75E752FE702E200766658 /* README in Resources */,
 				9DECF9CC2E45F309005C0BBA /* sounds in Resources */,
 				9DECF9CD2E45F309005C0BBA /* denise.icns in Resources */,
 				9DECF9CE2E45F309005C0BBA /* shader in Resources */,
 				9DECF9CF2E45F309005C0BBA /* translation in Resources */,
 				9DECF9D12E45F309005C0BBA /* data in Resources */,
+				9DA75E0D2FE6FD6B00766658 /* presets in Resources */,
 				9DECF9D22E45F309005C0BBA /* images in Resources */,
 				9DECF9D32E45F309005C0BBA /* fonts in Resources */,
 			);
@@ -2948,31 +3154,37 @@
 			buildActionMask = 2147483647;
 			files = (
 				9D5539712D5A91010083E91B /* echo.cpp in Sources */,
+				9DA75E682FE702E200766658 /* Integrator8580.cpp in Sources */,
 				9D55396E2D5A90BB0083E91B /* superCpu.cpp in Sources */,
 				9D55396D2D5A90AE0083E91B /* chessCard.cpp in Sources */,
+				9DA75E702FE702E200766658 /* Dac.cpp in Sources */,
 				9D55396C2D5A909C0083E91B /* w65C02.cpp in Sources */,
 				9DC4559E2FA108F5004C6482 /* m6502.cpp in Sources */,
 				9D55396B2D5A90940083E91B /* w65816.cpp in Sources */,
 				9D8FB4E42CB475A8006905BE /* images.cpp in Sources */,
+				9DA75E622FE702E200766658 /* WaveformCalculator.cpp in Sources */,
 				9D8FAE072CB40DF8006905BE /* input.cpp in Sources */,
 				9D8FAB2C2CB3F6F0006905BE /* media.cpp in Sources */,
 				9D8FAB302CB3F6F0006905BE /* fileloader.cpp in Sources */,
 				9D8FADFE2CB40DF8006905BE /* m68000.cpp in Sources */,
 				9D8FAB092CB3F6EF006905BE /* manager.cpp in Sources */,
-				9D8FAE8F2CB40DFA006905BE /* sid.cpp in Sources */,
 				9DFEB1B62FC8D30700528A40 /* resize.cpp in Sources */,
 				9D4D10482F071C6B00296467 /* memDebugger.cpp in Sources */,
 				9D8FAB182CB3F6EF006905BE /* bass.cpp in Sources */,
 				9D8FAE212CB40DF8006905BE /* paula.cpp in Sources */,
 				9D06FBF52FA92300009F364B /* serialDebugger.cpp in Sources */,
 				9D8FAB132CB3F6EF006905BE /* cosinePrecise.cpp in Sources */,
+				9DA75D4C2FE6F17B00766658 /* usbSidPico.cpp in Sources */,
 				9D07CD052E296CD000A9787E /* crc16.cpp in Sources */,
 				9D8FAE882CB40DF9006905BE /* base.cpp in Sources */,
+				9DA75E642FE702E200766658 /* Spline.cpp in Sources */,
+				9DA75D422FE6F12B00766658 /* chamberlin.cpp in Sources */,
 				9D8FAE622CB40DF9006905BE /* interface.cpp in Sources */,
 				9D8FAE682CB40DF9006905BE /* tape.cpp in Sources */,
 				9D8FAE0C2CB40DF8006905BE /* keyboard.cpp in Sources */,
 				9D07CCFA2E296CD000A9787E /* lha_reader.cpp in Sources */,
 				9D8FAE6C2CB40DF9006905BE /* wd1770.cpp in Sources */,
+				9DA75E782FE702E200766658 /* FilterModelConfig8580.cpp in Sources */,
 				9D3226672F97727E005B3154 /* paulaDebugger.cpp in Sources */,
 				9D07CCFF2E296CD000A9787E /* lzs_decoder.cpp in Sources */,
 				9D07CD0A2E296CD000A9787E /* pm2_decoder.cpp in Sources */,
@@ -2983,6 +3195,9 @@
 				9D8FAAF82CB3F6EF006905BE /* program.cpp in Sources */,
 				9D8FAE012CB40DF8006905BE /* m68000.cpp in Sources */,
 				9D64044D2DCDEF2E00624A00 /* hunk.cpp in Sources */,
+				9DA75E6C2FE702E200766658 /* WaveformGenerator.cpp in Sources */,
+				9DA75E822FE702E200766658 /* EnvelopeGenerator.cpp in Sources */,
+				9DA75E762FE702E200766658 /* Filter8580.cpp in Sources */,
 				9D8FAB1C2CB3F6F0006905BE /* states.cpp in Sources */,
 				9D8FAE742CB40DF9006905BE /* drive.cpp in Sources */,
 				9D64044C2DCDEF2E00624A00 /* hardDrive.cpp in Sources */,
@@ -2990,15 +3205,19 @@
 				9D8F51082EDB5A2A00153A53 /* watcher.cpp in Sources */,
 				9D8FAAFF2CB3F6EF006905BE /* palette.cpp in Sources */,
 				9D8FAB112CB3F6EF006905BE /* cosine.cpp in Sources */,
+				9DA75E722FE702E200766658 /* Filter.cpp in Sources */,
 				9D8FAB282CB3F6F0006905BE /* model.cpp in Sources */,
 				9DD0A0BA2E3B94AF0018DA68 /* USBSID.cpp in Sources */,
+				9DA75E7C2FE702E200766658 /* State.cpp in Sources */,
 				9D8FAE3E2CB40DF9006905BE /* reu.cpp in Sources */,
 				9D07CD0C2E296CD000A9787E /* lha_arch_unix.cpp in Sources */,
 				9D07CD182E29703800A9787E /* depsSpirv.cpp in Sources */,
 				9DC0D1822F69EA06005DB0ED /* copperDebugger.cpp in Sources */,
 				9D07CD0D2E296CD000A9787E /* lz5_decoder.cpp in Sources */,
 				9D8FAE582CB40DF9006905BE /* traps.cpp in Sources */,
+				9DA75E6E2FE702E200766658 /* FilterModelConfig.cpp in Sources */,
 				9DF7CF502D96E1D400CECCF1 /* lha.cpp in Sources */,
+				9DA75E2D2FE7027A00766658 /* residfp.cpp in Sources */,
 				9D8FAE172CB40DF8006905BE /* copper.cpp in Sources */,
 				9D6404412DCDEEF500624A00 /* firmware.cpp in Sources */,
 				9D8FAE112CB40DF8006905BE /* interface.cpp in Sources */,
@@ -3017,6 +3236,7 @@
 				9D8F51042EDB5A1B00153A53 /* dasmHandler.cpp in Sources */,
 				9D07CD0E2E296CD000A9787E /* lhx_decoder.cpp in Sources */,
 				9D06FBFB2FA92343009F364B /* serial.cpp in Sources */,
+				9DA75E6A2FE702E200766658 /* ExternalFilter.cpp in Sources */,
 				9D8FAE2D2CB40DF8006905BE /* diskDrive.cpp in Sources */,
 				9D8FAB2D2CB3F6F0006905BE /* autoloader.cpp in Sources */,
 				9D8FABB02CB3F8EE006905BE /* api.cpp in Sources */,
@@ -3051,21 +3271,27 @@
 				9D07CD012E296CD000A9787E /* lha_input_stream.cpp in Sources */,
 				9D32BA8A2F940DF900AC6442 /* agnusDebugger.cpp in Sources */,
 				9D8FAE4D2CB40DF9006905BE /* input.cpp in Sources */,
+				9DA75E802FE702E200766658 /* FilterModelConfig6581.cpp in Sources */,
 				9D8FAE102CB40DF8006905BE /* system.cpp in Sources */,
 				9D8FAE9B2CB40DFA006905BE /* m6526.cpp in Sources */,
 				9D8FAE192CB40DF8006905BE /* blitter.cpp in Sources */,
+				9DA75E7E2FE702E200766658 /* version.cc in Sources */,
 				9DFA8D452E6F062C00DDD746 /* system.cpp in Sources */,
 				9DFA8D472E6F062C00DDD746 /* firmware.cpp in Sources */,
 				9D8FAE612CB40DF9006905BE /* clipboard.cpp in Sources */,
 				9D64044B2DCDEF2E00624A00 /* filesystemExt.cpp in Sources */,
+				9DA75D402FE6F12B00766658 /* reSid.cpp in Sources */,
 				9D07CC8C2E296C5F00A9787E /* images.cpp in Sources */,
+				9DA75E842FE702E200766658 /* SID.cpp in Sources */,
 				9D8FAB172CB3F6EF006905BE /* drive.cpp in Sources */,
 				9D4D104A2F071C6B00296467 /* cpuDebugger.cpp in Sources */,
 				9D8FAAFC2CB3F6EF006905BE /* manager.cpp in Sources */,
 				9D8FAAF92CB3F6EF006905BE /* manager.cpp in Sources */,
 				9DE47D102DE8CD6200903CA4 /* uuid.cpp in Sources */,
 				9D4D104E2F071DA500296467 /* dasmHandler.cpp in Sources */,
+				9DA75E602FE702E200766658 /* Filter6581.cpp in Sources */,
 				9DD306D82DFAFF2200B8F12F /* httpClient.cpp in Sources */,
+				9DA75D4E2FE6F17B00766658 /* residfpHandler.cpp in Sources */,
 				9D8FAB012CB3F6EF006905BE /* archiveViewer.cpp in Sources */,
 				9DC455A82FA10977004C6482 /* m65Debugger.cpp in Sources */,
 				9D8FADFD2CB40DF8006905BE /* denise.cpp in Sources */,
@@ -3089,6 +3315,7 @@
 				9D07CD042E296CD000A9787E /* lk7_decoder.cpp in Sources */,
 				9D8FAB2A2CB3F6F0006905BE /* config.cpp in Sources */,
 				9D5FAF2D2CF07001002B0C34 /* imageViewer.cpp in Sources */,
+				9DA75E362FE702BD00766658 /* SincResampler.cpp in Sources */,
 				9D7B485F2E40D7640010B152 /* cgif_raw.cpp in Sources */,
 				9D8FAB192CB3F6EF006905BE /* panning.cpp in Sources */,
 				9D8FAE4C2CB40DF9006905BE /* prg.cpp in Sources */,
@@ -3104,11 +3331,11 @@
 				9D8FAE442CB40DF9006905BE /* easyFlash.cpp in Sources */,
 				9DC0D1802F69EA06005DB0ED /* conditionViewDebugger.cpp in Sources */,
 				9D8FAE6D2CB40DF9006905BE /* via.cpp in Sources */,
+				9DA75E7A2FE702E200766658 /* OpAmp.cpp in Sources */,
 				9D8FAE5A2CB40DF9006905BE /* keyBuffer.cpp in Sources */,
 				9D07CD032E296CD000A9787E /* lh5_decoder.cpp in Sources */,
 				9D07CCFC2E296CD000A9787E /* null_decoder.cpp in Sources */,
 				9D6404392DCDEE1C00624A00 /* expansionPort.cpp in Sources */,
-				9DD0A0B62E3B943B0018DA68 /* usbSidPico.cpp in Sources */,
 				9DFA8D4B2E6F062C00DDD746 /* misc.cpp in Sources */,
 				9D8FAB1A2CB3F6EF006905BE /* reverb.cpp in Sources */,
 				9D8FAE602CB40DF9006905BE /* system.cpp in Sources */,
@@ -3127,10 +3354,12 @@
 				9DC455A42FA10935004C6482 /* viaDebugger.cpp in Sources */,
 				9D8FAE082CB40DF8006905BE /* controlPort.cpp in Sources */,
 				9D98A74B2F4B93EF00BB972F /* expressionParser.cpp in Sources */,
+				9DA75E662FE702E200766658 /* Integrator6581.cpp in Sources */,
 				9D8FAC7B2CB40C9D006905BE /* renderThread.cpp in Sources */,
 				9D6404382DCDEE1C00624A00 /* fastMem.cpp in Sources */,
 				9D8FAAF72CB3F6EF006905BE /* cmd.cpp in Sources */,
 				9D64043E2DCDEE3F00624A00 /* error.cpp in Sources */,
+				9DA75D442FE6F12B00766658 /* reSid24.cpp in Sources */,
 				9DC0D17E2F69EA06005DB0ED /* watcherHelper.cpp in Sources */,
 				9D7B485D2E40D7640010B152 /* cgif.cpp in Sources */,
 				9D07CCF92E296CD000A9787E /* lh1_decoder.cpp in Sources */,
@@ -3147,31 +3376,37 @@
 			buildActionMask = 2147483647;
 			files = (
 				9DECF91E2E45F309005C0BBA /* echo.cpp in Sources */,
+				9DA75E692FE702E200766658 /* Integrator8580.cpp in Sources */,
 				9DECF91F2E45F309005C0BBA /* superCpu.cpp in Sources */,
 				9DECF9202E45F309005C0BBA /* chessCard.cpp in Sources */,
+				9DA75E712FE702E200766658 /* Dac.cpp in Sources */,
 				9DECF9212E45F309005C0BBA /* w65C02.cpp in Sources */,
 				9DC4559F2FA108F5004C6482 /* m6502.cpp in Sources */,
 				9DECF9222E45F309005C0BBA /* w65816.cpp in Sources */,
 				9DECF9232E45F309005C0BBA /* images.cpp in Sources */,
+				9DA75E632FE702E200766658 /* WaveformCalculator.cpp in Sources */,
 				9DECF9242E45F309005C0BBA /* input.cpp in Sources */,
 				9DECF9252E45F309005C0BBA /* media.cpp in Sources */,
 				9DECF9262E45F309005C0BBA /* fileloader.cpp in Sources */,
 				9DECF9272E45F309005C0BBA /* m68000.cpp in Sources */,
 				9DECF9282E45F309005C0BBA /* manager.cpp in Sources */,
-				9DECF9292E45F309005C0BBA /* sid.cpp in Sources */,
 				9DFEB1B72FC8D30700528A40 /* resize.cpp in Sources */,
 				9D4D10492F071C6B00296467 /* memDebugger.cpp in Sources */,
 				9DECF92A2E45F309005C0BBA /* bass.cpp in Sources */,
 				9DECF92B2E45F309005C0BBA /* paula.cpp in Sources */,
 				9D06FBF62FA92300009F364B /* serialDebugger.cpp in Sources */,
 				9DECF92C2E45F309005C0BBA /* cosinePrecise.cpp in Sources */,
+				9DA75D4D2FE6F17B00766658 /* usbSidPico.cpp in Sources */,
 				9DECF92D2E45F309005C0BBA /* crc16.cpp in Sources */,
 				9DECF92E2E45F309005C0BBA /* base.cpp in Sources */,
+				9DA75E652FE702E200766658 /* Spline.cpp in Sources */,
+				9DA75D432FE6F12B00766658 /* chamberlin.cpp in Sources */,
 				9DECF92F2E45F309005C0BBA /* interface.cpp in Sources */,
 				9DECF9302E45F309005C0BBA /* tape.cpp in Sources */,
 				9DECF9322E45F309005C0BBA /* keyboard.cpp in Sources */,
 				9DECF9332E45F309005C0BBA /* lha_reader.cpp in Sources */,
 				9DECF9342E45F309005C0BBA /* wd1770.cpp in Sources */,
+				9DA75E792FE702E200766658 /* FilterModelConfig8580.cpp in Sources */,
 				9D3226682F97727E005B3154 /* paulaDebugger.cpp in Sources */,
 				9DECF9352E45F309005C0BBA /* lzs_decoder.cpp in Sources */,
 				9DECF9362E45F309005C0BBA /* pm2_decoder.cpp in Sources */,
@@ -3182,6 +3417,9 @@
 				9DECF9392E45F309005C0BBA /* program.cpp in Sources */,
 				9DECF93A2E45F309005C0BBA /* m68000.cpp in Sources */,
 				9DECF93B2E45F309005C0BBA /* hunk.cpp in Sources */,
+				9DA75E6D2FE702E200766658 /* WaveformGenerator.cpp in Sources */,
+				9DA75E832FE702E200766658 /* EnvelopeGenerator.cpp in Sources */,
+				9DA75E772FE702E200766658 /* Filter8580.cpp in Sources */,
 				9DECF93C2E45F309005C0BBA /* states.cpp in Sources */,
 				9DECF93D2E45F309005C0BBA /* drive.cpp in Sources */,
 				9DECF93E2E45F309005C0BBA /* hardDrive.cpp in Sources */,
@@ -3189,15 +3427,19 @@
 				9D8F51092EDB5A2A00153A53 /* watcher.cpp in Sources */,
 				9DECF93F2E45F309005C0BBA /* palette.cpp in Sources */,
 				9DECF9402E45F309005C0BBA /* cosine.cpp in Sources */,
+				9DA75E732FE702E200766658 /* Filter.cpp in Sources */,
 				9DECF9412E45F309005C0BBA /* model.cpp in Sources */,
 				9DECF9422E45F309005C0BBA /* USBSID.cpp in Sources */,
+				9DA75E7D2FE702E200766658 /* State.cpp in Sources */,
 				9DECF9432E45F309005C0BBA /* reu.cpp in Sources */,
 				9DECF9442E45F309005C0BBA /* lha_arch_unix.cpp in Sources */,
 				9DECF9452E45F309005C0BBA /* depsSpirv.cpp in Sources */,
 				9DC0D1832F69EA06005DB0ED /* copperDebugger.cpp in Sources */,
 				9DECF9462E45F309005C0BBA /* lz5_decoder.cpp in Sources */,
 				9DECF9472E45F309005C0BBA /* traps.cpp in Sources */,
+				9DA75E6F2FE702E200766658 /* FilterModelConfig.cpp in Sources */,
 				9DECF9482E45F309005C0BBA /* lha.cpp in Sources */,
+				9DA75E2E2FE7027A00766658 /* residfp.cpp in Sources */,
 				9DECF9492E45F309005C0BBA /* copper.cpp in Sources */,
 				9DECF94A2E45F309005C0BBA /* firmware.cpp in Sources */,
 				9DECF94B2E45F309005C0BBA /* interface.cpp in Sources */,
@@ -3216,6 +3458,7 @@
 				9D8F51052EDB5A1B00153A53 /* dasmHandler.cpp in Sources */,
 				9DECF9562E45F309005C0BBA /* lhx_decoder.cpp in Sources */,
 				9D06FBFC2FA92343009F364B /* serial.cpp in Sources */,
+				9DA75E6B2FE702E200766658 /* ExternalFilter.cpp in Sources */,
 				9DECF9572E45F309005C0BBA /* diskDrive.cpp in Sources */,
 				9DECF9582E45F309005C0BBA /* autoloader.cpp in Sources */,
 				9DECF9592E45F309005C0BBA /* api.cpp in Sources */,
@@ -3250,21 +3493,27 @@
 				9DECF96F2E45F309005C0BBA /* lha_input_stream.cpp in Sources */,
 				9D32BA8B2F940DF900AC6442 /* agnusDebugger.cpp in Sources */,
 				9DECF9702E45F309005C0BBA /* input.cpp in Sources */,
+				9DA75E812FE702E200766658 /* FilterModelConfig6581.cpp in Sources */,
 				9DECF9712E45F309005C0BBA /* system.cpp in Sources */,
 				9DECF9722E45F309005C0BBA /* m6526.cpp in Sources */,
 				9DECF9732E45F309005C0BBA /* blitter.cpp in Sources */,
+				9DA75E7F2FE702E200766658 /* version.cc in Sources */,
 				9DFA8D462E6F062C00DDD746 /* system.cpp in Sources */,
 				9DFA8D482E6F062C00DDD746 /* firmware.cpp in Sources */,
 				9DECF9742E45F309005C0BBA /* clipboard.cpp in Sources */,
 				9DECF9752E45F309005C0BBA /* filesystemExt.cpp in Sources */,
+				9DA75D412FE6F12B00766658 /* reSid.cpp in Sources */,
 				9DECF9762E45F309005C0BBA /* images.cpp in Sources */,
+				9DA75E852FE702E200766658 /* SID.cpp in Sources */,
 				9DECF9772E45F309005C0BBA /* drive.cpp in Sources */,
 				9D4D104B2F071C6B00296467 /* cpuDebugger.cpp in Sources */,
 				9DECF9782E45F309005C0BBA /* manager.cpp in Sources */,
 				9DECF9792E45F309005C0BBA /* manager.cpp in Sources */,
 				9DECF97A2E45F309005C0BBA /* uuid.cpp in Sources */,
 				9D4D104F2F071DA500296467 /* dasmHandler.cpp in Sources */,
+				9DA75E612FE702E200766658 /* Filter6581.cpp in Sources */,
 				9DECF97B2E45F309005C0BBA /* httpClient.cpp in Sources */,
+				9DA75D4F2FE6F17B00766658 /* residfpHandler.cpp in Sources */,
 				9DECF97C2E45F309005C0BBA /* archiveViewer.cpp in Sources */,
 				9DC455A92FA10977004C6482 /* m65Debugger.cpp in Sources */,
 				9DECF97D2E45F309005C0BBA /* denise.cpp in Sources */,
@@ -3288,6 +3537,7 @@
 				9DECF98D2E45F309005C0BBA /* lk7_decoder.cpp in Sources */,
 				9DECF98E2E45F309005C0BBA /* config.cpp in Sources */,
 				9DECF98F2E45F309005C0BBA /* imageViewer.cpp in Sources */,
+				9DA75E372FE702BD00766658 /* SincResampler.cpp in Sources */,
 				9DECF9902E45F309005C0BBA /* cgif_raw.cpp in Sources */,
 				9DECF9912E45F309005C0BBA /* panning.cpp in Sources */,
 				9DECF9922E45F309005C0BBA /* prg.cpp in Sources */,
@@ -3303,11 +3553,11 @@
 				9DECF9982E45F309005C0BBA /* easyFlash.cpp in Sources */,
 				9DC0D1812F69EA06005DB0ED /* conditionViewDebugger.cpp in Sources */,
 				9DECF9992E45F309005C0BBA /* via.cpp in Sources */,
+				9DA75E7B2FE702E200766658 /* OpAmp.cpp in Sources */,
 				9DECF99A2E45F309005C0BBA /* keyBuffer.cpp in Sources */,
 				9DECF99B2E45F309005C0BBA /* lh5_decoder.cpp in Sources */,
 				9DECF99C2E45F309005C0BBA /* null_decoder.cpp in Sources */,
 				9DECF99D2E45F309005C0BBA /* expansionPort.cpp in Sources */,
-				9DECF99E2E45F309005C0BBA /* usbSidPico.cpp in Sources */,
 				9DFA8D4C2E6F062C00DDD746 /* misc.cpp in Sources */,
 				9DECF99F2E45F309005C0BBA /* reverb.cpp in Sources */,
 				9DECF9A02E45F309005C0BBA /* system.cpp in Sources */,
@@ -3326,10 +3576,12 @@
 				9DC455A52FA10935004C6482 /* viaDebugger.cpp in Sources */,
 				9DECF9AC2E45F309005C0BBA /* controlPort.cpp in Sources */,
 				9D98A74C2F4B93EF00BB972F /* expressionParser.cpp in Sources */,
+				9DA75E672FE702E200766658 /* Integrator6581.cpp in Sources */,
 				9DECF9AD2E45F309005C0BBA /* renderThread.cpp in Sources */,
 				9DECF9AE2E45F309005C0BBA /* fastMem.cpp in Sources */,
 				9DECF9AF2E45F309005C0BBA /* cmd.cpp in Sources */,
 				9DECF9B02E45F309005C0BBA /* error.cpp in Sources */,
+				9DA75D452FE6F12B00766658 /* reSid24.cpp in Sources */,
 				9DC0D17F2F69EA06005DB0ED /* watcherHelper.cpp in Sources */,
 				9DECF9B12E45F309005C0BBA /* cgif.cpp in Sources */,
 				9DECF9B22E45F309005C0BBA /* lh1_decoder.cpp in Sources */,
