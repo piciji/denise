@@ -950,8 +950,7 @@ namespace DRIVER {
                         // note: one encoder at a time for same commandbuffer, so "[rce endEncoding]" before
                         id<MTLBlitCommandEncoder> bce = [commandBuffer blitCommandEncoder];
                         
-                        if (p.mipmap)
-                            [bce generateMipmapsForTexture:(p.renderTarget.view)];
+                        [bce generateMipmapsForTexture:(p.renderTarget.view)];
                         
                         [bce endEncoding];
                         bce = nil;
