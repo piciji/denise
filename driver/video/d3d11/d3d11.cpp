@@ -1435,8 +1435,6 @@ namespace DRIVER {
     }
 
     auto updateRenderTargets(unsigned width, unsigned height) -> void {
-        unsigned sourceWidth = width;
-        unsigned sourceHeight = height;
         frame.mvp = projection; // assume: last shader pass is NOT final pass
 
         for(int i = 0; i < shaderPasses; i++) {

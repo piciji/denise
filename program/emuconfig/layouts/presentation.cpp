@@ -3017,6 +3017,9 @@ auto ParamEditor::open() -> void {
     unfocusTimer.setEnabled();
     setVisible();
     setFocused();
+
+    if (state.layout == &sliderLay)
+        sliderLay.slider.setFocused();
 }
 
 auto PresentationLayout::copyCustomPresets() -> void {
