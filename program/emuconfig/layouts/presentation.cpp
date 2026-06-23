@@ -3018,7 +3018,7 @@ auto ParamEditor::open() -> void {
     setVisible();
     setFocused();
 
-    if (state.layout == &sliderLay)
+    if (state.layout == &sliderLay && !GUIKIT::Application::isCocoa())
         sliderLay.slider.setFocused();
 }
 

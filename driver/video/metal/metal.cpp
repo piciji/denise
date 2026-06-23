@@ -1308,7 +1308,7 @@ namespace DRIVER {
     }
     
     auto updateRotation() -> void {
-        float radian = (float)settings.rotation * 90.0 * (M_PI / 180.0f);
+        float radian = (float)settings.rotation * 270.0 * (M_PI / 180.0f);
         
         float cz, sz;
         __sincosf(radian, &sz, &cz);
