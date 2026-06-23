@@ -1436,6 +1436,7 @@ namespace DRIVER {
 
     auto updateRenderTargets(unsigned width, unsigned height) -> void {
         frame.mvp = projection; // assume: last shader pass is NOT final pass
+        bool flp = viewScreen.flipped;
 
         for(int i = 0; i < shaderPasses; i++) {
             auto& p = programs[i];
@@ -1446,19 +1447,22 @@ namespace DRIVER {
 
             if (p.scaleTypeX != ShaderPreset::SCALE_NONE || p.scaleTypeY != ShaderPreset::SCALE_NONE) {
                 if (p.scaleTypeX == ShaderPreset::SCALE_INPUT) width *= p.scaleX;
-                else if (p.scaleTypeX == ShaderPreset::SCALE_VIEWPORT) width = viewport.width * p.scaleX;
-                else if (p.scaleTypeX == ShaderPreset::SCALE_ABSOLUTE) width = p.absX;
+                else if (p.scaleTypeX == ShaderPreset::SCALE_VIEWPORT) {
+                    width = (flp ? viewport.height : viewport.width) * p.scaleX;
+                } else if (p.scaleTypeX == ShaderPreset::SCALE_ABSOLUTE) width = p.absX;
 
                 if (!width) width = viewport.width;
 
                 if (p.scaleTypeY == ShaderPreset::SCALE_INPUT) height *= p.scaleY;
-                else if (p.scaleTypeY == ShaderPreset::SCALE_VIEWPORT) height = viewport.height * p.scaleY;
+                else if (p.scaleTypeY == ShaderPreset::SCALE_VIEWPORT) {
+                    height = (flp ? viewport.width : viewport.height) * p.scaleY;
+                }
                 else if (p.scaleTypeY == ShaderPreset::SCALE_ABSOLUTE) height = p.absY;
 
                 if (!height) height = viewport.height;
             } else if (lastPass) {
-                width = viewport.width;
-                height = viewport.height;
+                width = flp ? viewport.height : viewport.width;
+                height = flp ? viewport.width : viewport.height;
             }
 
             D3D11Utility::releaseTexture(p.renderTarget);
@@ -1483,7 +1487,7 @@ namespace DRIVER {
                 }
 
             } else {
-                if (viewScreen.flipped && (viewScreen.mode != ViewScreen::Mode::Window)) {
+                if (flp && (viewScreen.mode != ViewScreen::Mode::Window)) {
                     unsigned tmp = width;
                     width = height;
                     height = tmp;
