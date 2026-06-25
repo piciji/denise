@@ -1,6 +1,6 @@
 
 shaders = 11
-luma_chroma = true
+rgb10BitInput = true
 
 shader0 = resources/colorEncoding.slang
 alias0 = "LumaChromaEncoding"

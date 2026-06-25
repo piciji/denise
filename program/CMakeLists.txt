@@ -156,7 +156,7 @@ if(LIBLAME_FOUND)
 endif()
 
 SET_SOURCE_FILES_PROPERTIES(program.cpp
-        PROPERTIES COMPILE_FLAGS "-DAPP_NAME=\"\\\"${AppName}\\\"\" -DTRANSLATION_FOLDER=\"\\\"${translationFolder}/\\\"\" -DDATA_FOLDER=\"\\\"${dataFolder}/\\\"\" -DSHADER_FOLDER=\"\\\"${shaderFolder}/\\\"\" -DIMAGES_FOLDER=\"\\\"${imagesFolder}/\\\"\" -DSOUND_FOLDER=\"\\\"${soundFolder}/\\\"\" ")
+        PROPERTIES COMPILE_FLAGS "-DAPP_NAME=\"\\\"${AppName}\\\"\" -DTRANSLATION_FOLDER=\"\\\"${translationFolder}/\\\"\" -DDATA_FOLDER=\"\\\"${dataFolder}/\\\"\" -DPRESET_FOLDER=\"\\\"${presetFolder}/\\\"\" -DIMAGES_FOLDER=\"\\\"${imagesFolder}/\\\"\" -DSOUND_FOLDER=\"\\\"${soundFolder}/\\\"\" ")
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
     set(srcs ${srcs} "${CMAKE_SOURCE_DIR}/${guikit.resource}" )

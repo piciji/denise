@@ -11,7 +11,7 @@ struct ShaderPreset {
         R32G32_SFLOAT, R32G32B32A32_UINT, R32G32B32A32_SINT, R32G32B32A32_SFLOAT
     };
 
-    bool lumaChroma = false; // incoming frame data use 10 bit RGB components to prevent accuracy loss when converting to YUV/YIC
+    bool rgb10BitInput = false; // incoming frame data use 10 bit RGB components to prevent accuracy loss when converting to YUV/YIC
 
     struct Pass {
         std::string src;
@@ -63,6 +63,6 @@ struct ShaderPreset {
         params.clear();
         luts.clear();
         passes.clear();
-        lumaChroma = false;
+        rgb10BitInput = false;
     }
 };

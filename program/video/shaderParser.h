@@ -19,6 +19,8 @@ struct ShaderParser {
     bool modified;
     static DataStorage* dataStorage;
 
+    static constexpr char INTERNAL[] = "internal/";
+
     auto loadPreset(std::string path) -> bool;
 
     auto addPreset(ShaderParser* parser, bool prepend) -> bool;
@@ -90,5 +92,7 @@ struct ShaderParser {
     static auto writeLut(const std::string& path, uint8_t* data, unsigned width, unsigned height) -> void;
 
     auto adjustInitials(ShaderPreset::Param& param, const std::string& path) -> void;
+
+    static auto internalPresetFolder() -> std::string;
 };
 

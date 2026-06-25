@@ -667,10 +667,6 @@ auto Program::settingsFileFromEmuFolder( std::string ident ) -> std::string {
     return installFolder() + ident + SETTINGS_FILE;
 }
 
-auto Program::shaderFolder() -> std::string {
-    return installFolder() + SHADER_FOLDER;
-}
-
 auto Program::presetFolder() -> std::string {
     return installFolder() + PRESET_FOLDER;
 }

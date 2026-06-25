@@ -134,8 +134,6 @@ extern uint8_t pageUpGray[286];
 
 extern uint8_t error[338];
 
-extern uint8_t retroarch[843];
-
 extern uint8_t bolt[436];
 
 extern uint8_t gears[553];
@@ -203,5 +201,9 @@ extern uint8_t arrowLeft[169];
 extern uint8_t arrowRight[167];
 
 extern uint8_t circleGray[304];
+
+extern uint8_t download[154];
+
+extern uint8_t star[304];
 
 }

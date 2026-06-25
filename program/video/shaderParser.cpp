@@ -36,7 +36,8 @@ auto ShaderParser::loadPreset(std::string path) -> bool {
         return false;
     }
 
-    shaderPreset.lumaChroma = rootSettings.get<bool>("luma_chroma", false);
+    shaderPreset.rgb10BitInput = rootSettings.get<bool>("rgb10BitInput", false)
+        || rootSettings.get<bool>("luma_chroma", false); // deprecated
 
     for(int i = 0; i < passCount; i++)
         parsePass(i);
@@ -77,8 +78,8 @@ auto ShaderParser::savePreset(std::string path) -> bool {
     } else {
         writeLine(fp, "shaders", std::to_string(shaderPreset.passes.size()));
 
-        if (shaderPreset.lumaChroma)
-            writeLine(fp, "luma_chroma", "true" );
+        if (shaderPreset.rgb10BitInput)
+            writeLine(fp, "rgb10BitInput", "true" );
 
         fputs( "\n", fp );
 
@@ -86,7 +87,7 @@ auto ShaderParser::savePreset(std::string path) -> bool {
             auto& pass = shaderPreset.passes[i];
 
             writeLine(fp, i, "shader", GUIKIT::File::buildRelativePath(
-                hasYUVPrepend(pass) ? program->shaderFolder() : path, pass.src));
+                hasYUVPrepend(pass) ? internalPresetFolder() : path, pass.src));
 
             if (!pass.inUse)
                 writeLine(fp, i, "hide", "true");
@@ -125,7 +126,7 @@ auto ShaderParser::savePreset(std::string path) -> bool {
             fputs( out.c_str(), fp );
 
             for(auto& lut : shaderPreset.luts) {
-                writeLine(fp, lut.id, GUIKIT::File::buildRelativePath(hasYUVPrepend(lut) ? program->shaderFolder() : path, lut.path) );
+                writeLine(fp, lut.id, GUIKIT::File::buildRelativePath(hasYUVPrepend(lut) ? internalPresetFolder() : path, lut.path) );
                 if (lut.filter != ShaderPreset::FILTER_UNSPEC)
                     writeLine(fp, lut.id + "_linear", lut.filter == ShaderPreset::FILTER_NEAREST ? "false" : "true" );
                 writeLine(fp, lut.id + "_wrap_mode",  translateWrapMode(lut.wrap) );
@@ -222,7 +223,7 @@ auto ShaderParser::parseTextures() -> void {
 
         if (lut.path.empty())
             continue;
-        lut.path = GUIKIT::File::resolveRelativePath( hasYUVPrepend(lut) ? program->shaderFolder() : rootSettings.getPath(), lut.path );
+        lut.path = GUIKIT::File::resolveRelativePath( hasYUVPrepend(lut) ? internalPresetFolder() : rootSettings.getPath(), lut.path );
 
         int filter = -1;
         if (rootSettings.find(id + "_linear"))
@@ -247,7 +248,7 @@ auto ShaderParser::parsePass(unsigned pos) -> bool {
         return false;
 
     pass.alias = rootSettings.get<std::string>("alias" + strPos, "");
-    pass.src = GUIKIT::File::resolveRelativePath( hasYUVPrepend(pass) ? program->shaderFolder() : rootSettings.getPath(), path);
+    pass.src = GUIKIT::File::resolveRelativePath( hasYUVPrepend(pass) ? internalPresetFolder() : rootSettings.getPath(), path);
     pass.bufferType = ShaderPreset::BufferType::UNKNOWN;
     pass.error = "";
     if (!fetchShaderSource(pass))
@@ -507,7 +508,7 @@ auto ShaderParser::addPreset(ShaderParser* parser, bool prepend) -> bool {
         shaderPreset.passes[0].subChain = true;
         GUIKIT::Vector::insert( entryPaths, parser->getPresetPath(), 0 );
 
-        shaderPreset.lumaChroma = preset.lumaChroma;
+        shaderPreset.rgb10BitInput = preset.rgb10BitInput;
     } else {
         preset.passes[0].subChain = true;
         entryPaths.push_back( parser->getPresetPath() );
@@ -898,6 +899,10 @@ auto ShaderParser::clear() -> void {
     shaderPreset.clear();
     rootSettings.clear();
     modified = false;
+}
+
+auto ShaderParser::internalPresetFolder() -> std::string {
+    return program->presetFolder() + INTERNAL;
 }
 
 ShaderParser::ShaderParser() {

@@ -11,6 +11,7 @@
 #include "../../view/status.h"
 #include "../../helper/fileHelper.h"
 #include "../../helper/settingsHelper.h"
+#include "../../video/shaderParser.h"
 #include <cmath>
 
 #define _settings this->tabWindow->settings
@@ -136,9 +137,9 @@ VideoShaderLayout::Main::Control::Control() {
     append(yuvEncoding, { 0u, 0u }, 10);
     append(downloadShader, { 0u, 0u }, 15);
 
-    append(loadOldShader,{0u, 0u}, 10);
     append(prependPreset,{0u, 0u}, 10);
     append(appendPreset,{0u, 0u}, 10);
+    append(loadDefaultShader,{0u, 0u}, 10);
     append(load,{0u, 0u});
 
     unload.setEnabled(false);
@@ -566,7 +567,7 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
     pageDown.loadPng((uint8_t*)Icons::pageDown, sizeof(Icons::pageDown) );
     pageUpGray.loadPng((uint8_t*)Icons::pageUpGray, sizeof(Icons::pageUpGray) );
     pageDownGray.loadPng((uint8_t*)Icons::pageDownGray, sizeof(Icons::pageDownGray) );
-    retroarch.loadPng((uint8_t*)Icons::retroarch, sizeof(Icons::retroarch) );
+    downloadImage.loadPng((uint8_t*)Icons::download, sizeof(Icons::download) );
     colorImage.loadPng((uint8_t*)Icons::color, sizeof(Icons::color));
     menuImage.loadPng((uint8_t*)Icons::menu, sizeof(Icons::menu));
     addImage.loadPng((uint8_t*)Icons::add, sizeof(Icons::add));
@@ -576,11 +577,13 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
     screenshotImage.loadPng((uint8_t*)Icons::screenshot, sizeof(Icons::screenshot));
     hdrImage.loadPng((uint8_t*)Icons::hdr, sizeof(Icons::hdr));
     rewindImage.loadPng((uint8_t*)Icons::rewind, sizeof(Icons::rewind) );
+    starImage.loadPng((uint8_t*)Icons::star, sizeof(Icons::star) );
 
     layScreenText.options.font.addFont.setImage(&addImage);
     layScreenText.options.font.removeFont.setImage(&delImage);
 
-    layShader.main.control.downloadShader.setImage(&retroarch);
+    layShader.main.control.downloadShader.setImage(&downloadImage);
+    layShader.main.control.loadDefaultShader.setImage(&starImage);
 
     tviBase.setUserData( (uintptr_t)1 );
     tviBase.setImage( colorImage );
@@ -769,7 +772,8 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
             } catch (Error& e) {
                 _error("Shader update: %s", e.what());
                 layShader.main.progress.label.setForegroundColorThreaded(ERROR_COLOR);
-                layShader.main.progress.label.setTextThreaded(trans->getA("error"));                
+                layShader.main.progress.label.setTextThreaded(trans->getA("error"));
+                copyCustomPresets(); // at least we have older denise shader
             }
         });
         t1.detach();
@@ -914,22 +918,33 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
         emuThread->unlock();
     };
 
-    layShader.main.control.loadOldShader.onActivate = [this]() {
-        auto path = openShaderFileDialog(true);
-        if (path.empty())
-            return;
-
-        emuThread->lock();
-        if (loadShader(path))
-            layShader.favourite.control.add.setEnabled();
-
-        emuThread->unlock();
-    };
-
     layShader.main.control.load.onActivate = [this]() {
         auto path = openShaderFileDialog();
         if (path.empty())
             return;
+
+        emuThread->lock();
+        if (loadShader(path)) {
+            layShader.favourite.control.add.setEnabled();
+            _settings->set<std::string>("slang_folder", GUIKIT::File::buildRelativePath(GUIKIT::File::getPath(path)));
+        }
+        emuThread->unlock();
+    };
+
+    layShader.main.control.loadDefaultShader.onActivate = [this]() {
+        std::string path = FileHelper::generatedFolder("shaders");
+        path += "bezel/koko-aio/Presets-4.1/";
+        if (dynamic_cast<LIBC64::Interface*>(emulator))
+            path += "monitor-bloom-bezel-1541.slangp";
+        else
+            path += "monitor-bloom-bezel-amiga.slangp";
+
+        GUIKIT::File file(path.c_str());
+
+        if (!file.exists()) {
+            this->tabWindow->message->warning( trans->getA("Shader missing") );
+            return;
+        }
 
         emuThread->lock();
         if (loadShader(path)) {
@@ -953,7 +968,7 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
             layShader.main.info.loaded.setText( vManager()->getPresetPathDetailed() );
             _settings->set<std::string>("slang_folder", GUIKIT::File::buildRelativePath(GUIKIT::File::getPath(path)));
             layShader.favourite.control.add.setEnabled();
-            layBase.view.gamma.setEnabled( !layBase.view.mode.gpu.checked() || !vManager()->shaderLumaChromaInput() );
+            layBase.view.gamma.setEnabled( !layBase.view.mode.gpu.checked() || !vManager()->shaderRgb10BitInput() );
         }
         emuThread->unlock();
         showErrors(errors);
@@ -973,7 +988,7 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
             layShader.main.info.loaded.setText( vManager()->getPresetPathDetailed() );
             _settings->set<std::string>("slang_folder", GUIKIT::File::buildRelativePath(GUIKIT::File::getPath(path)));
             layShader.favourite.control.add.setEnabled();
-            layBase.view.gamma.setEnabled( !layBase.view.mode.gpu.checked() || !vManager()->shaderLumaChromaInput() );
+            layBase.view.gamma.setEnabled( !layBase.view.mode.gpu.checked() || !vManager()->shaderRgb10BitInput() );
         }
         emuThread->unlock();
         showErrors(errors);
@@ -2192,7 +2207,7 @@ auto PresentationLayout::updateVisibillity() -> void {
         layBase.view.option.newLuma.setEnabled(false);
     }
 
-    layBase.view.gamma.setEnabled( !crtGpuChecked || !vManager()->shaderLumaChromaInput() );
+    layBase.view.gamma.setEnabled( !crtGpuChecked || !vManager()->shaderRgb10BitInput() );
 
     layBase.view.scanlines.setEnabled(crtCpuChecked);
     if (crtCpuChecked)
@@ -2263,8 +2278,6 @@ auto PresentationLayout::translate() -> void {
     layPass.control.save.setText( trans->getA("save") );
     layShader.main.control.load.setText( trans->getA("load") );
     layShader.main.control.load.setTooltip( trans->getA("load shader tooltip") );
-    layShader.main.control.loadOldShader.setText( trans->getA("load outdated shader") );
-    layShader.main.control.loadOldShader.setTooltip( trans->getA("load outdated shader tooltip") );
     layPass.control.save.setTooltip( trans->getA("save parameter tooltip") );
 
     layShader.main.setText( trans->getA("Shader") );
@@ -2668,7 +2681,7 @@ auto PresentationLayout::loadShader(std::string path) -> bool {
         buildShaderUI(preset, true);
         layShader.main.info.loaded.setText( vManager()->getPresetPathDetailed() );
         layShader.main.control.setEnabled();
-        layBase.view.gamma.setEnabled( !layBase.view.mode.gpu.checked() || !vManager()->shaderLumaChromaInput() );
+        layBase.view.gamma.setEnabled( !layBase.view.mode.gpu.checked() || !vManager()->shaderRgb10BitInput() );
         view->updateShader(emulator);
         enableGPUMode(true);
     }
@@ -2721,20 +2734,17 @@ auto PresentationLayout::addShaderUI() -> void {
     }
 }
 
-auto PresentationLayout::getShaderFolder(bool oldShader) -> std::string {
-    if (!oldShader)
-        return  GUIKIT::File::resolveRelativePath(_settings->get<std::string>("slang_folder", ""));
-
-    return program->shaderFolder();
+auto PresentationLayout::getShaderFolder() -> std::string {
+    return  GUIKIT::File::resolveRelativePath(_settings->get<std::string>("slang_folder", ""));
 }
 
-auto PresentationLayout::openShaderFileDialog(bool oldShader) -> std::string {
+auto PresentationLayout::openShaderFileDialog() -> std::string {
     static const std::vector<std::string> suffixList = {"slang", "slangp"};
 
     return GUIKIT::BrowserWindow()
             .setWindow( *(this->tabWindow) )
             .setTitle(trans->getA("select shader"))
-            .setPath( getShaderFolder(oldShader) )
+            .setPath( getShaderFolder() )
             .setFilters({ GUIKIT::BrowserWindow::transformFilter("SLANG", suffixList ) })
             .open();
 }
@@ -3026,6 +3036,8 @@ auto PresentationLayout::copyCustomPresets() -> void {
     std::string srcPath = program->presetFolder();
     std::string targetPath = FileHelper::generatedFolder("shaders");
 
+    GUIKIT::File::createDir( static_cast<std::string>(ShaderParser::INTERNAL) + "resources", targetPath );
+
     auto files = GUIKIT::File::getFileList( srcPath );
 
     for (auto& file : files) {
@@ -3036,11 +3048,13 @@ auto PresentationLayout::copyCustomPresets() -> void {
     // plugins
     std::string pluginFolder = "bezel/koko-aio/config/plugins/";
 
-    GUIKIT::File::createDir( targetPath + pluginFolder + "enabled" );
+    if (GUIKIT::File::isDir( targetPath + pluginFolder )) {
+        GUIKIT::File::createDir( targetPath + pluginFolder + "enabled" );
 
-    GUIKIT::File::xcopy(targetPath + pluginFolder + "disabled/led1.txt", targetPath + pluginFolder + "enabled/led1.txt");
-    GUIKIT::File::xcopy(targetPath + pluginFolder + "disabled/led2.txt", targetPath + pluginFolder + "enabled/led2.txt");
-    GUIKIT::File::xcopy(targetPath + pluginFolder + "disabled/led3.txt", targetPath + pluginFolder + "enabled/led3.txt");
+        GUIKIT::File::xcopy(targetPath + pluginFolder + "disabled/led1.txt", targetPath + pluginFolder + "enabled/led1.txt");
+        GUIKIT::File::xcopy(targetPath + pluginFolder + "disabled/led2.txt", targetPath + pluginFolder + "enabled/led2.txt");
+        GUIKIT::File::xcopy(targetPath + pluginFolder + "disabled/led3.txt", targetPath + pluginFolder + "enabled/led3.txt");
+    }
 }
 
 }

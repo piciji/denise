@@ -78,7 +78,7 @@ struct VideoShaderLayout : GUIKIT::VerticalLayout {
             GUIKIT::Widget spacer;
             GUIKIT::CheckBox yuvEncoding;
             GUIKIT::ImageView downloadShader;
-            GUIKIT::Button loadOldShader;
+            GUIKIT::Button loadDefaultShader;
 
             GUIKIT::Button prependPreset;
             GUIKIT::Button appendPreset;
@@ -451,7 +451,8 @@ struct PresentationLayout : GUIKIT::HorizontalLayout {
     GUIKIT::Image pageDown;
     GUIKIT::Image pageUpGray;
     GUIKIT::Image pageDownGray;
-    GUIKIT::Image retroarch;
+    GUIKIT::Image downloadImage;
+    GUIKIT::Image starImage;
     GUIKIT::Image colorImage;
     GUIKIT::Image menuImage;
     GUIKIT::Image addImage;
@@ -481,8 +482,8 @@ struct PresentationLayout : GUIKIT::HorizontalLayout {
     auto showErrors(const std::vector<std::string>& errors) -> void;
     auto loadShader(std::string path) -> bool;
     auto unloadShader(bool reloadDriver = true) -> void;
-    auto getShaderFolder(bool oldShader) -> std::string;
-    auto openShaderFileDialog(bool oldShader = false) -> std::string;
+    auto getShaderFolder() -> std::string;
+    auto openShaderFileDialog() -> std::string;
     auto presentShaderError() -> void;
     auto clearShaderError() -> void;
     auto addShaderUI() -> void;

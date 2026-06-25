@@ -129,7 +129,7 @@ auto ShaderParser::writeLut(const std::string& path, uint8_t* data, unsigned wid
 
     if (pngData && pngSize) {
         GUIKIT::File file;
-        file.setFile(program->shaderFolder() + path);
+        file.setFile(internalPresetFolder() + path);
         if (file.open(GUIKIT::File::Mode::Write))
             file.write(pngData, pngSize);
         delete[] pngData;

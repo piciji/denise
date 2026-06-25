@@ -14,9 +14,6 @@
 #ifndef FONT_FOLDER
 #define FONT_FOLDER "fonts/"
 #endif
-#ifndef SHADER_FOLDER
-#define SHADER_FOLDER "shader/"
-#endif
 #ifndef PRESET_FOLDER
 #define PRESET_FOLDER "presets/"
 #endif
@@ -98,7 +95,6 @@ struct Program : Emulator::Interface::Bind {
     auto fontFolder() -> std::string;
 	auto imgFolder() -> std::string;
     auto soundFolder() -> std::string;
-    auto shaderFolder() -> std::string;
     auto presetFolder() -> std::string;
 	auto appFolder() -> std::string;
     auto getSystemLangFile() -> std::string;

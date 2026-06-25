@@ -262,7 +262,7 @@ struct VideoManager {
     auto setPassMipmap(unsigned passId, bool state) -> void;
     auto setPassScaleX(unsigned passId, float scale) -> void;
     auto setPassScaleY(unsigned passId, float scale) -> void;
-    auto shaderLumaChromaInput() -> bool;
+    auto shaderRgb10BitInput() -> bool;
     auto translateShaderBufferType(ShaderPreset::BufferType& bufferType) -> const std::string;
     auto getColorSpectrum(unsigned id, unsigned col) -> C64ColorSpectrum&;
     auto lumaChromaMode() -> bool;

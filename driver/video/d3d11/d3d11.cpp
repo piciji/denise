@@ -1507,7 +1507,7 @@ namespace DRIVER {
 
             if (shaderPasses) {
                 auto& p = programs[shaderPasses-1];
-                if (!preset->lumaChroma && p.format == DXGI_FORMAT_R16G16B16A16_FLOAT)
+                if (!preset->rgb10BitInput && p.format == DXGI_FORMAT_R16G16B16A16_FLOAT)
                     setInternalHDRParams(false, true);
                 else
                     setInternalHDRParams(true, true);

@@ -90,7 +90,7 @@ auto View::renderPlaceholder(uint8_t gpuOptions) -> bool {
     _height = imageViewer->overrideImage.height;
     _data = imageViewer->overrideImage.data;
 
-    if ((activeVideoManager->crtMode == VideoManager::CrtMode::Gpu) && activeVideoManager->shaderLumaChromaInput()) {
+    if ((activeVideoManager->crtMode == VideoManager::CrtMode::Gpu) && activeVideoManager->shaderRgb10BitInput()) {
         if (videoDriver->lock(gpu_data, gpu_pitch, _width, _height, gpuOptions | (uint8_t)DRIVER::OPT_RGB10)) {
             for (_h = 0; _h < _height; _h++) {
                 for (_w = 0; _w < _width; _w++) {

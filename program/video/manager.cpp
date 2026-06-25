@@ -246,7 +246,7 @@ auto VideoManager::generateC64ColorSpectrum() -> void {
 }
 
 auto VideoManager::lumaChromaMode() -> bool {
-    return (crtMode == CrtMode::Cpu) || ( (crtMode == CrtMode::Gpu) && shaderLumaChromaInput() );
+    return (crtMode == CrtMode::Cpu) || ( (crtMode == CrtMode::Gpu) && shaderRgb10BitInput() );
 }
 
 auto VideoManager::normalizeColorSpectrumPalGamma( double& color ) -> void {
@@ -702,7 +702,7 @@ template<typename T, uint8_t options> auto VideoManager::renderFrame(const T* sr
         renderToRgb<T, interlace, field>(width, height, src, srcPitch, gpuData, gpuPitch - width);
 
 	} else if (crtMode == CrtMode::Gpu) {
-        if (shaderLumaChromaInput()) {
+        if (shaderRgb10BitInput()) {
 
             if (!videoDriver->lock(gpuData, gpuPitch, width, height, gpuOptions | (uint8_t)DRIVER::OPT_RGB10 ))
                 goto Typical;
@@ -1545,7 +1545,7 @@ auto VideoManager::loadPreset(const std::string& path, std::vector<std::string>&
         if (!tempParser->hasYUVPrepend()) {
             ShaderParser* tempParserPre = new ShaderParser;
             std::string _emuIdent = emulator->ident;
-            if (tempParserPre->loadPreset(program->shaderFolder() + GUIKIT::String::toLowerCase(_emuIdent) + "_yuv.slangp"))
+            if (tempParserPre->loadPreset(ShaderParser::internalPresetFolder() + GUIKIT::String::toLowerCase(_emuIdent) + "_yuv.slangp"))
                 tempParser->addPreset( tempParserPre, true );
             delete tempParserPre;
         }
@@ -1670,8 +1670,8 @@ auto VideoManager::setPassScaleY(unsigned passId, float scale) -> void {
     rebuildShader = true;
 }
 
-auto VideoManager::shaderLumaChromaInput() -> bool {
-    return parser->shaderPreset.lumaChroma;
+auto VideoManager::shaderRgb10BitInput() -> bool {
+    return parser->shaderPreset.rgb10BitInput;
 }
 
 auto VideoManager::translateShaderBufferType(ShaderPreset::BufferType& bufferType) -> const std::string {

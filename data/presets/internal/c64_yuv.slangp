@@ -1,6 +1,6 @@
 
 shaders = 2
-luma_chroma = true
+rgb10BitInput = true
 
 shader0 = resources/yuvEncoding.slang
 alias0 = "YUV Encoding"

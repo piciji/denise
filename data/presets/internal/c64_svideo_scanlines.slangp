@@ -1,6 +1,6 @@
 
 shaders = 12
-luma_chroma = true
+rgb10BitInput = true
 
 shader0 = resources/colorEncoding.slang
 alias0 = "LumaChromaEncoding"
@@ -59,21 +59,21 @@ float_framebuffer6 = true
 scale_type6 = source
 scale6 = 1.0
 
-shader7 = resources/gamma.slang
+shader7 = resources/scanlines.slang
 alias7 = "GammaOrShades"
 wrap_mode7 = "clamp_to_edge"
 filter_linear7 = false
 float_framebuffer7 = true
 scale_type7 = source
-scale7 = 1.0
+scale_x7 = 1.0
+scale_y7 = 2.0
 
 shader8 = resources/bloomHorizontal.slang
 alias8 = "BloomHorizontal"
 wrap_mode8 = "clamp_to_edge"
 float_framebuffer8 = true
 scale_type8 = source
-scale_x8 = 1.0
-scale_y8 = 2.0
+scale8 = 1.0
 
 shader9 = resources/bloomVertical.slang
 alias9 = "BloomVertical"
@@ -94,9 +94,8 @@ alias11 = "RadialDistortion"
 wrap_mode11 = "clamp_to_border"
 float_framebuffer11 = true
 scale_type11 = source
-scale11 = 1.0
+scale11 = 2.0
 mipmap_input11 = true
-
 
 # LUT generation: program/video/luts.cpp
 textures = "lutBloom;lutBandwidth;lutMaskAperture;lutMaskShadow;lutMaskSlot"
