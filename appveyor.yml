@@ -144,7 +144,7 @@ for:
     - sh: sudo mkdir -p out/translation
     - sh: sudo mkdir -p out/data
     - sh: sudo mkdir -p out/fonts
-    - sh: sudo mkdir -p out/shader
+    - sh: sudo mkdir -p out/presets
     - sh: sudo mkdir -p out/images
     - sh: sudo mkdir -p out/sounds
     - sh: sudo cp data/img/denise.png out/
@@ -155,7 +155,7 @@ for:
     - sh: sudo cp data/fonts/*.ttf out/fonts/
     - sh: sudo cp data/images/* out/images/
     - sh: sudo cp -r data/sounds/* out/sounds/
-    - sh: sudo cp -r data/shader/* out/shader/
+    - sh: sudo cp -r data/presets/* out/presets/
     - sh: sudo cp data/install.sh out/
     - sh: sudo cp data/uninstall.sh out/
     - sh: sudo cp licence.md out/

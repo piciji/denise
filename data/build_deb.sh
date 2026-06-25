@@ -14,7 +14,7 @@ mkdir denisepackage/$prefix/share/denise/images
 mkdir denisepackage/$prefix/share/denise/fonts
 mkdir denisepackage/$prefix/share/denise/data
 mkdir denisepackage/$prefix/share/denise/sounds
-mkdir denisepackage/$prefix/share/denise/shader
+mkdir denisepackage/$prefix/share/denise/presets
 mkdir denisepackage/$prefix/share/applications
 mkdir denisepackage/$prefix/share/appdata
 mkdir denisepackage/$prefix/share/icons
@@ -28,7 +28,7 @@ install -D -m 644 control denisepackage/DEBIAN
 install -D -m 644 translation/* denisepackage/$prefix/share/denise/translation
 install -D -m 644 fonts/* denisepackage/$prefix/share/denise/fonts
 cp -r sounds/* denisepackage/$prefix/share/denise/sounds/
-cp -r shader/* denisepackage/$prefix/share/denise/shader/
+cp -r presets/* denisepackage/$prefix/share/denise/presets/
 install -D -m 644 data/* denisepackage/$prefix/share/denise/data
 install -D -m 644 img/denise_48.png denisepackage/$prefix/share/icons/denise.png
 install -D -m 644 img/denise_48.png denisepackage/$prefix/share/icons/hicolor/48x48/apps/denise.png
