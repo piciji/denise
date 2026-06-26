@@ -135,10 +135,10 @@ VideoShaderLayout::Main::Control::Control() {
     append(unload,{0u, 0u});
     append(spacer, { ~0u, 0u });
     append(yuvEncoding, { 0u, 0u }, 10);
-    append(downloadShader, { 0u, 0u }, 15);
 
     append(prependPreset,{0u, 0u}, 10);
     append(appendPreset,{0u, 0u}, 10);
+    append(downloadShader, { 0u, 0u }, 10);
     append(loadDefaultShader,{0u, 0u}, 10);
     append(load,{0u, 0u});
 

@@ -42,7 +42,6 @@
 		9D07CD192E29703800A9787E /* depsSlang.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D07CD172E29703800A9787E /* depsSlang.cpp */; settings = {COMPILER_FLAGS = "-I$(PROJECT_DIR)/deps/glslang/"; }; };
 		9D0C380B2CB584D800363301 /* denise.icns in Resources */ = {isa = PBXBuildFile; fileRef = 9D0C380A2CB584D800363301 /* denise.icns */; };
 		9D0C380D2CB5861C00363301 /* fonts in Resources */ = {isa = PBXBuildFile; fileRef = 9D0C380C2CB5861C00363301 /* fonts */; };
-		9D0C380F2CB5865B00363301 /* shader in Resources */ = {isa = PBXBuildFile; fileRef = 9D0C380E2CB5865B00363301 /* shader */; };
 		9D0C38112CB586AD00363301 /* translation in Resources */ = {isa = PBXBuildFile; fileRef = 9D0C38102CB586AD00363301 /* translation */; };
 		9D0C38132CB586BE00363301 /* sounds in Resources */ = {isa = PBXBuildFile; fileRef = 9D0C38122CB586BE00363301 /* sounds */; };
 		9D0C38242CB59D9B00363301 /* data in Resources */ = {isa = PBXBuildFile; fileRef = 9D0C38232CB59D9B00363301 /* data */; };
@@ -485,7 +484,6 @@
 		9DECF9C82E45F309005C0BBA /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9D8FAEA42CB415A9006905BE /* IOKit.framework */; };
 		9DECF9CC2E45F309005C0BBA /* sounds in Resources */ = {isa = PBXBuildFile; fileRef = 9D0C38122CB586BE00363301 /* sounds */; };
 		9DECF9CD2E45F309005C0BBA /* denise.icns in Resources */ = {isa = PBXBuildFile; fileRef = 9D0C380A2CB584D800363301 /* denise.icns */; };
-		9DECF9CE2E45F309005C0BBA /* shader in Resources */ = {isa = PBXBuildFile; fileRef = 9D0C380E2CB5865B00363301 /* shader */; };
 		9DECF9CF2E45F309005C0BBA /* translation in Resources */ = {isa = PBXBuildFile; fileRef = 9D0C38102CB586AD00363301 /* translation */; };
 		9DECF9D12E45F309005C0BBA /* data in Resources */ = {isa = PBXBuildFile; fileRef = 9D0C38232CB59D9B00363301 /* data */; };
 		9DECF9D22E45F309005C0BBA /* images in Resources */ = {isa = PBXBuildFile; fileRef = 9D0C38272CB5A66F00363301 /* images */; };
@@ -608,7 +606,6 @@
 		9D07CD172E29703800A9787E /* depsSlang.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = depsSlang.cpp; path = deps/depsSlang.cpp; sourceTree = "<group>"; };
 		9D0C380A2CB584D800363301 /* denise.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; name = denise.icns; path = data/img/denise.icns; sourceTree = "<group>"; };
 		9D0C380C2CB5861C00363301 /* fonts */ = {isa = PBXFileReference; lastKnownFileType = folder; name = fonts; path = data/fonts; sourceTree = "<group>"; };
-		9D0C380E2CB5865B00363301 /* shader */ = {isa = PBXFileReference; lastKnownFileType = folder; name = shader; path = data/shader; sourceTree = "<group>"; };
 		9D0C38102CB586AD00363301 /* translation */ = {isa = PBXFileReference; lastKnownFileType = folder; name = translation; path = data/translation; sourceTree = "<group>"; };
 		9D0C38122CB586BE00363301 /* sounds */ = {isa = PBXFileReference; lastKnownFileType = folder; name = sounds; path = data/sounds; sourceTree = "<group>"; };
 		9D0C38232CB59D9B00363301 /* data */ = {isa = PBXFileReference; lastKnownFileType = folder; name = data; path = data/data; sourceTree = "<group>"; };
@@ -2882,7 +2879,6 @@
 				9D0C38232CB59D9B00363301 /* data */,
 				9D0C38122CB586BE00363301 /* sounds */,
 				9D0C38102CB586AD00363301 /* translation */,
-				9D0C380E2CB5865B00363301 /* shader */,
 				9D0C380C2CB5861C00363301 /* fonts */,
 				9D0C380A2CB584D800363301 /* denise.icns */,
 				9D8FB4E02CB47539006905BE /* icons.cpp */,
@@ -3121,7 +3117,6 @@
 				9DA75E742FE702E200766658 /* README in Resources */,
 				9D0C38132CB586BE00363301 /* sounds in Resources */,
 				9D0C380B2CB584D800363301 /* denise.icns in Resources */,
-				9D0C380F2CB5865B00363301 /* shader in Resources */,
 				9D0C38112CB586AD00363301 /* translation in Resources */,
 				9D0C38242CB59D9B00363301 /* data in Resources */,
 				9DA75E0C2FE6FD6B00766658 /* presets in Resources */,
@@ -3137,7 +3132,6 @@
 				9DA75E752FE702E200766658 /* README in Resources */,
 				9DECF9CC2E45F309005C0BBA /* sounds in Resources */,
 				9DECF9CD2E45F309005C0BBA /* denise.icns in Resources */,
-				9DECF9CE2E45F309005C0BBA /* shader in Resources */,
 				9DECF9CF2E45F309005C0BBA /* translation in Resources */,
 				9DECF9D12E45F309005C0BBA /* data in Resources */,
 				9DA75E0D2FE6FD6B00766658 /* presets in Resources */,

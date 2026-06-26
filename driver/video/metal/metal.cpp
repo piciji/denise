@@ -1421,7 +1421,7 @@ namespace DRIVER {
         if (shaderPasses) {
             auto& p = programs[shaderPasses-1];
             
-            if (!preset->lumaChroma && (p.format == MTLPixelFormatRGBA16Float))
+            if (!preset->rgb10BitInput && (p.format == MTLPixelFormatRGBA16Float))
                 hdrUniforms.inverseTonemap = false;
             
             _format = p.format;
