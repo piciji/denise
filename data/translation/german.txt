@@ -977,3 +977,4 @@ Maximum = Maximum
 Hard Reset + Eject = Hard Reset + Auswerfen
 load shader tooltip = dein erster CRT Shader? dann beginne in den Ordnern "crt" oder "bezel/koko-aio/Presets-4.1/". Wenn noch nicht geschehen, bitte links auf das Download Symbol klicken um das Shader Paket herunterzuladen. Auf die gleiche Weise können die Shader von Zeit zu Zeit aktualisiert werden.
 shader missing = bitte zuerst links auf das Download Symbol klicken um das Shader Paket herunterzuladen.
+shader favourite = einen der besten Shader mit einem Klick laden. zeigt floppy mit LED, wenn im Tab Bildgeometrie unter Skalierung "Fenster" ausgewählt wird.

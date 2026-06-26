@@ -2273,6 +2273,7 @@ auto PresentationLayout::translate() -> void {
     layShader.main.control.appendPreset.setTooltip( trans->getA("combine shader") );
 
     layShader.main.control.downloadShader.setTooltip(trans->getA("download shader tooltip"));
+    layShader.main.control.loadDefaultShader.setTooltip(trans->getA("shader favourite"));
 
     layShader.main.control.unload.setText( trans->getA("unload") );
     layPass.control.save.setText( trans->getA("save") );
