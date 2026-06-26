@@ -7,7 +7,7 @@
  * This file is part of USBSID-Pico (https://github.com/LouDnl/USBSID-Pico-driver)
  * File author: LouD
  *
- * Copyright (c) 2024 LouD
+ * Copyright (c) 2024-2026 LouD
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,43 +26,60 @@
 #ifndef _USBSID_H_
 #define _USBSID_H_
 
+#ifdef __APPLE__
+#undef HAVE_ALIGNED_ALLOC
+#define USE_VENDOR_ITF
+#define LIBUSB_TIMEOUT   1000
+#else
+#define LIBUSB_TIMEOUT   0
+#endif
+
 #if defined(__linux__) || defined(__linux) || defined(linux) || defined(__unix__) || defined(__APPLE__)
   #define __US_LINUX_COMPILE
 #elif defined(_WIN32) || defined(_WIN64) || defined(__MINGW32__) || defined(__MINGW64__)
   #define __US_WINDOWS_COMPILE
 #endif
 
-#ifndef WINAPI
-#if defined(_ARM_)
-#define WINAPI
-#else
-#define WINAPI __stdcall
-#endif
+/**
+ * @brief Fix for CLANG64 and CLANGARM64 builds
+ * @ref https://github.com/LouDnl/USBSID-Pico-driver/issues/11
+ * @ref https://github.com/msys2/MINGW-packages/actions/runs/21104083635
+ */
+#if defined(__US_WINDOWS_COMPILE)
+  /* Detect ARM64 across various compiler defines */
+  #if defined(__aarch64__) || defined(_M_ARM64) || defined(__arm__) || defined(_M_ARM) || defined(_ARM_)
+    /* libusb on Windows typically expects WINAPI (stdcall) on x86,
+       but Clang on ARM64 must treat this as empty. */
+    #undef WINAPI
+    #define WINAPI
+    #undef LIBUSB_CALL
+    #define LIBUSB_CALL
+  #else
+    #ifndef WINAPI
+      #define WINAPI __stdcall
+    #endif
+    #ifndef LIBUSB_CALL
+      #define LIBUSB_CALL WINAPI
+    #endif
+  #endif
 #endif
 
+/* Fallback for other platforms */
 #ifndef LIBUSB_CALL
-#if defined(_WIN32) || defined(__CYGWIN__)
-#define LIBUSB_CALL WINAPI
-#else
-#define LIBUSB_CALL
-#endif
+  #define LIBUSB_CALL
 #endif
 
-#ifdef USBSID_OPTOFF
-#pragma GCC push_options
-#pragma GCC optimize ("O0")
-#endif
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-variable"
 
 #ifdef __cplusplus
-  //#include <cstdbool>
   #include <cstdint>
   #include <cstdio>
   #include <cstdlib>
   #include <cstring>
   #include <chrono>
   #include <thread>
+  #include <atomic>
 #else
   #include <stdbool.h>
   #include <stdint.h>
@@ -70,9 +87,20 @@
   #include <stdlib.h>
   #include <string.h>
   #include <pthread.h>
+  #include <stdatomic.h>
 #endif
 
-//#include <libusb.h>
+/**
+ * @brief Fix for CLANG64 and CLANGARM64 builds
+ * @ref https://github.com/LouDnl/USBSID-Pico-driver/issues/11
+ * @ref https://github.com/msys2/MINGW-packages/actions/runs/21104083635
+ */
+#if defined(__clang__) && defined(__MINGW32__)
+  #if defined(__x86_64__) || defined(__aarch64__)
+    #include <pthread.h>
+  #endif
+#endif
+
 
 /* Optional driver start and driver exit commands
  *
@@ -100,6 +128,7 @@
 
 using namespace std;
 
+/* Pre-define libusb structs */
 struct libusb_context;
 struct libusb_transfer;
 
@@ -114,8 +143,13 @@ namespace USBSID_NS
     PRODUCT_ID     = 0x4011,
     ACM_CTRL_DTR   = 0x01,
     ACM_CTRL_RTS   = 0x02,
+#ifdef USE_VENDOR_ITF
+    EP_OUT_ADDR    = 0x04,
+    EP_IN_ADDR     = 0x84,
+#else
     EP_OUT_ADDR    = 0x02,
     EP_IN_ADDR     = 0x82,
+#endif
     LEN_IN_BUFFER  = 1,
     LEN_OUT_BUFFER = 64,
     #ifdef DEBUG_USBSID_MEMORY
@@ -144,6 +178,30 @@ namespace USBSID_NS
     BOOTLOADER   =  20,   /*    0b10100 ~ 0x14 */
   };
 
+  /* Socket config array
+   *  0 Initiator     = 0x37
+   *  1 Verification  = 0x7f
+   *  2 HiByte        = socketOne enabled
+   *  2 LoByte        = socketOne dualsid
+   *  3 LoByte        = socketOne chipType
+   *  4 HiByte        = socketOne sid1Type
+   *  4 LoByte        = socketOne sid2Type
+   *  5 HiByte        = socketTwo enabled
+   *  5 LoByte        = socketTwo dualsid
+   *  6 LoByte        = socketTwo chipType
+   *  7 HiByte        = socketTwo sid1Type
+   *  7 LoByte        = socketTwo sid2Type
+   *  8 HiByte        = socketOne SID1 id
+   *  8 LoByte        = socketOne SID2 id
+   *  9 HiByte        = socketOne SID1 id
+   *  9 LoByte        = socketOne SID2 id
+   * 10 LoByte 0b001  = socketTwo mirrors socketOne
+   * 10 LoByte 0b010  = sockets are flipped One is Two and vice versa
+   * 10 LoByte 0b100  = SID addresses are mixed (quad sid only)
+   * 11 Terminator    = 0xff
+   */
+  #define SOCKET_BUFFER_SIZE 12
+
   /* Thread related */
   static int run_thread;
 
@@ -158,6 +216,9 @@ namespace USBSID_NS
   static struct libusb_device_handle *devh = NULL;
   static struct libusb_transfer *transfer_out = NULL;  /* OUT-going transfers (OUT from host PC to USB-device) */
   static struct libusb_transfer *transfer_in = NULL;  /* IN-coming transfers (IN to host PC from USB-device) */
+  static bool transfer_out_pending = false;   /* for better transfer sync */
+  static bool transfer_in_pending = false;
+
   static libusb_context *ctx = NULL;
   static bool in_buffer_dma = false;
   static bool out_buffer_dma = false;
@@ -189,8 +250,8 @@ namespace USBSID_NS
   static ring_buffer_t us_ringbuffer;
   const int min_diff_size = 16;
   const int min_ring_size = 256;
-  static int diff_size = 64;
-  static int ring_size = 8192;
+  const int default_diff_size = 64;
+  const int default_ring_size = 8192;
 
   /* Clock cycles per second
    * Clock speed: 0.985 MHz (PAL) or 1.023 MHz (NTSC)
@@ -260,31 +321,43 @@ namespace USBSID_NS
   static int socketconfig = -1;
 
   /* Object related */
-  static bool us_Initialised = false;
-  static bool us_Available = false;
-  static bool us_PortIsOpen = false;
+  static int us_Found = 0;
   static int instance = -1;
 
   /* Timing related */
-  typedef std::nano                                      ratio_t;      /* 1000000000 */
-  typedef std::chrono::high_resolution_clock::time_point timestamp_t;  /* Point in time */
-  typedef std::chrono::nanoseconds                       duration_t;   /* Duration in nanoseconds */
-  static double us_CPUcycleDuration               = ratio_t::den / (float)cycles_per_sec;          /* CPU cycle duration in nanoseconds */
-  static double us_InvCPUcycleDurationNanoSeconds = 1.0 / (ratio_t::den / (float)cycles_per_sec);  /* Inverted CPU cycle duration in nanoseconds */
-  static timestamp_t m_StartTime   = std::chrono::high_resolution_clock::now();
-  static timestamp_t m_LastTime    = m_StartTime;
+  typedef std::nano                               ratio_t;      /* 1000000000 */
+  typedef std::chrono::steady_clock::time_point   timestamp_t;  /* Point in time */
+  typedef std::chrono::nanoseconds                duration_t;   /* Duration in nanoseconds */
 
-  static volatile int us_thread = 0;
+  #ifdef __cplusplus
+  static std::atomic_int us_thread(0);
+  #else
+  static _Atomic int us_thread = 0;
+  #endif
   static pthread_mutex_t us_mutex;
   class USBSID_Class {
     private:
 
+      /* Driver related */
+      static bool us_Initialised;
+      static bool us_Available;
+      static bool us_PortIsOpen;
       int us_InstanceID;
+
+      /* Timing related */
+      static double us_CPUcycleDuration;  /* CPU cycle duration in nanoseconds */
+      static double us_InvCPUcycleDurationNanoSeconds;  /* Inverted CPU cycle duration in nanoseconds */
+      static timestamp_t m_StartTime;  /* That moment when... */
+      static timestamp_t m_LastTime;  /* I know what you did last summer! */
+
+      /* Ringbuffer related */
+      static int diff_size;
+      static int ring_size;
 
       /* LIBUSB */
       int LIBUSB_Setup(bool start_threaded, bool with_cycles);
       int LIBUSB_Exit(void);
-      int LIBUSB_Available(libusb_context *ctx, uint16_t vendor_id, uint16_t product_id);
+      int LIBUSB_Available(libusb_context *ctx_, uint16_t vendor_id, uint16_t product_id);
       void LIBUSB_StopTransfers(void);
       int LIBUSB_OpenDevice(void);
       void LIBUSB_CloseDevice(void);
@@ -327,87 +400,85 @@ namespace USBSID_NS
       USBSID_Class();   /* Constructor */
       ~USBSID_Class();  /* Deconstructor */
 
-      int us_Found;
-
       /* USBSID */
-      int USBSID_Init(bool start_threaded, bool with_cycles);
-      int USBSID_Close(void);
-      bool USBSID_isInitialised(void){ return us_Initialised; };
-      bool USBSID_isAvailable(void){ return us_Available; };
-      bool USBSID_isOpen(void){ return us_PortIsOpen; };
+      int USBSID_Init(bool start_threaded, bool with_cycles);                  /* Well it inits? */
+      int USBSID_Close(void);                                                  /* And this does not */
+      int USBSID_GetInstanceID(void){ return us_InstanceID; };                 /* Does it count? */
+      bool USBSID_isInitialised(void){ return us_Initialised; };               /* Probability 50% */
+      bool USBSID_isAvailable(void){ return us_Available; };                   /* Only if you're nice */
+      bool USBSID_isOpen(void){ return us_PortIsOpen; };                       /* Adults only */
 
       /* USBSID & SID control */
-      void USBSID_Pause(void);                                            /* Pause playing by releasing chipselect pins */
-      void USBSID_Reset(void);                                            /* Reset all SID chips */
-      void USBSID_ResetAllRegisters(void);                                /* Reset register for all SID chips */
-      void USBSID_Mute(void);                                             /* Mute all SID chips */
-      void USBSID_UnMute(void);                                           /* UnMute all SID chips */
-      void USBSID_DisableSID(void);                                       /* Release reset pin and unmute SID */
-      void USBSID_EnableSID(void);                                        /* Assert reset pin and release chipselect pins */
-      void USBSID_ClearBus(void);                                         /* Clear the SID bus from any data */
-      void USBSID_SetClockRate(long clockrate_cycles,                     /* Set CPU clockrate in Hertz */
-                               bool suspend_sids);                        /* Assert SID RES signal while changing clockrate (Advised!)*/
-      long USBSID_GetClockRate(void);                                     /* Get CPU clockrate in Hertz  */
-      long USBSID_GetRefreshRate(void);                                   /* Get cycles per refresh rate */
-      long USBSID_GetRasterRate(void);                                    /* Get cycles per raster rate */
-      uint8_t* USBSID_GetSocketConfig(uint8_t socket_config[]);           /* Get socket config for parsing */
-      int USBSID_GetSocketNumSIDS(int socket, uint8_t socket_config[]);   /* Get the socket number of sids configured */
-      int USBSID_GetSocketChipType(int socket, uint8_t socket_config[]);  /* Get the socket chip type configured */
-      int USBSID_GetSocketSIDType1(int socket, uint8_t socket_config[]);  /* Get the socket SID 1 type configured */
-      int USBSID_GetSocketSIDType2(int socket, uint8_t socket_config[]);  /* Get the socket SID 2 type configured (only works for clone chip types ofcourse) */
-      int USBSID_GetNumSIDs(void);                                        /* Get the total number of sids configured */
-      int USBSID_GetFMOplSID(void);                                       /* Get the sid number (if configured) to address FMOpl */
-      int USBSID_GetPCBVersion(void);                                     /* Get the PCB version */
-      void USBSID_SetStereo(int state);                                   /* Set device to mono or stereo ~ v1.3 PCB only */
-      void USBSID_ToggleStereo(void);                                     /* Toggle between mono and stereo ~ v1.3 PCB only */
+      void USBSID_Pause(void);                                                 /* Pause playing by releasing chipselect pins */
+      void USBSID_Reset(void);                                                 /* Reset all SID chips */
+      void USBSID_ResetAllRegisters(void);                                     /* Reset register for all SID chips */
+      void USBSID_Mute(void);                                                  /* Mute all SID chips */
+      void USBSID_UnMute(void);                                                /* UnMute all SID chips */
+      void USBSID_DisableSID(void);                                            /* Release reset pin and unmute SID */
+      void USBSID_EnableSID(void);                                             /* Assert reset pin and release chipselect pins */
+      void USBSID_ClearBus(void);                                              /* Clear the SID bus from any data */
+      void USBSID_SetClockRate(long clockrate_cycles,                          /* Set CPU clockrate in Hertz */
+                               bool suspend_sids);                             /* Assert SID RES signal while changing clockrate (Advised!)*/
+      long USBSID_GetClockRate(void);                                          /* Get CPU clockrate in Hertz  */
+      long USBSID_GetRefreshRate(void);                                        /* Get cycles per refresh rate */
+      long USBSID_GetRasterRate(void);                                         /* Get cycles per raster rate */
+      uint8_t* USBSID_GetSocketConfig(uint8_t socket_config[]);                /* Get socket config for parsing */
+      int USBSID_GetSocketNumSIDS(int socket, uint8_t socket_config[]);        /* Get the socket number of sids configured */
+      int USBSID_GetSocketChipType(int socket, uint8_t socket_config[]);       /* Get the socket chip type configured */
+      int USBSID_GetSocketSIDType1(int socket, uint8_t socket_config[]);       /* Get the socket SID 1 type configured */
+      int USBSID_GetSocketSIDType2(int socket, uint8_t socket_config[]);       /* Get the socket SID 2 type configured (only works for clone chip types ofcourse) */
+      int USBSID_GetNumSIDs(void);                                             /* Get the total number of sids configured */
+      int USBSID_GetFMOplSID(void);                                            /* Get the sid number (if configured) to address FMOpl */
+      int USBSID_GetPCBVersion(void);                                          /* Get the PCB version */
+      void USBSID_SetStereo(int state);                                        /* Set device to mono or stereo ~ v1.3 PCB only */
+      void USBSID_ToggleStereo(void);                                          /* Toggle between mono and stereo ~ v1.3 PCB only */
 
       /* Synchronous direct */
       void USBSID_SingleWrite(unsigned char *buff, size_t len);                /* Single write buffer of size_t ~ example: config writing */
       unsigned char USBSID_SingleRead(uint8_t reg);                            /* Single read register, return result */
       unsigned char USBSID_SingleReadConfig(unsigned char *buff, size_t len);  /* Single to buffer of specified length ~ example: config reading */
+      int USBSID_ReadConfig(unsigned char *buff, size_t len);                  /* Single to buffer of specified length ~ returns size of data */
 
       /* Asynchronous direct */
-      void USBSID_Write(unsigned char *buff, size_t len);                    /* Write buffer of size_t len */
-      void USBSID_Write(uint8_t reg, uint8_t val);                           /* Write register and value */
-      void USBSID_Write(unsigned char *buff, size_t len, uint16_t cycles);   /* Wait n cycles, write buffer of size_t len */
-      void USBSID_Write(uint8_t reg, uint8_t val, uint16_t cycles);          /* Wait n cycles, write register and value */
-      void USBSID_WriteCycled(uint8_t reg, uint8_t val, uint16_t cycles);    /* Write register and value, USBSID uses cycles for delay */
-      unsigned char USBSID_Read(uint8_t reg);                                /* Write register, return result */
-      unsigned char USBSID_Read(unsigned char *writebuff);                   /* Write buffer, return result */
-      unsigned char USBSID_Read(unsigned char *writebuff, uint16_t cycles);  /* Wait for n cycles and write buffer, return result */
+      void USBSID_Write(unsigned char *buff, size_t len);                      /* Write buffer of size_t len */
+      void USBSID_Write(uint8_t reg, uint8_t val);                             /* Write register and value */
+      void USBSID_Write(unsigned char *buff, size_t len, uint16_t cycles);     /* Wait n cycles, write buffer of size_t len */
+      void USBSID_Write(uint8_t reg, uint8_t val, uint16_t cycles);            /* Wait n cycles, write register and value */
+      void USBSID_WriteCycled(uint8_t reg, uint8_t val, uint16_t cycles);      /* Write register and value, USBSID uses cycles for delay */
+      unsigned char USBSID_Read(uint8_t reg);                                  /* Write register, return result */
+      unsigned char USBSID_Read(unsigned char *writebuff);                     /* Write buffer, return result */
+      unsigned char USBSID_Read(unsigned char *writebuff, uint16_t cycles);    /* Wait for n cycles and write buffer, return result */
 
       /* Asynchronous thread */
       void USBSID_WriteRing(uint8_t reg, uint8_t val);                         /* Write register and value to ringbuffer, USBSID adds 10 delay cycles to each write */
       void USBSID_WriteRingCycled(uint8_t reg, uint8_t val, uint16_t cycles);  /* Write register, value, and cycles to ringbuffer */
 
       /* Threading */
-      void USBSID_EnableThread(void);   /* Enable the thread on the fly */
-      void USBSID_DisableThread(void);  /* Disable the running thread and switch to non threaded and cycled on the fly */
+      void USBSID_EnableThread(void);                                          /* Enable the thread on the fly */
+      void USBSID_DisableThread(void);                                         /* Disable the running thread and switch to non threaded and cycled on the fly */
 
       /* Ringbuffer */
-      void USBSID_SetFlush(void);          /* Set flush buffer flag to 1 */
-      void USBSID_Flush(void);             /* Set flush buffer flag to 1 and flushes the buffer */
-      void USBSID_SetBufferSize(int size); /* Set the buffer size for storing writes */
-      void USBSID_SetDiffSize(int size);   /* Set the minimum size difference between head & tail */
-      void USBSID_RestartRingBuffer(void); /* Restart the ringbuffer*/
+      void USBSID_SetFlush(void);                                              /* Set flush buffer flag to 1 */
+      void USBSID_Flush(void);                                                 /* Set flush buffer flag to 1 and flushes the buffer */
+      void USBSID_SetBufferSize(int size);                                     /* Set the buffer size for storing writes */
+      void USBSID_SetDiffSize(int size);                                       /* Set the minimum size difference between head & tail */
+      void USBSID_RestartRingBuffer(void);                                     /* Restart the ringbuffer */
 
       /* Thread utils */
-      void USBSID_RestartThread(bool with_cycles);
-      static void *_USBSID_Thread(void *context)
+      void USBSID_RestartThread(bool with_cycles);                             /* Restart the thread that handles the ringbuffer */
+      static void *_USBSID_Thread(void *context)                               /* Internal wrapper to start the thread */
       { /* Required for supplying private function to pthread_create */
         return ((USBSID_Class *)context)->USBSID_Thread();
       }
 
       /* Timing and cycles */
-      uint_fast64_t USBSID_WaitForCycle(uint_fast16_t cycles);         /* Sleep for n cycles */
-      uint_fast64_t USBSID_CycleFromTimestamp(timestamp_t timestamp);  /* Returns cycles since m_StartTime */
-
-      /* Utils */
-      /* TODO: Deprecate this function, emulator/player should handle this */
-      uint8_t USBSID_Address(uint16_t addr);  /* Calculates correct SID address to write to if player does not */
+      uint_fast64_t USBSID_WaitForCycle(uint_fast16_t cycles);                 /* Sleep for n cycles */
+      uint_fast64_t USBSID_WaitForCycle_(uint_fast16_t cycles);                /* Sleep for n cycles ~ deprecated */
+      void USBSID_SyncTime(void);                                              /* Sync time for cycle delay function */
   };
 
 } /* USBSIDDriver */
+
 
 #ifdef USBSID_OPTOFF
 #pragma GCC diagnostic pop

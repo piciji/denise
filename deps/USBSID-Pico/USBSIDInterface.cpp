@@ -7,7 +7,7 @@
  * This file is part of USBSID-Pico (https://github.com/LouDnl/USBSID-Pico-driver)
  * File author: LouD
  *
- * Copyright (c) 2024 LouD
+ * Copyright (c) 2024-2026 LouD
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -113,10 +113,10 @@ extern "C"
     /* No check here, can be called without connection */
     return ((USBSID_Class*)p)->USBSID_isOpen();
   }
-  int found_USBSID(USBSIDitf p) {
-    if( p == NULL ) return -1;
-    return ((USBSID_Class*)p)->us_Found;
-  }
+  // int found_USBSID(USBSIDitf p) {
+  //   if( p == NULL ) return -1;
+  //   return ((USBSID_Class*)p)->us_Found;
+  // }
   void writesingle_USBSID(USBSIDitf p, unsigned char *buff, size_t len){
     if( p == NULL ) return;
     return ((USBSID_Class*)p)->USBSID_SingleWrite(buff, len);
