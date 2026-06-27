@@ -236,8 +236,8 @@
 		9DA75D432FE6F12B00766658 /* chamberlin.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DA75D3C2FE6F12A00766658 /* chamberlin.cpp */; };
 		9DA75D442FE6F12B00766658 /* reSid24.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DA75D3D2FE6F12A00766658 /* reSid24.cpp */; };
 		9DA75D452FE6F12B00766658 /* reSid24.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DA75D3D2FE6F12A00766658 /* reSid24.cpp */; };
-		9DA75D4C2FE6F17B00766658 /* usbSidPico.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DA75D482FE6F17A00766658 /* usbSidPico.cpp */; };
-		9DA75D4D2FE6F17B00766658 /* usbSidPico.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DA75D482FE6F17A00766658 /* usbSidPico.cpp */; };
+		9DA75D4C2FE6F17B00766658 /* usbSidPico.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DA75D482FE6F17A00766658 /* usbSidPico.cpp */; settings = {COMPILER_FLAGS = "-DLIBUSB -I$(PROJECT_DIR)/deps/USBSID-Pico/"; }; };
+		9DA75D4D2FE6F17B00766658 /* usbSidPico.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DA75D482FE6F17A00766658 /* usbSidPico.cpp */; settings = {COMPILER_FLAGS = "-DLIBUSB -I$(PROJECT_DIR)/deps/USBSID-Pico/"; }; };
 		9DA75D4E2FE6F17B00766658 /* residfpHandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DA75D4A2FE6F17B00766658 /* residfpHandler.cpp */; };
 		9DA75D4F2FE6F17B00766658 /* residfpHandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DA75D4A2FE6F17B00766658 /* residfpHandler.cpp */; };
 		9DA75E0C2FE6FD6B00766658 /* presets in Resources */ = {isa = PBXBuildFile; fileRef = 9DA75E0B2FE6FD6B00766658 /* presets */; };
@@ -302,7 +302,7 @@
 		9DC455A52FA10935004C6482 /* viaDebugger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DC455A12FA10934004C6482 /* viaDebugger.cpp */; };
 		9DC455A82FA10977004C6482 /* m65Debugger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DC455A62FA10977004C6482 /* m65Debugger.cpp */; };
 		9DC455A92FA10977004C6482 /* m65Debugger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DC455A62FA10977004C6482 /* m65Debugger.cpp */; };
-		9DD0A0BA2E3B94AF0018DA68 /* USBSID.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DD0A0B92E3B94AF0018DA68 /* USBSID.cpp */; settings = {COMPILER_FLAGS = "-DHAVE_ALIGNED_ALLOC -I$(PROJECT_DIR)/data/libs/include/"; }; };
+		9DD0A0BA2E3B94AF0018DA68 /* USBSID.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DD0A0B92E3B94AF0018DA68 /* USBSID.cpp */; settings = {COMPILER_FLAGS = "-I$(PROJECT_DIR)/data/libs/include/"; }; };
 		9DD0A0BC2E3B9A220018DA68 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9DD0A0BB2E3B9A220018DA68 /* Security.framework */; };
 		9DD306D82DFAFF2200B8F12F /* httpClient.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DD306D62DFAFF2200B8F12F /* httpClient.cpp */; };
 		9DD79F362E916F4400A4166D /* AVFAudio.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9DD79F352E916F4400A4166D /* AVFAudio.framework */; };
@@ -354,7 +354,7 @@
 		9DECF93F2E45F309005C0BBA /* palette.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAA7E2CB3F6EF006905BE /* palette.cpp */; };
 		9DECF9402E45F309005C0BBA /* cosine.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAAB32CB3F6EF006905BE /* cosine.cpp */; };
 		9DECF9412E45F309005C0BBA /* model.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAAE62CB3F6EF006905BE /* model.cpp */; };
-		9DECF9422E45F309005C0BBA /* USBSID.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DD0A0B92E3B94AF0018DA68 /* USBSID.cpp */; settings = {COMPILER_FLAGS = "-DHAVE_ALIGNED_ALLOC -I$(PROJECT_DIR)/data/libs/include/"; }; };
+		9DECF9422E45F309005C0BBA /* USBSID.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DD0A0B92E3B94AF0018DA68 /* USBSID.cpp */; settings = {COMPILER_FLAGS = "-I$(PROJECT_DIR)/data/libs/include/"; }; };
 		9DECF9432E45F309005C0BBA /* reu.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAD252CB40DF7006905BE /* reu.cpp */; };
 		9DECF9442E45F309005C0BBA /* lha_arch_unix.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D07CCF12E296CD000A9787E /* lha_arch_unix.cpp */; };
 		9DECF9452E45F309005C0BBA /* depsSpirv.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D07CD162E29703800A9787E /* depsSpirv.cpp */; };
