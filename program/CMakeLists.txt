@@ -191,10 +191,3 @@ endif()
 target_sources(${PROJECT_NAME} PUBLIC ${srcs} )
 
 target_link_libraries(${PROJECT_NAME} PUBLIC guikit driver coreC64 coreAmiga logos icons)
-
-add_custom_command(
-        TARGET ${PROJECT_NAME} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy
-        "${CMAKE_SOURCE_DIR}/builds/release/program/denise.exe"
-        "${CMAKE_SOURCE_DIR}/builds/release/program/x64denise.exe"
-)
