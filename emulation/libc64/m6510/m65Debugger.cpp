@@ -187,6 +187,11 @@ auto M65Debugger::checkSoftStop(uint16_t addr) -> bool {
 
 auto M65Debugger::debuggerStepOver() -> void {
     unsigned bytes;
+    uint8_t _op = peek(pcEdge);
+    if (_op == 0x40 || _op == 0x60) { // RTI/RTS
+        debuggerStepInto();
+        return;
+    }
     disassemble( pcEdge, bytes );
 
     softStep = pcEdge + bytes;
