@@ -1,5 +1,7 @@
 
 #include "m6502.h"
+
+#include "../../system/debuggerSnapshot.h"
 #include "../drive/drive.h"
 #include "../../system/system.h"
 
@@ -2015,6 +2017,18 @@ auto M6502New::updateSnapshot(DebuggerSnapshot& snap) -> void {
     s.regY = regY;
     s.regS = 0x100 | regS;
     s.flags = STATUS;
+}
+
+auto M6502New::updateFromSnapshot(DebuggerSnapshot& snap) -> void {
+    auto& s = snap.drives[drive->number];
+
+    pc = pcEdge = s.pcEdge = s.pc;
+    regA = s.regA;
+    regX = s.regX;
+    regY = s.regY;
+    regS = s.regS;
+    setStatus(s.flags);
+    s.updateFromExtern = false;
 }
 
 auto M6502New::peek(uint16_t addr) -> uint8_t {

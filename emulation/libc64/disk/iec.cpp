@@ -629,6 +629,10 @@ auto IecBus::updateCpuSnapshot( DebuggerTheme theme, DebuggerSnapshot& snap ) ->
     drives[ getDriveId(theme) ]->cpu.updateSnapshot( snap );
 }
 
+auto IecBus::updateFromCpuSnapshot( DebuggerTheme theme, DebuggerSnapshot& snap ) -> void {
+    drives[ getDriveId(theme) ]->cpu.updateFromSnapshot( snap );
+}
+
 auto IecBus::updateViaSnapshot( DebuggerTheme theme, DebuggerSnapshot& snap ) -> void {
     drives[ getDriveId(theme) ]->updateViaDebuggerSnapshot( snap );
 }

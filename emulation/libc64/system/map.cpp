@@ -308,4 +308,73 @@ auto System::memoryDump(uint8_t page, uint8_t* dump) -> void {
     }
 }
 
+auto System::memoryDumpCart(uint16_t startAddr, uint16_t endAddr, uint8_t* dump) -> void {
+    for (unsigned addr = startAddr; addr < endAddr; addr++) {
+        if (addr >= 0x8000 && addr <= 0x9fff) {
+            *dump++ = peekRomL( addr );
+        } else if (addr >= 0xa000 && addr <= 0xbfff) {
+            *dump++ = peekRomH( addr );
+        } else
+            *dump++ = 0xff;
+    }
+}
+
+auto System::memoryDumpROM(uint16_t startAddr, uint16_t endAddr, uint8_t* dump) -> void {
+    bool scpu = dynamic_cast<SuperCpu*>(expansionPort);
+
+    for (unsigned addr = startAddr; addr < endAddr; addr++) {
+        if (addr >= 0xa000 && addr <= 0xbfff) {
+            if (scpu)
+                *dump++ = superCpu->readSramB1<true>( addr );
+            else
+                *dump++ = basicRom[ addr & 0x1fff ];
+        } else if (addr >= 0xd000 && addr <= 0xdfff) {
+            *dump++ = charRom[ addr & 0xfff ];
+        } else if (addr >= 0xe000) {
+            if (scpu)
+                *dump++ = superCpu->peekKernal( addr );
+            else
+                *dump++ = kernalRom[ addr & 0x1fff ];
+        } else
+            *dump++ = ram[addr & 0xffff];
+    }
+}
+
+auto System::memoryDumpIO(uint16_t startAddr, uint16_t endAddr, uint8_t* dump) -> void {
+    bool scpu = dynamic_cast<SuperCpu*>(expansionPort);
+
+    for (unsigned addr = startAddr; addr < endAddr; addr++) {
+        switch (addr & 0xff00) {
+            case 0xd000:
+                if (scpu) {
+                    if ((addr & 0xfff0) == 0xd0b0) {
+                        *dump++ = superCpu->peekIoSCPU(addr);
+                        break;
+                    }
+                }
+            case 0xd100: *dump++ = peekVicReg(addr); break;
+            case 0xd200:
+            case 0xd300:
+                if (scpu)
+                    *dump++ = superCpu->readSramB1<true>(addr);
+                else
+                    *dump++ = peekVicReg(addr);
+                break;
+            case 0xd400:
+            case 0xd500:
+            case 0xd600:
+            case 0xd700: *dump++ = peekSidReg(addr); break;
+            case 0xd800:
+            case 0xd900:
+            case 0xda00:
+            case 0xdb00: *dump++ = readColorRam(addr); break;
+            case 0xdc00: *dump++ = peekCia1Reg(addr); break;
+            case 0xdd00: *dump++ = peekCia2Reg(addr); break;
+            case 0xde00: *dump++ = peekIo1Reg(addr); break;
+            case 0xdf00: *dump++ = peekIo2Reg(addr); break;
+            default: *dump++ = 0xff; break;
+        }
+    }
+}
+
 }

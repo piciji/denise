@@ -2097,4 +2097,8 @@ auto Interface::getMemoryDumpPage(DebuggerTheme theme, uint8_t page, uint8_t* du
     system->getMemoryDumpPage(theme, page, dump);
 }
 
+auto Interface::getMemory(DebuggerTheme theme, DebuggerAction action, unsigned startAddr, unsigned endAddr, uint8_t* dump) -> void {
+    system->getMemory(theme, action, startAddr, endAddr, dump);
+}
+
 }
