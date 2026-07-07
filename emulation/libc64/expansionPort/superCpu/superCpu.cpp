@@ -707,6 +707,10 @@ template<bool peekAccess> auto SuperCpu::readSramKernal(uint16_t addr) -> uint8_
     return sram[0x8000 + addr];
 }
 
+auto SuperCpu::peekKernal(uint16_t addr) -> uint8_t {
+    return memConf & HW_ENABLE ? readSramKernal<true>( addr ) : readSramB1<true>( addr );
+}
+
 template<bool peekAccess> auto SuperCpu::readRom(uint16_t addr) -> uint8_t {
     if constexpr (!peekAccess)
         clockStretchRom();    

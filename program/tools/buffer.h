@@ -1,6 +1,8 @@
 
 #pragma once
 
+#include <cstring>
+
 template<typename T> static auto copyBufferToInt( const uint8_t* buf ) -> T {
 
     T value = 0;
@@ -27,7 +29,7 @@ template<typename T> static auto copyIntToBuffer( uint8_t* buf, T value ) -> uin
 
 static auto copyStringToBuffer(uint8_t* buf, uint8_t length, uint8_t* input) -> uint8_t* {
     buf[0] = length;
-    memcpy(&buf[1], input, length);
+    std::memcpy(&buf[1], input, length);
 
     return buf + length + 1;
 }

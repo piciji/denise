@@ -349,9 +349,14 @@ struct System {
 	auto debuggerStepOut(DebuggerTheme theme) -> bool;
 	auto getMemoryDumpBank(uint8_t bank, uint8_t* dump) -> void;
 	auto getMemoryDumpPage(DebuggerTheme theme, uint8_t page, uint8_t* dump) -> void;
+    auto memoryDumpROM(uint16_t startAddr, uint16_t endAddr, uint8_t* dump) -> void;
+    auto memoryDumpIO(uint16_t startAddr, uint16_t endAddr, uint8_t* dump) -> void;
+    auto memoryDumpCart(uint16_t startAddr, uint16_t endAddr, uint8_t* dump) -> void;
+    auto getMemory(DebuggerTheme theme, DebuggerAction action, unsigned startAddr, unsigned endAddr, uint8_t* dump) -> void;
 
     auto debugPointReached(Emulator::Interface::DebuggerTheme theme, Emulator::Interface::DebuggerAction action, unsigned addr) -> void;
     auto updateDebuggerSnapshot() -> void;
+    auto applyRemoteSnapshotChanges() -> void;
     auto debuggerUpdate() -> void;
     auto debuggerUpdateEvent() -> void;
 

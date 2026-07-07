@@ -356,7 +356,7 @@ struct Interface {
     };
 
     enum class DebuggerAction { None, Breakpoint, Watchpoint, WatchpointWrite, ExceptionPoint, Softstop, ModifiedCode, History, Line, Frame,
-        DmaView, DmaLog, DmaWatch, AutoUpdate, UIRequestedStop, HaltCPU };
+        DmaView, DmaLog, DmaWatch, AutoUpdate, UIRequestedStop, HaltCPU, MemROM, MemIO, MemCART };
 
     struct DebuggerSnapshot {
         unsigned themes = 0; // multiple themes
@@ -692,6 +692,7 @@ struct Interface {
     virtual auto getMemoryDumpBank(uint8_t bank, uint16_t* dump) -> void {}
     virtual auto getMemoryDumpBank(uint8_t bank, uint8_t* dump) -> void {}
     virtual auto getMemoryDumpPage(DebuggerTheme theme, uint8_t page, uint8_t* dump) -> void {}
+    virtual auto getMemory(DebuggerTheme theme, DebuggerAction action, unsigned startAddr, unsigned endAddr, uint8_t* dump) -> void {}
     virtual auto getDmaDump() -> uint8_t* { return nullptr; }
 
     virtual auto editMemory(DebuggerTheme theme, uint32_t addr, std::vector<uint16_t> values) -> void {}

@@ -7,6 +7,8 @@
 namespace LIBC64 {
 
 struct DebuggerSnapshot : Emulator::Interface::DebuggerSnapshot {
+    bool updateFromExtern = false;
+
     uint16_t regA;
     uint16_t regX;
     uint16_t regY;
@@ -41,6 +43,8 @@ struct DebuggerSnapshot : Emulator::Interface::DebuggerSnapshot {
     uint8_t lineCycles;
 
     struct Drive {
+        bool updateFromExtern = false;
+
         uint16_t regA;
         uint16_t regX;
         uint16_t regY;
@@ -203,6 +207,10 @@ struct DebuggerSnapshot : Emulator::Interface::DebuggerSnapshot {
     {100, "C64RAM:"}, {101, "CPU:"},
     {102, "DRIVE8:"}, {103, "DRIVE9:"},
     {104, "DRIVE10:"},{105, "DRIVE11:"},
+    };
+
+    constexpr static Emulator::Interface::DebuggerIdent memAccesses[] {
+    {0, "CPU"}, {1, "RAM"}, {2, "ROM"}, {3, "IO"}, {4, "CART"}
     };
 
     constexpr static Emulator::Interface::DebuggerIdent CiaPorts[2][2][8] = {

@@ -149,6 +149,8 @@ struct M6510 : M65Debugger {
 
     auto updateSnapshot(DebuggerSnapshot& snap) -> void;
 
+    auto updateFromSnapshot(DebuggerSnapshot& snap) -> void;
+
     auto parseExpressionValue(const std::string& input, int& pos) -> uint32_t;
 
     auto peek(uint16_t addr) -> uint8_t;

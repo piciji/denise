@@ -89,6 +89,7 @@ struct SuperCpu : ExpansionPort, WDCFAMILY::W65816 {
     template<bool peekAccess = false> auto readSramB1(uint16_t addr) -> uint8_t;
     template<bool peekAccess = false> auto readSramChar(uint16_t addr) -> uint8_t;
     template<bool peekAccess = false> auto readSramKernal(uint16_t addr) -> uint8_t;
+    auto peekKernal(uint16_t addr) -> uint8_t;
     template<bool peekAccess = false> auto readRom(uint16_t addr) -> uint8_t;
 
     template<bool reuAccess, uint8_t mode, uint8_t addrArea> auto writeSramAndOrHostRam(uint16_t addr, uint8_t value) -> void;
@@ -177,7 +178,7 @@ struct SuperCpu : ExpansionPort, WDCFAMILY::W65816 {
     auto setExpander(ExpansionPort* expander) -> void;
     auto getSizeNotConsideredForMemorySerialization() -> unsigned;
 
-    // SuperCPU can change HOST memory map onyl by GAME/EXROM.
+    // SuperCPU can change HOST memory map only by GAME/EXROM.
     // 6510 runs only for a short time to set PPORT to a meaningfull setting.
     // hence 6510 is permanently halted and can't change PPORT anymore.
     // PPORT has setting to make it possible to map IO in only by GAME/EXROM.

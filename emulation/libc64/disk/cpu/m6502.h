@@ -113,6 +113,7 @@ struct M6502New : M65Debugger {
     auto loadTrace(Emulator::HistoryEntry<uint8_t>& entry) -> void;
 
     auto updateSnapshot(DebuggerSnapshot& snap) -> void;
+    auto updateFromSnapshot(DebuggerSnapshot& snap) -> void;
 };
 
 }

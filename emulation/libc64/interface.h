@@ -227,6 +227,7 @@ struct Interface : Emulator::Interface {
     auto disassembleTrace(DebuggerTheme theme, unsigned i, uint16_t& flags) -> std::string;
 	auto getMemoryDumpBank(uint8_t bank, uint8_t* dump) -> void;
 	auto getMemoryDumpPage(DebuggerTheme theme, uint8_t page, uint8_t* dump) -> void;
+    auto getMemory(DebuggerTheme theme, DebuggerAction action, unsigned startAddr, unsigned endAddr, uint8_t* dump) -> void;
     auto getDmaDump() -> uint8_t*;
 
     auto editMemory(DebuggerTheme theme, uint32_t addr, std::vector<uint16_t> values) -> void;

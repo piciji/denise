@@ -94,7 +94,7 @@ auto EmuThread::lock(bool unlockDebugging) -> bool {
         unlockDebugger();
     }
 
-    if  (acknowledged /* check for nesting */ )
+    if (acknowledged /* check for nesting */ )
         return false;
 
     freeContext = true;

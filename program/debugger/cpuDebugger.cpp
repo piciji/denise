@@ -331,8 +331,6 @@ auto CpuDebugger::buildTheme() -> GUIKIT::Layout* {
     };
 
     cpu->watcher.adder.address.onReturn = [this]() {
-        auto& instructionList = cpu->instructionLayout.list;
-
         std::string addressText = cpu->watcher.adder.address.text();
         if (addressText.empty())
             return;
@@ -349,20 +347,8 @@ auto CpuDebugger::buildTheme() -> GUIKIT::Layout* {
             }
         }
 
-        if (watcherHelper.findBy( address, action ))
-            return;
-
         emuThread->lock();
-        watcherHelper.addToList( static_cast<unsigned>(address), action );
-        watcherHelper.updateList();
-
-        if (action == DebuggerAction::Breakpoint) {
-            auto instRow = findInstructionRowBy(static_cast<unsigned>(address));
-            if (instRow.has_value())
-                updateInstructionBreakpointVisuals(instructionList, instRow.value_or(0), watcherHelper.findBy( address, action ));
-        }
-
-        emulator->debuggerAdd(getTheme(), action, address);
+        addEntry( address, action );
         emuThread->unlock();
     };
 
@@ -710,13 +696,15 @@ auto CpuDebugger::initTheme() -> void {
 }
 
 auto CpuDebugger::closeTheme() -> void {
-    emulator->debuggerRemove( getTheme(), DebuggerAction::None);
-    emulator->debuggerRemove( getTheme(), DebuggerAction::Breakpoint );
-    emulator->debuggerRemove( getTheme(), DebuggerAction::Watchpoint );
-    emulator->debuggerRemove( getTheme(), DebuggerAction::WatchpointWrite );
-    emulator->debuggerRemove( getTheme(), DebuggerAction::ExceptionPoint );
-    emulator->debuggerRemove( getTheme(), DebuggerAction::History );
-    emulator->debuggerRemove( getTheme(), DebuggerAction::ModifiedCode );
+    if (!program->binaryMonitor.clientConnected()) {
+        emulator->debuggerRemove( getTheme(), DebuggerAction::None);
+        emulator->debuggerRemove( getTheme(), DebuggerAction::Breakpoint );
+        emulator->debuggerRemove( getTheme(), DebuggerAction::Watchpoint );
+        emulator->debuggerRemove( getTheme(), DebuggerAction::WatchpointWrite );
+        emulator->debuggerRemove( getTheme(), DebuggerAction::ExceptionPoint );
+        emulator->debuggerRemove( getTheme(), DebuggerAction::History );
+        emulator->debuggerRemove( getTheme(), DebuggerAction::ModifiedCode );
+    }
 }
 
 auto CpuDebugger::update68k(LIBAMI::DebuggerSnapshot& s) -> void {
@@ -898,6 +886,70 @@ auto CpuDebugger::translateTheme() -> void {
         c64RdyControl->rdyButton.setText("RDY" );
         c64RdyControl->rdyButton.setTooltip( showTips ? trans->getA( "step next rdy" ) : "" );
     }
+}
+
+auto CpuDebugger::addEntry(unsigned address, DebuggerAction action) -> void {
+    auto& instructionList = cpu->instructionLayout.list;
+    if (watcherHelper.findBy( address, action ))
+        return;
+
+    watcherHelper.addToList( static_cast<unsigned>(address), action );
+    watcherHelper.updateList();
+
+    if (action == DebuggerAction::Breakpoint) {
+        auto instRow = findInstructionRowBy(static_cast<unsigned>(address));
+        if (instRow.has_value())
+            updateInstructionBreakpointVisuals(instructionList, instRow.value_or(0), watcherHelper.findBy( address, action ));
+    }
+
+    emulator->debuggerAdd(getTheme(), action, address);
+}
+
+auto CpuDebugger::addCondition(unsigned address, DebuggerAction action, const std::string& condition) -> bool {
+    DbgWatcher* watcher = watcherHelper.findBy(address, action);
+    if (!watcher)
+        return false;
+
+    watcher->useHitCount = false;
+    watcher->hitCount = 0;
+    watcher->hitCountCompare = 0;
+    watcher->useExpression = true;
+    watcher->expression = condition;
+    watcher->expressionCompare = 0;
+
+    updateBreakpointVisuals(watcher);
+
+    return updateWatchpointCondition(*watcher);
+}
+
+auto CpuDebugger::deleteEntry(unsigned address, DebuggerAction action) -> void {
+    auto& instructionList = cpu->instructionLayout.list;
+    if (watcherHelper.findBy( address, action ) == nullptr)
+        return;
+
+    emulator->debuggerRemove( getTheme(), action, address);
+    auto instRow = findInstructionRowBy(static_cast<unsigned>(address));
+    if (instRow.has_value())
+        removeInstructionBreakpointVisuals(instructionList, instRow.value_or(0));
+
+    watcherHelper.removeFromList(address, action);
+    watcherHelper.updateList();
+}
+
+auto CpuDebugger::enableEntry(unsigned address, DebuggerAction action, bool enable) -> void {
+    DbgWatcher* watcher = watcherHelper.findBy(address, action);
+    if (!watcher || (watcher->enabled == enable))
+        return;
+
+    watcher->enabled = enable;
+
+    updateBreakpointVisuals(watcher);
+
+    if (watcher->enabled) {
+        emulator->debuggerAdd(getTheme(), watcher->action, watcher->addr);
+        updateWatchpointCondition( *watcher );
+    } else
+        emulator->debuggerRemove(getTheme(), watcher->action, watcher->addr);
 }
 
 auto CpuDebugger::buildControl() -> GUIKIT::Layout* {

@@ -484,6 +484,16 @@ auto M6510::updateSnapshot(DebuggerSnapshot& snap) -> void {
     snap.flags = STATUS;
 }
 
+auto M6510::updateFromSnapshot(DebuggerSnapshot& snap) -> void {
+    pc = pcEdge = snap.pcEdge = snap.pc;
+    regA = snap.regA;
+    regX = snap.regX;
+    regY = snap.regY;
+    regS = snap.regS;
+    SET_STATUS(snap.flags)
+    snap.updateFromExtern = false;
+}
+
 template auto M6510::process<false, false>() -> void;
 template auto M6510::process<false, true>() -> void;
 template auto M6510::resetRoutine<false, false>() -> void;

@@ -166,11 +166,7 @@ auto Program::finishStartup() -> void {
         power(binaryMonitor.clientConnected() ? getEmulator("C64") : getLastUsedEmu(), false);
 
 	initUserInterface();
-
-    if (binaryMonitor.clientConnected()) {
-        activeEmulator->debuggerAdd( DebuggerTheme::Unspecified, DebuggerAction::UIRequestedStop, 0 );
-    }
-
+    
     initialized = true;
 }
 
@@ -890,13 +886,27 @@ auto Program::getAMIModelValue(LIBAMI::Interface::ModelId modelId) -> int {
 }
 
 auto Program::openDebugger(Emulator::Interface* emulator, DebuggerTheme theme) -> void {
+    Debugger* debugger = getDebugger( emulator, theme );
+
+    if (!debugger)
+        debugger = createDebugger( emulator, theme );
+
+    if (debugger)
+        debugger->makeVisible();
+}
+
+auto Program::getDebugger(Emulator::Interface* emulator, DebuggerTheme theme) -> Debugger* {
     for (auto debugger : debuggers) {
         if (debugger->emulator == emulator && debugger->getTheme() == theme) {
-            debugger->makeVisible();
-            return;
+            return debugger;
         }
     }
-    Debugger* debugger;
+    return nullptr;
+}
+
+auto Program::createDebugger(Emulator::Interface* emulator, DebuggerTheme theme) -> Debugger* {
+    Debugger* debugger = nullptr;
+
     switch (theme) {
         case DebuggerTheme::CPU: debugger = new CpuDebugger(emulator); break;
         case DebuggerTheme::SCPU: debugger = new ScpuDebugger(emulator); break;
@@ -924,12 +934,15 @@ auto Program::openDebugger(Emulator::Interface* emulator, DebuggerTheme theme) -
         case DebuggerTheme::Paula: debugger = new PaulaDebugger(emulator); break;
         case DebuggerTheme::Serial: debugger = new SerialDebugger(emulator); break;
         default:
-            return;
+            break;
     }
 
-    debugger->build();
-    debuggers.push_back(debugger);
-    debugger->makeVisible();
+    if (debugger) {
+        debugger->build();
+        debuggers.push_back(debugger);
+    }
+
+    return debugger;
 }
 
 auto Program::hasActiveDebugger() -> bool {

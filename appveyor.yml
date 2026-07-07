@@ -20,6 +20,7 @@ branches:
     - /v\d*\.\d*/
     - /v\d*\.\d*\.\d*/
     - /test\d*\.\d*/
+    - binary_monitor
 
 environment:
   matrix:

@@ -933,6 +933,7 @@ auto System::debuggerUpdate() -> void {
     debuggerSnapshot.mutex.lock();
     updateDebuggerSnapshot();
     interface->debugger(&debuggerSnapshot);
+    applyRemoteSnapshotChanges();
     debugger.action = DebuggerAction::None;
 }
 
@@ -1629,6 +1630,52 @@ auto System::getMemoryDumpPage(DebuggerTheme theme, uint8_t page, uint8_t* dump)
     }
 }
 
+auto System::getMemory(DebuggerTheme theme, DebuggerAction action, unsigned startAddr, unsigned endAddr, uint8_t* dump) -> void {
+    switch (theme) {
+        case DebuggerTheme::Drive8Memory:
+            for (unsigned addr = startAddr; addr < endAddr; addr++)
+                *dump++ = iecBus.drives[0]->cpuRead<true>(addr);
+            break;
+        case DebuggerTheme::Drive9Memory:
+            for (unsigned addr = startAddr; addr < endAddr; addr++)
+                *dump++ = iecBus.drives[1]->cpuRead<true>(addr);
+            break;
+        case DebuggerTheme::Drive10Memory:
+            for (unsigned addr = startAddr; addr < endAddr; addr++)
+                *dump++ = iecBus.drives[2]->cpuRead<true>(addr);
+            break;
+        case DebuggerTheme::Drive11Memory:
+            for (unsigned addr = startAddr; addr < endAddr; addr++)
+                *dump++ = iecBus.drives[3]->cpuRead<true>(addr);
+            break;
+        case DebuggerTheme::Memory:
+            if (action == DebuggerAction::MemROM) {
+                memoryDumpROM( startAddr, endAddr, dump );
+            } else if (action == DebuggerAction::MemIO) {
+                memoryDumpIO( startAddr, endAddr, dump );
+            } else if (action == DebuggerAction::MemCART) {
+                memoryDumpCart( startAddr, endAddr, dump );
+            } else {
+                for (unsigned addr = startAddr; addr < endAddr; addr++)
+                    *dump++ = ram[addr & 0xffff];
+            }
+            break;
+
+        default:
+        case DebuggerTheme::CPU:
+        case DebuggerTheme::SCPU:
+        case DebuggerTheme::MemorySCPU:
+            if (expansionPort->haltMainCpu()) {
+                for (unsigned addr = startAddr; addr < endAddr; addr++)
+                    *dump++ = superCpu->peekByte( addr & 0xffffff );
+            } else {
+                for (unsigned addr = startAddr; addr < endAddr; addr++)
+                    *dump++ = memoryCpu.peek( addr );
+            }
+            break;
+    }
+}
+
 auto System::debugPointReached(Emulator::Interface::DebuggerTheme theme, Emulator::Interface::DebuggerAction action, unsigned addr) -> void {
     debugger.action = action;
     debugger.theme = theme;
@@ -1688,6 +1735,20 @@ auto System::updateDebuggerSnapshot() -> void {
         iecBus.updateViaSnapshot(DebuggerTheme::Drive11VIA, debuggerSnapshot);
 
     vicII->updatePositionSnapshot(debuggerSnapshot);
+}
+
+auto System::applyRemoteSnapshotChanges() -> void {
+    if (debuggerSnapshot.updateFromExtern)
+        cpu.updateFromSnapshot(debuggerSnapshot);
+
+    if (debuggerSnapshot.drives[0].updateFromExtern)
+        iecBus.updateFromCpuSnapshot(DebuggerTheme::Drive8CPU, debuggerSnapshot);
+    if (debuggerSnapshot.drives[1].updateFromExtern)
+        iecBus.updateFromCpuSnapshot(DebuggerTheme::Drive9CPU, debuggerSnapshot);
+    if (debuggerSnapshot.drives[2].updateFromExtern)
+        iecBus.updateFromCpuSnapshot(DebuggerTheme::Drive10CPU, debuggerSnapshot);
+    if (debuggerSnapshot.drives[3].updateFromExtern)
+        iecBus.updateFromCpuSnapshot(DebuggerTheme::Drive11CPU, debuggerSnapshot);
 }
 
 auto System::debuggerUpdateEvent() -> void {
