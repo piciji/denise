@@ -30,6 +30,7 @@ struct Debugger : GUIKIT::Window {
 
     GUIKIT::Menu settingsMenu;
     std::vector<GUIKIT::MenuItem*> menuItems;
+    GUIKIT::MenuCheckItem stepoverAllItem;
     GUIKIT::MenuCheckItem showTipsItem;
 
     GUIKIT::Image addImg;
@@ -136,14 +137,15 @@ struct Debugger : GUIKIT::Window {
     static auto updateRegBin(GUIKIT::LineEdit& reg, unsigned val) -> void;
     auto updateRegDec(GUIKIT::LineEdit& reg, unsigned val) -> void;
     auto appendDebuggerItems() -> void;
+    auto stepoverAll() const -> bool { return stepoverAllItem.checked(); }
 
     static auto isPaused() -> bool;
-    static auto stepOut(Emulator::Interface* emulator, DebuggerTheme theme = DebuggerTheme::CPU) -> void;
-    static auto stepInto(Emulator::Interface* emulator, DebuggerTheme theme = DebuggerTheme::CPU) -> void;
-    static auto stepOver(Emulator::Interface* emulator, DebuggerTheme theme = DebuggerTheme::CPU) -> void;
-    static auto stepLine(Emulator::Interface* emulator, unsigned line = ~0) -> void;
-    static auto stepFrame(Emulator::Interface* emulator) -> void;
-    static auto resume(Emulator::Interface* emulator) -> void;
+    auto stepOut(DebuggerTheme theme = DebuggerTheme::CPU) -> void;
+    auto stepInto(DebuggerTheme theme = DebuggerTheme::CPU) -> void;
+    auto stepOver(DebuggerTheme theme = DebuggerTheme::CPU) -> void;
+    auto stepLine(unsigned line = ~0) -> void;
+    auto stepFrame() -> void;
+    auto resume() -> void;
     static auto haltCpu(Emulator::Interface* emulator) -> void;
     static auto reset() -> void;
     static auto getWidth(unsigned length, bool editField) -> unsigned;

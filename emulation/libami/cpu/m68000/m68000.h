@@ -158,7 +158,7 @@ public:
     auto getCCR() -> uint8_t;
     auto getSR() -> uint16_t;
 
-    auto debuggerStepOver() -> void;
+    auto debuggerStepOver(bool subroutineOnly) -> void;
     auto debuggerStepInto() -> void;
     auto debuggerStepOut() -> bool;
 

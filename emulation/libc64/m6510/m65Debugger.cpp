@@ -185,16 +185,23 @@ auto M65Debugger::checkSoftStop(uint16_t addr) -> bool {
     return false;
 }
 
-auto M65Debugger::debuggerStepOver() -> void {
-    unsigned bytes;
+auto M65Debugger::debuggerStepOver(bool subroutineOnly) -> void {
     uint8_t _op = peek(pcEdge);
-    if (_op == 0x40 || _op == 0x60) { // RTI/RTS
-        debuggerStepInto();
-        return;
-    }
-    disassemble( pcEdge, bytes );
+    bool _over = true;
 
-    softStep = pcEdge + bytes;
+    if (subroutineOnly) {
+        if (_op != 0x20) // JSR
+            _over = false;
+    } else if (_op == 0x40 || _op == 0x60) // RTI/RTS
+        _over = false;
+
+    if (_over) {
+        unsigned bytes;
+        disassemble( pcEdge, bytes );
+        softStep = pcEdge + bytes;
+    } else
+        softStep = std::nullopt;
+
     flagDebugAction(SoftStop, true);
 }
 

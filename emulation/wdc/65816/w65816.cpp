@@ -613,10 +613,23 @@ auto W65816::checkSoftStop(uint32_t addr) -> bool {
     return false;
 }
 
-auto W65816::debuggerStepOver() -> void {
-    unsigned bytes;
-    disassemble( pcEdge, bytes );
-    softStep = (pcEdge & 0xff0000) | ((pcEdge + bytes) & 0xffff);
+auto W65816::debuggerStepOver(bool subroutineOnly) -> void {
+    uint8_t _op = peekByte(pcEdge);
+    bool _over = true;
+
+    if (subroutineOnly) {
+        if (_op != 0x20 && _op != 0x22 && _op != 0xfc) // JSR/JSL/JSL AbsIndexedIndirect
+            _over = false;
+    } else if (_op == 0x40 || _op == 0x60 || _op == 0x6b) // RTI/RTS/RTL
+        _over = false;
+
+    if (_over) {
+        unsigned bytes;
+        disassemble( pcEdge, bytes );
+        softStep = (pcEdge & 0xff0000) | ((pcEdge + bytes) & 0xffff);
+    } else
+        softStep = std::nullopt;
+
     control |= SoftStop;
 }
 

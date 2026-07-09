@@ -117,7 +117,7 @@ struct IecBus {
     auto disassembleData(DebuggerTheme theme, uint16_t addr, unsigned bytes) -> std::string;
     auto disassembleTrace(DebuggerTheme theme, unsigned i, uint8_t& flags) -> std::string;
 
-    auto debuggerStepOver(DebuggerTheme theme) -> void;
+    auto debuggerStepOver(DebuggerTheme theme, bool subroutineOnly) -> void;
     auto debuggerStepInto(DebuggerTheme theme) -> void;
     auto debuggerStepOut(DebuggerTheme theme) -> bool;
 

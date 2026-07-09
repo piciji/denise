@@ -507,7 +507,7 @@ auto BinaryMonitor::advanceInstruction(Command& command) -> void {
     if (!debugging)
         emuThread->lock();
     if (stepOver)
-        activeEmulator->debuggerStepOver( DebuggerTheme::CPU );
+        activeEmulator->debuggerStepOver( DebuggerTheme::CPU, true );
     else
         activeEmulator->debuggerStepInto( DebuggerTheme::CPU );
 
@@ -557,7 +557,7 @@ auto BinaryMonitor::setCondition(Command& command) -> void {
         return;
     }
 
-    std::string condStr(command.body[5], length);
+    std::string condStr(reinterpret_cast<char*>(command.body + 5), length);
 
     Debugger* debugger = program->getDebugger( activeEmulator, DebuggerTheme::CPU );
 
@@ -960,7 +960,7 @@ auto BinaryMonitor::sendRegisters(unsigned requestId, uint8_t space) -> void {
             case rA: value = snapD ? snapD->regA : snapshot->regA; break;
             case rX: value = snapD ? snapD->regX : snapshot->regX; break;
             case rY: value = snapD ? snapD->regY : snapshot->regY; break;
-            case rPC: value = snapD ? snapD->pc : snapshot->pc; break;
+            case rPC: value = snapD ? snapD->pcEdge : snapshot->pcEdge; break;
             case rSP: value = snapD ? snapD->regS : snapshot->regS; break;
             case rFlags: value = snapD ? snapD->flags : snapshot->flags; break;
             case rD: value = snapshot->regD; break;

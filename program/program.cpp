@@ -963,6 +963,16 @@ auto Program::hasFocusedDebugger() -> bool {
     return false;
 }
 
+auto Program::getFirstActiveDebugger() -> Debugger* {
+    for (auto debugger : debuggers) {
+        if (debugger->emulator == activeEmulator) {
+            if (debugger->visible())
+                return debugger;
+        }
+    }
+    return nullptr;
+}
+
 auto Program::getActiveDebuggers() -> std::vector<Debugger*> {
     std::vector<Debugger*> out;
     for (auto debugger : debuggers) {

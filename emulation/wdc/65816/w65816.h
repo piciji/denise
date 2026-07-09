@@ -43,7 +43,7 @@ struct W65816 {
     auto disassembleData(uint32_t addr, unsigned bytes) -> std::string;
     auto disassembleTrace(unsigned i, uint8_t& flags) -> std::string;
 
-    auto debuggerStepOver() -> void;
+    auto debuggerStepOver(bool subroutineOnly) -> void;
     auto debuggerStepInto() -> void;
     auto debuggerStepOut() -> bool;
     auto hasModifiedCode() -> bool { return modifiedCode.getAndForget(); }

@@ -458,12 +458,23 @@ auto M68000::checkSoftStop(uint32_t addr) -> bool {
     return false;
 }
 
-auto M68000::debuggerStepOver() -> void {
-    unsigned iSize;
+auto M68000::debuggerStepOver(bool subroutineOnly) -> void {
+    bool _over = true;
 
-    disassemble( pcEdge, iSize );
+    if (subroutineOnly) {
+        if (( (ird & 0xffc0) != 0x4e80) && ( (ird & 0xff00) != 0x6100) ) // JSR / BSR
+            _over = false;
+    } else if (( ird == 0x4e73) || ( ird == 0x4e77) || ( ird == 0x4e75) ) // RTE / RTR / RTS
+        _over = false;
 
-    softStep = pcEdge + iSize;
+    if (_over) {
+        unsigned iSize;
+        disassemble( pcEdge, iSize );
+        softStep = pcEdge + iSize;
+    } else {
+        softStep = std::nullopt;
+    }
+
     control |= SoftStop;
 }
 
