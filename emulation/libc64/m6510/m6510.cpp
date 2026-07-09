@@ -380,7 +380,7 @@ template<bool mhz2, bool busLogger> auto M6510::busWrite( uint16_t addr, uint8_t
     if constexpr(mhz2)  { SYNC2 }
     else                { SYNC }
 
-    if (control & (WatchPoint | ModifiedCode) ) {
+    if (control & (WatchPointWrite | ModifiedCode) ) {
         modifiedCode.checkAndSet( addr );
 
         if ((control & WatchPointWrite) && watchPointsWrite.check( addr )) {
