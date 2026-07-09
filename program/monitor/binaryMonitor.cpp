@@ -69,7 +69,7 @@ auto BinaryMonitor::waitForClientToAccept() -> void {
     }
 }
 
-auto BinaryMonitor::initDebugger(DebuggerTheme theme) -> void {
+auto BinaryMonitor::initDebugger(DebuggerTheme theme) -> Debugger* {
     Debugger* debugger = program->getDebugger( activeEmulator, theme );
 
     if (!debugger) {
@@ -77,6 +77,8 @@ auto BinaryMonitor::initDebugger(DebuggerTheme theme) -> void {
         if (debugger)
             debugger->initTheme();
     }
+
+    return debugger;
 }
 
 auto BinaryMonitor::update() -> void {
@@ -453,7 +455,8 @@ auto BinaryMonitor::setCheckpoint(Command& command) -> void {
         }
     }
 
-    Debugger* debugger = program->getDebugger( activeEmulator, theme );
+    emuThread->lock();
+    Debugger* debugger = initDebugger(theme);
 
     if (!debugger) {
         sendError( Error::CMD_FAILURE, command.requestId );
@@ -475,10 +478,6 @@ auto BinaryMonitor::setCheckpoint(Command& command) -> void {
     cp.stop = command.body[4];
     cp.enable = command.body[5] >= 1;
     checkPoints.push_back( cp );
-
-    emuThread->lock();
-
-    initDebugger(theme);
 
     if (cp.op & 1) {
         cpuDebugger->addEntry( cp.address, DebuggerAction::Watchpoint);

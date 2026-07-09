@@ -276,7 +276,7 @@ template<uint8_t actions> inline auto W65816::write(uint32_t addr, uint8_t value
     }
 #endif
 
-    if (control & (WatchPoint | ModifiedCode) ) {
+    if (control & (WatchPointWrite | ModifiedCode) ) {
         modifiedCode.checkAndSet( addr );
 
         if ((control & WatchPointWrite) && watchPointsWrite.check( addr )) {
