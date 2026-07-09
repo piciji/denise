@@ -964,28 +964,34 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
         } break;
 
         case Hotkey::DebuggerToggle: {
-            if (program->hasActiveDebugger())
-                Debugger::resume( activeEmulator );
+            auto debugger = program->getFirstActiveDebugger();
+            if (debugger)
+                debugger->resume( );
         } break;
         case Hotkey::DebuggerStepInto: {
-            if (program->hasActiveDebugger())
-                Debugger::stepInto( activeEmulator );
+            auto debugger = program->getFirstActiveDebugger();
+            if (debugger)
+                debugger->stepInto( );
         } break;
         case Hotkey::DebuggerStepOver: {
-            if (program->hasActiveDebugger())
-                Debugger::stepOver( activeEmulator );
+            auto debugger = program->getFirstActiveDebugger();
+            if (debugger)
+                debugger->stepOver( );
         } break;
         case Hotkey::DebuggerStepOut: {
-            if (program->hasActiveDebugger())
-                Debugger::stepOut( activeEmulator );
+            auto debugger = program->getFirstActiveDebugger();
+            if (debugger)
+                debugger->stepOut( );
         } break;
         case Hotkey::DebuggerLine: {
-            if (program->hasActiveDebugger())
-                Debugger::stepLine( activeEmulator );
+            auto debugger = program->getFirstActiveDebugger();
+            if (debugger)
+                debugger->stepLine( );
         } break;
         case Hotkey::DebuggerFrame: {
-            if (program->hasActiveDebugger())
-                Debugger::stepFrame( activeEmulator );
+            auto debugger = program->getFirstActiveDebugger();
+            if (debugger)
+                debugger->stepFrame( );
         } break;
     }
     emuThread->unlock();

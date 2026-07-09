@@ -1549,21 +1549,21 @@ auto System::setWatchpointCondition(DebuggerTheme theme, DebuggerAction action, 
     return false;
 }
 
-auto System::debuggerStepOver(DebuggerTheme theme) -> void {
+auto System::debuggerStepOver(DebuggerTheme theme, bool subroutineOnly) -> void {
     switch (theme) {
         case DebuggerTheme::Drive8CPU:
         case DebuggerTheme::Drive9CPU:
         case DebuggerTheme::Drive10CPU:
         case DebuggerTheme::Drive11CPU:
-            iecBus.debuggerStepOver(theme);
+            iecBus.debuggerStepOver(theme, subroutineOnly);
             break;
         default:
         case DebuggerTheme::CPU:
         case DebuggerTheme::SCPU:
             if (expansionPort->haltMainCpu())
-                superCpu->debuggerStepOver();
+                superCpu->debuggerStepOver(subroutineOnly);
             else
-                cpu.debuggerStepOver();
+                cpu.debuggerStepOver(subroutineOnly);
             break;
     }
 }

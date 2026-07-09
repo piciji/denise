@@ -2080,8 +2080,8 @@ auto Interface::setWatchpointCondition(DebuggerTheme theme, DebuggerAction actio
     return system->setWatchpointCondition(theme, action, addr, hitCount, hitCountMode, expression, expressionMode);
 }
 
-auto Interface::debuggerStepOver(DebuggerTheme theme) -> void {
-    system->debuggerStepOver(theme);
+auto Interface::debuggerStepOver(DebuggerTheme theme, bool subroutineOnly) -> void {
+    system->debuggerStepOver(theme, subroutineOnly);
 }
 
 auto Interface::debuggerStepInto(DebuggerTheme theme) -> void {

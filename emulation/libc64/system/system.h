@@ -344,7 +344,7 @@ struct System {
 	auto debuggerRemove(Emulator::Interface::DebuggerTheme theme, Emulator::Interface::DebuggerAction action, std::optional<unsigned> addr) -> void;
     auto setWatchpointCondition(DebuggerTheme theme, Emulator::Interface::DebuggerAction action, unsigned addr, unsigned hitCount, unsigned hitCountMode, const std::string& expression, unsigned expressionMode) -> bool;
 
-	auto debuggerStepOver(DebuggerTheme theme) -> void;
+	auto debuggerStepOver(DebuggerTheme theme, bool subroutineOnly) -> void;
 	auto debuggerStepInto(DebuggerTheme theme) -> void;
 	auto debuggerStepOut(DebuggerTheme theme) -> bool;
 	auto getMemoryDumpBank(uint8_t bank, uint8_t* dump) -> void;

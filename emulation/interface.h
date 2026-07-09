@@ -685,7 +685,7 @@ struct Interface {
     virtual auto debuggerRemove(DebuggerTheme theme, DebuggerAction action, std::optional<unsigned> addr = std::nullopt) -> void {}
     virtual auto setWatchpointCondition(DebuggerTheme theme, DebuggerAction action, unsigned addr, unsigned hitCount, unsigned hitCountMode, const std::string& expression, unsigned expressionMode) -> bool { return true; }
 
-    virtual auto debuggerStepOver(DebuggerTheme theme) -> void {}
+    virtual auto debuggerStepOver(DebuggerTheme theme, bool subroutineOnly) -> void {}
     virtual auto debuggerStepInto(DebuggerTheme theme) -> void {}
     virtual auto debuggerStepOut(DebuggerTheme theme) -> bool { return false; }
 

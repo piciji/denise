@@ -211,6 +211,7 @@ struct Program : Emulator::Interface::Bind {
     auto getDebugger(Emulator::Interface* emulator, DebuggerTheme theme) -> Debugger*;
     auto hasActiveDebugger() -> bool;
     auto hasFocusedDebugger() -> bool;
+    auto getFirstActiveDebugger() -> Debugger*;
     auto getActiveDebuggers() -> std::vector<Debugger*>;
     auto debugger(Emulator::Interface::DebuggerSnapshot* snapshot) -> void override;
 

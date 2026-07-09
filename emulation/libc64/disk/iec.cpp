@@ -613,8 +613,8 @@ auto IecBus::disassembleTrace(DebuggerTheme theme, unsigned i, uint8_t& flags) -
     return drives[ getDriveId(theme) ]->cpu.disassembleTrace( i, flags );
 }
 
-auto IecBus::debuggerStepOver(DebuggerTheme theme) -> void {
-    drives[ getDriveId(theme) ]->cpu.debuggerStepOver();
+auto IecBus::debuggerStepOver(DebuggerTheme theme, bool subroutineOnly) -> void {
+    drives[ getDriveId(theme) ]->cpu.debuggerStepOver(subroutineOnly);
 }
 
 auto IecBus::debuggerStepInto(DebuggerTheme theme) -> void {

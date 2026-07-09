@@ -170,27 +170,27 @@ auto Debugger::build() -> void {
     };
 
     control->stepInto.onActivate = [this]() {
-        stepInto( emulator, getCpuTheme() );
+        this->stepInto( getCpuTheme() );
     };
 
     control->stepOut.onActivate = [this]() {
-        stepOut( emulator, getCpuTheme() );
+        this->stepOut( getCpuTheme() );
     };
 
     control->stepOver.onActivate = [this]() {
-        stepOver( emulator, getCpuTheme() );
+        this->stepOver( getCpuTheme() );
     };
 
     control->line.onActivate = [this]() {
-        stepLine( emulator );
+        this->stepLine( );
     };
 
     control->frame.onActivate = [this]() {
-        stepFrame( emulator );
+        this->stepFrame( );
     };
 
     control->resume.onActivate = [this]() {
-        resume( emulator );
+        this->resume( );
     };
 
     control->toLine.onClick = [this]() {
@@ -205,7 +205,7 @@ auto Debugger::build() -> void {
         if (line == -1)
             return;
 
-        stepLine( emulator, line );
+        stepLine( line );
     };
 
     control->lineEdit.onReturn = [this]() {
@@ -226,7 +226,25 @@ auto Debugger::build() -> void {
         emuThread->unlock();
     };
 
+    stepoverAllItem.onToggle = [this]() {
+        bool checked = stepoverAllItem.checked();
+        settings->set<bool>("stepover_all", checked);
+        emuThread->lock();
+        for (auto debugger : debuggers) {
+            if (debugger->emulator == emulator) {
+                if (debugger != this)
+                    debugger->stepoverAllItem.setChecked( checked );
+                debugger->translate();
+            }
+        }
+        emuThread->unlock();
+    };
+
     appendDebuggerItems();
+
+    settingsMenu.append( *new GUIKIT::MenuSeparator );
+
+    settingsMenu.append( stepoverAllItem );
 
     settingsMenu.append( *new GUIKIT::MenuSeparator );
 
@@ -250,6 +268,8 @@ auto Debugger::build() -> void {
     }
 
     showTipsItem.setChecked( settings->get<bool>("debugger_tips", true) );
+
+    stepoverAllItem.setChecked( settings->get<bool>("stepover_all", false) );
     
     setTitle( titleIdent() );
 
@@ -305,6 +325,7 @@ auto Debugger::translate() -> void {
     bool showTips = showTipsItem.checked();
     control->lineEdit.setPlaceholder( trans->getA( "line" ) );
     showTipsItem.setText( trans->getA("popup hints") );
+    stepoverAllItem.setText( "step over: also JMP, BRANCH" );
     control->stepInto.setTooltip( showTips ? trans->getA("step into") : "" );
     control->stepOver.setTooltip( showTips ? trans->getA("step over") : "" );
     control->stepOut.setTooltip( showTips ? trans->getA("step out") : "" );
@@ -381,7 +402,7 @@ auto Debugger::Callback() -> void {
     }
 }
 
-auto Debugger::stepOut(Emulator::Interface* emulator, DebuggerTheme theme) -> void {
+auto Debugger::stepOut(DebuggerTheme theme) -> void {
     if (!isPaused() || (emulator != activeEmulator))
         return;
 
@@ -391,7 +412,7 @@ auto Debugger::stepOut(Emulator::Interface* emulator, DebuggerTheme theme) -> vo
     }
 }
 
-auto Debugger::stepInto(Emulator::Interface* emulator, DebuggerTheme theme) -> void {
+auto Debugger::stepInto(DebuggerTheme theme) -> void {
     if (!isPaused() || (emulator != activeEmulator))
         return;
     timerVisibility->setEnabled();
@@ -399,16 +420,16 @@ auto Debugger::stepInto(Emulator::Interface* emulator, DebuggerTheme theme) -> v
     emuThread->unlockDebugger();
 }
 
-auto Debugger::stepOver(Emulator::Interface* emulator, DebuggerTheme theme) -> void {
+auto Debugger::stepOver(DebuggerTheme theme) -> void {
     if (!isPaused() || (emulator != activeEmulator))
         return;
 
     timerVisibility->setEnabled();
-    emulator->debuggerStepOver(theme);
+    emulator->debuggerStepOver(theme, !stepoverAll());
     emuThread->unlockDebugger();
 }
 
-auto Debugger::stepLine(Emulator::Interface* emulator, unsigned line) -> void {
+auto Debugger::stepLine(unsigned line) -> void {
     if (emulator != activeEmulator)
         return;
     emuThread->lock();
@@ -418,7 +439,7 @@ auto Debugger::stepLine(Emulator::Interface* emulator, unsigned line) -> void {
     emuThread->unlock();
 }
 
-auto Debugger::stepFrame(Emulator::Interface* emulator) -> void {
+auto Debugger::stepFrame() -> void {
     if (!isPaused() || (emulator != activeEmulator))
         return;
 
@@ -428,7 +449,7 @@ auto Debugger::stepFrame(Emulator::Interface* emulator) -> void {
     emuThread->unlockDebugger();
 }
 
-auto Debugger::resume(Emulator::Interface* emulator) -> void {
+auto Debugger::resume() -> void {
     if (emulator != activeEmulator)
         return;
 

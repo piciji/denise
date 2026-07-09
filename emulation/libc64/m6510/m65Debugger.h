@@ -45,7 +45,7 @@ struct M65Debugger {
     auto debuggerRemove(DebuggerAction action) -> void;
 
     auto checkSoftStop(uint16_t addr) -> bool;
-    auto debuggerStepOver() -> void;
+    auto debuggerStepOver(bool subroutineOnly) -> void;
     auto debuggerStepInto() -> void;
     auto debuggerStepOut() -> bool;
 
