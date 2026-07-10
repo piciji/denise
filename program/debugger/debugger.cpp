@@ -369,16 +369,18 @@ auto Debugger::Callback(Emulator::Interface::DebuggerSnapshot* snapshot) -> void
         debugger->prepareTheme(false);
     }
 
+    bool _lock = snapshot->callbackAction != DebuggerAction::AutoUpdate;
+
+    if (_lock) {
+        if (program->binaryMonitor.clientConnected())
+            program->binaryMonitor.responseStopped( static_cast<LIBC64::DebuggerSnapshot*>(snapshot) );
+    }
+
     emuThread->events |= EmuThread::EVT_DEBUGGER;
     snapshot->mutex.unlock();
 
-    if (snapshot->callbackAction != DebuggerAction::AutoUpdate) {
-        if (program->binaryMonitor.clientConnected()) {
-            program->binaryMonitor.responseStopped( static_cast<LIBC64::DebuggerSnapshot*>(snapshot) );
-        }
-
+    if (_lock)
         emuThread->lockDebugger();
-    }
 }
 
 auto Debugger::Callback() -> void {
