@@ -62,6 +62,7 @@ auto BinaryMonitor::waitForClientToAccept() -> void {
         }
         _log("Socket: client %i accepted", client->handle)
 
+        delayedJobs = false;
         activeEmulator = program->getEmulator("C64");
         initDebugger(DebuggerTheme::CPU);
         activeEmulator->debuggerAdd( DebuggerTheme::Unspecified, DebuggerAction::UIRequestedStop, 0 );
@@ -85,6 +86,19 @@ auto BinaryMonitor::update() -> void {
     bool error = false;
     if (client == nullptr)
         return;
+
+    if (delayedJobs) {
+        delayedJobs = false;
+        std::vector<CheckPoint*> toDelete;
+        for (auto& cp : checkPoints) {
+            if (cp.hit && cp.temporary)
+                toDelete.push_back(&cp);
+        }
+        for (auto& cp : toDelete) {
+            _log("Socket: temporary checkpoint ID %i removed", cp->num );
+            deleteCheckpoint( cp );
+        }
+    }
 
     while (client->poll(error )) {
         if (error) {
@@ -475,6 +489,7 @@ auto BinaryMonitor::setCheckpoint(Command& command) -> void {
     cp.address = copyBufferToInt<uint16_t>(&command.body[0]);
     cp.endAddress = copyBufferToInt<uint16_t>(&command.body[2]);
     cp.temporary = command.body[7];
+    cp.hit = false;
     cp.stop = command.body[4];
     cp.enable = command.body[5] >= 1;
     checkPoints.push_back( cp );
@@ -500,13 +515,13 @@ auto BinaryMonitor::setCheckpoint(Command& command) -> void {
 }
 
 auto BinaryMonitor::advanceInstruction(Command& command) -> void {
-    bool stepOver = !!command.body[0];
+    uint8_t stepOver = command.body[0];
     bool debugging = emuThread->debugging;
 
     if (!debugging)
         emuThread->lock();
     if (stepOver)
-        activeEmulator->debuggerStepOver( DebuggerTheme::CPU, true );
+        activeEmulator->debuggerStepOver( DebuggerTheme::CPU, stepOver == 1 );
     else
         activeEmulator->debuggerStepInto( DebuggerTheme::CPU );
 
@@ -601,13 +616,12 @@ auto BinaryMonitor::sendCheckpointInfo(uint32_t requestId, CheckPoint& cp, bool 
     copyIntToBuffer<uint32_t>( &response[17], 0); // ignore count
     response[21] = !!cp.condition;
     response[22] = cp.space;
+    cp.hit |= hit;
+
+    if (hit && cp.temporary)
+        delayedJobs = true;
 
     sendResponse(sizeof(response), Type::CHECKPOINT_INFO, Error::OK, requestId, response);
-
-    if (hit && cp.temporary) {
-        _log("Socket: temporary checkpoint ID %i removed", cp.num );
-        deleteCheckpoint( &cp );
-    }
 }
 
 auto BinaryMonitor::performReset(Command& command) -> void {

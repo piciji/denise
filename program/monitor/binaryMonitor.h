@@ -66,6 +66,7 @@ struct BinaryMonitor {
         uint16_t endAddress;
         uint8_t op;
         uint8_t temporary;
+        bool hit;
         uint8_t enable;
         uint8_t stop;
         bool condition;
@@ -74,6 +75,7 @@ struct BinaryMonitor {
     };
 
     std::vector<CheckPoint> checkPoints;
+    bool delayedJobs = false;
 
     enum {
         rA = 0, rX = 1, rY = 2, rPC = 3, rSP = 4, rFlags = 5,
