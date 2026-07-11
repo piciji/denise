@@ -618,9 +618,6 @@ auto BinaryMonitor::sendCheckpointInfo(uint32_t requestId, CheckPoint& cp, bool 
     response[22] = cp.space;
     cp.hit |= hit;
 
-    if (hit && cp.temporary)
-        delayedJobs = true;
-
     sendResponse(sizeof(response), Type::CHECKPOINT_INFO, Error::OK, requestId, response);
 }
 
@@ -779,6 +776,7 @@ auto BinaryMonitor::sendResume() -> void {
 
 auto BinaryMonitor::responseStopped(LIBC64::DebuggerSnapshot* snap) -> void {
     snapshot = snap;
+    bool _delayedJobs = false;
 
     for (auto& cp : checkPoints) {
         if (cp.address == snapshot->callbackAddress && cp.theme == snapshot->callbackTheme) {
@@ -792,6 +790,9 @@ auto BinaryMonitor::responseStopped(LIBC64::DebuggerSnapshot* snap) -> void {
                 _log("Socket: hit breakpoint ID %i", cp.num)
                 sendCheckpointInfo(~0, cp, true);
             }
+
+            if (cp.hit && cp.temporary)
+                _delayedJobs = true;
         }
     }
 
@@ -802,6 +803,9 @@ auto BinaryMonitor::responseStopped(LIBC64::DebuggerSnapshot* snap) -> void {
 
     _log("Socket: stopped")
     sendResponse(2, Type::STOPPED, Error::OK, MON_EVENT, body);
+
+    if (_delayedJobs)
+        delayedJobs = true;
 }
 
 auto BinaryMonitor::sendResponse(uint32_t length, Type type, Error errorCode, uint32_t requestId, const uint8_t* body) -> void {
