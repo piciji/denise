@@ -2846,9 +2846,9 @@ View::FpsWindow::Top::Top() {
 View::FpsWindow::Center::Center() {
     append( label, {0u, 0u} );
     append( spacer, {~0u, 0u} );
-    append( each, {0u, 0u}, 10 );
-    append( each4th, {0u, 0u}, 10 );
-    append( each8th, {0u, 0u}, 10 );
+    append( each, {0u, 0u}, 7 );
+    append( each4th, {0u, 0u}, 7 );
+    append( each8th, {0u, 0u}, 7 );
     append( each16th, {0u, 0u} );
 
     GUIKIT::RadioBox::setGroup( each, each4th, each8th, each16th );
@@ -2871,7 +2871,7 @@ auto View::FpsWindow::show() -> void {
     unsigned _height = 100;
 
     if (mode == Mode::FASTFORWARD) {
-        _width = 280;
+        _width = 300;
         _height = 130;
     }
 
