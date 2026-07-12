@@ -56,7 +56,8 @@ struct Interface {
     
     enum class CropType { Off = 0, Monitor = 1, AutoRatio = 2, Auto = 3, AllSidesRatio = 4, AllSides = 5, Free = 6 };
     enum class TapeMode { Stop = 0, Play = 1, Record = 2, Forward = 3, Rewind = 4, ResetCounter = 5, Unpressed = 6 };
-    enum class WarpMode { NoAudioOut = 1, NoVideoOut = 2, ReduceVideoOutput = 4, NoVideoSequencer = 8, SlowSpeed = 16 };
+    enum class WarpMode { NoAudioOut = 1, NoVideoOut = 2, ReduceVideoOutputEach16th = 4, NoVideoSequencer = 8, SlowSpeed = 16,
+        ReduceVideoOutputEach4th = 32, ReduceVideoOutputEach8th = 64 };
     enum class DriveSound { FloppyInsert = 1, FloppyEject = 2, FloppySpinUp = 3, FloppySpinDown = 4,
                             FloppySpin = 5, FloppyHeadBang = 6, FloppyStep = 7, FloppySnatch = 9,
                             TapeInsert = 10, TapeEject = 11, TapeAnyButton = 12, TapeStopButton = 13,
@@ -648,7 +649,6 @@ struct Interface {
     virtual auto videoAddMeta(bool state) -> void {}
 
     virtual auto setWarpMode(unsigned config) -> void {}
-	virtual auto getWarpMode() -> unsigned { return 0; }
 
 	// copy/paste
 	virtual auto pasteText( std::string buffer ) -> void {}

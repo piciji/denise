@@ -94,7 +94,7 @@ struct AudioManager {
     auto setTapeNoise( ) -> void;
 
     auto setBufferSize() -> void;
-    auto setResampler(float overrideRate = 0.0f) -> void;
+    auto setResampler() -> void;
     auto calcStatistics( float adjust ) -> void;
     auto power() -> void;
     auto powerOff() -> void;

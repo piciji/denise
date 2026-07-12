@@ -5,11 +5,16 @@
 #define VIDEO_SKEW 0.0015
 
 auto VideoManager::setSynchronize() -> void {
-    bool vsync = globalSettings->get<bool>("video_sync", true);
-    bool vrr = globalSettings->get<bool>("vrr_sync", false);
-
     if (!activeEmulator)
         return;
+
+    bool vsync = false;
+    bool vrr = false;
+
+    if (program->warp.mode == Program::Warp::Off) {
+        vsync = globalSettings->get<bool>("video_sync", true);
+        vrr = globalSettings->get<bool>("vrr_sync", false);
+    }
 
     auto _settings = Program::getSettings( activeEmulator );
     unsigned tr = _settings->get<unsigned>("threaded_renderer", 0);
@@ -48,8 +53,11 @@ auto VideoManager::setSynchronize() -> void {
             vsync = false;
     }
 
-    if (videoDriver->hasThreaded() != threadedRenderer)
-        videoDriver->setThreaded( threadedRenderer );
+    if (program->warp.mode == Program::Warp::Off) {
+        // don't change when toggling warp mode
+        if (videoDriver->hasThreaded() != threadedRenderer)
+            videoDriver->setThreaded( threadedRenderer );
+    }
 
     if (videoDriver->hasSynchronized() != vsync)
         videoDriver->synchronize( vsync );
@@ -61,7 +69,6 @@ auto VideoManager::setSynchronize() -> void {
         audioManager->allowDrc = (vsync || vrr) && !threadedRenderer && (frameRenderEach == 1) && (skew <= VIDEO_SKEW);
         audioManager->setRateControl();
     }
-    program->updateOverallSynchronize();
 }
 
 auto VideoManager::setHardSync() -> void {

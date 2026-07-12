@@ -1854,10 +1854,6 @@ auto Interface::setWarpMode(unsigned config) -> void {
     system->setWarpMode( config );
 }
 
-auto Interface::getWarpMode() -> unsigned {
-	return system->warp.config;
-}
-
 auto Interface::setMemoryInitParams(MemoryPattern& pattern) -> void {
 
     system->memoryInit = pattern;

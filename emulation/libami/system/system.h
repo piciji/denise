@@ -52,6 +52,7 @@ struct System {
     struct {
         unsigned config = 0;
         unsigned frameCounter;
+        unsigned frameMask;
         bool renderNext;
     } warp;
 

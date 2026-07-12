@@ -20,7 +20,7 @@ struct View : GUIKIT::Window {
     bool customResizeMode = false;
     int dropZone = 0;
 	bool grabMouseLeft = false;
-	bool useFullscreenRefreshAsEmuSpeed = false;
+    float overrideFullscreenRefreshRate = 0.0f;
 	ImageViewer* imageViewer = nullptr;
     GUIKIT::Image placeholder;
     GUIKIT::Image dndOverlays[2];
@@ -219,6 +219,8 @@ struct View : GUIKIT::Window {
     GUIKIT::Menu speedControlMenu;
         GUIKIT::MenuCheckItem warpItem;
         GUIKIT::MenuCheckItem aggressiveWarpItem;
+        GUIKIT::MenuCheckItem fastForwardItem;
+        GUIKIT::MenuItem customizeFFItem;
         GUIKIT::MenuCheckItem pauseItem;
         GUIKIT::Menu fpsPresentationMenu;
             GUIKIT::Menu fpsDecimalMenu;
@@ -324,6 +326,8 @@ struct View : GUIKIT::Window {
 
     struct FpsWindow : GUIKIT::Window {
 
+        enum class Mode { CUSTOM, FASTFORWARD } mode;
+
         struct Top : GUIKIT::HorizontalLayout {
             GUIKIT::LineEdit fpsLineEdit;
             GUIKIT::Widget spacer;
@@ -331,6 +335,16 @@ struct View : GUIKIT::Window {
             GUIKIT::RadioBox percentRadioBox;
             Top();
         } top;
+
+        struct Center : GUIKIT::HorizontalLayout {
+            GUIKIT::Label label;
+            GUIKIT::Widget spacer;
+            GUIKIT::RadioBox each;
+            GUIKIT::RadioBox each4th;
+            GUIKIT::RadioBox each8th;
+            GUIKIT::RadioBox each16th;
+            Center();
+        } center;
 
         struct Bottom : GUIKIT::HorizontalLayout {
             GUIKIT::Button cancel;
@@ -344,13 +358,17 @@ struct View : GUIKIT::Window {
         View* view;
         auto build() -> void;
         auto show() -> void;
+        auto getIdent() const -> std::string;
 
-        explicit FpsWindow(View* view) : GUIKIT::Window(Hints::No_Title) {
+        explicit FpsWindow(View* view, Mode mode) : GUIKIT::Window(Hints::No_Title) {
             this->view = view;
+            this->mode = mode;
             build();
         }
+    };
 
-    } *fpsWindow = nullptr;
+    FpsWindow* fpsCustomWindow = nullptr;
+    FpsWindow* fpsFastforwardWindow = nullptr;
             	
     auto questionToWrite(Emulator::Interface::Media* media) -> bool;
     auto updateSpeedLabels() -> void;

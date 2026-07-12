@@ -849,7 +849,7 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
         emuThread->lock();
         _settings->set<unsigned>("threaded_renderer", 2);
         if (emulator == activeEmulator) {
-            program->setWarp( false );
+            program->setWarp( Program::Warp::Off );
             VideoManager::setSynchronize();
         }
         emuThread->unlock();
@@ -894,7 +894,7 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
     layBase.view.mode.rgb.onActivate = [this]() {
         _settings->set<unsigned>("video_crt", (unsigned)VideoManager::CrtMode::None);
         emuThread->lock();
-        program->setWarp( false );
+        program->setWarp( Program::Warp::Off );
         updatePresets(true, false);
         view->updateShader(emulator);
         emuThread->unlock();
@@ -903,7 +903,7 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
     layBase.view.mode.cpu.onActivate = [this]() {
         _settings->set<unsigned>("video_crt", (unsigned)VideoManager::CrtMode::Cpu);
         emuThread->lock();
-        program->setWarp( false );
+        program->setWarp( Program::Warp::Off );
         updatePresets(true, false);
         view->updateShader(emulator);
         emuThread->unlock();
@@ -912,7 +912,7 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
     layBase.view.mode.gpu.onActivate = [this]() {
         _settings->set<unsigned>("video_crt", (unsigned)VideoManager::CrtMode::Gpu);
         emuThread->lock();
-        program->setWarp( false );
+        program->setWarp( Program::Warp::Off );
         updatePresets(true, false);
         view->updateShader(emulator);
         emuThread->unlock();
@@ -1894,7 +1894,7 @@ auto PresentationLayout::countFloatingPoint(ShaderPreset::Param& param, int& pla
     places = std::max(places, placesStep);
 }
 
-auto PresentationLayout::buildShaderUI(ShaderPreset* preset, bool selectIt) -> void {
+auto PresentationLayout::buildShaderUI(ShaderPreset* preset) -> void {
 
     for(auto tviPass : tviPasses) {
         tviShader.remove(*tviPass);
@@ -1960,7 +1960,7 @@ auto PresentationLayout::buildShaderUI(ShaderPreset* preset, bool selectIt) -> v
     } else
         tviShader.setExpanded();
 
-    if (selectIt && !tviBase.selected() && !isSecondaryViewSelected()) {
+    if ( !tviBase.selected() && !isSecondaryViewSelected()) {
         tviShader.setSelected();
         moduleSwitch.setSelection( 2 );
     }
@@ -2173,7 +2173,7 @@ auto PresentationLayout::updatePresets(bool reloadDriver, bool reloadPreset) -> 
     std::vector<std::string> errors;
     ShaderPreset* preset = vManager()->getPreset(errors);
     if (preset) {
-        buildShaderUI(preset, reloadPreset);
+        buildShaderUI(preset);
         layShader.main.info.loaded.setText( vManager()->getPresetPathDetailed() );
         layShader.main.control.setEnabled();
         layShader.favourite.control.add.setEnabled();
@@ -2679,7 +2679,7 @@ auto PresentationLayout::loadShader(std::string path) -> bool {
     ShaderPreset* preset = vManager()->loadPreset(path, errors);
 
     if (preset) {
-        buildShaderUI(preset, true);
+        buildShaderUI(preset);
         layShader.main.info.loaded.setText( vManager()->getPresetPathDetailed() );
         layShader.main.control.setEnabled();
         layBase.view.gamma.setEnabled( !layBase.view.mode.gpu.checked() || !vManager()->shaderRgb10BitInput() );

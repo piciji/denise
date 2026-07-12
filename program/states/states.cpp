@@ -78,7 +78,7 @@ auto States::load( std::string path, bool prependFolder ) -> void {
     if (autoStartedMediaGroup)
         program->initAutoWarp(autoStartedMediaGroup, true);
     else
-        program->warp.enableAutoWarp = false;
+        program->warp.autoMode = Program::Warp::Off;
 
     videoDriver->hideSplashScreen();
 }

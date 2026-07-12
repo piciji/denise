@@ -97,10 +97,7 @@ DriversLayout::DriversLayout() {
         globalSettings->set<std::string>("video_driver", vdl.top.driver.combo.text() );
 
         emuThread->lock();
-        // disable warp before, otherwise if threaded CPU CRT is selected, the midline callback would be active with warp.
-        // warp will not render all frames but mid scanline callback runs without finishing the frame
-        // todo: solve this better, more self-acting
-        program->setWarp(false);
+        program->setWarp(Program::Warp::Off);
         program->initVideo(true);
         updateDriverPropsVisibility();
         emuThread->unlock();

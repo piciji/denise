@@ -331,10 +331,10 @@ auto View::build() -> void {
         if (!settings->get<bool>("fullscreen_setting_adjust_emu_speed", false))
             return;
 
-        useFullscreenRefreshAsEmuSpeed = true;
+        overrideFullscreenRefreshRate = rate;
         emuThread->lock();
         audioManager->setSynchronize();
-        audioManager->setResampler(rate);
+        audioManager->setResampler();
         statusHandler->resetFrameCounter();
         emuThread->unlock();
     };
@@ -530,8 +530,8 @@ auto View::switchFullScreen(bool fullScreen, bool forceUnacquire) -> void {
         displayChangeTimer.setInterval(600);
     displayChangeTimer.setEnabled();
 
-    if (!fullScreen && useFullscreenRefreshAsEmuSpeed) {
-        useFullscreenRefreshAsEmuSpeed = false;
+    if (!fullScreen && (overrideFullscreenRefreshRate != 0.0) ) {
+        overrideFullscreenRefreshRate = 0.0;
         audioManager->setResampler();
         if (statusHandler)
             statusHandler->resetFrameCounter();
@@ -943,14 +943,18 @@ auto View::updatePauseCheck() -> void {
 }
 
 auto View::updateWarpCheck() -> void {
-    bool ff = program->warp.active && !program->warp.aggressive;
-    bool ffa = program->warp.active && program->warp.aggressive;
+    bool warpNormal = program->warp.mode == Program::Warp::Normal;
+    bool warpAggressive = program->warp.mode == Program::Warp::Aggressive;
+    bool fastForward = program->warp.mode == Program::Warp::FastForward;
 
-    if (ff != warpItem.checked())
-        warpItem.setChecked(ff);
+    if (warpNormal != warpItem.checked())
+        warpItem.setChecked(warpNormal);
 
-    if (ffa != aggressiveWarpItem.checked())
-        aggressiveWarpItem.setChecked(ffa);
+    if (warpAggressive != aggressiveWarpItem.checked())
+        aggressiveWarpItem.setChecked(warpAggressive);
+
+    if (fastForward != fastForwardItem.checked())
+        fastForwardItem.setChecked(fastForward);
 }
 
 auto View::togglePause() -> void {
@@ -1702,7 +1706,7 @@ auto View::buildMenu() -> void {
     videoSyncItem.onToggle = [&]() {
         globalSettings->set<bool>("video_sync", videoSyncItem.checked() );
         emuThread->lock();
-        program->setWarp( false );
+        program->setWarp( Program::Warp::Off );
         VideoManager::setSynchronize();
         statusHandler->resetFrameCounter();
         emuThread->unlock();
@@ -1870,17 +1874,35 @@ auto View::buildMenu() -> void {
 
     warpItem.onToggle = []() {
         emuThread->lock();
-        program->toggleWarp( false );
+        program->toggleWarp( Program::Warp::Normal );
         emuThread->unlock();
     };
     speedControlMenu.append( warpItem );
 
     aggressiveWarpItem.onToggle = []() {
         emuThread->lock();
-        program->toggleWarp( true );
+        program->toggleWarp( Program::Warp::Aggressive );
         emuThread->unlock();
     };
     speedControlMenu.append( aggressiveWarpItem );
+
+    speedControlMenu.append( *GUIKIT::MenuSeparator::getInstance() );
+
+    fastForwardItem.onToggle = []() {
+        emuThread->lock();
+        program->toggleWarp( Program::Warp::FastForward );
+        emuThread->unlock();
+    };
+    speedControlMenu.append( fastForwardItem );
+
+    customizeFFItem.onActivate = [this]() {
+        if (!fpsFastforwardWindow)
+            fpsFastforwardWindow = new FpsWindow(this, FpsWindow::Mode::FASTFORWARD);
+        fpsFastforwardWindow->show();
+    };
+    speedControlMenu.append( customizeFFItem );
+
+    speedControlMenu.append( *GUIKIT::MenuSeparator::getInstance() );
 
     pauseItem.onToggle = [this]() {
         this->togglePause();
@@ -1939,10 +1961,10 @@ auto View::buildMenu() -> void {
             auto settings = Program::getSettings( activeEmulator );
             settings->set<unsigned>("speed_profile", i);
             emuThread->lock();
+            overrideFullscreenRefreshRate = 0.0f;
             audioManager->setSynchronize();
             audioManager->setResampler();
             statusHandler->resetFrameCounter();
-            useFullscreenRefreshAsEmuSpeed = false;
             emuThread->unlock();
         };
         speedControlMenu.append( *speedItem );
@@ -1950,11 +1972,11 @@ auto View::buildMenu() -> void {
         if (i == 1 || i == (steps - 1))
             speedControlMenu.append( *GUIKIT::MenuSeparator::getInstance() );
 
-        if (i == (steps - 1)) {
+        if (i == steps) {
             customizeSpeedItem.onActivate = [this]() {
-                if (!fpsWindow)
-                    fpsWindow = new FpsWindow(this);
-                fpsWindow->show();
+                if (!fpsCustomWindow)
+                    fpsCustomWindow = new FpsWindow(this, FpsWindow::Mode::CUSTOM);
+                fpsCustomWindow->show();
             };
             speedControlMenu.append( customizeSpeedItem );
         }
@@ -2428,6 +2450,9 @@ auto View::translate() -> void {
     warpItem.setText( trans->get("Toggle Warp") );
     aggressiveWarpItem.setText( trans->get("Toggle Warp aggressive") );
 
+    fastForwardItem.setText( trans->get("Toggle Fast Forward") );
+    customizeFFItem.setText( trans->get("customize speed") );
+
     maximumSpeedItem.setText( trans->get("maximum speed") );
     customizeSpeedItem.setText( trans->get("customize speed") );
 
@@ -2547,7 +2572,19 @@ auto View::questionToWrite(Emulator::Interface::Media* media) -> bool {
 
 auto View::getSpeedBySelectedProfile(float& speed, bool& percent) -> unsigned {
     auto settings = Program::getSettings( activeEmulator );
-    unsigned speedProfile = settings->get<unsigned>("speed_profile", 1, {0, (unsigned)speedItems.size() - 1});
+    if (program->warp.mode == Program::Warp::FastForward) {
+        speed = settings->get<float>("fastforward_speed", 500.0);
+        percent = settings->get<bool>("fastforward_speed_percent", false);
+        return ~0;
+    }
+
+    if (overrideFullscreenRefreshRate != 0.0) {
+        speed = overrideFullscreenRefreshRate;
+        percent = false;
+        return ~0;
+    }
+
+    auto speedProfile = settings->get<unsigned>("speed_profile", 1, {0, (unsigned)speedItems.size() - 1});
     getSpeed(speedProfile, speed, percent);
     return speedProfile;
 }
@@ -2595,6 +2632,9 @@ auto View::isCustomSpeed() -> bool {
 
 auto View::isMaximumSpeed() -> bool {
     if (!activeEmulator)
+        return false;
+
+    if (program->warp.mode == Program::Warp::FastForward)
         return false;
 
     auto settings = Program::getSettings( activeEmulator );
@@ -2803,6 +2843,19 @@ View::FpsWindow::Top::Top() {
     setAlignment( 0.5 );
 }
 
+View::FpsWindow::Center::Center() {
+    append( label, {0u, 0u} );
+    append( spacer, {~0u, 0u} );
+    append( each, {0u, 0u}, 10 );
+    append( each4th, {0u, 0u}, 10 );
+    append( each8th, {0u, 0u}, 10 );
+    append( each16th, {0u, 0u} );
+
+    GUIKIT::RadioBox::setGroup( each, each4th, each8th, each16th );
+
+    setAlignment( 0.5 );
+}
+
 View::FpsWindow::Bottom::Bottom() {
     append( cancel, {0u, 0u} );
     append( spacer, {~0u, 0u} );
@@ -2813,13 +2866,29 @@ View::FpsWindow::Bottom::Bottom() {
 
 auto View::FpsWindow::show() -> void {
     auto geo = view->geometry();
-    int _x = geo.x + geo.width / 2 - 115;
-    int _y = geo.y + geo.height / 2 - 50;
 
-    setGeometry( { _x, _y, 230, 100} );
+    unsigned _width = 230;
+    unsigned _height = 100;
+
+    if (mode == Mode::FASTFORWARD) {
+        _width = 280;
+        _height = 130;
+    }
+
+    if (_width >= geo.width)
+        _width = geo.width;
+
+    if (_height >= geo.height)
+        _height = geo.height;
+
+    int _x = geo.x + (geo.width - _width) / 2;
+    int _y = geo.y + (geo.height - _height) / 2;
+
+    setGeometry( { _x, _y, _width, _height} );
+
     auto settings = Program::getSettings( activeEmulator );
-    auto speed = settings->get<float>("custom_speed", 59.95);
-    auto percent = settings->get<bool>("custom_speed_percent", false);
+    auto speed = settings->get<float>(getIdent(), mode == Mode::CUSTOM ? 59.95 : 500.0);
+    auto percent = settings->get<bool>(getIdent() + "_percent", false);
     std::string label = GUIKIT::String::formatFloatingPoint(speed, 3, true);
 
     top.fpsLineEdit.setText( label );
@@ -2827,6 +2896,19 @@ auto View::FpsWindow::show() -> void {
         top.percentRadioBox.setChecked();
     else
         top.fpsRadioBox.setChecked();
+
+    if (mode == Mode::FASTFORWARD ) {
+        auto each = settings->get<unsigned>(getIdent() + "_each", 0, {0, 3});
+        switch (each) {
+            case 0:
+            default: center.each.setChecked(); break;
+            case 1: center.each4th.setChecked(); break;
+            case 2: center.each8th.setChecked(); break;
+            case 3: center.each16th.setChecked(); break;
+        }
+        center.setEnabled( );
+    } else
+        center.setEnabled( false );
 
     setVisible();
     setFocused();
@@ -2850,11 +2932,22 @@ auto View::FpsWindow::build() -> void {
         if (out < 1.0)
             return;
 
-        Program::getSettings( activeEmulator )->set<std::string>("custom_speed", userInput);
-        Program::getSettings( activeEmulator )->set<bool>("custom_speed_percent", top.percentRadioBox.checked());
+        unsigned each = 0;
+        if (center.each4th.checked()) each = 1;
+        else if (center.each8th.checked()) each = 2;
+        else if (center.each16th.checked()) each = 3;
 
-        if (view->isCustomSpeed()) {
+        Program::getSettings( activeEmulator )->set<std::string>(getIdent(), userInput);
+        Program::getSettings( activeEmulator )->set<bool>(getIdent() + "_percent", top.percentRadioBox.checked());
+        Program::getSettings( activeEmulator )->set<unsigned>(getIdent() + "_each", each);
+
+        if (mode == Mode::FASTFORWARD && program->warp.mode == Program::Warp::FastForward) {
             emuThread->lock();
+            program->setWarp( Program::Warp::FastForward, program->warp.manuell );
+            emuThread->unlock();
+        } else if (mode == Mode::CUSTOM && view->isCustomSpeed()) {
+            emuThread->lock();
+            view->overrideFullscreenRefreshRate = 0.0f;
             audioManager->setResampler();
             statusHandler->resetFrameCounter();
             emuThread->unlock();
@@ -2873,11 +2966,29 @@ auto View::FpsWindow::build() -> void {
     bottom.apply.setText( trans->get("Apply") );
     bottom.cancel.setText( trans->get("Cancel") );
 
+    center.label.setText( trans->getA("show images") );
+    center.each.setText( trans->get("all") );
+    center.each4th.setText( trans->getA("4.") );
+    center.each8th.setText( trans->getA("8.") );
+    center.each16th.setText( trans->getA("16.") );
+
     layout.setMargin( 10 );
-    layout.append(top, {~0u, 0u}, 20);
+    layout.append(top, {~0u, 0u}, mode == Mode::FASTFORWARD ? 10 : 20);
+    if (mode == Mode::FASTFORWARD )
+        layout.append(center, {~0u, 0u}, 20);
     layout.append(bottom, {~0u, 0u});
 
     append( layout );
+}
+
+auto View::FpsWindow::getIdent() const -> std::string {
+    switch (mode) {
+        default:
+        case Mode::CUSTOM:
+            return "custom_speed";
+        case Mode::FASTFORWARD:
+            return "fastforward_speed";
+    }
 }
 
 auto View::getReadable(DebuggerTheme theme, Emulator::Interface* emulator) -> std::string {

@@ -772,10 +772,6 @@ auto Interface::setWarpMode(unsigned config) -> void {
     system->setWarpMode( config );
 }
 
-auto Interface::getWarpMode() -> unsigned {
-    return system->warp.config;
-}
-
 auto Interface::autoStartedByMediaGroup() -> MediaGroup* {
 
     return getDiskMediaGroup();

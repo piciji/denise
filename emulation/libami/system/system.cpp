@@ -241,6 +241,7 @@ auto System::power(bool softReset, bool resetInstruction) -> void {
             warp.config = 0;
             warp.frameCounter = 0;
             warp.renderNext = false;
+            warp.frameMask = 0;
 
         } else {
             cpu.reset();
@@ -417,11 +418,11 @@ auto System::videoRefresh( uint16_t* frame, unsigned width, unsigned height, uns
         warp.renderNext = false;
         denise.setDisableSequencer( (warp.config & (unsigned)Interface::WarpMode::NoVideoSequencer) ? 1 : 2 );
 
-    } else if (warp.config & (unsigned)Interface::WarpMode::ReduceVideoOutput) {
+    } else if (warp.frameMask) {
         if ((options & 0xc0) == 0) // lace frame toggle
             frame = nullptr;
 
-        if ((++warp.frameCounter & 15) == 0) {
+        if ((++warp.frameCounter & warp.frameMask) == 0) {
             warp.frameCounter = 0;
             denise.setDisableSequencer( 0 );
             warp.renderNext = true;
@@ -512,8 +513,16 @@ auto System::setWarpMode( unsigned config ) -> void {
     warp.config = config | (warp.config & (unsigned)Interface::WarpMode::SlowSpeed);
     paula.disableAudioOut(config & (unsigned) Emulator::Interface::WarpMode::NoAudioOut);
 
+    warp.frameMask = 0;
+    if (warp.config & (unsigned) Emulator::Interface::WarpMode::ReduceVideoOutputEach16th)
+        warp.frameMask = 15;
+    else if (warp.config & (unsigned) Emulator::Interface::WarpMode::ReduceVideoOutputEach8th)
+        warp.frameMask = 7;
+    else if (warp.config & (unsigned) Emulator::Interface::WarpMode::ReduceVideoOutputEach4th)
+        warp.frameMask = 3;
+
     if (config & (unsigned) Emulator::Interface::WarpMode::NoVideoSequencer) denise.setDisableSequencer( 1 );
-    else if (config & (unsigned) Emulator::Interface::WarpMode::ReduceVideoOutput) denise.setDisableSequencer( 2 );
+    else if (warp.frameMask) denise.setDisableSequencer( 2 );
     else denise.setDisableSequencer( 0 );
 
     warp.frameCounter = 0;

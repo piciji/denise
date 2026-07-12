@@ -117,7 +117,6 @@ struct Interface : Emulator::Interface  {
     auto setInputSampling(uint8_t mode) -> void;
 
     auto setWarpMode(unsigned config) -> void;
-    auto getWarpMode() -> unsigned;
 
     auto enableFloppySounds(bool state) -> void;
 

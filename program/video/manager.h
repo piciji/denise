@@ -69,8 +69,7 @@ struct VideoManager {
 
     bool rebuildShader = true;
     ShaderParser* parser = nullptr;
-        
-	static bool synchronized;
+
     static uint8_t frameRenderPos;
     static uint8_t frameRenderTrigger;
     static bool placeHolder;

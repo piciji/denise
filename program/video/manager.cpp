@@ -22,7 +22,6 @@
 #include "../tools/chronos.h"
 #include "../view/status.h"
 
-bool VideoManager::synchronized = true;
 uint8_t VideoManager::frameRenderPos = 0;
 uint8_t VideoManager::frameRenderTrigger = 1;
 bool VideoManager::placeHolder = false;
@@ -598,7 +597,8 @@ template<typename T, uint8_t options> auto VideoManager::renderFrame(const T* sr
     constexpr bool isPause = options & 0x10;
     constexpr bool lores = !hires && !shres;
     bool iHold = interlace && !field && !interlaceFields;
-    bool suppressShader = program->warp.active;
+    //bool suppressShader = program->warp.mode != Program::Warp::Off;
+    bool suppressShader = false;
     bool rewind = audioManager->rewind;
     uint8_t gpuOptions = iHold | (interlace << 1) | (suppressShader << 2) | (isPause << 5) | (rewind << 6);
 

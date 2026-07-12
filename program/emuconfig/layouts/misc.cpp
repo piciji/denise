@@ -53,7 +53,8 @@ AutostartLayout::AutoWarp::AutoWarp(Emulator::Interface* emulator) {
     append(label, {0u, 0u}, 10 );
     append(off, {0u, 0u}, 10 );
     append(normal, {0u, 0u}, 10 );
-    append(aggressive, {0u, 0u}, 25 );
+    append(aggressive, {0u, 0u}, 10 );
+    append(fastforward, {0u, 0u}, 25 );
     if (dynamic_cast<LIBC64::Interface*>(emulator))
         append(diskFirstFile, {0u, 0u}, 10);
 
@@ -62,7 +63,7 @@ AutostartLayout::AutoWarp::AutoWarp(Emulator::Interface* emulator) {
 
     append(disableWarpWhenInput, {0u, 0u} );
 
-    GUIKIT::RadioBox::setGroup( off, normal, aggressive );
+    GUIKIT::RadioBox::setGroup( off, normal, aggressive, fastforward );
 
     setAlignment( 0.5 );
 }
@@ -149,6 +150,13 @@ MiscLayout::MiscLayout(TabWindow* tabWindow) : autostartLayout(tabWindow->emulat
     autostartLayout.autoWarp.aggressive.onActivate = [this]() {
 
         _settings->set<unsigned>("auto_warp", 2);
+
+        initAutowarp();
+    };
+
+    autostartLayout.autoWarp.fastforward.onActivate = [this]() {
+
+        _settings->set<unsigned>("auto_warp", 3);
 
         initAutowarp();
     };
@@ -341,6 +349,7 @@ auto MiscLayout::translate() -> void {
     autostartLayout.autoWarp.label.setText(trans->get("Auto Warp", {}, true));
     autostartLayout.autoWarp.aggressive.setText(trans->get("aggressive"));
     autostartLayout.autoWarp.normal.setText(trans->get("normal"));
+    autostartLayout.autoWarp.fastforward.setText(trans->get("Fast Forward"));
     autostartLayout.autoWarp.off.setText(trans->get("off"));
 
     autostartLayout.manuellOverAutowarp.setText(trans->getA("manual ends auto warp"));
@@ -382,7 +391,7 @@ auto MiscLayout::initAutowarp(Emulator::Interface::MediaGroup* forGroup) -> void
 
 auto MiscLayout::loadSettings() -> void {
 
-    unsigned autoWarp = _settings->get<unsigned>("auto_warp", 0);
+    unsigned autoWarp = _settings->get<unsigned>("auto_warp", 0, {0, 3});
 
     if (autoWarp == 0)
         autostartLayout.autoWarp.off.setChecked();
@@ -390,6 +399,8 @@ auto MiscLayout::loadSettings() -> void {
         autostartLayout.autoWarp.normal.setChecked();
     else if (autoWarp == 2)
         autostartLayout.autoWarp.aggressive.setChecked();
+    else if (autoWarp == 3)
+        autostartLayout.autoWarp.fastforward.setChecked();
 
     autostartLayout.manuellOverAutowarp.setChecked( _settings->get<bool>("manuell_ends_auto_warp", true) );
 

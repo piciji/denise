@@ -175,7 +175,7 @@ auto StatusHandler::updateFrameCounter() -> void {
     unsigned limit = ((unsigned)fpsCounter.fps * fpsCounter.updateIntervall) / 1000;
 
     if (++fpsCounter.updateDelay >= limit) {
-        if (!VideoManager::synchronized)
+        if (program->warp.mode != Program::Warp::Off || !audioDriver->hasSynchronized())
             // check input polling and message loop every 50 ms
             program->loopFrames = ((unsigned)fpsCounter.fps * 50 ) / 1000;
         else

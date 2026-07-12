@@ -21,6 +21,7 @@ auto InputManager::setHotkeys() -> void {
     hotkeys.push_back( {Hotkey::Id::Fullscreen, "Fullscreen"} );
     hotkeys.push_back( {Hotkey::Id::ToggleWarp, "Toggle Warp"} );
     hotkeys.push_back( {Hotkey::Id::ToggleWarpAggressive, "Toggle Warp Aggressive"} );
+    hotkeys.push_back( {Hotkey::Id::ToggleFastForward, "Toggle Fast Forward"} );
     
     hotkeys.push_back( {Hotkey::Id::ToggleMenu, "Toggle_menu"} );
     hotkeys.push_back( {Hotkey::Id::ToggleStatus, "Toggle_status"} );	
@@ -209,7 +210,7 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
                     bool val = activeEmulator->getModelValue( model->id );
                     settings->set<bool>( _underscore(model->name), !val );
                     activeEmulator->setModelValue( model->id, !val );
-                    program->setWarp(false);
+                    program->setWarp(Program::Warp::Off);
                     program->power(activeEmulator);
                 }
             }
@@ -291,22 +292,31 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
                 emuView->inputLayout->updateConnectorButtons();
 		} break;
         case Hotkey::Id::ToggleWarp:
+            emuThread->lock();
+            program->toggleWarp( Program::Warp::Normal );
+            break;
+
         case Hotkey::Id::ToggleWarpAggressive:
             emuThread->lock();
-            program->toggleWarp( id == Hotkey::Id::ToggleWarpAggressive );
+            program->toggleWarp( Program::Warp::Aggressive );
+            break;
+
+        case Hotkey::Id::ToggleFastForward:
+            emuThread->lock();
+            program->toggleWarp( Program::Warp::FastForward );
             break;
 
         case Hotkey::Id::Warp:
-            if (!program->warp.active) {
+            if (program->warp.mode != program->warp.autoMode) {
                 emuThread->lock();
-                program->setWarp(true, program->warp.aggressive);
+                program->setWarp( program->warp.autoMode );
             }
             break;
 
         case Hotkey::Id::WarpOff:
-            if (program->warp.active) {
+            if (program->warp.mode != Program::Warp::Off) {
                 emuThread->lock();
-                program->setWarp(false);
+                program->setWarp(Program::Warp::Off);
             }
             break;
 
@@ -478,7 +488,7 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
             }
 
             settings->set<unsigned>("video_crt", _mode);
-            program->setWarp( false );
+            program->setWarp( Program::Warp::Off );
             auto emuView = EmuConfigView::TabWindow::getView( activeEmulator );
             if (emuView && emuView->presentationLayout)
                 emuView->presentationLayout->loadSettings();
@@ -1034,6 +1044,7 @@ auto InputManager::pollHotkeys() -> void {
 				
 			case Hotkey::Id::ToggleWarp:
 			case Hotkey::Id::ToggleWarpAggressive:
+		    case Hotkey::Id::ToggleFastForward:
 				if(!warp)
 					warp = trigger;
 				break;

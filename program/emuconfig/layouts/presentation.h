@@ -474,7 +474,7 @@ struct PresentationLayout : GUIKIT::HorizontalLayout {
     auto updatePresets(bool reloadDriver, bool reloadPreset) -> void;
     auto updateVisibillity() -> void;
     auto loadSettings(bool init = false) -> void;
-    auto buildShaderUI(ShaderPreset* preset, bool selectIt = true) -> void;
+    auto buildShaderUI(ShaderPreset* preset) -> void;
     auto buildPass(ShaderPreset* preset, ShaderPreset::Pass& pass) -> void;
     auto countFloatingPoint(ShaderPreset::Param& param, int& places, int& decimalPlaces) -> void;
     auto updateMoveImg() -> void;

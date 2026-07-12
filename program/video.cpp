@@ -521,91 +521,77 @@ auto Program::updateCrop( Emulator::Interface* emulator ) -> void {
 	emulator->cropFrame( (Emulator::Interface::CropType) type, crop );
 }
 
-auto Program::toggleWarp(bool aggressive) -> void {
-    if (!activeEmulator)
-        return;
-
-    bool ff = warp.active && !warp.aggressive;
-    bool ffa = warp.active && warp.aggressive;
-
+auto Program::toggleWarp( Warp::Mode mode) -> void {
     if (warp.manuellEndsAutoWarp && warp.motorControlled)
-        warp.enableAutoWarp = false;
+        warp.autoMode = Warp::Off;
 
-    if ( (!aggressive && ffa) || (aggressive && ff) ) {
-        // switch modes (already active)
-        unsigned val = (unsigned)Emulator::Interface::WarpMode::NoAudioOut | (unsigned)Emulator::Interface::WarpMode::ReduceVideoOutput;
-        if (aggressive)
-            val |= (unsigned)Emulator::Interface::WarpMode::NoVideoSequencer;
+    if (mode == warp.mode)
+        mode = Warp::Mode::Off;
 
-        activeEmulator->setWarpMode( val );
-        warp.aggressive = aggressive;
-
-        if (view)
-            view->updateWarpCheck();
-    } else {
-        bool toggleOn = !ff && !ffa;
-        setWarp( toggleOn, aggressive);
-        warp.manuell = toggleOn;
-    }
+    setWarp(mode, true);
 }
 
-auto Program::setWarp( bool activate, bool aggressive ) -> void {
-    if (!activeEmulator)
-        return;
-
-    activeVideoManager = VideoManager::getInstance( activeEmulator );
+auto Program::setWarp( Warp::Mode mode, bool manuell ) -> void {
     unsigned forward = 0;
+    bool resetFrameCounter = !(warp.mode != Warp::Off && mode != Warp::Mode::Off);
 
-    if (activate) {
-        videoDriver->hideSplashScreen();
-        warp.active = true;
-        warp.aggressive = aggressive;
-        VideoManager::setFrameRender(1);
+    switch (mode) {
+        case Warp::Mode::Off:
+            warp.manuell = false;
+            loopFrames = 0;
+            if (warp.mode == Warp::Mode::FastForward) {
+                warp.mode = Warp::Off;
+                audioManager->setSynchronize();
+                audioManager->setResampler();
+                audioManager->setVolume();
+            } else {
+                warp.mode = Warp::Off;
+                VideoManager::setSynchronize();
+            }
 
-        if (videoDriver->hasSynchronized())
-            videoDriver->synchronize( false );
+            if (audioManager)
+                audioManager->drive.reset();
 
-        if (videoDriver->hasVRR())
-            videoDriver->setVRR(false);
+            break;
+        case Warp::Mode::Normal:
+        case Warp::Mode::Aggressive: {
+            warp.manuell = manuell;
 
-        forward = (unsigned)Emulator::Interface::WarpMode::NoAudioOut | (unsigned)Emulator::Interface::WarpMode::ReduceVideoOutput;
-        if (aggressive)
-            forward |= (unsigned)Emulator::Interface::WarpMode::NoVideoSequencer;
+            if (warp.mode == Warp::Mode::FastForward) {
+                warp.mode = mode;
+                audioManager->setSynchronize();
+                audioManager->setResampler();
+                audioManager->setVolume();
+            } else {
+                warp.mode = mode;
+                VideoManager::setSynchronize();
+            }
 
-    } else {
-        warp.active = false;
+            forward = (unsigned)Emulator::Interface::WarpMode::NoAudioOut | (unsigned)Emulator::Interface::WarpMode::ReduceVideoOutputEach16th;
+            if (mode == Warp::Mode::Aggressive)
+                forward |= (unsigned)Emulator::Interface::WarpMode::NoVideoSequencer;
+        } break;
 
-        VideoManager::setSynchronize();
-
-        if (audioManager)
-            audioManager->drive.reset();
+        case Warp::FastForward: {
+            warp.mode = mode;
+            warp.manuell = manuell;
+            audioManager->setSynchronize();
+            audioManager->setResampler();
+            audioManager->volumeAdjust = 0.0;
+            auto each = getSettings( activeEmulator )->get<unsigned>("fastforward_speed_each", 0, {0, 3});
+            if (each == 1) forward = (unsigned)Emulator::Interface::WarpMode::ReduceVideoOutputEach4th;
+            else if (each == 2) forward = (unsigned)Emulator::Interface::WarpMode::ReduceVideoOutputEach8th;
+            else if (each == 3) forward = (unsigned)Emulator::Interface::WarpMode::ReduceVideoOutputEach16th;
+        } break;
     }
 
-    if (statusHandler)
+    if (statusHandler && resetFrameCounter)
         statusHandler->resetFrameCounter();
 
     activeEmulator->setWarpMode( forward );
 
     if (view)
         view->updateWarpCheck();
-	
-	updateOverallSynchronize();
-}
-
-auto Program::updateOverallSynchronize() -> void {
-	VideoManager::synchronized = false;
-
-	if (activeEmulator && activeEmulator->getWarpMode())
-		return;	
-	
-	bool vSync = videoDriver->hasSynchronized();
-
-    bool vrr = videoDriver->hasVRR();
-	
-	bool aSync = audioDriver->hasSynchronized();
-
-	if ( vSync || vrr || aSync )
-		VideoManager::synchronized = true;
 }
 
 auto Program::updateFullscreenSetting() -> void {

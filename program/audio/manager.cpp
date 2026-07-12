@@ -67,11 +67,10 @@ auto AudioManager::setSynchronize() -> void {
         return;
 
     audioDriver->synchronize(synchronize);
-    program->updateOverallSynchronize();
     setBufferSize();
 }
 
-auto AudioManager::setResampler(float overrideRate) -> void {
+auto AudioManager::setResampler() -> void {
     if (!activeEmulator)
         return;
     
@@ -88,13 +87,7 @@ auto AudioManager::setResampler(float overrideRate) -> void {
     bool percent;
     unsigned speedProfile;
 
-    if (overrideRate == 0.0f)
-        speedProfile = view->getSpeedBySelectedProfile(speed, percent);
-    else {
-        speedProfile = ~0;
-        percent = false;
-        speed = overrideRate;
-    }
+    speedProfile = view->getSpeedBySelectedProfile(speed, percent);
 
     if (speedProfile != 0) {
         if (percent) {

@@ -192,7 +192,6 @@ struct Interface : Emulator::Interface {
         
     auto activateDebugCart( unsigned limitCycles = 0 ) -> void;
     auto setWarpMode(unsigned config) -> void;
-	auto getWarpMode() -> unsigned;
 
     auto setMemoryInitParams(MemoryPattern& pattern) -> void;
 	auto getMemoryInitPattern( uint8_t* pattern ) -> void;

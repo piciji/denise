@@ -563,7 +563,7 @@ auto Cmd::autoloadImages() -> void {
         typedef Emulator::Interface EmuInt;
 
         if (aggressiveWarp)
-            activeEmulator->setWarpMode( (unsigned)EmuInt::WarpMode::NoAudioOut | (unsigned)EmuInt::WarpMode::ReduceVideoOutput | (unsigned)EmuInt::WarpMode::NoVideoSequencer );
+            activeEmulator->setWarpMode( (unsigned)EmuInt::WarpMode::NoAudioOut | (unsigned)EmuInt::WarpMode::ReduceVideoOutputEach16th | (unsigned)EmuInt::WarpMode::NoVideoSequencer );
         else if (noDriver || noGui)
             activeEmulator->setWarpMode( (unsigned)EmuInt::WarpMode::NoAudioOut | (unsigned)EmuInt::WarpMode::NoVideoOut );
         else if (debug)

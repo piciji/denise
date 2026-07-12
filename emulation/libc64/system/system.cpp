@@ -712,6 +712,7 @@ auto System::power( bool softReset ) -> void {
         warp.config = 0;
         warp.frameCounter = 0;
         warp.renderNext = false;
+        warp.frameMask = 0;
     }
 
     tapeNoise.reset();
@@ -974,6 +975,14 @@ auto System::setWarpMode( unsigned config ) -> void {
     vicII->disableSequencer(config & (unsigned) Emulator::Interface::WarpMode::NoVideoSequencer);
     updateDriveSounds();
 
+    warp.frameMask = 0;
+    if (warp.config & (unsigned) Emulator::Interface::WarpMode::ReduceVideoOutputEach16th)
+        warp.frameMask = 15;
+    else if (warp.config & (unsigned) Emulator::Interface::WarpMode::ReduceVideoOutputEach8th)
+        warp.frameMask = 7;
+    else if (warp.config & (unsigned) Emulator::Interface::WarpMode::ReduceVideoOutputEach4th)
+        warp.frameMask = 3;
+
     if (!config && sidManager.hasIntensifiedPseudoStereo())
         sidManager.applyOffsetPseudoStereo();
 }
@@ -1090,10 +1099,10 @@ auto System::videoRefresh( uint8_t* frame, unsigned width, unsigned height, unsi
         warp.renderNext = false;
         vicII->disableSequencer( warp.config & (unsigned)Interface::WarpMode::NoVideoSequencer );
 
-    } else if (warp.config & (unsigned)Interface::WarpMode::ReduceVideoOutput) {
+    } else if (warp.frameMask) {
         frame = nullptr;
 
-        if ((++warp.frameCounter & 15) == 0) {
+        if ((++warp.frameCounter & warp.frameMask) == 0) {
             warp.frameCounter = 0;
             vicII->disableSequencer( false );
             warp.renderNext = true;

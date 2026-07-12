@@ -716,7 +716,7 @@ auto ModelLayout::applyCustomStuff( Line::Block* block, Emulator::Interface::Mod
                 break;
 
             case LIBC64::Interface::ModelIdCycleAccurateVideo:
-                program->setWarp(false);
+                program->setWarp(Program::Warp::Off);
 
                 if (this->emulator == activeEmulator)
                     program->power(activeEmulator);
@@ -724,7 +724,7 @@ auto ModelLayout::applyCustomStuff( Line::Block* block, Emulator::Interface::Mod
 
             case LIBC64::Interface::ModelIdDiskThread:
             case LIBC64::Interface::ModelIdDiskOnDemand:
-                program->setWarp(false);
+                program->setWarp(Program::Warp::Off);
                 break;
 
             case LIBC64::Interface::ModelIdEmulateDriveMechanics:

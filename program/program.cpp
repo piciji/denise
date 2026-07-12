@@ -432,7 +432,7 @@ auto Program::reset( Emulator::Interface* emulator ) -> void {
 
 auto Program::powerOff() -> void {
     if ( activeEmulator ) {
-        setWarp( false );
+        setWarp( Program::Warp::Off );
         activeEmulator->powerOff();
         
         for(auto& mediaGroup : activeEmulator->mediaGroups) {
@@ -478,7 +478,7 @@ auto Program::powerOff() -> void {
 
     activeEmulator = nullptr;
     activeVideoManager = nullptr;
-    warp.enableAutoWarp = false;
+    warp.autoMode = Warp::Off;
 }
 
 auto Program::loopNoGui() -> void {
@@ -498,12 +498,8 @@ auto Program::loop() -> void {
 		unsigned frames = loopFrames;
 		
 		if (frames) {
-			while(frames--) {
-				if (activeEmulator)
-					activeEmulator->run();
-				else
-					break;
-			}
+			while(frames--)
+			    activeEmulator->run();
 		} else
 			activeEmulator->run();
 
@@ -731,7 +727,7 @@ auto Program::questionToWrite(Emulator::Interface::Media* media) -> bool {
 }
 
 auto Program::autoStartFinish(bool soft) -> void {
-    if (!activeEmulator || !warp.enableAutoWarp || !warp.active)
+    if (!activeEmulator || (warp.autoMode == Warp::Off))
         return;
 
     if (soft && warp.motorControlled)
@@ -742,7 +738,7 @@ auto Program::autoStartFinish(bool soft) -> void {
 
 auto Program::hintAutoWarp(uint8_t state) -> void {
 
-    if (!activeEmulator || !warp.enableAutoWarp || warp.manuell || !warp.motorControlled)
+    if (!activeEmulator || (warp.autoMode == Warp::Off) || warp.manuell || !warp.motorControlled)
         return;
 
     bool motorOn = state & 1;
@@ -766,27 +762,24 @@ auto Program::initAutoWarp(Emulator::Interface::MediaGroup* mediaGroup, bool ini
 
     auto _settings = getSettings( activeEmulator );
 
-    unsigned _autoWarp = _settings->get<unsigned>("auto_warp", 0);
+    warp.autoMode = (Warp::Mode)_settings->get<unsigned>("auto_warp", 0, {0, 3});
     warp.manuellEndsAutoWarp = _settings->get<bool>("manuell_ends_auto_warp", true);
-    warp.enableAutoWarp = _autoWarp != 0;
+    warp.motorControlled = true;
+    warp.inputControlled = false;
 
-    if (warp.enableAutoWarp) {
+    if (warp.autoMode != Warp::Off) {
         if (mediaGroup->isDisk()) {
             if (dynamic_cast<LIBC64::Interface*>(activeEmulator))
                 warp.motorControlled = !_settings->get<bool>("auto_warp_disk_first_file", true);
-            else
-                warp.motorControlled = true;
 
             warp.inputControlled = _settings->get<bool>("auto_warp_off_input", false);
-        } else {
+        } else if (mediaGroup->isTape()) {
             warp.motorControlled = !_settings->get<bool>("auto_warp_tape_first_file", false);
             warp.inputControlled = false;
         }
 
         if (!initOnly)
-            setWarp(true, _autoWarp == 2);
-        else if (warp.motorControlled)
-            warp.aggressive = _autoWarp == 2;
+            setWarp(warp.autoMode);
     }
 }
 

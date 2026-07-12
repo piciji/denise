@@ -71,11 +71,11 @@ struct Program : Emulator::Interface::Bind {
 	unsigned loopFrames = 0;
     GUIKIT::Timer fpsChangeTimer;
 
-	struct {
-        bool active = false;
-        bool aggressive = false;
+	struct Warp {
+	    enum Mode { Off, Normal, Aggressive, FastForward } mode = Mode::Off;
         // auto Warp
-        bool enableAutoWarp = false;
+	    Mode autoMode = Mode::Off;
+
         bool motorControlled = false;
         bool inputControlled = false;
         bool manuell = false;
@@ -169,9 +169,9 @@ struct Program : Emulator::Interface::Bind {
     auto getCropMessage( Emulator::Interface* emulator, Emulator::Interface::CropType cropType) -> std::string;
     auto getScaleMessage(Emulator::Interface* emulator, int aspectMode ) -> std::string;
     auto setPalette( Emulator::Interface* emulator ) -> void;
-    auto toggleWarp(bool aggressive) -> void;
-    auto setWarp( bool activate, bool aggressive = false ) -> void;
-    auto updateOverallSynchronize() -> void;
+
+    auto toggleWarp( Warp::Mode mode) -> void;
+    auto setWarp( Warp::Mode mode, bool manuell = false ) -> void;
     auto updateFullscreenSetting() -> void;
     auto fpsChanged() -> void override;
     auto setRotation() -> void;
