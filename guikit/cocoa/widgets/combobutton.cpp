@@ -89,9 +89,19 @@ auto pComboButton::minimumSize() -> Size {
 }
     
 auto pComboButton::setGeometry(Geometry geometry) -> void {
+    int adjustX = 2;
+    int adjustY = 0;
+    
+    if (GUIKIT::hasMinimumVersion(26, 0)) {
+        adjustX = 0;
+        adjustY = 1;
+    } else if (GUIKIT::hasMinimumVersion(10, 15)) {
+        adjustY = -1;
+    }
+    
     pWidget::setGeometry({
-        geometry.x - 2, geometry.y + (GUIKIT::hasMinimumVersion(10, 15) ? 1 : 0),
-        geometry.width + 4, geometry.height
+        geometry.x - adjustX, geometry.y - adjustY,
+        geometry.width + (adjustX * 2), geometry.height
     });
 }
 

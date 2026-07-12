@@ -39,24 +39,34 @@ namespace GUIKIT {
     
 auto pButton::minimumSize() -> Size {
     Size size = getMinimumSize();
+    
+    int adjustW = 22;
+    int adjustH = 6;
 
     if (!button.image())
-        return {size.width + 22, size.height + 6};
+        return {size.width + adjustW, size.height + adjustH};
 
     if (button.text().empty())
-        return {button.image()->width + 22, button.image()->height + 6};
+        return {button.image()->width + adjustW, button.image()->height + adjustH};
 
-    return {size.width + button.image()->width + 22, size.height + 6};
+    return {size.width + button.image()->width + adjustW, size.height + adjustH};
 }
     
 auto pButton::setGeometry(Geometry geometry) -> void {
-    int adjust = 2;
-      if (!button.image())
-        adjust = 6;
+    int adjustX = 2;
+    int adjustY = 2;
+    
+    if (!button.image())
+        adjustX = 6;
+    
+    if (GUIKIT::hasMinimumVersion(26, 0)) {
+        adjustX = 0;
+        adjustY = 0;
+    }
     
     pWidget::setGeometry({
-        geometry.x - adjust, geometry.y - 2,
-        geometry.width + (adjust * 2), geometry.height + 4
+        geometry.x - adjustX, geometry.y - adjustY,
+        geometry.width + (adjustX * 2), geometry.height + (adjustY * 2)
     });
 }
     

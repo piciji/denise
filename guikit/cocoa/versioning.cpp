@@ -15,6 +15,9 @@
 #define NSAppKitVersionNumber12  2113
 #define NSAppKitVersionNumber13  2299
 #define NSAppKitVersionNumber14  2487
+#define NSAppKitVersionNumber15  2490
+#define NSAppKitVersionNumber26  2500
+
 
 auto isBigSur() -> bool {    
     return (NSAppKitVersionNumber >= NSAppKitVersionNumber11) && (NSAppKitVersionNumber < NSAppKitVersionNumber12);
@@ -48,11 +51,24 @@ auto hasMinimumVersion(unsigned major, unsigned minor) -> bool {
     } else if (major == 14) {
         switch(minor) {
             default:
-            case 0: // Ventura 14.0
+            case 0: // Sonoma 14.0
                 return _internalVersion >= NSAppKitVersionNumber14;
                 
         }
-        
+    } else if (major == 15) {
+        switch(minor) {
+            default:
+            case 0: // Sequoia 15.0
+                return _internalVersion >= NSAppKitVersionNumber15;
+                
+        }
+    } else if (major == 26) {
+        switch(minor) {
+            default:
+            case 0: // Tahoe 26.0
+                return _internalVersion >= NSAppKitVersionNumber26;
+                
+        }
     } else if (major == 10) {
         
         switch(minor) {

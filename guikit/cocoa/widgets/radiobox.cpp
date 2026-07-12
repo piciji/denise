@@ -35,8 +35,14 @@ auto pRadioBox::minimumSize() -> Size {
         
     Size size = pFont::size([(id)inner font], widget.text());
     
+    int adjustH = 0;
+    
+    if (GUIKIT::hasMinimumVersion(26, 0)) {
+        adjustH = 4;
+    }
+    
     calculatedMinimumSize.updated = true;   
-    calculatedMinimumSize.minimumSize = {size.width + 22, size.height + 0};
+    calculatedMinimumSize.minimumSize = {size.width + 22, size.height + adjustH};
     
     return calculatedMinimumSize.minimumSize;
 }
