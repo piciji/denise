@@ -32,6 +32,8 @@ VicIIBase::VicIIBase(System* system) : system(system), cpu(system->cpu) {
 
     for(auto& s : debugger.spr)
         s.data = new uint8_t[16384];
+
+    disableSpriteCollisions = false;
 }	
 
 VicIIBase::~VicIIBase() {
@@ -472,6 +474,14 @@ auto VicIIBase::enableDmaView(bool state, bool withScrolling) -> void {
     lineVCounter = 0;
     linePos = 0;
     visibleLine = false;
+}
+
+auto VicIIBase::collisionsDisabled() const -> bool {
+    return disableSpriteCollisions;
+}
+
+auto VicIIBase::disableCollisions(bool state) -> void {
+    disableSpriteCollisions = state;
 }
 
 auto VicIIBase::Debugger::enableDmaView(bool state, bool withScrolling) -> void {

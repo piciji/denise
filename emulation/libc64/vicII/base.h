@@ -159,6 +159,8 @@ struct VicIIBase {
     auto getVicBank() -> uint16_t { return vicBank; }
 	auto enableDmaView(bool state, bool withScrolling) -> void;
     auto resetDebuggerDma() -> void;
+    auto collisionsDisabled() const -> bool;
+    auto disableCollisions(bool state) -> void;
 
 protected:     
     bool ultimaxPhi1;
@@ -279,6 +281,7 @@ protected:
 
 	uint8_t spriteForegroundCollided;	
 	uint8_t spriteSpriteCollided;
+    bool disableSpriteCollisions;
 		
 	bool canSpriteSpriteCollisionIrq;
 	bool canSpriteForegroundCollisionIrq;

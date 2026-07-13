@@ -981,3 +981,4 @@ shader favourite = einen der besten Shader mit einem Klick laden. zeigt floppy m
 Fast Forward = Fast Forward
 Toggle Fast Forward = Fast Forward umschalten
 show images = Bilder zeigen
+Disable Sprite Collisions = Sprite-Kollisionen deaktivieren
