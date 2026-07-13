@@ -250,9 +250,9 @@ auto InputManager::autoAssign( Emulator::Interface::Device& device ) -> void {
 
                         if (group.id == Hid::Joypad::Hat) {
                             if (input.name == "Up" && (hidInput.name.find(".Y") != std::string::npos))
-                                qualifier = 2;
-                            else if (input.name == "Down" && (hidInput.name.find(".Y") != std::string::npos))
                                 qualifier = 1;
+                            else if (input.name == "Down" && (hidInput.name.find(".Y") != std::string::npos))
+                                qualifier = 2;
                             else if (input.name == "Left" && (hidInput.name.find(".X") != std::string::npos))
                                 qualifier = 1;
                             else if (input.name == "Right" && (hidInput.name.find(".X") != std::string::npos))

@@ -307,8 +307,8 @@ struct RawJoypad {
                     	int16_t _x = (value == 6 || value == 7 || value == 8) ? -32768
 								: ( (value == 2 || value == 3 || value == 4) ? +32767 : 0 );
 
-                    	int16_t _y = (value == 4 || value == 5 || value == 6) ? -32768
-								: ( (value == 8 || value == 1 || value == 2) ? +32767 : 0 );
+                    	int16_t _y = (value == 4 || value == 5 || value == 6) ? +32767
+								: ( (value == 8 || value == 1 || value == 2) ? -32768 : 0 );
 
                         pJoypad->hats[hat].x = _x;
                         pJoypad->hats[hat].y = _y;
