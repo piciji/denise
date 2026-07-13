@@ -678,6 +678,7 @@ namespace DRIVER {
         
         updateRTS = true;
         updateHistory = true;
+        frameCount = 0;
     }
     
     auto changeThreadPriorityToRealtime(bool state) -> void {
@@ -1185,6 +1186,9 @@ namespace DRIVER {
         
         if (s == SplashScreen::FINISH)
             return false;
+
+        if (s == SplashScreen::FADE_OUT)
+            frameCount = 0;
         
         if (splashScreenTex.view == nil || s == SplashScreen::TEXTURE_UPDATE) {
             MTLUtility::initTexture(splashScreenTex, splashScreen.viewport.width, splashScreen.viewport.height, MTLPixelFormatRGBA8Unorm, device);
@@ -1798,6 +1802,7 @@ namespace DRIVER {
         onShaderProgressCallback(-1, !shaderPasses);
         updateRTS = true;
         updateHistory = true;
+        frameCount = 0;
         updateFrameSize();
     }
     

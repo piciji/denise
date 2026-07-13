@@ -459,6 +459,7 @@ namespace DRIVER {
         updateRotation();
         updateRTS = true;
         updateHistory = true;
+        frameCount = 0;
     }
 
     auto init(uintptr_t handle) -> bool {
@@ -1047,6 +1048,7 @@ namespace DRIVER {
         onShaderProgressCallback(-1, !shaderPasses);
         updateRTS = true;
         updateHistory = true;
+        frameCount = 0;
         updateFrameSize();
     }
 
@@ -1207,7 +1209,7 @@ namespace DRIVER {
         if (!(options & OPT_DisallowShader) && shaderPasses) {
             frameCount += 1;
             unsigned curTime = Chronos::getTimestampInMicrosecondsPrecise();
-            deltaTime = curTime - lastTime;            
+            deltaTime = curTime - lastTime;
             lastTime = curTime;
             frameDirection = (options & OPT_Rewind) ? -1 : 1;
 
@@ -1749,9 +1751,11 @@ namespace DRIVER {
     auto buildSplashscreenTexture() -> bool {
         auto s = splashScreen.update(viewport);
 
-        if (s == SplashScreen::FINISH) {
+        if (s == SplashScreen::FINISH)
             return false;
-        }
+
+        if (s == SplashScreen::FADE_OUT)
+            frameCount = 0;
 
         if (!splash.texture.ptr || (s == SplashScreen::TEXTURE_UPDATE)) {
             D3D11Utility::releaseTexture(splash.texture);

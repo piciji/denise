@@ -10,16 +10,17 @@ struct GLSplashScreen : SplashScreen {
     GLuint vao = 0;
     GLuint vbo = 0;
     GLuint tex = 0;
+    Status lastS;
 
     auto updateTex(Viewport& _viewport) -> bool {
 
-        auto s = SplashScreen::update(_viewport);
+        lastS = SplashScreen::update(_viewport);
 
-        if (s == SplashScreen::FINISH) {
+        if (lastS == SplashScreen::FINISH) {
             return false;
         }
 
-        if (!tex || (s == SplashScreen::TEXTURE_UPDATE)) {
+        if (!tex || (lastS == SplashScreen::TEXTURE_UPDATE)) {
             if (tex)
                 glDeleteTextures(1, &tex);
 
@@ -31,7 +32,7 @@ struct GLSplashScreen : SplashScreen {
 
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, viewport.width, viewport.height, 0, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8_REV, screenData);
 
-        } else if (s == SplashScreen::DATA_UPDATE) {
+        } else if (lastS == SplashScreen::DATA_UPDATE) {
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, tex);
             glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, viewport.width, viewport.height, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8_REV, screenData );

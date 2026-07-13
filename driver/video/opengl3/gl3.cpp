@@ -975,6 +975,7 @@ End:
         onShaderProgressCallback(-1, !shaderPasses);
         updateRTS = true;
         updateHistory = true;
+        frameCount = 0;
         updateFrameSize();
     }
 
@@ -1146,6 +1147,14 @@ End:
         screenshotCallback(buffer, viewport.width, viewport.height);
 
         delete[] buffer;
+    }
+
+    auto updateSplashScreen() -> void {
+        if (splashScreen.updateTex( viewport )) {
+            if (splashScreen.lastS == SplashScreen::FADE_OUT)
+                frameCount = 0;
+            splashScreen.show( viewport );
+        }
     }
 };
 

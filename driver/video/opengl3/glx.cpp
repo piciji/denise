@@ -460,11 +460,8 @@ struct GLX : public Video, GL3, RenderThread {
     auto render() -> void {
         GL3::_redraw(options);
 
-        if (splashScreen.enable) {
-            if (splashScreen.updateTex( viewport )) {
-                splashScreen.show( viewport );
-            }
-        }
+        if (splashScreen.enable)
+            updateSplashScreen();
 
         if (dndOverlay.enabled())
             dndOverlay.show(viewport);
@@ -607,6 +604,7 @@ struct GLX : public Video, GL3, RenderThread {
         clearCurrent();
         updateRTS = true;
         updateHistory = true;
+        frameCount = 0;
     }
 
     auto setIntegerScalingDimension( unsigned _w, unsigned _h, bool _ds) -> void {

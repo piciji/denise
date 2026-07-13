@@ -9,7 +9,7 @@ struct SplashScreen {
     Video::SplashscreenCallback callback;
     static constexpr float stepLength = 0.04f;
 
-    enum Status { NO_UPDATE = 0, TEXTURE_UPDATE = 1, DATA_UPDATE = 2, FINISH = 3 };
+    enum Status { NO_UPDATE = 0, TEXTURE_UPDATE = 1, DATA_UPDATE = 2, FINISH = 3, FADE_OUT = 4 };
 
     Viewport prevViewport;
     Viewport viewport;
@@ -37,6 +37,10 @@ struct SplashScreen {
 
         if (showFrames) {
             --showFrames;
+            if (!showFrames) {
+                if (status == NO_UPDATE)
+                    status = Status::FADE_OUT;
+            }
         } else {
             if (!setAlpha()) {
                 finish();
