@@ -219,13 +219,48 @@
                 window->onKeyPress(eventType == NSEventTypeKeyDown, keyCode);
         } break;
         case NSEventTypeFlagsChanged: {
-            uint16_t keyCode = [event keyCode];
-            static NSUInteger flagsBefore = 0;
-            NSUInteger flags = event.modifierFlags;
-            bool keyDown = (flags & flagsBefore) == flagsBefore;
-            flagsBefore = flags;
-            if (window->onKeyPress)
-                window->onKeyPress(keyDown, keyCode);
+            uint16_t keyCode = [event keyCode];            
+            if (!window->onKeyPress)
+                break;
+            
+            switch (event.keyCode) {
+                case 56: // Left Shift
+                case 60: // Right Shift
+                    if (event.modifierFlags & NSEventModifierFlagShift)
+                        window->onKeyPress(true, keyCode);
+                    else
+                        window->onKeyPress(false, keyCode);
+                    break;
+                case 55: // Left Command
+                case 54: // Right Command
+                    if (event.modifierFlags & NSEventModifierFlagCommand)
+                        window->onKeyPress(true, keyCode);
+                    else
+                        window->onKeyPress(false, keyCode);
+                    break;
+                case 58: // Left Option
+                case 61: // Right Option
+                    if (event.modifierFlags & NSEventModifierFlagOption)
+                        window->onKeyPress(true, keyCode);
+                    else
+                        window->onKeyPress(false, keyCode);
+                    break;
+                case 59: // Left Control
+                case 62: // Right Control
+                    if (event.modifierFlags & NSEventModifierFlagControl)
+                        window->onKeyPress(true, keyCode);
+                    else
+                        window->onKeyPress(false, keyCode);
+                    break;
+                case 63: // Function (FN)
+                    if (event.modifierFlags & NSEventModifierFlagFunction)
+                        window->onKeyPress(true, keyCode);
+                    else
+                        window->onKeyPress(false, keyCode);
+                    break;
+
+            }
+        
         } break;
         case NSEventTypeLeftMouseDragged:
         case NSEventTypeRightMouseDragged:
