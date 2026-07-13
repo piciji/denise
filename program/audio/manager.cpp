@@ -308,14 +308,14 @@ auto AudioManager::setRateControl() -> void {
 
     dynamicRateControl = allowDrc && globalSettings->get<bool>("dynamic_rate_control", false);
 
-    auto _rateDelta = globalSettings->get<float>("rate_control_delta", 0.005, {0.0, 0.010});
+    if (dynamicRateControl) {
+        auto _rateDelta = globalSettings->get<float>("rate_control_delta", 0.005, {0.0, 0.010});
 
-    rateDelta = (float)(static_cast<int>(_rateDelta * 10000.0 + 0.5)) / 10000.0;
-    
-    setBufferSize();
-
-    if (!dynamicRateControl)
+        rateDelta = (float)(static_cast<int>(_rateDelta * 10000.0 + 0.5)) / 10000.0;
+    } else
         rData.ratio = ratio;
+
+    setBufferSize();
 }
 
 auto AudioManager::power() -> void {

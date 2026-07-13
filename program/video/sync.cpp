@@ -10,14 +10,15 @@ auto VideoManager::setSynchronize() -> void {
 
     bool vsync = false;
     bool vrr = false;
+    unsigned tr = 0;
 
     if (program->warp.mode == Program::Warp::Off) {
         vsync = globalSettings->get<bool>("video_sync", true);
         vrr = globalSettings->get<bool>("vrr_sync", false);
-    }
 
-    auto _settings = Program::getSettings( activeEmulator );
-    unsigned tr = _settings->get<unsigned>("threaded_renderer", 0);
+        auto _settings = Program::getSettings( activeEmulator );
+        tr = _settings->get<unsigned>("threaded_renderer", 0);
+    }
 
     bool threadedRenderer = tr == 1;
     bool adaptive = tr == 2;

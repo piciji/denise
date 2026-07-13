@@ -578,10 +578,9 @@ auto Program::setWarp( Warp::Mode mode, bool manuell ) -> void {
             audioManager->setSynchronize();
             audioManager->setResampler();
             audioManager->volumeAdjust = 0.0;
-            auto each = getSettings( activeEmulator )->get<unsigned>("fastforward_speed_each", 0, {0, 3});
-            if (each == 1) forward = (unsigned)Emulator::Interface::WarpMode::ReduceVideoOutputEach4th;
-            else if (each == 2) forward = (unsigned)Emulator::Interface::WarpMode::ReduceVideoOutputEach8th;
-            else if (each == 3) forward = (unsigned)Emulator::Interface::WarpMode::ReduceVideoOutputEach16th;
+            if (warp.ff_each == 1) forward = (unsigned)Emulator::Interface::WarpMode::ReduceVideoOutputEach4th;
+            else if (warp.ff_each == 2) forward = (unsigned)Emulator::Interface::WarpMode::ReduceVideoOutputEach8th;
+            else if (warp.ff_each == 3) forward = (unsigned)Emulator::Interface::WarpMode::ReduceVideoOutputEach16th;
         } break;
     }
 

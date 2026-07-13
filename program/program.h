@@ -73,6 +73,11 @@ struct Program : Emulator::Interface::Bind {
 
 	struct Warp {
 	    enum Mode { Off, Normal, Aggressive, FastForward } mode = Mode::Off;
+	    // fast forward
+	    unsigned ff_each = 0;
+	    bool ff_percent = false;
+	    float ff_speed = 500.0;
+
         // auto Warp
 	    Mode autoMode = Mode::Off;
 
@@ -137,6 +142,7 @@ struct Program : Emulator::Interface::Bind {
 	auto getLastUsedEmu() -> Emulator::Interface*;
 	auto getEmulator( std::string ident ) -> Emulator::Interface*;
     auto initAutoWarp(Emulator::Interface::MediaGroup* mediaGroup, bool initOnly = false) -> void;
+    auto initFastForward() -> void;
 
     auto initUserInterface() -> void;
     auto unsetObsoleteConfigs(GUIKIT::Settings* settings, Emulator::Interface* emulator) -> void;

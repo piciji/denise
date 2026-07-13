@@ -387,6 +387,7 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
             statusHandler->updateDiskDriveSpace();
             setVideoDimension(activeEmulator);
 		    updateOnScreenText();
+		    initFastForward();
 
             if (settings->get<bool>("scale_emu_switch", false))
                 view->updateToHoldDimension();
@@ -781,6 +782,14 @@ auto Program::initAutoWarp(Emulator::Interface::MediaGroup* mediaGroup, bool ini
         if (!initOnly)
             setWarp(warp.autoMode);
     }
+}
+
+auto Program::initFastForward() -> void {
+    auto _settings = getSettings( activeEmulator );
+
+    warp.ff_each = _settings->get<unsigned>("fastforward_speed_each", 0, {0, 3});
+    warp.ff_speed = _settings->get<float>("fastforward_speed", 500.0);
+    warp.ff_percent = _settings->get<bool>("fastforward_speed_percent", false);
 }
 
 auto Program::jam( Emulator::Interface::Media* media ) -> void {

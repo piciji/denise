@@ -2572,9 +2572,11 @@ auto View::questionToWrite(Emulator::Interface::Media* media) -> bool {
 
 auto View::getSpeedBySelectedProfile(float& speed, bool& percent) -> unsigned {
     auto settings = Program::getSettings( activeEmulator );
-    if (program->warp.mode == Program::Warp::FastForward) {
-        speed = settings->get<float>("fastforward_speed", 500.0);
-        percent = settings->get<bool>("fastforward_speed_percent", false);
+    auto& warp = program->warp;
+
+    if (warp.mode == Program::Warp::FastForward) {
+        speed = warp.ff_speed;
+        percent = warp.ff_percent;
         return ~0;
     }
 
@@ -2937,9 +2939,12 @@ auto View::FpsWindow::build() -> void {
         else if (center.each8th.checked()) each = 2;
         else if (center.each16th.checked()) each = 3;
 
-        Program::getSettings( activeEmulator )->set<std::string>(getIdent(), userInput);
-        Program::getSettings( activeEmulator )->set<bool>(getIdent() + "_percent", top.percentRadioBox.checked());
-        Program::getSettings( activeEmulator )->set<unsigned>(getIdent() + "_each", each);
+        auto _settings = Program::getSettings( activeEmulator );
+        _settings->set<std::string>(getIdent(), userInput);
+        _settings->set<bool>(getIdent() + "_percent", top.percentRadioBox.checked());
+        _settings->set<unsigned>(getIdent() + "_each", each);
+        if (mode == Mode::FASTFORWARD)
+            program->initFastForward();
 
         if (mode == Mode::FASTFORWARD && program->warp.mode == Program::Warp::FastForward) {
             emuThread->lock();
