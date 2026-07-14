@@ -63,18 +63,22 @@ auto BinaryMonitor::waitForClientToAccept() -> void {
         _log("Socket: client %i accepted", client->handle)
 
         delayedJobs = false;
-        activeEmulator = program->getEmulator("C64");
-        initDebugger(DebuggerTheme::CPU);
-        activeEmulator->debuggerAdd( DebuggerTheme::Unspecified, DebuggerAction::UIRequestedStop, 0 );
+
+        Emulator::Interface* emulator = activeEmulator;
+        if (!emulator)
+            emulator = program->getEmulator("C64");
+
+        initDebugger(emulator, DebuggerTheme::CPU);
+        emulator->debuggerAdd( DebuggerTheme::Unspecified, DebuggerAction::UIRequestedStop, 0 );
         break;
     }
 }
 
-auto BinaryMonitor::initDebugger(DebuggerTheme theme) -> Debugger* {
-    Debugger* debugger = program->getDebugger( activeEmulator, theme );
+auto BinaryMonitor::initDebugger(Emulator::Interface* emulator, DebuggerTheme theme) -> Debugger* {
+    Debugger* debugger = program->getDebugger( emulator, theme );
 
     if (!debugger) {
-        debugger = program->createDebugger( activeEmulator, theme );
+        debugger = program->createDebugger( emulator, theme );
         if (debugger)
             debugger->initTheme();
     }
@@ -470,7 +474,7 @@ auto BinaryMonitor::setCheckpoint(Command& command) -> void {
     }
 
     emuThread->lock();
-    Debugger* debugger = initDebugger(theme);
+    Debugger* debugger = initDebugger(activeEmulator, theme);
 
     if (!debugger) {
         sendError( Error::CMD_FAILURE, command.requestId );
@@ -944,7 +948,7 @@ auto BinaryMonitor::getRegisters(Command& command) -> void {
     uint8_t space = command.body[0];
 
     emuThread->lock();
-    initDebugger( getTheme( space ) );
+    initDebugger( activeEmulator, getTheme( space ) );
     sendRegisters(command.requestId, space);
     emuThread->unlock();
 }
@@ -1036,7 +1040,7 @@ auto BinaryMonitor::setRegisters(Command& command) -> void {
         snapD = &snapshot->drives[space - 1];
 
     emuThread->lock();
-    initDebugger( theme );
+    initDebugger( activeEmulator, theme );
     Reg reg;
     for (int i = 0; i < count; i++) {
         reg.size = body[0];

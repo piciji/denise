@@ -166,5 +166,5 @@ struct BinaryMonitor {
 
     auto getTheme(uint8_t space) -> DebuggerTheme;
 
-    auto initDebugger(DebuggerTheme theme) -> Debugger*;
+    auto initDebugger(Emulator::Interface* emulator, DebuggerTheme theme) -> Debugger*;
 };
