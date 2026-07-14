@@ -33,24 +33,18 @@ auto pRadioBox::minimumSize() -> Size {
     if (calculatedMinimumSize.updated)
         return calculatedMinimumSize.minimumSize; 
         
-    Size size = pFont::size([(id)inner font], widget.text());
-    
-    int adjustH = 0;
-    
-    if (GUIKIT::hasMinimumVersion(26, 0)) {
-        adjustH = 4;
-    }
+    NSSize _size = [inner fittingSize];
     
     calculatedMinimumSize.updated = true;   
-    calculatedMinimumSize.minimumSize = {size.width + 22, size.height + adjustH};
+    calculatedMinimumSize.minimumSize = {(unsigned)_size.width, (unsigned)_size.height};
     
     return calculatedMinimumSize.minimumSize;
 }
     
 auto pRadioBox::setGeometry(Geometry geometry) -> void {
     pWidget::setGeometry({
-        geometry.x - 1, geometry.y + 0,
-        geometry.width + 2, geometry.height
+        geometry.x, geometry.y,
+        geometry.width, geometry.height
     });
     
     @autoreleasepool {

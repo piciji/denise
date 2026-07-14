@@ -56,6 +56,7 @@ PaulaDebugger::Paula::Intr::Intr() {
         auto* entry = new Entry();
         entry->label.setText( inter );
         entry->checkR.setText( inter );
+        entry->check.setText( "" );
         entries.push_back( entry );
         append( *entry, {0u, 0u}, ++i < elements ? 7 : 0 );
     }

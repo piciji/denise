@@ -25,20 +25,14 @@
 namespace GUIKIT {
     
 auto pCheckBox::minimumSize() -> Size {
-    int adjustH = 0;
-    
-    if (GUIKIT::hasMinimumVersion(26, 0)) {
-        adjustH = 4;
-    }
-    
     Size size = getMinimumSize();
-    return {size.width + 20, size.height + adjustH};
+    return {size.width, size.height};
 }
     
 auto pCheckBox::setGeometry(Geometry geometry) -> void {
     pWidget::setGeometry({
-        geometry.x - 2, geometry.y,
-        geometry.width + 4, geometry.height
+        geometry.x, geometry.y,
+        geometry.width, geometry.height
     });
 }
 

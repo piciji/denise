@@ -69,17 +69,17 @@
 namespace GUIKIT {
     
 auto pStepButton::minimumSize() -> Size {
-    Size size;
+    bool _updated = calculatedMinimumSize.updated;
+
+    Size size = getMinimumSize();
     
-    if (calculatedMinimumSize.updated)
-        size = calculatedMinimumSize.minimumSize;
-    else {
-        calculatedMinimumSize.minimumSize = pFont::size([(id)editView font], widget.text());
-    
-        calculatedMinimumSize.updated = true;
+    if (!_updated) {
+        NSSize _size = [(id)editView fittingSize];
+        calculatedMinimumSize.minimumSize.height = (unsigned)_size.height;
+        size.height = calculatedMinimumSize.minimumSize.height;
     }
     
-    return {size.width + 10 + 15, size.height + 6};
+    return {size.width, size.height};
 }
 
 auto pStepButton::setFont(std::string font) -> void {
@@ -108,9 +108,12 @@ auto pStepButton::updateRange() -> void {
     
 auto pStepButton::setGeometry(Geometry geometry) -> void {
     @autoreleasepool {
-        [editView setFrame:NSMakeRect(0, 0, geometry.width - 15, geometry.height)];
+        NSSize _size = [(id)stepView fittingSize];
+        unsigned _stepperS = (unsigned)_size.width;
         
-        [stepView setFrame:NSMakeRect(geometry.width - 15, 0, 15, geometry.height)];
+        [editView setFrame:NSMakeRect(0, 0, geometry.width - _stepperS, geometry.height)];
+        
+        [stepView setFrame:NSMakeRect(geometry.width - _stepperS, 0, _stepperS, geometry.height)];
     }
     pWidget::setGeometry( geometry );
 }

@@ -33,8 +33,8 @@ auto pFrame::setGeometry(Geometry geometry) -> void {
     bool empty = widget.text().empty();
   
     pWidget::setGeometry({
-        int(geometry.x - 3), int(geometry.y - (empty ? size.height - 0 : 0)),
-        geometry.width + 6, geometry.height + (empty ? size.height + 0 : 0)
+        int(geometry.x - 0), int(geometry.y - (empty ? size.height : 0)),
+        geometry.width + 0, geometry.height + (empty ? size.height : 1)
     });
 }
 

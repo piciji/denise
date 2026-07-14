@@ -63,8 +63,16 @@
 namespace GUIKIT {
 
 auto pLineEdit::minimumSize() -> Size {
+    bool _updated = calculatedMinimumSize.updated;
+    
     Size size = getMinimumSize();
-    return {size.width + 10, size.height + 6};
+    if (!_updated) {
+        auto _size = pFont::size([(id)cocoaView font], widget.text());
+        calculatedMinimumSize.minimumSize.width += _size.width;
+        size.width = calculatedMinimumSize.minimumSize.width;
+    }
+    
+    return {size.width + 10, size.height + 0};
 }
 
 auto pLineEdit::setEditable(bool editable) -> void {

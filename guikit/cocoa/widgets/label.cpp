@@ -39,9 +39,9 @@ auto pLabel::minimumSize() -> Size {
     Size size = getMinimumSize();
     
     if ([[(id)cocoaView font] isFixedPitch])
-        return {size.width + 1, size.height};
+        return {size.width, size.height};
 
-    return {size.width + 1, size.height + 4};
+    return {size.width, size.height};
 }
 
 auto pLabel::setAlign( Label::Align align ) -> void {
@@ -53,7 +53,7 @@ auto pLabel::setAlign( Label::Align align ) -> void {
     
 auto pLabel::setGeometry(Geometry geometry) -> void {
     unsigned height = getMinimumSize().height;
-    unsigned widgetHeight = geometry.height + 4;
+    unsigned widgetHeight = geometry.height;
     auto offset = geometry;
     
     if(widgetHeight > height) {
@@ -63,8 +63,8 @@ auto pLabel::setGeometry(Geometry geometry) -> void {
     }
     
     pWidget::setGeometry({
-        offset.x - 2, offset.y - 3,
-        offset.width + 4, offset.height + 6
+        offset.x, offset.y,
+        offset.width, offset.height
     });
 }
     

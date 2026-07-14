@@ -19,6 +19,7 @@ PaletteColorLayout::PaletteColorLayout(unsigned editWidth, unsigned canvasHeight
     append( canvas, {(unsigned)((float)canvasHeight * 1.5), canvasHeight}, 20 );
     append( edit, {editWidth, 0u} );
 
+    edit.setFont(GUIKIT::Font::monospace());
     color.setFont( GUIKIT::Font::system("bold") );
     canvas.setBorderColor( 1, 0x666666 );
     edit.setMaxLength(6);
@@ -63,13 +64,14 @@ PaletteLayout::PaletteLayout(TabWindow* tabWindow) {
         listView.setText( listView.selection(), 0, palette.name );
     };
     
-    GUIKIT::LineEdit test1;
-    test1.setText( "bbbbbb" );
-    auto editWidth = test1.minimumSize().width;
+    GUIKIT::Label test1;
+    test1.setFont(GUIKIT::Font::monospace());
+    test1.setText( "000000" );
+    auto editWidth = test1.minimumSize().width + 4;
     
-    GUIKIT::LineEdit test2;
-    test2.setText("F");    
-    auto canvasHeight = test2.minimumSize().height - 2;
+    GUIKIT::Label test2;
+    test2.setText("F");
+    auto canvasHeight = test2.minimumSize().height;
     
     for(unsigned i = 0; i < paletteManager->getSize(); i++ ) {
 

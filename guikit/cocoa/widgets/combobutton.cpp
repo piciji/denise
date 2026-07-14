@@ -73,6 +73,8 @@ auto pComboButton::append(std::string text, const std::string& font) -> void {
 }
 
 auto pComboButton::minimumSize() -> Size {
+    return getMinimumSize();
+    
     if (calculatedMinimumSize.updated)
         return calculatedMinimumSize.minimumSize; 
         
@@ -89,19 +91,9 @@ auto pComboButton::minimumSize() -> Size {
 }
     
 auto pComboButton::setGeometry(Geometry geometry) -> void {
-    int adjustX = 2;
-    int adjustY = 0;
-    
-    if (GUIKIT::hasMinimumVersion(26, 0)) {
-        adjustX = 0;
-        adjustY = 1;
-    } else if (GUIKIT::hasMinimumVersion(10, 15)) {
-        adjustY = -1;
-    }
-    
     pWidget::setGeometry({
-        geometry.x - adjustX, geometry.y - adjustY,
-        geometry.width + (adjustX * 2), geometry.height
+        geometry.x, geometry.y + 1,
+        geometry.width, geometry.height
     });
 }
 
