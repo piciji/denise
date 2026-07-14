@@ -23,13 +23,13 @@ namespace GUIKIT {
     
 auto pCheckButton::minimumSize() -> Size {
     Size size = getMinimumSize();
-    return {size.width + 22, size.height + 6};
+    return {size.width, size.height};
 }
 
 auto pCheckButton::setGeometry(Geometry geometry) -> void {
     pWidget::setGeometry({
-        geometry.x - 2, geometry.y - 2,
-        geometry.width + 4, geometry.height + 4
+        geometry.x, geometry.y,
+        geometry.width, geometry.height
     });
 }
 

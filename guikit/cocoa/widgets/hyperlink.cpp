@@ -24,12 +24,12 @@ namespace GUIKIT {
     
 auto pHyperlink::minimumSize() -> Size {
     Size size = getMinimumSize();
-    return {size.width + 1, size.height + 4};
+    return {size.width, size.height};
 }
     
 auto pHyperlink::setGeometry(Geometry geometry) -> void {
     unsigned height = pFont::size([(id)cocoaView font], " ").height;
-    unsigned widgetHeight = geometry.height + 4;
+    unsigned widgetHeight = geometry.height;
     auto offset = geometry;
     
     if(widgetHeight > height) {
@@ -39,8 +39,8 @@ auto pHyperlink::setGeometry(Geometry geometry) -> void {
     }
     
     pWidget::setGeometry({
-        offset.x - 2, offset.y - 2,
-        offset.width + 4, offset.height + 4
+        offset.x, offset.y,
+        offset.width, offset.height
     });
 }
     

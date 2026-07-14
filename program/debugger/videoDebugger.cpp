@@ -100,7 +100,7 @@ VideoDebugger::Video::Wraper::Intr::Row::Row(Debugger* debugger, bool isMask) {
     val.setEditable( false );
     isMask ? intLine.setEnabled( false ) : intLine.setReadonly();
 
-    append(label, {35u, 0u}, 5);
+    append(label, {0u, 0u}, 5);
     append(val, {getWidth(2, true), 0u}, 10);
     append(intLine, {0u, 0u}, 5);
 
@@ -712,6 +712,8 @@ auto VideoDebugger::translateTheme() -> void {
         flagsSpr.boxes[2]->setText( "SF Collision" );
         flagsSpr.boxes[3]->setText( "SS Collision" );
     }
+    
+    GUIKIT::Layout::alignChildWidth({&intLatch, &intMask});
 }
 
 auto VideoDebugger::saveIdent() -> std::string {

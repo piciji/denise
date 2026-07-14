@@ -191,7 +191,7 @@ auto pStatusBar::update() -> void {
     label->setText( statusBar.text().empty() ? " " : statusBar.text() );
     label->setFont( statusBar.font().empty() ? Font::system() : statusBar.font() );
     
-    unsigned textHeight = label->minimumSize().height;
+    unsigned textHeight = label->minimumSize().height + 4;
     
     if (parts.size() == 0) { // simple status view
         usedWidgets.push_back( label );

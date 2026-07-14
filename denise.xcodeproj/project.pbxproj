@@ -93,6 +93,10 @@
 		9D6F44882F2E6CD4005BABFA /* dmaDebugger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D6F44852F2E6CD4005BABFA /* dmaDebugger.cpp */; };
 		9D7B485D2E40D7640010B152 /* cgif.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D7B48572E40D7640010B152 /* cgif.cpp */; };
 		9D7B485F2E40D7640010B152 /* cgif_raw.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D7B485A2E40D7640010B152 /* cgif_raw.cpp */; };
+		9D7E7E863006A8F100FFACCD /* binaryMonitor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D7E7E853006A8F100FFACCD /* binaryMonitor.cpp */; };
+		9D7E7E873006A8F100FFACCD /* binaryMonitor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D7E7E853006A8F100FFACCD /* binaryMonitor.cpp */; };
+		9D7E7E8D3006A91300FFACCD /* socket.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D7E7E8B3006A91200FFACCD /* socket.cpp */; };
+		9D7E7E8E3006A91300FFACCD /* socket.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D7E7E8B3006A91200FFACCD /* socket.cpp */; };
 		9D8F51042EDB5A1B00153A53 /* dasmHandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8F51032EDB5A1B00153A53 /* dasmHandler.cpp */; };
 		9D8F51052EDB5A1B00153A53 /* dasmHandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8F51032EDB5A1B00153A53 /* dasmHandler.cpp */; };
 		9D8F51082EDB5A2A00153A53 /* watcher.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8F51062EDB5A2A00153A53 /* watcher.cpp */; };
@@ -689,6 +693,13 @@
 		9D7B485A2E40D7640010B152 /* cgif_raw.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = cgif_raw.cpp; sourceTree = "<group>"; };
 		9D7B485B2E40D7640010B152 /* cgif_raw.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = cgif_raw.h; sourceTree = "<group>"; };
 		9D7B485C2E40D7640010B152 /* LICENSE.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = LICENSE.txt; sourceTree = "<group>"; };
+		9D7E7E843006A8F100FFACCD /* binaryMonitor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = binaryMonitor.h; path = monitor/binaryMonitor.h; sourceTree = "<group>"; };
+		9D7E7E853006A8F100FFACCD /* binaryMonitor.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = binaryMonitor.cpp; path = monitor/binaryMonitor.cpp; sourceTree = "<group>"; };
+		9D7E7E883006A91200FFACCD /* colors.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = colors.h; sourceTree = "<group>"; };
+		9D7E7E893006A91200FFACCD /* macros.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = macros.h; sourceTree = "<group>"; };
+		9D7E7E8A3006A91200FFACCD /* socket.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = socket.h; sourceTree = "<group>"; };
+		9D7E7E8B3006A91200FFACCD /* socket.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = socket.cpp; sourceTree = "<group>"; };
+		9D7E7E8C3006A91300FFACCD /* buffer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = buffer.h; sourceTree = "<group>"; };
 		9D8F51022EDB5A1B00153A53 /* dasmHandler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = dasmHandler.h; sourceTree = "<group>"; };
 		9D8F51032EDB5A1B00153A53 /* dasmHandler.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = dasmHandler.cpp; sourceTree = "<group>"; };
 		9D8F51062EDB5A2A00153A53 /* watcher.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = watcher.cpp; sourceTree = "<group>"; };
@@ -1559,6 +1570,15 @@
 			path = deps/cgif;
 			sourceTree = "<group>";
 		};
+		9D7E7E833006A8E100FFACCD /* monitor */ = {
+			isa = PBXGroup;
+			children = (
+				9D7E7E853006A8F100FFACCD /* binaryMonitor.cpp */,
+				9D7E7E843006A8F100FFACCD /* binaryMonitor.h */,
+			);
+			name = monitor;
+			sourceTree = "<group>";
+		};
 		9D8FA9292CB3D7A7006905BE = {
 			isa = PBXGroup;
 			children = (
@@ -1621,6 +1641,7 @@
 		9D8FAA6E2CB3F6EF006905BE /* program */ = {
 			isa = PBXGroup;
 			children = (
+				9D7E7E833006A8E100FFACCD /* monitor */,
 				9D32BA9A2F940ED900AC6442 /* helper */,
 				9DBA88402ED0C7D400DF0756 /* debugger */,
 				9D8FAA6F2CB3F6EF006905BE /* cmd */,
@@ -1681,6 +1702,11 @@
 		9D8FAA802CB3F6EF006905BE /* tools */ = {
 			isa = PBXGroup;
 			children = (
+				9D7E7E8C3006A91300FFACCD /* buffer.h */,
+				9D7E7E883006A91200FFACCD /* colors.h */,
+				9D7E7E893006A91200FFACCD /* macros.h */,
+				9D7E7E8B3006A91200FFACCD /* socket.cpp */,
+				9D7E7E8A3006A91200FFACCD /* socket.h */,
 				9D0C94892E5E345E00A9B56C /* diskGuesser.cpp */,
 				9D0C948A2E5E345E00A9B56C /* diskGuesser.h */,
 				9DD306D62DFAFF2200B8F12F /* httpClient.cpp */,
@@ -3306,6 +3332,7 @@
 				9D8FAE832CB40DF9006905BE /* vicIIFast.cpp in Sources */,
 				9D64043A2DCDEE1C00624A00 /* builtinHD.cpp in Sources */,
 				9D8FAE792CB40DF9006905BE /* structure.cpp in Sources */,
+				9D7E7E863006A8F100FFACCD /* binaryMonitor.cpp in Sources */,
 				9D07CD042E296CD000A9787E /* lk7_decoder.cpp in Sources */,
 				9D8FAB2A2CB3F6F0006905BE /* config.cpp in Sources */,
 				9D5FAF2D2CF07001002B0C34 /* imageViewer.cpp in Sources */,
@@ -3348,6 +3375,7 @@
 				9DC455A42FA10935004C6482 /* viaDebugger.cpp in Sources */,
 				9D8FAE082CB40DF8006905BE /* controlPort.cpp in Sources */,
 				9D98A74B2F4B93EF00BB972F /* expressionParser.cpp in Sources */,
+				9D7E7E8D3006A91300FFACCD /* socket.cpp in Sources */,
 				9DA75E662FE702E200766658 /* Integrator6581.cpp in Sources */,
 				9D8FAC7B2CB40C9D006905BE /* renderThread.cpp in Sources */,
 				9D6404382DCDEE1C00624A00 /* fastMem.cpp in Sources */,
@@ -3528,6 +3556,7 @@
 				9DECF98A2E45F309005C0BBA /* vicIIFast.cpp in Sources */,
 				9DECF98B2E45F309005C0BBA /* builtinHD.cpp in Sources */,
 				9DECF98C2E45F309005C0BBA /* structure.cpp in Sources */,
+				9D7E7E873006A8F100FFACCD /* binaryMonitor.cpp in Sources */,
 				9DECF98D2E45F309005C0BBA /* lk7_decoder.cpp in Sources */,
 				9DECF98E2E45F309005C0BBA /* config.cpp in Sources */,
 				9DECF98F2E45F309005C0BBA /* imageViewer.cpp in Sources */,
@@ -3570,6 +3599,7 @@
 				9DC455A52FA10935004C6482 /* viaDebugger.cpp in Sources */,
 				9DECF9AC2E45F309005C0BBA /* controlPort.cpp in Sources */,
 				9D98A74C2F4B93EF00BB972F /* expressionParser.cpp in Sources */,
+				9D7E7E8E3006A91300FFACCD /* socket.cpp in Sources */,
 				9DA75E672FE702E200766658 /* Integrator6581.cpp in Sources */,
 				9DECF9AD2E45F309005C0BBA /* renderThread.cpp in Sources */,
 				9DECF9AE2E45F309005C0BBA /* fastMem.cpp in Sources */,

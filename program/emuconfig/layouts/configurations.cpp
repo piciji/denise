@@ -864,8 +864,6 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow)
     };
 
     stateFast.top.find.onActivate = [this]() {
-        stateFast.selector.listView.reset();
-
         auto fileName = stateFast.top.edit.text();
         if (fileName.empty()) {
             fileName = "savestate";
@@ -887,9 +885,15 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow)
 
         std::sort(lines.begin(), lines.end());
 
+        auto& lView = stateFast.selector.listView;
+        lView.lockRedraw();
+        lView.reset();
+        
         for(auto& line : lines ) {
-            stateFast.selector.listView.append({ std::to_string(line.pos), line.fileName, line.date });
+            lView.append({ std::to_string(line.pos), line.fileName, line.date }, true);
         }
+        lView.autoSizeColumns();
+        lView.unlockRedraw();
 
         stateFast.selector.preview.setImage(nullptr);
     };

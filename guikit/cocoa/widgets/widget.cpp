@@ -37,14 +37,17 @@ auto pWidget::setFont(std::string font) -> void {
 
 inline auto pWidget::getMinimumSize() -> Size {
     if (calculatedMinimumSize.updated)
-        return calculatedMinimumSize.minimumSize;        
+        return calculatedMinimumSize.minimumSize;
     
-    calculatedMinimumSize.minimumSize = pFont::size([(id)cocoaView font], widget.text());
+    NSSize _size = [(id)cocoaView fittingSize];
+    
+    calculatedMinimumSize.minimumSize = { (unsigned)_size.width, (unsigned)_size.height };
 
     calculatedMinimumSize.updated = true;
     
     return calculatedMinimumSize.minimumSize;
 }
+
 
 auto pWidget::setEnabled(bool enabled) -> void {
     @autoreleasepool {

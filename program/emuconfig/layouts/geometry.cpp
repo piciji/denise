@@ -144,9 +144,13 @@ RatioLayout::Hotkey::Hotkey() {
 }
 
 RatioLayout::Dimension::Dimension() {
+    GUIKIT::LineEdit test;
+    test.setFont(GUIKIT::Font::monospace());
+    test.setText("0000");
+    
     append(label, {0u, 0u}, 10);
-    append(width, {0u, 0u}, 10);
-    append(height, {0u, 0u}, 10);
+    append(width, {test.minimumSize().width, 0u}, 10);
+    append(height, {test.minimumSize().width, 0u}, 10);
     append(refresh, {0u, 0u}, 10);
     append(apply, {0u, 0u}, 10);
     append(scaleOnEmuSwitch, { 0u, 0u });

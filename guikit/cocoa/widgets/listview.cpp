@@ -324,7 +324,7 @@
     
     auto headers = listView->state.header;
     if(headers.size() == 0) headers.push_back("");
-    [content setUsesAlternatingRowBackgroundColors:headers.size() >= 2];
+   // [content setUsesAlternatingRowBackgroundColors:headers.size() >= 2];
     
     for(unsigned column = 0; column < headers.size(); column++) {
         NSTableColumn* tableColumn = [[NSTableColumn alloc] initWithIdentifier:[[NSNumber numberWithInteger:column] stringValue]];
@@ -475,6 +475,7 @@ auto pListView::reset() -> void {
 }
 
 auto pListView::setHeaderText(std::vector<std::string> list) -> void {
+    [[(id)cocoaView content] setUsesAlternatingRowBackgroundColors:list.size() >= 2];
     @autoreleasepool {
         [(id)cocoaView reloadColumns];
     }
