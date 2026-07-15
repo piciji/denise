@@ -36,12 +36,7 @@
 namespace GUIKIT {
 
 auto pLabel::minimumSize() -> Size {
-    Size size = getMinimumSize();
-    
-    if ([[(id)cocoaView font] isFixedPitch])
-        return {size.width, size.height};
-
-    return {size.width, size.height};
+    return getMinimumSize();
 }
 
 auto pLabel::setAlign( Label::Align align ) -> void {
