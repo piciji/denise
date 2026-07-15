@@ -64,7 +64,7 @@ PaletteLayout::PaletteLayout(TabWindow* tabWindow) {
         listView.setText( listView.selection(), 0, palette.name );
     };
     
-    GUIKIT::Label test1;
+    GUIKIT::LineEdit test1;
     test1.setFont(GUIKIT::Font::monospace());
     test1.setText( "000000" );
     auto editWidth = test1.minimumSize().width + 4;

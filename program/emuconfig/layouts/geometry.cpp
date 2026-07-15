@@ -147,6 +147,8 @@ RatioLayout::Dimension::Dimension() {
     GUIKIT::LineEdit test;
     test.setFont(GUIKIT::Font::monospace());
     test.setText("0000");
+    width.setFont(GUIKIT::Font::monospace());
+    height.setFont(GUIKIT::Font::monospace());
     
     append(label, {0u, 0u}, 10);
     append(width, {test.minimumSize().width, 0u}, 10);
