@@ -406,6 +406,7 @@ auto Cart::isSupported() -> bool {
         case LIBC64::Interface::CartridgeIdMagicDesk2:
         case LIBC64::Interface::CartridgeIdStructuredBasic:
         case LIBC64::Interface::CartridgeIdKcsPower:
+        case LIBC64::Interface::CartridgeIdProphet64:
             return true;
         default:
             break;

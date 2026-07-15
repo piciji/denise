@@ -24,6 +24,7 @@
 #include "businessBasic.h"
 #include "rgcd.h"
 #include "structuredBasic.h"
+#include "prophet64.h"
 
 namespace LIBC64 {
 
@@ -157,6 +158,10 @@ auto GameCart::create( Interface::CartridgeId cartridgeId, unsigned _size ) -> C
 
         case Interface::CartridgeIdStructuredBasic:
             cart = new StructuredBasic(system);
+            break;
+
+        case Interface::CartridgeIdProphet64:
+            cart = new Prophet64(system);
             break;
 
         default:
