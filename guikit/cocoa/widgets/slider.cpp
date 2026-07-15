@@ -111,13 +111,13 @@ auto pSlider::minimumSize() -> Size {
 auto pSlider::setGeometry(Geometry geometry) -> void {
     if (slider.orientation == Slider::Orientation::VERTICAL) {
         pWidget::setGeometry({
-            geometry.x, geometry.y - 2,
-            geometry.width, geometry.height + 4
+            geometry.x, geometry.y,
+            geometry.width, geometry.height
         });
     } else {
         pWidget::setGeometry({
-            geometry.x - 2, geometry.y,
-            geometry.width + 4, geometry.height
+            geometry.x, geometry.y,
+            geometry.width, geometry.height
         });
     }
 }

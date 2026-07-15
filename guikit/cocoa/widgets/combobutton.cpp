@@ -74,25 +74,11 @@ auto pComboButton::append(std::string text, const std::string& font) -> void {
 
 auto pComboButton::minimumSize() -> Size {
     return getMinimumSize();
-    
-    if (calculatedMinimumSize.updated)
-        return calculatedMinimumSize.minimumSize; 
-        
-    unsigned maximumWidth = 0;
-    for(auto& text : comboButton.state.rows)
-        maximumWidth = std::max(maximumWidth, pFont::size([(id)cocoaView font], text).width);
-    
-    Size size = pFont::size([(id)cocoaView font], " ");
-    
-    calculatedMinimumSize.updated = true;   
-    calculatedMinimumSize.minimumSize = {maximumWidth + 36, size.height + 6};
-    
-    return calculatedMinimumSize.minimumSize;
 }
     
 auto pComboButton::setGeometry(Geometry geometry) -> void {
     pWidget::setGeometry({
-        geometry.x, geometry.y + 1,
+        geometry.x, geometry.y,
         geometry.width, geometry.height
     });
 }

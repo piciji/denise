@@ -8,6 +8,11 @@
         [self setRefusesFirstResponder:YES];
         [self setDelegate:self];
         [self setTarget:self];
+        
+        NSTextFieldCell* cell = (NSTextFieldCell*)self.cell;
+        cell.wraps = NO;
+        cell.scrollable = YES;
+        cell.lineBreakMode = NSLineBreakByTruncatingTail;
     }
     return self;
 }
@@ -63,16 +68,22 @@
 namespace GUIKIT {
 
 auto pLineEdit::minimumSize() -> Size {
-    bool _updated = calculatedMinimumSize.updated;
+    if (calculatedMinimumSize.updated)
+        return calculatedMinimumSize.minimumSize;
     
-    Size size = getMinimumSize();
-    if (!_updated) {
-        auto _size = pFont::size([(id)cocoaView font], widget.text());
-        calculatedMinimumSize.minimumSize.width += _size.width;
+    NSTextFieldCell* cell = [(NSTextField*)cocoaView cell];
+    
+    if (!cell || cell.cellSize.width <= 0.0) {
+        Size size = getMinimumSize();
+        calculatedMinimumSize.minimumSize.width = pFont::size([(id)cocoaView font], widget.text()).width + 14;
         size.width = calculatedMinimumSize.minimumSize.width;
+        return {size.width, size.height};
     }
+        
+    calculatedMinimumSize.updated = true;
+    calculatedMinimumSize.minimumSize = {(unsigned)cell.cellSize.width, (unsigned)cell.cellSize.height};
     
-    return {size.width + 10, size.height + 0};
+    return calculatedMinimumSize.minimumSize;
 }
 
 auto pLineEdit::setEditable(bool editable) -> void {
