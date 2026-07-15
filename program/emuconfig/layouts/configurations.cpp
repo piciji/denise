@@ -312,10 +312,10 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow)
         auto _sel = moduleList.selection();
 
         moduleSwitch.setSelection( _sel );
-        if (memoryPattern && _sel == 2) {
-            GUIKIT::HorizontalLayout::alignChildrenVertically( {&memoryPattern->firstLine, &memoryPattern->secondLine, &memoryPattern->thirdLine} );
-            memoryPattern->updateLayout();
-        }
+       // if (memoryPattern && _sel == 2) {
+          //  GUIKIT::HorizontalLayout::alignChildrenVertically( {&memoryPattern->firstLine, &memoryPattern->secondLine, &memoryPattern->thirdLine} );
+         //   memoryPattern->updateLayout();
+        //}
     };
 
     append( moduleFrame, {0u, 0u}, 10 );
