@@ -435,7 +435,7 @@ struct OsxKeyNames {
         
         if(keyboardLayout) {
             UInt32 deadKeyState = 0;
-            UniCharCount maxStringLength = 8;
+            constexpr UniCharCount maxStringLength = 8;
             UniCharCount actualStringLength = 0;
             UniChar unicodeString[maxStringLength];
             

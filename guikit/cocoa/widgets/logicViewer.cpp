@@ -136,7 +136,7 @@ auto pLogicViewer::setGeometry(Geometry geometry) -> void {
 }
 
 auto pLogicViewer::scrollToActive() -> void {
-    NSClipView* clipView = [(id)cocoaView contentView];
+    NSClipView* clipView = (NSClipView*)[(id)cocoaView contentView];
     NSRect visibleRect = [clipView documentVisibleRect];
     int scrollPos = (int)visibleRect.origin.x;
 
@@ -187,7 +187,7 @@ auto pLogicViewer::redraw() -> void {
     unsigned width = geometry.width;
     unsigned height = geometry.height;
     
-    NSClipView* clipView = [(id)cocoaView contentView];
+    NSClipView* clipView = (NSClipView*)[(id)cocoaView contentView];
     NSRect visibleRect = [clipView documentVisibleRect];
     CGFloat _scrollOffset = visibleRect.origin.x;
 
