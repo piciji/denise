@@ -234,3 +234,4 @@ extern GUIKIT::Settings* globalSettings;
 extern Emulator::Interface* activeEmulator;
 extern InputManager* activeInputManager;
 extern VideoManager* activeVideoManager;
+
