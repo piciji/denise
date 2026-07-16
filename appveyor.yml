@@ -259,7 +259,6 @@ for:
 
   build_script:
     - sh: |
-        dmgbuild --version
         if [ "${APPVEYOR_REPO_TAG}" == "true" ]
         then
           cd sshpass*
