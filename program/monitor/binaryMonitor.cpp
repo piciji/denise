@@ -18,7 +18,7 @@
 #ifdef LOG_BINARY
     #define _log(msg, ...) { _inform(msg, ##__VA_ARGS__); fflush( stdout ); }
 #else
-    #define _log(msg, var)
+    #define _log(msg, ...)
 #endif
 
 BinaryMonitor::BinaryMonitor() {
@@ -215,6 +215,9 @@ auto BinaryMonitor::handleCommand(uint8_t* buffer) -> void {
             break;
         case Type::ADVANCE_INSTRUCTIONS:
             advanceInstruction( command );
+            break;
+        case Type::ADVANCE_LINES:
+            advanceLines( command );
             break;
         case Type::EXECUTE_UNTIL_RETURN:
             stepOut( command );
@@ -518,16 +521,64 @@ auto BinaryMonitor::setCheckpoint(Command& command) -> void {
     _log("Socket: set checkpoint ID %i", cp.num )
 }
 
-auto BinaryMonitor::advanceInstruction(Command& command) -> void {
-    uint8_t stepOver = command.body[0];
+auto BinaryMonitor::advanceLines(Command& command) -> void {
+    uint8_t action = command.body[0];
+    auto steps = copyBufferToInt<uint16_t>( &command.body[1] );
     bool debugging = emuThread->debugging;
 
     if (!debugging)
         emuThread->lock();
-    if (stepOver)
-        activeEmulator->debuggerStepOver( DebuggerTheme::CPU, stepOver == 1 );
+
+    std::string desc;
+    switch (action) {
+        default:
+        case 0:
+            activeEmulator->debuggerAdd( DebuggerTheme::Unspecified, DebuggerAction::Line, ~0 );
+            desc = "step line";
+            break;
+        case 1:
+            activeEmulator->debuggerAdd( DebuggerTheme::Unspecified, DebuggerAction::Line, steps );
+            desc = "step to line " + std::to_string( steps );
+            break;
+        case 2:
+            activeEmulator->debuggerAdd( DebuggerTheme::Unspecified, DebuggerAction::Frame, 0 );
+            desc = "step frame";
+            break;
+    }
+
+    sendResponse(0, Type::ADVANCE_LINES, Error::OK, command.requestId, nullptr);
+    if (!debugging)
+        emuThread->unlock();
     else
-        activeEmulator->debuggerStepInto( DebuggerTheme::CPU );
+        emuThread->unlockDebugger();
+
+    _log("Socket: %s", desc.c_str());
+}
+
+auto BinaryMonitor::advanceInstruction(Command& command) -> void {
+    uint8_t action = command.body[0];
+    //uint16_t steps = copyBufferToInt<uint16_t>( &command.body[1] );
+    bool debugging = emuThread->debugging;
+
+    if (!debugging)
+        emuThread->lock();
+
+    std::string desc;
+    switch (action) {
+        default:
+        case 0:
+            activeEmulator->debuggerStepInto( DebuggerTheme::CPU );
+            desc = "step into";
+            break;
+        case 1:
+            activeEmulator->debuggerStepOver( DebuggerTheme::CPU, true );
+            desc = "step over sub routine";
+            break;
+        case 2:
+            activeEmulator->debuggerStepOver( DebuggerTheme::CPU, false );
+            desc = "step over sub routine and control flow changing instructions";
+            break;
+    }
 
     sendResponse(0, Type::ADVANCE_INSTRUCTIONS, Error::OK, command.requestId, nullptr);
     if (!debugging)
@@ -535,10 +586,7 @@ auto BinaryMonitor::advanceInstruction(Command& command) -> void {
     else
         emuThread->unlockDebugger();
 
-    if (stepOver)
-        _log("Socket: step over")
-    else
-        _log("Socket: step into")
+    _log("Socket: %s", desc.c_str());
 }
 
 auto BinaryMonitor::stepOut(Command& command) -> void {

@@ -193,7 +193,7 @@
 - (void)windowDidResignKey:(NSNotification *)notification {
     if (!window->onKeyPress)
         return;
-    fprintf(stdout, "resign\n");
+
     window->onKeyPress(false, 56);
     window->onKeyPress(false, 60);
     window->onKeyPress(false, 55);

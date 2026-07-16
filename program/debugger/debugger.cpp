@@ -445,7 +445,6 @@ auto Debugger::stepFrame() -> void {
     if (!isPaused() || (emulator != activeEmulator))
         return;
 
-    program->isPause &= ~2;
     timerVisibility->setEnabled();
     emulator->debuggerAdd( DebuggerTheme::Unspecified, DebuggerAction::Frame, 0 );
     emuThread->unlockDebugger();

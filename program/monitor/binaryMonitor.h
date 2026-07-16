@@ -33,6 +33,7 @@ struct BinaryMonitor {
         RESUMED = 0x63,
         ADVANCE_INSTRUCTIONS = 0x71,
         EXECUTE_UNTIL_RETURN = 0x73,
+        ADVANCE_LINES = 0x74,
         PING = 0x81,
         BANKS_AVAILABLE = 0x82,
         REGISTERS_AVAILABLE = 0x83,
@@ -153,6 +154,8 @@ struct BinaryMonitor {
     auto toggleCheckpoints(Command& command) -> void;
 
     auto advanceInstruction(Command& command) -> void;
+
+    auto advanceLines(Command& command) -> void;
 
     auto stepOut(Command& command) -> void;
 
