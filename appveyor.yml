@@ -7,9 +7,9 @@ skip_commits:
     - '**/*.md'
 
 image:
-  - Visual Studio 2022
   - macos-sonoma
   - macos-monterey
+  - Visual Studio 2022
 #  - Ubuntu2004
 
 stack: python 3.8
@@ -246,7 +246,8 @@ for:
       - image: macos-sonoma
 
   install:
-    - sh: sudo pip install dmgbuild
+    - sh: python3 -m pip install --upgrade pip
+    - sh: python3 -m pip install dmgbuild==1.6.7 
     - sh: test -e sshpass-1.08.tar.gz && echo "File exists" || curl -L https://onboardcloud.dl.sourceforge.net/project/sshpass/sshpass/1.08/sshpass-1.08.tar.gz --output sshpass-1.08.tar.gz
     - tar -zxf sshpass-1.08.tar.gz
 
@@ -258,6 +259,7 @@ for:
 
   build_script:
     - sh: |
+        dmgbuild --version
         if [ "${APPVEYOR_REPO_TAG}" == "true" ]
         then
           cd sshpass*
