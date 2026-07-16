@@ -7,9 +7,9 @@ skip_commits:
     - '**/*.md'
 
 image:
+  - Visual Studio 2022
   - macos-sonoma
   - macos-monterey
-  - Visual Studio 2022
 #  - Ubuntu2004
 
 stack: python 3.10
@@ -20,7 +20,6 @@ branches:
     - /v\d*\.\d*/
     - /v\d*\.\d*\.\d*/
     - /test\d*\.\d*/
-    - cocoa_layouting
 
 environment:
   matrix:
