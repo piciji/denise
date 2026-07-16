@@ -37,7 +37,7 @@ auto pFrame::setGeometry(Geometry geometry) -> void {
   
     pWidget::setGeometry({
         int(geometry.x), int(geometry.y - (empty ? size.height : 0)),
-        geometry.width, geometry.height + (empty ? size.height : 1)
+        geometry.width, geometry.height + (empty ? size.height : 2)
     });
 }
 
