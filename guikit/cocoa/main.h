@@ -285,7 +285,6 @@ struct pButton : pWidget {
 
     auto setImage(Image* image) -> void;
     auto minimumSize() -> Size;
-    auto setGeometry(Geometry geometry) -> void;
     auto setText(const std::string& text) -> void;
     auto init() -> void;
 
@@ -316,7 +315,6 @@ struct pCheckButton : pWidget {
     CheckButton& checkButton;
 
     auto minimumSize() -> Size;
-    auto setGeometry(Geometry geometry) -> void;
     auto setChecked(bool checked) -> void;
     auto setText(const std::string& text) -> void;
     auto init() -> void;
@@ -330,7 +328,6 @@ struct pCheckBox : pWidget {
     auto minimumSize() -> Size;
     auto setChecked(bool checked) -> void;
     auto setText(const std::string& text) -> void;
-    auto setGeometry(Geometry geometry) -> void;
     auto setForegroundColor(unsigned color) -> void;
     auto init() -> void;
 
@@ -357,7 +354,6 @@ struct pSlider : pWidget {
     Slider& slider;
 
     auto minimumSize() -> Size;
-    auto setGeometry(Geometry geometry) -> void;
     auto setLength(unsigned length) -> void;
     auto setPosition(unsigned position) -> void;
 

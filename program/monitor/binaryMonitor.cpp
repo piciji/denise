@@ -171,7 +171,7 @@ auto BinaryMonitor::handleCommand(uint8_t* buffer) -> void {
 
     switch (command.type) {
         default:
-            _log("Socket: unknown command type: %02x", command.type)
+            _log("Socket: unknown command type: %02x", (uint8_t)command.type)
             break;
         case Type::PING:
             sendResponse(0, Type::PING, Error::OK, command.requestId, nullptr);

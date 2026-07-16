@@ -23,8 +23,7 @@
 namespace GUIKIT {
     
 auto pHyperlink::minimumSize() -> Size {
-    Size size = getMinimumSize();
-    return {size.width, size.height};
+    return getMinimumSize();
 }
     
 auto pHyperlink::setGeometry(Geometry geometry) -> void {

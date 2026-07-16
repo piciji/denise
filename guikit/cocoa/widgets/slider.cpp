@@ -107,20 +107,6 @@ auto pSlider::minimumSize() -> Size {
         
     return {thickness, thickness};
 }
-    
-auto pSlider::setGeometry(Geometry geometry) -> void {
-    if (slider.orientation == Slider::Orientation::VERTICAL) {
-        pWidget::setGeometry({
-            geometry.x, geometry.y,
-            geometry.width, geometry.height
-        });
-    } else {
-        pWidget::setGeometry({
-            geometry.x, geometry.y,
-            geometry.width, geometry.height
-        });
-    }
-}
 
 auto pSlider::setLength(unsigned length) -> void {
     @autoreleasepool {
