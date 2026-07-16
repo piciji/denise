@@ -1,4 +1,6 @@
 
+// check for AppKit which builds the App, not OS the App is running on
+
 #define NSAppKitVersionNumber10_4  824
 #define NSAppKitVersionNumber10_5  949
 #define NSAppKitVersionNumber10_6  1038
