@@ -190,6 +190,21 @@
     return self;
 }
 
+- (void)windowDidResignKey:(NSNotification *)notification {
+    if (!window->onKeyPress)
+        return;
+    fprintf(stdout, "resign\n");
+    window->onKeyPress(false, 56);
+    window->onKeyPress(false, 60);
+    window->onKeyPress(false, 55);
+    window->onKeyPress(false, 54);
+    window->onKeyPress(false, 58);
+    window->onKeyPress(false, 61);
+    window->onKeyPress(false, 59);
+    window->onKeyPress(false, 62);
+    window->onKeyPress(false, 63);
+}
+
 -(void)sendEvent:(NSEvent*)event {
     static bool initMenuRunLoop = false;
     NSEventType eventType = [event type];
@@ -226,39 +241,23 @@
             switch (event.keyCode) {
                 case 56: // Left Shift
                 case 60: // Right Shift
-                    if (event.modifierFlags & NSEventModifierFlagShift)
-                        window->onKeyPress(true, keyCode);
-                    else
-                        window->onKeyPress(false, keyCode);
+                    window->onKeyPress((event.modifierFlags & NSEventModifierFlagShift) != 0, keyCode);
                     break;
                 case 55: // Left Command
                 case 54: // Right Command
-                    if (event.modifierFlags & NSEventModifierFlagCommand)
-                        window->onKeyPress(true, keyCode);
-                    else
-                        window->onKeyPress(false, keyCode);
+                    window->onKeyPress((event.modifierFlags & NSEventModifierFlagCommand) != 0, keyCode);
                     break;
                 case 58: // Left Option
                 case 61: // Right Option
-                    if (event.modifierFlags & NSEventModifierFlagOption)
-                        window->onKeyPress(true, keyCode);
-                    else
-                        window->onKeyPress(false, keyCode);
+                    window->onKeyPress((event.modifierFlags & NSEventModifierFlagOption) != 0, keyCode);
                     break;
                 case 59: // Left Control
                 case 62: // Right Control
-                    if (event.modifierFlags & NSEventModifierFlagControl)
-                        window->onKeyPress(true, keyCode);
-                    else
-                        window->onKeyPress(false, keyCode);
+                    window->onKeyPress((event.modifierFlags & NSEventModifierFlagControl) != 0, keyCode);
                     break;
                 case 63: // Function (FN)
-                    if (event.modifierFlags & NSEventModifierFlagFunction)
-                        window->onKeyPress(true, keyCode);
-                    else
-                        window->onKeyPress(false, keyCode);
+                    window->onKeyPress((event.modifierFlags & NSEventModifierFlagFunction) != 0, keyCode);
                     break;
-
             }
         
         } break;

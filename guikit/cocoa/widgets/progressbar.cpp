@@ -16,7 +16,8 @@
 namespace GUIKIT {
     
 auto pProgressBar::minimumSize() -> Size {
-    return {0, 10};
+    auto _size = getMinimumSize();
+    return {0, _size.height};
 }
 
 auto pProgressBar::init() -> void {

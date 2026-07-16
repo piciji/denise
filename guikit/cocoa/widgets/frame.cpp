@@ -29,12 +29,15 @@ auto pFrame::minimumSize() -> Size {
 }
 
 auto pFrame::setGeometry(Geometry geometry) -> void {
-    Size size = pFont::size([(id)cocoaView titleFont], widget.text());
+    Size size;
     bool empty = widget.text().empty();
+    if (empty) {
+        size = pFont::size([(id)cocoaView titleFont], widget.text());
+    }
   
     pWidget::setGeometry({
-        int(geometry.x), int(geometry.y - (empty ? size.height : 0)),
-        geometry.width, geometry.height + (empty ? size.height : 1)
+        int(geometry.x), int(geometry.y - (empty ? size.height : borderSize())),
+        geometry.width, geometry.height + (empty ? size.height : (borderSize() << 1))
     });
 }
 

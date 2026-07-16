@@ -244,6 +244,10 @@ struct IokitKeyboard {
         };
         
         unsigned scancode = cocoaToHidMap[keyCode & 0x7f];
+        
+        if (keysPressed[scancode] == keyDown)
+            return;
+        
         keysPressed[scancode] = keyDown;
         
         if (keyCallback)
