@@ -46,13 +46,6 @@ auto pButton::minimumSize() -> Size {
     return {size.width, size.height};
 }
     
-auto pButton::setGeometry(Geometry geometry) -> void {
-    pWidget::setGeometry({
-        geometry.x, geometry.y,
-        geometry.width, geometry.height
-    });
-}
-    
 auto pButton::setImage(Image* image) -> void {
     @autoreleasepool {
         if (!image) {

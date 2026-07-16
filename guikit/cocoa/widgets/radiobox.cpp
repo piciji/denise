@@ -42,10 +42,7 @@ auto pRadioBox::minimumSize() -> Size {
 }
     
 auto pRadioBox::setGeometry(Geometry geometry) -> void {
-    pWidget::setGeometry({
-        geometry.x, geometry.y,
-        geometry.width, geometry.height
-    });
+    pWidget::setGeometry(geometry);
     
     @autoreleasepool {
         [inner setFrame:NSMakeRect(0, 0, geometry.width, geometry.height)];
