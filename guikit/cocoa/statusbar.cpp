@@ -57,9 +57,9 @@ auto pStatusBar::create() -> void {
     //    [cocoaView setHidden:YES];
         
         [cocoaView setWantsLayer:YES];
-        #if __MAC_OS_X_VERSION_MIN_REQUIRED > __MAC_10_13
-        [cocoaView setClipsToBounds:YES];
-        #endif
+     //   #if __MAC_OS_X_VERSION_MIN_REQUIRED > __MAC_10_13
+     //   [cocoaView setClipsToBounds:YES];
+     //   #endif
 
         [(id)cocoaView setBackgroundColor: [NSColor textBackgroundColor]];
 
