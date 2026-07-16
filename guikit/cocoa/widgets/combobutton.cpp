@@ -77,9 +77,10 @@ auto pComboButton::minimumSize() -> Size {
 }
     
 auto pComboButton::setGeometry(Geometry geometry) -> void {
-    if(@available(macOS 26.0, *));
-    else
+    if(!hasMinimumVersion(26, 0))
         geometry.y += 1;
+    else
+        geometry.y -= 1;
     
     pWidget::setGeometry({
         geometry.x, geometry.y,
