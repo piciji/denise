@@ -152,7 +152,6 @@ VideoShaderLayout::Main::Control::Control() {
 VideoShaderLayout::Main::Info::Info() {
     append(label,{0u, 0u}, 5);
     append(loaded,{~0u, 0u});
-    append(imgReplacer, { 0u, 0u }, 10);
     append(clearCache,{0u, 0u}, 10);
     append(toParams,{0u, 0u});
 
@@ -572,7 +571,6 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
     menuImage.loadPng((uint8_t*)Icons::menu, sizeof(Icons::menu));
     addImage.loadPng((uint8_t*)Icons::add, sizeof(Icons::add));
     delImage.loadPng((uint8_t*)Icons::del, sizeof(Icons::del));
-    gearsImage.loadPng((uint8_t*)Icons::gears, sizeof(Icons::gears));
     backImage.loadPng((uint8_t*)Icons::back, sizeof(Icons::back));
     screenshotImage.loadPng((uint8_t*)Icons::screenshot, sizeof(Icons::screenshot));
     hdrImage.loadPng((uint8_t*)Icons::hdr, sizeof(Icons::hdr));
@@ -1110,8 +1108,6 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
     codeLayout.setMargin(10);
     codeWindow.append(codeLayout);
 
-    layShader.main.info.imgReplacer.setImage( &gearsImage );
-
     codeWindow.onClose = [this]() {
         codeWindow.setVisible(false);
         this->tabWindow->setFocused(100);
@@ -1229,14 +1225,6 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
     layShader.main.info.clearCache.onActivate = [this]() {
         std::string cacheFolder = FileHelper::generatedFolder("cache");
         GUIKIT::File::removeDirectory( cacheFolder );
-    };
-
-    layShader.main.info.imgReplacer.onActivate = [this]() {
-        if (!view->imageViewer) {
-            view->imageViewer = new ImageViewer;
-            view->imageViewer->build();
-        }
-        view->imageViewer->setVisible();
     };
 
     layParam.listView.onClick = [this](unsigned row, unsigned col, GUIKIT::Position position) {

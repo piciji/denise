@@ -2,7 +2,6 @@
 #pragma once
 
 #include "../../guikit/api.h"
-#include "imageViewer.h"
 #include "message.h"
 #include "../media/recentFiles.h"
 #include <mutex>
@@ -21,7 +20,6 @@ struct View : GUIKIT::Window {
     int dropZone = 0;
 	bool grabMouseLeft = false;
     float overrideFullscreenRefreshRate = 0.0f;
-	ImageViewer* imageViewer = nullptr;
     GUIKIT::Image placeholder;
     GUIKIT::Image dndOverlays[2];
 
@@ -140,7 +138,6 @@ struct View : GUIKIT::Window {
     auto loadImages() -> void;
     
     auto loadPlaceholder() -> void;
-    auto renderPlaceholder(uint8_t gpuOptions) -> bool;
     auto loadDragnDropOverlay() -> void;
     auto togglePause() -> void;
     auto updatePauseCheck() -> void;

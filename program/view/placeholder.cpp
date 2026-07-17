@@ -74,52 +74,6 @@ auto View::loadPlaceholder() -> void {
     videoDriver->showSplashScreen(frames, cb);
 }
 
-auto View::renderPlaceholder(uint8_t gpuOptions) -> bool {
-    unsigned _width, _height;
-    uint8_t* _data;
-    unsigned gpu_pitch;
-    unsigned* gpu_data = nullptr;
-    unsigned _w, _h;
-
-    if (GUIKIT::Application::isQuit || !imageViewer || !imageViewer->overrideImage.data)
-        return false;
-
-    gpuOptions &= (DRIVER::OPT_DisallowShader | DRIVER::OPT_TakeScreenshot);
-
-    _width = imageViewer->overrideImage.width;
-    _height = imageViewer->overrideImage.height;
-    _data = imageViewer->overrideImage.data;
-
-    if ((activeVideoManager->crtMode == VideoManager::CrtMode::Gpu) && activeVideoManager->shaderRgb10BitInput()) {
-        if (videoDriver->lock(gpu_data, gpu_pitch, _width, _height, gpuOptions | (uint8_t)DRIVER::OPT_RGB10)) {
-            for (_h = 0; _h < _height; _h++) {
-                for (_w = 0; _w < _width; _w++) {
-                    *gpu_data++ = ((unsigned)_data[0] + 256) << 20 | ((unsigned)_data[1] + 256) << 10 | ((unsigned)_data[2] + 256);
-                    _data += 4;
-                }
-                gpu_data += gpu_pitch - _width;
-            }
-
-            videoDriver->unlockAndRedraw();
-            return true;
-        }
-    }
-
-    if (videoDriver->lock(gpu_data, gpu_pitch, _width, _height, gpuOptions)) {
-        for (_h = 0; _h < _height; _h++) {
-            for (_w = 0; _w < _width; _w++) {
-                *gpu_data++ = _data[0] << 16 | _data[1] << 8 | _data[2];
-                _data += 4;
-            }
-            gpu_data += gpu_pitch - _width;
-        }
-
-        videoDriver->unlockAndRedraw();
-    }
-
-    return true;
-}
-
 auto View::cursorForPlaceholderInUpperTriangle(GUIKIT::Position p) -> int {
 
     DRIVER::Viewport& viewport = videoDriver->getViewport();

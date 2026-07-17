@@ -72,7 +72,6 @@ struct VideoManager {
 
     static uint8_t frameRenderPos;
     static uint8_t frameRenderTrigger;
-    static bool placeHolder;
     static bool needAUpdate;
     static unsigned takeScreenShots;
 

@@ -24,7 +24,6 @@
 
 uint8_t VideoManager::frameRenderPos = 0;
 uint8_t VideoManager::frameRenderTrigger = 1;
-bool VideoManager::placeHolder = false;
 bool VideoManager::needAUpdate = true;
 unsigned VideoManager::takeScreenShots = 0;
 
@@ -670,22 +669,13 @@ template<typename T, uint8_t options> auto VideoManager::renderFrame(const T* sr
                 }
             }
 
-            if (!placeHolder) {
-                if (!--takeScreenShots && screenshot.pause)
-                    program->isPause = screenshot.pause;
-            }
+            if (!--takeScreenShots && screenshot.pause)
+                program->isPause = screenshot.pause;
         }
     }
 
     frameRenderPos = 0;
     videoDriver->setIntegerScalingDimension( lores ? (width << 1) : (hires ? width : (width >> 1)), interlace ? height : (height << 1), shres | hires | interlace);
-
-    if (unlikely(placeHolder)) {
-        takeScreenShots = 0;
-        if (!view->renderPlaceholder(gpuOptions))
-            placeHolder = false;
-        return;
-    }
 
     if (dmaColors) {
         gpuOptions |= (uint8_t)DRIVER::OPT_DisallowShader | (uint8_t)DRIVER::OPT_DisallowFilter;

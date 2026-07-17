@@ -2780,7 +2780,7 @@ auto View::takeScreenshot() -> void {
     screenshot.twoFrames = mergeTwoFrames;
     screenshot.pause = 0;
     screenshot.saveState = false;
-    screenshot.interval = VideoManager::placeHolder ? 1 : screenGunEach;
+    screenshot.interval = screenGunEach;
     screenshot.intervalPos = delayScreenshot ? (50 * 3) : 1;
 
     if (screenshot.animatedGif) {

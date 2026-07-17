@@ -90,7 +90,6 @@ struct VideoShaderLayout : GUIKIT::VerticalLayout {
         struct Info : GUIKIT::HorizontalLayout {
             GUIKIT::Label label;
             GUIKIT::Label loaded;
-            GUIKIT::Button imgReplacer;
             GUIKIT::Button clearCache;
             GUIKIT::Button toParams;
 
@@ -457,7 +456,6 @@ struct PresentationLayout : GUIKIT::HorizontalLayout {
     GUIKIT::Image menuImage;
     GUIKIT::Image addImage;
     GUIKIT::Image delImage;
-    GUIKIT::Image gearsImage;
     GUIKIT::Image backImage;
     GUIKIT::Image screenshotImage;
     GUIKIT::Image hdrImage;

@@ -59,7 +59,6 @@ set(headers
         video/props.cpp
         video/shaderParser.h
         video/sync.cpp
-        view/imageViewer.h
         view/message.h
         view/placeholder.cpp
         view/status.h
@@ -133,7 +132,6 @@ set(srcs
         video/palette.cpp
         video/manager.cpp
         video/shaderParser.cpp
-        view/imageViewer.cpp
         tools/httpClient.cpp
         tools/diskGuesser.cpp
         tools/socket.cpp
