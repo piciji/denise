@@ -83,8 +83,10 @@ auto pLineEdit::minimumSize() -> Size {
     calculatedMinimumSize.updated = true;
     calculatedMinimumSize.minimumSize = {(unsigned)cell.cellSize.width, (unsigned)cell.cellSize.height};
     
-    if (!hasMinimumVersion(10, 14) && ([[(id)cocoaView font] isFixedPitch]))
-        calculatedMinimumSize.minimumSize.height += 1;
+    if (!@available(macOS 10.14, *)) {
+        if ([[(id)cocoaView font] isFixedPitch])
+            calculatedMinimumSize.minimumSize.height += 1;
+    }
     
     return calculatedMinimumSize.minimumSize;
 }

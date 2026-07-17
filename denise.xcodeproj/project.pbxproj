@@ -81,7 +81,6 @@
 		9D55396D2D5A90AE0083E91B /* chessCard.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D5539582D5A8FBC0083E91B /* chessCard.cpp */; };
 		9D55396E2D5A90BB0083E91B /* superCpu.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D5539562D5A8F4D0083E91B /* superCpu.cpp */; };
 		9D5539712D5A91010083E91B /* echo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D5539702D5A90E30083E91B /* echo.cpp */; };
-		9D5FAF2D2CF07001002B0C34 /* imageViewer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D5FAF2B2CF07000002B0C34 /* imageViewer.cpp */; };
 		9D6404362DCDEE1C00624A00 /* hdController.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D64042C2DCDEE1C00624A00 /* hdController.cpp */; };
 		9D6404372DCDEE1C00624A00 /* mtecAT500.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D6404302DCDEE1C00624A00 /* mtecAT500.cpp */; };
 		9D6404382DCDEE1C00624A00 /* fastMem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D6404332DCDEE1C00624A00 /* fastMem.cpp */; };
@@ -439,7 +438,6 @@
 		9DECF98C2E45F309005C0BBA /* structure.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FADBC2CB40DF8006905BE /* structure.cpp */; };
 		9DECF98D2E45F309005C0BBA /* lk7_decoder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D07CCE12E296CD000A9787E /* lk7_decoder.cpp */; };
 		9DECF98E2E45F309005C0BBA /* config.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAAEA2CB3F6EF006905BE /* config.cpp */; };
-		9DECF98F2E45F309005C0BBA /* imageViewer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D5FAF2B2CF07000002B0C34 /* imageViewer.cpp */; };
 		9DECF9902E45F309005C0BBA /* cgif_raw.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D7B485A2E40D7640010B152 /* cgif_raw.cpp */; };
 		9DECF9912E45F309005C0BBA /* panning.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAAC32CB3F6EF006905BE /* panning.cpp */; };
 		9DECF9922E45F309005C0BBA /* prg.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAD6B2CB40DF7006905BE /* prg.cpp */; };
@@ -665,8 +663,6 @@
 		9D55396A2D5A902D0083E91B /* instructions.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = instructions.cpp; sourceTree = "<group>"; };
 		9D55396F2D5A90E30083E91B /* echo.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = echo.h; sourceTree = "<group>"; };
 		9D5539702D5A90E30083E91B /* echo.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = echo.cpp; sourceTree = "<group>"; };
-		9D5FAF2B2CF07000002B0C34 /* imageViewer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = imageViewer.cpp; sourceTree = "<group>"; };
-		9D5FAF2C2CF07000002B0C34 /* imageViewer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = imageViewer.h; sourceTree = "<group>"; };
 		9D64042B2DCDEE1C00624A00 /* hdBase.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = hdBase.h; sourceTree = "<group>"; };
 		9D64042C2DCDEE1C00624A00 /* hdController.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = hdController.cpp; sourceTree = "<group>"; };
 		9D64042D2DCDEE1C00624A00 /* builtinHD.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = builtinHD.h; sourceTree = "<group>"; };
@@ -1869,8 +1865,6 @@
 		9D8FAACB2CB3F6EF006905BE /* view */ = {
 			isa = PBXGroup;
 			children = (
-				9D5FAF2B2CF07000002B0C34 /* imageViewer.cpp */,
-				9D5FAF2C2CF07000002B0C34 /* imageViewer.h */,
 				9D8FAACC2CB3F6EF006905BE /* status.h */,
 				9D8FAACD2CB3F6EF006905BE /* status.cpp */,
 				9D8FAACE2CB3F6EF006905BE /* placeholder.cpp */,
@@ -3348,7 +3342,6 @@
 				9D7E7E863006A8F100FFACCD /* binaryMonitor.cpp in Sources */,
 				9D07CD042E296CD000A9787E /* lk7_decoder.cpp in Sources */,
 				9D8FAB2A2CB3F6F0006905BE /* config.cpp in Sources */,
-				9D5FAF2D2CF07001002B0C34 /* imageViewer.cpp in Sources */,
 				9DA75E362FE702BD00766658 /* SincResampler.cpp in Sources */,
 				9D7B485F2E40D7640010B152 /* cgif_raw.cpp in Sources */,
 				9D8FAB192CB3F6EF006905BE /* panning.cpp in Sources */,
@@ -3572,7 +3565,6 @@
 				9D7E7E873006A8F100FFACCD /* binaryMonitor.cpp in Sources */,
 				9DECF98D2E45F309005C0BBA /* lk7_decoder.cpp in Sources */,
 				9DECF98E2E45F309005C0BBA /* config.cpp in Sources */,
-				9DECF98F2E45F309005C0BBA /* imageViewer.cpp in Sources */,
 				9DA75E372FE702BD00766658 /* SincResampler.cpp in Sources */,
 				9DECF9902E45F309005C0BBA /* cgif_raw.cpp in Sources */,
 				9DECF9912E45F309005C0BBA /* panning.cpp in Sources */,

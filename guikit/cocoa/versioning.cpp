@@ -1,5 +1,5 @@
 
-// check for AppKit which builds the App, not OS the App is running on
+// deprecated
 
 #define NSAppKitVersionNumber10_4  824
 #define NSAppKitVersionNumber10_5  949

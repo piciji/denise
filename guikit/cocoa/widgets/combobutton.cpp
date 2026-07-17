@@ -5,9 +5,11 @@
     if(self = [super initWithFrame:NSMakeRect(0, 0, 0, 0) pullsDown:NO]) {
         comboButton = &comboButtonReference;
         [self setTarget:self];
-        if (GUIKIT::isBigSur()) {
-            [[self cell] setBezelStyle: NSBezelStyleTexturedRounded];
-            [[self cell] setArrowPosition: NSPopUpArrowAtBottom];
+        if (@available(macOS 11.0, *)) {
+            if (!@available(macOS 12.0, *)) { // Big Sur
+                [[self cell] setBezelStyle: NSBezelStyleTexturedRounded];
+                [[self cell] setArrowPosition: NSPopUpArrowAtBottom];
+            }
         }
         [self setAction:@selector(activate:)];
     }
@@ -77,10 +79,10 @@ auto pComboButton::minimumSize() -> Size {
 }
     
 auto pComboButton::setGeometry(Geometry geometry) -> void {
-    if(!hasMinimumVersion(26, 0))
+    if(@available(macOS 26.0, *)) {
+        // geometry.y -= 1;  // uncomment when we don't build on Sonoma for newer versions like Tahoe
+    } else
         geometry.y += 1;
-    else
-        geometry.y -= 1;
     
     pWidget::setGeometry({
         geometry.x, geometry.y,

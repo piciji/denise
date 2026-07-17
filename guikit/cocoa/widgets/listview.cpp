@@ -272,7 +272,7 @@
         // this is a hack to completly remove row spacing
         unsigned fontSize = GUIKIT::pFont::getSizeFromString( listView->font() );
         
-        if (__MAC_OS_X_VERSION_MIN_REQUIRED <= MAC_OS_X_VERSION_10_13 ) { // High Sierra
+        if (__MAC_OS_X_VERSION_MIN_REQUIRED <= MAC_OS_X_VERSION_10_13 ) { // when min deployment target is High Sierra
             if (fontSize == 6 || fontSize == 7 || fontSize == 11) {
                 listView->p.fontAdjust.rowHeight = -3;
                 listView->p.fontAdjust.yOffset = -2;
