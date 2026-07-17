@@ -1004,10 +1004,6 @@ namespace DRIVER {
                 [rce drawPrimitives:MTLPrimitiveTypeTriangleStrip vertexStart:0 vertexCount:4];
             }
             
-#ifdef DRV_FREETYPE
-            showText(rce);
-#endif
-            
             if (splashScreen.enable) {
                 if(buildSplashScreenTexture()) {
                     showSplashScreen(rce);
@@ -1018,6 +1014,10 @@ namespace DRIVER {
                 buildDndOverlayTexture();
                 showDndOverlay(rce);
             }
+            
+#ifdef DRV_FREETYPE
+            showText(rce);
+#endif
             
             if (progressVisible && progressTex.view) {
                 setProgressPosition();
