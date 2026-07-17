@@ -1350,9 +1350,6 @@ namespace DRIVER {
         context->Draw(4, 0);
 
         context->VSSetConstantBuffers(0, 1, &ubo);
-#ifdef DRV_FREETYPE
-        showText();
-#endif
 
         if (splashScreen.enable) {
             if (buildSplashscreenTexture()) {
@@ -1364,6 +1361,10 @@ namespace DRIVER {
             buildOverlayTexture();
             blendRect<false, true>(overlay);
         }
+
+#ifdef DRV_FREETYPE
+        showText();
+#endif
 
         if (progressVisible && progress.texture.ptr) {
             setProgressPosition();
