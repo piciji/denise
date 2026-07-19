@@ -596,8 +596,7 @@ template<typename T, uint8_t options> auto VideoManager::renderFrame(const T* sr
     constexpr bool isPause = options & 0x10;
     constexpr bool lores = !hires && !shres;
     bool iHold = interlace && !field && !interlaceFields;
-    //bool suppressShader = program->warp.mode != Program::Warp::Off;
-    bool suppressShader = false;
+    bool suppressShader = program->warp.disableShader && ((program->warp.mode == Program::Warp::Normal) || (program->warp.mode == Program::Warp::Aggressive));
     bool rewind = audioManager->rewind;
     uint8_t gpuOptions = iHold | (interlace << 1) | (suppressShader << 2) | (isPause << 5) | (rewind << 6);
 

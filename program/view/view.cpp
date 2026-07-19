@@ -1886,6 +1886,20 @@ auto View::buildMenu() -> void {
     };
     speedControlMenu.append( aggressiveWarpItem );
 
+    warpDisableShader.onToggle = [this]() {
+        emuThread->lock();
+        program->warp.disableShader = warpDisableShader.checked();
+        globalSettings->set<bool>("warp_disable_shader", warpDisableShader.checked());
+        emuThread->unlock();
+    };
+
+    if ( globalSettings->get<bool>("warp_disable_shader", false) ) {
+        warpDisableShader.setChecked();
+        program->warp.disableShader = true;
+    }
+
+    speedControlMenu.append( warpDisableShader );
+
     speedControlMenu.append( *GUIKIT::MenuSeparator::getInstance() );
 
     fastForwardItem.onToggle = []() {
@@ -2449,6 +2463,7 @@ auto View::translate() -> void {
 
     warpItem.setText( trans->get("Toggle Warp") );
     aggressiveWarpItem.setText( trans->get("Toggle Warp aggressive") );
+    warpDisableShader.setText( trans->get("no shader when warp") );
 
     fastForwardItem.setText( trans->get("Toggle Fast Forward") );
     customizeFFItem.setText( trans->get("customize speed") );

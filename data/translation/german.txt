@@ -983,3 +983,4 @@ Toggle Fast Forward = Fast Forward umschalten
 show images = Bilder zeigen
 Disable Sprite Sprite Collisions = Sprite-Sprite Kollisionen deaktivieren
 Disable Sprite Character Collisions = Sprite-Character Kollisionen deaktivieren
+no shader when warp = kein Shader bei Warp

@@ -216,6 +216,7 @@ struct View : GUIKIT::Window {
     GUIKIT::Menu speedControlMenu;
         GUIKIT::MenuCheckItem warpItem;
         GUIKIT::MenuCheckItem aggressiveWarpItem;
+        GUIKIT::MenuCheckItem warpDisableShader;
         GUIKIT::MenuCheckItem fastForwardItem;
         GUIKIT::MenuItem customizeFFItem;
         GUIKIT::MenuCheckItem pauseItem;

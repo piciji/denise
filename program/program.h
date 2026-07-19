@@ -75,6 +75,7 @@ struct Program : Emulator::Interface::Bind {
 
 	struct Warp {
 	    enum Mode { Off, Normal, Aggressive, FastForward } mode = Mode::Off;
+	    bool disableShader = false;
 	    // fast forward
 	    unsigned ff_each = 0;
 	    bool ff_percent = false;
