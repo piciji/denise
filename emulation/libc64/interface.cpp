@@ -26,7 +26,7 @@
 
 namespace LIBC64 {
 
-const std::string Interface::Version = "230";
+const std::string Interface::Version = "231";
     
 Interface::Interface() : Emulator::Interface( "C64" ) {
     
@@ -654,7 +654,8 @@ auto Interface::prepareModels() -> void {
     models.push_back({ModelIdDriveAcceleration, "Drive Acceleration", Model::Type::Slider, Model::Purpose::DriveMechanics, 704, {0, 1024}, {}, 256, 1.0 });
     models.push_back({ModelIdDriveDeceleration, "Drive Deceleration", Model::Type::Slider, Model::Purpose::DriveMechanics, 256, {0, 1024}, {}, 256, 1.0 });
 
-    models.push_back({ModelIdDisableSpriteCollisions, "Disable Sprite Collisions", Model::Type::Switch, Model::Purpose::GraphicChip, 0});
+    models.push_back({ModelIdDisableSpriteCollisions, "Disable Sprite Sprite Collisions", Model::Type::Switch, Model::Purpose::GraphicChip, 0});
+    models.push_back({ModelIdDisableSpriteCharacterCollisions, "Disable Sprite Character Collisions", Model::Type::Switch, Model::Purpose::GraphicChip, 0});
 }
 
 auto Interface::prepareFirmware() -> void {
@@ -1683,8 +1684,13 @@ auto Interface::setModelValue(unsigned modelId, int value) -> void {
             system->sidManager.setUSBSIDDiffSize(value);
             break;
         case ModelIdDisableSpriteCollisions:
-            system->vicIICycle.disableCollisions(value & 1);
-            system->vicIIFast.disableCollisions(value & 1);
+            system->vicIICycle.disableSpriteSpriteCollisions(value & 1);
+            system->vicIIFast.disableSpriteSpriteCollisions(value & 1);
+            break;
+
+        case ModelIdDisableSpriteCharacterCollisions:
+            system->vicIICycle.disableSpriteForegroundCollisions(value & 1);
+            system->vicIIFast.disableSpriteForegroundCollisions(value & 1);
             break;
     }
 }
@@ -1790,7 +1796,8 @@ auto Interface::getModelValue(unsigned modelId) -> int {
         case ModelIdSidUsbPico:             return system->sidManager.hasUSBSID();
         case ModelIdSidUsbPicoBufferSize:   return system->sidManager.getUSBSIDBuffSize();
         case ModelIdSidUsbPicoDiffSize:     return system->sidManager.getUSBSIDDiffSize();
-        case ModelIdDisableSpriteCollisions: return system->vicIICycle.collisionsDisabled();
+        case ModelIdDisableSpriteCollisions: return system->vicIICycle.collisionsSpiteSpriteDisabled();
+        case ModelIdDisableSpriteCharacterCollisions: return system->vicIICycle.collisionsSpiteForegroundDisabled();
     }
     return 0;
 }

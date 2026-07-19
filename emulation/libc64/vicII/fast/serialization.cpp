@@ -79,7 +79,8 @@ auto VicIIFast::serialize(Emulator::Serializer& s) -> void {
     
     s.integer( idleMode );	
     s.integer( initVCounter );
-    s.integer( disableSpriteCollisions );
+    s.integer( disallowSpriteSpriteCollisions );
+    s.integer( disallowSpriteForegroundCollisions );
     
     for( unsigned i = 0; i < 8; i++ ) {
         Sprite& spr = sprite[i];

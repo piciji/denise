@@ -145,13 +145,13 @@ auto VicIIFast::clock() -> void {
 
 			if ( canSpriteSpriteCollisionIrq && spriteSpriteCollided) {
 				canSpriteSpriteCollisionIrq = false;
-			    if (!disableSpriteCollisions)
+			    if (!disallowSpriteSpriteCollisions)
 				    updateIrq( Interrupt::MMC );
 			}
 
 			if ( canSpriteForegroundCollisionIrq && spriteForegroundCollided) {
 				canSpriteForegroundCollisionIrq = false;
-			    if (!disableSpriteCollisions)
+			    if (!disallowSpriteForegroundCollisions)
 				    updateIrq( Interrupt::MBC );
 			}
 		} else if (isUpdateRc( flags )) {

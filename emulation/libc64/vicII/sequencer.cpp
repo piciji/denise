@@ -115,13 +115,13 @@ inline auto VicIICycle::sequencer( uint32_t flags ) -> void {
 
 	// collisions in the second half trigger IRQ next cycle
 	if (canSpriteSpriteCollisionIrq && spriteSpriteCollided) {
-	    if (!disableSpriteCollisions)
+	    if (!disallowSpriteSpriteCollisions)
 		    updateIrq( Interrupt::MMC );
 		canSpriteSpriteCollisionIrq = false;
 	}
 
 	if (canSpriteForegroundCollisionIrq && spriteForegroundCollided) {
-	    if (!disableSpriteCollisions)
+	    if (!disallowSpriteForegroundCollisions)
 		    updateIrq( Interrupt::MBC );
 		canSpriteForegroundCollisionIrq = false;
 	}

@@ -981,4 +981,5 @@ shader favourite = load one of the best shaders with a click. Shows a floppy wit
 Fast Forward = Fast Forward
 Toggle Fast Forward = Toggle Fast Forward
 show images = show images
-Disable Sprite Collisions = Disable Sprite Collisions
+Disable Sprite Sprite Collisions = Disable Sprite-Sprite collisions
+Disable Sprite Character Collisions = Disable Sprite-Character collisions

@@ -98,7 +98,7 @@ auto VicIIFast::readReg( uint8_t addr ) -> uint8_t {
 			value = spriteSpriteCollided;
 			spriteSpriteCollided = 0;	
             canSpriteSpriteCollisionIrq = true;
-            if (disableSpriteCollisions)
+            if (disallowSpriteSpriteCollisions)
                 value = 0;
 			break;
         }
@@ -106,7 +106,7 @@ auto VicIIFast::readReg( uint8_t addr ) -> uint8_t {
 			value = spriteForegroundCollided;
 			spriteForegroundCollided = 0;
             canSpriteForegroundCollisionIrq = true;
-            if (disableSpriteCollisions)
+            if (disallowSpriteForegroundCollisions)
                 value = 0;
 			break;
         }        

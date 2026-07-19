@@ -30,7 +30,8 @@ struct Interface : Emulator::Interface {
         ModelIdReuRam, ModelIdGeoRam, ModelIdIntensifyPseudoStereo,
     	ModelIdEmulateDriveMechanics, ModelIdDriveStepperDelay, ModelIdDriveAcceleration, ModelIdDriveDeceleration,
     	ModelIdSuperCpuRam, ModelIdTrackZeroSensor, ModelId2Mhz,
-        ModelIdSidUsbPico, ModelIdSidUsbPicoBufferSize, ModelIdSidUsbPicoDiffSize, ModelIdDisableSpriteCollisions,
+        ModelIdSidUsbPico, ModelIdSidUsbPicoBufferSize, ModelIdSidUsbPicoDiffSize,
+        ModelIdDisableSpriteCollisions, ModelIdDisableSpriteCharacterCollisions,
     };
     
     enum MediaGroupId {
