@@ -199,9 +199,9 @@ struct SuperCpu : ExpansionPort, WDCFAMILY::W65816 {
 
     auto updateSnapshot(DebuggerSnapshot& snap) -> void;
     auto updateMemorySnapshot(DebuggerSnapshot& snap) -> void;
-    auto debugPointReached(int source, unsigned addr) -> void;
+    auto debugPointReached(int source, Emulator::WatchPoints& wp, unsigned addr) -> void;
 
-    auto debuggerAdd(DebuggerAction action, uint32_t addr, uint32_t addrTo = 0) -> void;
+    auto debuggerAdd(DebuggerAction action, unsigned ident, uint32_t addr, uint32_t addrTo) -> void;
     auto debuggerRemove(DebuggerAction action, uint32_t addr) -> void;
     auto debuggerRemove(DebuggerAction action) -> void;
 

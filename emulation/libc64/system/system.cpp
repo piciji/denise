@@ -1398,7 +1398,7 @@ auto System::toggle2Mhz() -> bool {
     return mhz2 & 0x80;
 }
 
-auto System::debuggerAdd(DebuggerTheme theme, DebuggerAction action, uint32_t addr, uint32_t addrTo) -> void {
+auto System::debuggerAdd(DebuggerTheme theme, DebuggerAction action, unsigned ident, unsigned data0, unsigned data1) -> void {
     switch (theme) {
         case DebuggerTheme::Video:
             debuggerSnapshot.themes |= (unsigned)theme;
@@ -1411,7 +1411,7 @@ auto System::debuggerAdd(DebuggerTheme theme, DebuggerAction action, uint32_t ad
         case DebuggerTheme::DMA:
             switch (action) {
                 case DebuggerAction::DmaView:
-                    vicIICycle.enableDmaView(true, addr == 0);
+                    vicIICycle.enableDmaView(true, ident == 0);
                     break;
                 case DebuggerAction::DmaLog:
                     debuggerSnapshot.themes |= (unsigned)theme;
@@ -1419,7 +1419,7 @@ auto System::debuggerAdd(DebuggerTheme theme, DebuggerAction action, uint32_t ad
                     vicIICycle.debugger.enableDmaLog(true);
                     break;
                 case DebuggerAction::DmaWatch:
-                    debugger.dmaWatchers[addrTo & 3] = addr | (0x80 << 24);
+                    debugger.dmaWatchers[data0 & 3] = ident | (0x80 << 24);
                     break;
                 default: break;
             } break;
@@ -1427,13 +1427,13 @@ auto System::debuggerAdd(DebuggerTheme theme, DebuggerAction action, uint32_t ad
             if (action == DebuggerAction::None)
                 debuggerSnapshot.themes |= (unsigned)theme;
             else
-                cpu.debuggerAdd( action, static_cast<uint16_t>(addr), static_cast<uint16_t>(addrTo) );
+                cpu.debuggerAdd( action, ident, static_cast<uint16_t>(data0), static_cast<uint16_t>(data1) );
             break;
         case DebuggerTheme::SCPU:
             if (action == DebuggerAction::None)
                 debuggerSnapshot.themes |= (unsigned)theme;
             else
-                superCpu->debuggerAdd(action, addr, addrTo);
+                superCpu->debuggerAdd(action, ident, data0, data1);
             break;
         case DebuggerTheme::Drive8CPU:
         case DebuggerTheme::Drive9CPU:
@@ -1443,18 +1443,18 @@ auto System::debuggerAdd(DebuggerTheme theme, DebuggerAction action, uint32_t ad
                 debuggerSnapshot.themes |= (unsigned)theme;
                 driveCycleSyncingUpdate();
             } else
-                iecBus.debuggerAdd( theme, action, addr, addrTo );
+                iecBus.debuggerAdd( theme, action, ident, data0, data1 );
             break;
         case DebuggerTheme::Unspecified: {
             switch (action) {
                 case DebuggerAction::Line:
-                    vicII->debugger.stopLine = addr;
+                    vicII->debugger.stopLine = ident;
                 case DebuggerAction::Frame:
                 case DebuggerAction::HaltCPU:
                     vicII->debugger.action = action;
                     break;
                 case DebuggerAction::AutoUpdate:
-                    if (addr == 1) {
+                    if (ident == 1) {
                         updateDebuggerSnapshot();
                     }
                     break;
@@ -1472,7 +1472,7 @@ auto System::debuggerAdd(DebuggerTheme theme, DebuggerAction action, uint32_t ad
     debuggerUpdateEvent();
 }
 
-auto System::debuggerRemove(DebuggerTheme theme, DebuggerAction action, std::optional<unsigned> addr) -> void {
+auto System::debuggerRemove(DebuggerTheme theme, DebuggerAction action, std::optional<unsigned> ident) -> void {
     switch (theme) {
         case DebuggerTheme::Video:
             debuggerSnapshot.themes &= ~(unsigned)theme;
@@ -1485,30 +1485,30 @@ auto System::debuggerRemove(DebuggerTheme theme, DebuggerAction action, std::opt
         case DebuggerTheme::DMA:
             switch (action) {
                 case DebuggerAction::DmaView:
-                    vicIICycle.enableDmaView(false, !addr.has_value() || (addr.value_or(0) == 0));
+                    vicIICycle.enableDmaView(false, !ident.has_value() || (ident.value_or(0) == 0));
                     break;
                 case DebuggerAction::DmaLog:
                     debuggerSnapshot.themes &= ~(unsigned)theme;
                     vicIICycle.debugger.enableDmaLog(false);
                     break;
                 case DebuggerAction::DmaWatch:
-                    debugger.dmaWatchers[addr.value_or(0) & 3] = 0;
+                    debugger.dmaWatchers[ident.value_or(0) & 3] = 0;
                     break;
                 default: break;
             } break;
         case DebuggerTheme::CPU:
             if (action == DebuggerAction::None)
                 debuggerSnapshot.themes &= ~(unsigned)theme;
-            else if (addr.has_value())
-                cpu.debuggerRemove( action, addr.value_or(0) );
+            else if (ident.has_value())
+                cpu.debuggerRemove( action, ident.value_or(0) );
             else
                 cpu.debuggerRemove( action);
             break;
         case DebuggerTheme::SCPU:
             if (action == DebuggerAction::None)
                 debuggerSnapshot.themes &= ~(unsigned)theme;
-            else if (addr.has_value())
-                superCpu->debuggerRemove( action, addr.value_or(0));
+            else if (ident.has_value())
+                superCpu->debuggerRemove( action, ident.value_or(0));
             else
                 superCpu->debuggerRemove( action );
             break;
@@ -1519,8 +1519,8 @@ auto System::debuggerRemove(DebuggerTheme theme, DebuggerAction action, std::opt
             if (action == DebuggerAction::None) {
                 debuggerSnapshot.themes &= ~(unsigned)theme;
                 driveCycleSyncingUpdate();
-            } else if (addr.has_value())
-                iecBus.debuggerRemove( theme, action, addr.value_or(0));
+            } else if (ident.has_value())
+                iecBus.debuggerRemove( theme, action, ident.value_or(0));
             else
                 iecBus.debuggerRemove( theme, action );
             break;
@@ -1531,19 +1531,19 @@ auto System::debuggerRemove(DebuggerTheme theme, DebuggerAction action, std::opt
     debuggerUpdateEvent();
 }
 
-auto System::setWatchpointCondition(DebuggerTheme theme, DebuggerAction action, unsigned addr, unsigned hitCount, unsigned hitCountMode, const std::string& expression, unsigned expressionMode) -> bool {
+auto System::setWatchpointCondition(DebuggerTheme theme, DebuggerAction action, unsigned ident, unsigned hitCount, unsigned hitCountMode, const std::string& expression, unsigned expressionMode) -> bool {
     switch (theme) {
         case DebuggerTheme::Drive8CPU:
         case DebuggerTheme::Drive9CPU:
         case DebuggerTheme::Drive10CPU:
         case DebuggerTheme::Drive11CPU:
-            return iecBus.setWatchpointCondition( theme, action, addr, hitCount, hitCountMode, expression, expressionMode );
+            return iecBus.setWatchpointCondition( theme, action, ident, hitCount, hitCountMode, expression, expressionMode );
 
         default:
         case DebuggerTheme::CPU:
-            return cpu.setWatchpointCondition( action, addr, hitCount, hitCountMode, expression, expressionMode );
+            return cpu.setWatchpointCondition( action, ident, hitCount, hitCountMode, expression, expressionMode );
         case DebuggerTheme::SCPU:
-            return superCpu->setWatchpointCondition( action, addr, hitCount, hitCountMode, expression, expressionMode );
+            return superCpu->setWatchpointCondition( action, ident, hitCount, hitCountMode, expression, expressionMode );
     }
 
     return false;
@@ -1676,10 +1676,11 @@ auto System::getMemory(DebuggerTheme theme, DebuggerAction action, unsigned star
     }
 }
 
-auto System::debugPointReached(Emulator::Interface::DebuggerTheme theme, Emulator::Interface::DebuggerAction action, unsigned addr) -> void {
+auto System::debugPointReached(Emulator::Interface::DebuggerTheme theme, Emulator::Interface::DebuggerAction action, Emulator::WatchPoints& wp, unsigned addr) -> void {
     debugger.action = action;
     debugger.theme = theme;
     debugger.addr = addr;
+    wp.getAndResetHitIdents( debugger.watcherIdents );
     debuggerUpdate();
 }
 
@@ -1688,6 +1689,7 @@ auto System::updateDebuggerSnapshot() -> void {
     debuggerSnapshot.callbackAction = debugger.action;
     debuggerSnapshot.callbackAddress = debugger.addr;
     debuggerSnapshot.callbackTheme = debugger.theme;
+    debuggerSnapshot.watcherIdents = debugger.watcherIdents;
     debuggerSnapshot.codeMaybeModified = debuggerSnapshot.superCpu ? superCpu->hasModifiedCode() : cpu.hasModifiedCode();
     unsigned _t = debuggerSnapshot.themes;
 

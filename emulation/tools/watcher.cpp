@@ -13,16 +13,16 @@ WatchPoints::WatchPoints() {
     callback = [](bool state) {};
 }
 
-auto WatchPoints::add(uint32_t addr) -> void {
-    if (!find( addr ))
-        watchers.push_back( {addr} );
+auto WatchPoints::add(unsigned ident, uint32_t addr, uint32_t endAddr) -> void {
+    if (!find( ident ))
+        watchers.push_back( {ident, addr, endAddr} );
 
     callback(true);
 }
 
-auto WatchPoints::remove(uint32_t addr) -> void {
+auto WatchPoints::remove(unsigned ident) -> void {
     for (auto it = watchers.begin(); it != watchers.end();) {
-        if (it->addr == addr) {
+        if (it->ident == ident) {
             watchers.erase(it);
             flagWhenNeeded();
             break;
@@ -31,31 +31,52 @@ auto WatchPoints::remove(uint32_t addr) -> void {
     }
 }
 
-auto WatchPoints::find(uint32_t addr) -> Watcher* {
+auto WatchPoints::find(unsigned ident) -> Watcher* {
     for ( auto& w : watchers ) {
-        if (w.addr == addr)
+        if (w.ident == ident)
             return &w;
     }
     return nullptr;
 }
 
 auto WatchPoints::check(uint32_t addr, bool withConditions) -> bool {
+    bool hit = false;
     for ( auto& w : watchers ) {
-        if (w.addr == addr)
-            return withConditions ? checkConditions(w) : true;
-    }
-    return false;
-}
+        if ((w.addr <= addr) && (w.endAddr >= addr)) {
+            if (withConditions) {
+                w.hit = checkConditions(w);
+            } else
+                w.hit = true;
 
-auto WatchPoints::check( uint32_t addr, unsigned Size, bool withConditions ) -> Watcher* {
-    for (auto& w: watchers) {
-        if ((w.addr >= addr) && (w.addr < addr + Size)) {
-            if (withConditions)
-                return checkConditions(w) ? &w : nullptr;
-            return &w;
+            hit |= w.hit;
         }
     }
-    return nullptr;
+    return hit;
+}
+
+auto WatchPoints::check( uint32_t addr, unsigned Size, bool withConditions ) -> bool {
+    bool hit = false;
+    for (auto& w: watchers) {
+        if ((addr <= w.endAddr) && (w.addr < (addr + Size))) {
+            if (withConditions) {
+                w.hit = checkConditions(w);
+            } else
+                w.hit = true;
+
+            hit |= w.hit;
+        }
+    }
+    return hit;
+}
+
+auto WatchPoints::getAndResetHitIdents(std::vector<unsigned>& idents) -> void {
+    idents.clear();
+    for (auto& w: watchers) {
+        if (w.hit) {
+            idents.push_back(w.ident);
+            w.hit = false;
+        }
+    }
 }
 
 auto WatchPoints::removeAll() -> void {
@@ -74,9 +95,9 @@ auto WatchPoints::flagWhenNeeded() -> void {
     callback(!watchers.empty());
 }
 
-auto WatchPoints::setBreakpointCondition( unsigned addr, unsigned hitCount, unsigned hitCountMode,
+auto WatchPoints::setBreakpointCondition( unsigned ident, unsigned hitCount, unsigned hitCountMode,
                                           const std::string& expression, unsigned expressionMode ) -> void {
-    auto* w = find( addr );
+    auto* w = find( ident );
     if (!w)
         return;
 

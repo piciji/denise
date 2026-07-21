@@ -12,7 +12,9 @@ using WatcherCallback = std::function<void ( bool state )>;
 using ExpressionCallback = std::function< uint32_t (const std::string& input, int& pos)>;
 
 struct Watcher {
+    unsigned ident;
     uint32_t addr;
+    uint32_t endAddr;
     unsigned hitCount = 0;
     unsigned curHitCount = 0;
     unsigned hitCountMode = 0;
@@ -20,6 +22,7 @@ struct Watcher {
     ExpressionParser expressionParser;
     unsigned expressionMode = 0;
     bool expressionResultBefore = false;
+    bool hit = false;
 };
 
 struct WatchPoints {
@@ -31,19 +34,21 @@ struct WatchPoints {
 
     virtual ~WatchPoints() = default;
 
-    auto add(uint32_t addr) -> void;
+    auto add(unsigned ident, uint32_t addr, uint32_t endAddr) -> void;
 
-    auto remove(uint32_t addr) -> void;
+    auto remove(unsigned ident) -> void;
 
     auto setBreakpointCondition(unsigned addr, unsigned hitCount, unsigned hitCountMode, const std::string& expression, unsigned expressionMode) -> void;
 
     auto check(uint32_t addr, bool withConditions = true) -> bool;
 
-    auto check(uint32_t addr, unsigned Size, bool withConditions = true) -> Watcher*;
+    auto check(uint32_t addr, unsigned Size, bool withConditions = true) -> bool;
+
+    auto getAndResetHitIdents(std::vector<unsigned>& idents) -> void;
 
     auto checkConditions(Watcher& w) -> bool;
 
-    auto find(uint32_t addr) -> Watcher*;
+    auto find(unsigned ident) -> Watcher*;
 
     auto removeAll() -> void;
 

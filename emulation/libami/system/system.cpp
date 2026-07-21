@@ -732,7 +732,7 @@ auto System::cropFrame( Emulator::Interface::CropType type, Emulator::Interface:
     agnus.debugger.crop.settings.crop = _crop;
 }
 
-auto System::debuggerAdd(DebuggerTheme theme, DebuggerAction action, unsigned addr, unsigned addrTo) -> void {
+auto System::debuggerAdd(DebuggerTheme theme, DebuggerAction action, unsigned ident, unsigned data0, unsigned data1) -> void {
     switch (theme) {
         case DebuggerTheme::Video:
             debuggerSnapshot.themes |= (unsigned)theme;
@@ -741,7 +741,7 @@ auto System::debuggerAdd(DebuggerTheme theme, DebuggerAction action, unsigned ad
         case DebuggerTheme::DMA:
             switch (action) {
                 case DebuggerAction::DmaView:
-                    agnus.debugger.enableDmaView(true, addr == 0);
+                    agnus.debugger.enableDmaView(true, ident == 0);
                     break;
                 case DebuggerAction::DmaLog:
                     debuggerSnapshot.themes |= (unsigned)theme;
@@ -750,7 +750,7 @@ auto System::debuggerAdd(DebuggerTheme theme, DebuggerAction action, unsigned ad
                     leaveEmulation = true;
                     break;
                 case DebuggerAction::DmaWatch:
-                    agnus.debugger.dmaWatchers[addrTo & 3] = addr | (0x80 << 24);
+                    agnus.debugger.dmaWatchers[data0 & 3] = ident | (0x80 << 24);
                     break;
                 case DebuggerAction::Softstop:
                     agnus.debugger.softStopCycle(agnus.hPos);
@@ -761,7 +761,7 @@ auto System::debuggerAdd(DebuggerTheme theme, DebuggerAction action, unsigned ad
             if (action == DebuggerAction::None)
                 debuggerSnapshot.themes |= (unsigned)theme;
             else
-                cpu.debuggerAdd( action, addr, addrTo );
+                cpu.debuggerAdd( action, ident, data0, data1 );
             break;
 
         case DebuggerTheme::Copper:
@@ -771,7 +771,7 @@ auto System::debuggerAdd(DebuggerTheme theme, DebuggerAction action, unsigned ad
                     debuggerSnapshot.themes |= (unsigned)theme;
                     break;
                 default:
-                    agnus.copper.debuggerAdd(action, addr);
+                    agnus.copper.debuggerAdd(action, ident, data0);
                     break;
             } break;
 
@@ -790,12 +790,12 @@ auto System::debuggerAdd(DebuggerTheme theme, DebuggerAction action, unsigned ad
         case DebuggerTheme::Unspecified: {
             switch (action) {
                 case DebuggerAction::Line:
-                    agnus.debugger.stopLine = addr;
+                    agnus.debugger.stopLine = ident;
                 case DebuggerAction::Frame:
                     agnus.debugger.oneTimeAction = action;
                     break;
                 case DebuggerAction::AutoUpdate:
-                    if (addr == 1) {
+                    if (ident == 1) {
                         updateDebuggerSnapshot();
                     }
                     break;
@@ -817,7 +817,7 @@ auto System::debuggerAdd(DebuggerTheme theme, DebuggerAction action, unsigned ad
     agnus.debuggerUpdateEvent();
 }
 
-auto System::debuggerRemove(DebuggerTheme theme, DebuggerAction action, std::optional<unsigned> addr) -> void {
+auto System::debuggerRemove(DebuggerTheme theme, DebuggerAction action, std::optional<unsigned> ident) -> void {
     switch (theme) {
         case DebuggerTheme::Video:
             debuggerSnapshot.themes &= ~(unsigned)theme;
@@ -826,22 +826,22 @@ auto System::debuggerRemove(DebuggerTheme theme, DebuggerAction action, std::opt
         case DebuggerTheme::DMA:
             switch (action) {
                 case DebuggerAction::DmaView:
-                    agnus.debugger.enableDmaView(false, !addr.has_value() || (addr.value_or(0) == 0));
+                    agnus.debugger.enableDmaView(false, !ident.has_value() || (ident.value_or(0) == 0));
                     break;
                 case DebuggerAction::DmaLog:
                     debuggerSnapshot.themes &= ~(unsigned)theme;
                     agnus.debugger.enableDmaLog(false);
                     break;
                 case DebuggerAction::DmaWatch:
-                    agnus.debugger.dmaWatchers[addr.value_or(0) & 3] = 0;
+                    agnus.debugger.dmaWatchers[ident.value_or(0) & 3] = 0;
                     break;
                 default: break;
             } break;
         case DebuggerTheme::CPU:
             if (action == DebuggerAction::None)
                 debuggerSnapshot.themes &= ~(unsigned)theme;
-            else if (addr.has_value())
-                cpu.debuggerRemove( action, addr.value_or(0) );
+            else if (ident.has_value())
+                cpu.debuggerRemove( action, ident.value_or(0) );
             else
                 cpu.debuggerRemove( action );
             break;
@@ -853,8 +853,8 @@ auto System::debuggerRemove(DebuggerTheme theme, DebuggerAction action, std::opt
                     debuggerSnapshot.themes &= ~(unsigned)theme;
                     break;
                 default:
-                    if (addr.has_value())
-                        agnus.copper.debuggerRemove( action, addr.value_or(0) );
+                    if (ident.has_value())
+                        agnus.copper.debuggerRemove( action, ident.value_or(0) );
                     else
                         agnus.copper.debuggerRemove( action );
                     break;
@@ -874,8 +874,8 @@ auto System::debuggerRemove(DebuggerTheme theme, DebuggerAction action, std::opt
     agnus.debuggerUpdateEvent();
 }
 
-auto System::setWatchpointCondition(DebuggerTheme theme, DebuggerAction action, unsigned addr, unsigned hitCount, unsigned hitCountMode, const std::string& expression, unsigned expressionMode) -> bool {
-    return cpu.setWatchpointCondition( theme, action, addr, hitCount, hitCountMode, expression, expressionMode );
+auto System::setWatchpointCondition(DebuggerTheme theme, DebuggerAction action, unsigned ident, unsigned hitCount, unsigned hitCountMode, const std::string& expression, unsigned expressionMode) -> bool {
+    return cpu.setWatchpointCondition( theme, action, ident, hitCount, hitCountMode, expression, expressionMode );
 }
 
 auto System::editMemory(uint32_t addr, std::vector<uint16_t> values) -> void {

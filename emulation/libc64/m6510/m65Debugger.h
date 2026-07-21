@@ -40,8 +40,8 @@ struct M65Debugger {
     auto disassembleData(uint16_t addr, unsigned bytes) -> std::string;
     auto disassembleTrace(unsigned i, uint8_t& flags) -> std::string;
 
-    auto debuggerAdd(DebuggerAction action, uint16_t addr, uint16_t addrTo = 0) -> void;
-    auto debuggerRemove(DebuggerAction action, uint16_t addr) -> void;
+    auto debuggerAdd(DebuggerAction action, unsigned ident, uint16_t addr, uint16_t addrTo) -> void;
+    auto debuggerRemove(DebuggerAction action, unsigned ident) -> void;
     auto debuggerRemove(DebuggerAction action) -> void;
 
     auto checkSoftStop(uint16_t addr) -> bool;
@@ -51,7 +51,7 @@ struct M65Debugger {
 
     auto appendStepOut(uint16_t addr) -> void;
 
-    auto setWatchpointCondition(DebuggerAction action, unsigned addr, unsigned hitCount, unsigned hitCountMode, const std::string& expression, unsigned expressionMode) -> bool;
+    auto setWatchpointCondition(DebuggerAction action, unsigned ident, unsigned hitCount, unsigned hitCountMode, const std::string& expression, unsigned expressionMode) -> bool;
 
     auto hasModifiedCode() -> bool { return modifiedCode.getAndForget(); }
 

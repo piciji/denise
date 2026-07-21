@@ -103,10 +103,16 @@ inline auto W65816::controlBreaks() -> void {
     if (control & WAI)
         return;
 
+    int source = 0;
+
     if ((control & SoftStop) && checkSoftStop(pcEdge)) {
-        DEBUG_POINT_REACHED(SoftStop, pcEdge);
-    } else if ((control & BreakPoint) && breakPoints.check(pcEdge)) {
-        DEBUG_POINT_REACHED(BreakPoint, pcEdge);
+        source = SoftStop;
+    } if ((control & BreakPoint) && breakPoints.check(pcEdge)) {
+        source = BreakPoint;
+    }
+
+    if (source != 0) {
+        DEBUG_POINT_REACHED(source, breakPoints, pcEdge);
     }
 }
 
@@ -128,7 +134,7 @@ template<bool hardware> auto W65816::interrupt(const uint16_t& vector) -> void {
 
     if constexpr (hardware) {
         if ((control & ExceptionPoint) && exceptionPoints.check( vector )) {
-            DEBUG_POINT_REACHED(ExceptionPoint, vector);
+            DEBUG_POINT_REACHED(ExceptionPoint, exceptionPoints, vector);
         }
     }
 
@@ -232,7 +238,7 @@ template<uint8_t actions> inline auto W65816::idle(uint32_t addr) -> void {
 #endif
 
     if ((control & WatchPoint) && watchPoints.check( addr )) {
-        DEBUG_POINT_REACHED(WatchPoint, addr);
+        DEBUG_POINT_REACHED(WatchPoint, watchPoints, addr);
     }
 
     IDLE_CYCLE(addr);
@@ -254,7 +260,7 @@ template<uint8_t actions> inline auto W65816::read(uint32_t addr) -> uint8_t {
 #endif
 
     if ((control & WatchPoint) && watchPoints.check( addr )) {
-        DEBUG_POINT_REACHED(WatchPoint, addr);
+        DEBUG_POINT_REACHED(WatchPoint, watchPoints, addr);
     }
 
 #ifdef SEPARATE_VECTOR_READ
@@ -280,7 +286,7 @@ template<uint8_t actions> inline auto W65816::write(uint32_t addr, uint8_t value
         modifiedCode.checkAndSet( addr );
 
         if ((control & WatchPointWrite) && watchPointsWrite.check( addr )) {
-            DEBUG_POINT_REACHED(WatchPointWrite, addr);
+            DEBUG_POINT_REACHED(WatchPointWrite, watchPointsWrite, addr);
         }
     }
 

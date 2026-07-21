@@ -175,7 +175,7 @@ template<bool software, bool mhz2, bool busLogger> inline auto M6510::interrupt(
 
     if constexpr (!software) {
         if ((control & ExceptionPoint) && exceptionPoints.check( vector )) {
-            system->debugPointReached(DebuggerTheme::CPU, DebuggerAction::ExceptionPoint, vector);
+            system->debugPointReached(DebuggerTheme::CPU, DebuggerAction::ExceptionPoint, exceptionPoints, vector);
         }
     }
 	
@@ -306,7 +306,7 @@ STEAL:
     }
 
     if ((control & WatchPoint) && watchPoints.check( addr )) {
-        system->debugPointReached(DebuggerTheme::CPU, DebuggerAction::Watchpoint, addr);
+        system->debugPointReached(DebuggerTheme::CPU, DebuggerAction::Watchpoint, watchPoints, addr);
     }
 
 	if (addr == 0x0000 || addr == 0x0001)
@@ -339,7 +339,7 @@ STEAL:
     }
 
     if ((control & WatchPoint) && watchPoints.check( addr )) {
-        system->debugPointReached(DebuggerTheme::CPU, DebuggerAction::Watchpoint, addr);
+        system->debugPointReached(DebuggerTheme::CPU, DebuggerAction::Watchpoint, watchPoints, addr);
     }
 
     if (likely(addr > 0x0001)) {
@@ -384,7 +384,7 @@ template<bool mhz2, bool busLogger> auto M6510::busWrite( uint16_t addr, uint8_t
         modifiedCode.checkAndSet( addr );
 
         if ((control & WatchPointWrite) && watchPointsWrite.check( addr )) {
-            system->debugPointReached(DebuggerTheme::CPU, DebuggerAction::WatchpointWrite, addr);
+            system->debugPointReached(DebuggerTheme::CPU, DebuggerAction::WatchpointWrite, watchPointsWrite, addr);
         }
     }
 

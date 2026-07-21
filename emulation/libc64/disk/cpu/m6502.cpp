@@ -39,7 +39,7 @@ namespace LIBC64 {
 
 #define READ( addr ) 	\
     { if ((control & WatchPoint) && watchPoints.check( addr )) \
-        system->debugPointReached(getTheme(), DebuggerAction::Watchpoint, addr); \
+        system->debugPointReached(getTheme(), DebuggerAction::Watchpoint, watchPoints, addr); \
     dataBus = drive->cpuRead( addr ); }
 
 #define READ_LAST( addr ) \
@@ -48,7 +48,7 @@ namespace LIBC64 {
 
 #define WRITE( addr, value )	\
     { if ((control & WatchPointWrite) && watchPointsWrite.check( addr )) \
-        system->debugPointReached(getTheme(), DebuggerAction::WatchpointWrite, addr); \
+        system->debugPointReached(getTheme(), DebuggerAction::WatchpointWrite, watchPointsWrite, addr); \
     drive->cpuWrite( addr, value); }
 
 #define WRITE_LAST( addr, value )	\
@@ -171,7 +171,7 @@ template<bool software> inline auto M6502New::interrupt() -> void {
 
     if constexpr (!software) {
         if ((control & ExceptionPoint) && exceptionPoints.check( vector )) {
-            system->debugPointReached(getTheme(), DebuggerAction::ExceptionPoint, vector);
+            system->debugPointReached(getTheme(), DebuggerAction::ExceptionPoint, exceptionPoints, vector);
         }
     }
 
@@ -820,7 +820,7 @@ auto M6502New::process() -> void {
                     loadTrace(historyHandler.getNext());
 
                 if ((control & WatchPoint) && watchPoints.check( pc ))
-                    system->debugPointReached(getTheme(), DebuggerAction::Watchpoint, pc);
+                    system->debugPointReached(getTheme(), DebuggerAction::Watchpoint, watchPoints, pc);
             }
 
             operation = drive->cpuRead( pc++ );
@@ -2053,11 +2053,16 @@ auto M6502New::loadTrace(Emulator::HistoryEntry<uint8_t>& entry) -> void {
 }
 
 auto M6502New::controlBreaks() -> void {
+    DebuggerAction action = DebuggerAction::None;
+
     if ((control & SoftStop) && checkSoftStop(pcEdge)) {
-        system->debugPointReached(getTheme(), DebuggerAction::Softstop, pcEdge);
-    } else if ((control & BreakPoint) && breakPoints.check(pcEdge)) {
-        system->debugPointReached(getTheme(), DebuggerAction::Breakpoint, pcEdge);
+        action = DebuggerAction::Softstop;
+    } if ((control & BreakPoint) && breakPoints.check(pcEdge)) {
+        action = DebuggerAction::Breakpoint;
     }
+
+    if (action != DebuggerAction::None)
+        system->debugPointReached(DebuggerTheme::CPU, action, breakPoints, pcEdge);
 }
 
 }

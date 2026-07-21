@@ -117,9 +117,8 @@ template<uint8_t Size, uint8_t Flags> auto M68000::read(uint32_t adr) -> uint32_
     uint32_t result;
 
     if (control & WatchPoint) {
-        Emulator::Watcher* w = watchPoints.check( adr, Size, true );
-        if (w)
-            DEBUG_POINT_REACHED(WatchPoint, w->addr);
+        if (watchPoints.check( adr, Size, true ))
+            DEBUG_POINT_REACHED(WatchPoint, watchPoints, adr);
     }
 
     if constexpr (Size == Long) {
@@ -170,9 +169,8 @@ template<uint8_t Size, uint8_t Flags> auto M68000::write(uint32_t adr, uint32_t 
         modifiedCode.checkAndSet( adr, Size );
 
         if (control & WatchPointWrite) {
-            Emulator::Watcher* w = watchPointsWrite.check( adr, Size, true );
-            if (w)
-                DEBUG_POINT_REACHED(WatchPointWrite, w->addr);
+            if (watchPointsWrite.check( adr, Size, true ))
+                DEBUG_POINT_REACHED(WatchPointWrite, watchPointsWrite, adr);
         }
     }
 

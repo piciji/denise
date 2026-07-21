@@ -251,7 +251,7 @@ protected:
     virtual auto tasCycleBegin() -> void {}
     virtual auto tasCycleEnd() -> void {}
 
-    virtual auto debugPointReached(int source, unsigned addr) -> void {}
+    virtual auto debugPointReached(int source, Emulator::WatchPoints& wp, unsigned addr) -> void {}
 #endif
 
     auto flagDebugAction(int action, bool state) -> void;

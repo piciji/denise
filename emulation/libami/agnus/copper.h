@@ -90,8 +90,8 @@ struct Copper {
     enum DebuggerState {None = 0, WatchPoint = 1, BreakPoint = 2, SoftStep = 4, LogList = 8};
     int debuggerState;
 
-    auto debuggerAdd(DebuggerAction action, unsigned addr) -> void;
-    auto debuggerRemove(DebuggerAction action, unsigned addr) -> void;
+    auto debuggerAdd(DebuggerAction action, unsigned ident, unsigned addr) -> void;
+    auto debuggerRemove(DebuggerAction action, unsigned ident) -> void;
     auto debuggerRemove(DebuggerAction action) -> void;
     auto updateDmaSnapshot(DebuggerSnapshot& snap) -> void;
     auto checkBreakpoints() -> void;

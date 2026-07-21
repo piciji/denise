@@ -705,12 +705,18 @@ auto M6510::loadTrace(Emulator::HistoryEntry<uint8_t>& entry) -> void {
     }
 }
 
-inline auto M6510::controlBreaks() -> void {
-     if ((control & SoftStop) && checkSoftStop(pcEdge)) {
-         system->debugPointReached(DebuggerTheme::CPU, DebuggerAction::Softstop, pcEdge);
-     } else if ((control & BreakPoint) && breakPoints.check(pcEdge)) {
-         system->debugPointReached(DebuggerTheme::CPU, DebuggerAction::Breakpoint, pcEdge);
-     }
+auto M6510::controlBreaks() -> void {
+    DebuggerAction action = DebuggerAction::None;
+
+    if ((control & SoftStop) && checkSoftStop(pcEdge)) {
+        action = DebuggerAction::Softstop;
+    } if ((control & BreakPoint) && breakPoints.check(pcEdge)) {
+        action = DebuggerAction::Breakpoint;
+    }
+
+    if (action != DebuggerAction::None) {
+        system->debugPointReached(DebuggerTheme::CPU, action, breakPoints, pcEdge);
+    }
 }
 
 auto M6510::getFlags() -> uint8_t {

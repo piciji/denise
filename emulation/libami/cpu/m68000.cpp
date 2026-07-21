@@ -29,12 +29,12 @@ Cpu::Cpu(Agnus& agnus) : M68FAMILY::M68000(agnus) {
     };
 }
 
-auto Cpu::debuggerAdd(DebuggerAction action, unsigned addr, unsigned addrTo) -> void {
+auto Cpu::debuggerAdd(DebuggerAction action, unsigned ident, unsigned addr, unsigned addrTo) -> void {
     switch (action) {
-        case DebuggerAction::Breakpoint:        breakPoints.add( addr ); break;
-        case DebuggerAction::Watchpoint:        watchPoints.add( addr ); break;
-        case DebuggerAction::WatchpointWrite:   watchPointsWrite.add( addr ); break;
-        case DebuggerAction::ExceptionPoint:    exceptionPoints.add( addr ); break;
+        case DebuggerAction::Breakpoint:        breakPoints.add( ident, addr, addrTo ); break;
+        case DebuggerAction::Watchpoint:        watchPoints.add( ident, addr, addrTo ); break;
+        case DebuggerAction::WatchpointWrite:   watchPointsWrite.add( ident, addr, addrTo ); break;
+        case DebuggerAction::ExceptionPoint:    exceptionPoints.add( ident, addr, addr ); break;
         case DebuggerAction::ModifiedCode:      modifiedCode.add( addr, addrTo ); break;
         case DebuggerAction::History:           historyHandler.enable(); break;
         default:
@@ -42,12 +42,12 @@ auto Cpu::debuggerAdd(DebuggerAction action, unsigned addr, unsigned addrTo) -> 
     }
 }
 
-auto Cpu::debuggerRemove(DebuggerAction action, unsigned addr) -> void {
+auto Cpu::debuggerRemove(DebuggerAction action, unsigned ident) -> void {
     switch (action) {
-        case DebuggerAction::Breakpoint:        breakPoints.remove( addr ); break;
-        case DebuggerAction::Watchpoint:        watchPoints.remove( addr ); break;
-        case DebuggerAction::WatchpointWrite:   watchPointsWrite.remove( addr ); break;
-        case DebuggerAction::ExceptionPoint:    exceptionPoints.remove( addr ); break;
+        case DebuggerAction::Breakpoint:        breakPoints.remove( ident ); break;
+        case DebuggerAction::Watchpoint:        watchPoints.remove( ident ); break;
+        case DebuggerAction::WatchpointWrite:   watchPointsWrite.remove( ident ); break;
+        case DebuggerAction::ExceptionPoint:    exceptionPoints.remove( ident ); break;
         case DebuggerAction::History:           historyHandler.disable( ); break;
         case DebuggerAction::ModifiedCode:      modifiedCode.disable(); break;
         default:
@@ -132,7 +132,7 @@ auto Cpu::parseExpressionValue(const std::string& input, int& pos) -> uint32_t {
     return 0;
 }
 
-auto Cpu::setWatchpointCondition(DebuggerTheme theme, DebuggerAction action, unsigned addr, unsigned hitCount, unsigned hitCountMode, const std::string& expression, unsigned expressionMode) -> bool {
+auto Cpu::setWatchpointCondition(DebuggerTheme theme, DebuggerAction action, unsigned ident, unsigned hitCount, unsigned hitCountMode, const std::string& expression, unsigned expressionMode) -> bool {
     bool expressionError = false;
 
     if (!expression.empty()) {
@@ -152,26 +152,26 @@ auto Cpu::setWatchpointCondition(DebuggerTheme theme, DebuggerAction action, uns
     if (theme == DebuggerTheme::Copper) {
         switch (action) {
             case DebuggerAction::Breakpoint:
-                ref.copper.breakPoints.setBreakpointCondition( addr, hitCount, hitCountMode, expressionError ? "" : expression, expressionMode );
+                ref.copper.breakPoints.setBreakpointCondition( ident, hitCount, hitCountMode, expressionError ? "" : expression, expressionMode );
                 break;
             case DebuggerAction::Watchpoint:
-                ref.copper.watchPoints.setBreakpointCondition( addr, hitCount, hitCountMode, expressionError ? "" : expression, expressionMode );
+                ref.copper.watchPoints.setBreakpointCondition( ident, hitCount, hitCountMode, expressionError ? "" : expression, expressionMode );
                 break;
             default: break;
         }
     } else {
         switch (action) {
             case DebuggerAction::Breakpoint:
-                breakPoints.setBreakpointCondition( addr, hitCount, hitCountMode, expressionError ? "" : expression, expressionMode );
+                breakPoints.setBreakpointCondition( ident, hitCount, hitCountMode, expressionError ? "" : expression, expressionMode );
                 break;
             case DebuggerAction::Watchpoint:
-                watchPoints.setBreakpointCondition( addr, hitCount, hitCountMode, expressionError ? "" : expression, expressionMode );
+                watchPoints.setBreakpointCondition( ident, hitCount, hitCountMode, expressionError ? "" : expression, expressionMode );
                 break;
             case DebuggerAction::WatchpointWrite:
-                watchPointsWrite.setBreakpointCondition( addr, hitCount, hitCountMode, expressionError ? "" : expression, expressionMode );
+                watchPointsWrite.setBreakpointCondition( ident, hitCount, hitCountMode, expressionError ? "" : expression, expressionMode );
                 break;
             case DebuggerAction::ExceptionPoint:
-                exceptionPoints.setBreakpointCondition( addr, hitCount, hitCountMode, expressionError ? "" : expression, expressionMode );
+                exceptionPoints.setBreakpointCondition( ident, hitCount, hitCountMode, expressionError ? "" : expression, expressionMode );
                 break;
             default: break;
         }

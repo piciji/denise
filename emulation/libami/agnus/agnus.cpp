@@ -1052,7 +1052,7 @@ inline auto Agnus::csyncPolTrue(bool state) -> bool {
     return (beamCon & CSYTRUE) ? !state : state;
 }
 
-auto Agnus::debugPointReached(int source, unsigned addr) -> void {
+auto Agnus::debugPointReached(int source, Emulator::WatchPoints& wp, unsigned addr) -> void {
     Emulator::Interface::DebuggerAction action;
 
     switch (source) {
@@ -1064,7 +1064,16 @@ auto Agnus::debugPointReached(int source, unsigned addr) -> void {
         default: return;
     }
 
-    debugPointReached(DebuggerTheme::CPU, action, addr);
+    debugPointReached(DebuggerTheme::CPU, action, wp, addr);
+}
+
+auto Agnus::debugPointReached(DebuggerTheme theme, DebuggerAction action, Emulator::WatchPoints& wp, unsigned addr) -> void {
+    debugger.action = action;
+    debugger.theme = theme;
+    debugger.addr = addr;
+    wp.getAndResetHitIdents( debugger.watcherIdents );
+
+    system->debuggerUpdate();
 }
 
 auto Agnus::debugPointReached(DebuggerTheme theme, DebuggerAction action, unsigned addr) -> void {
@@ -1129,6 +1138,7 @@ auto Agnus::updateSnapshot(DebuggerSnapshot& snap) -> void {
     snap.callbackAction = debugger.action;
     snap.callbackAddress = debugger.addr;
     snap.callbackTheme = debugger.theme;
+    snap.watcherIdents = debugger.watcherIdents;
     snap.codeMaybeModified = cpu.hasModifiedCode();
 }
 

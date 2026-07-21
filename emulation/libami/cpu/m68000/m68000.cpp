@@ -105,11 +105,16 @@ auto M68000::controlBreaks() -> void {
     if (control & (TraceScheduled | Stop) )
         return;
 
+    int source = 0;
+
     if ((control & SoftStop) && checkSoftStop(pcEdge))
-        return DEBUG_POINT_REACHED(SoftStop, pcEdge);
+        source = SoftStop;
 
     if ((control & BreakPoint) && breakPoints.check(pcEdge, true))
-        return DEBUG_POINT_REACHED(BreakPoint, pcEdge);
+        source = BreakPoint;
+
+    if (source != 0)
+        DEBUG_POINT_REACHED(source, breakPoints, pcEdge);
 }
 
 auto M68000::loadTrace(Emulator::HistoryEntry<uint16_t>& entry) -> void {

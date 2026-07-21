@@ -1718,7 +1718,7 @@ auto SuperCpu::parseExpressionValue(const std::string& input, int& pos) -> uint3
     return 0;
 }
 
-auto SuperCpu::setWatchpointCondition(DebuggerAction action, unsigned addr, unsigned hitCount, unsigned hitCountMode, const std::string& expression, unsigned expressionMode) -> bool {
+auto SuperCpu::setWatchpointCondition(DebuggerAction action, unsigned ident, unsigned hitCount, unsigned hitCountMode, const std::string& expression, unsigned expressionMode) -> bool {
     bool expressionError = false;
 
     if (!expression.empty()) {
@@ -1737,16 +1737,16 @@ auto SuperCpu::setWatchpointCondition(DebuggerAction action, unsigned addr, unsi
 
     switch (action) {
         case DebuggerAction::Breakpoint:
-            breakPoints.setBreakpointCondition( addr, hitCount, hitCountMode, expressionError ? "" : expression, expressionMode );
+            breakPoints.setBreakpointCondition( ident, hitCount, hitCountMode, expressionError ? "" : expression, expressionMode );
             break;
         case DebuggerAction::Watchpoint:
-            watchPoints.setBreakpointCondition( addr, hitCount, hitCountMode, expressionError ? "" : expression, expressionMode );
+            watchPoints.setBreakpointCondition( ident, hitCount, hitCountMode, expressionError ? "" : expression, expressionMode );
             break;
         case DebuggerAction::WatchpointWrite:
-            watchPointsWrite.setBreakpointCondition( addr, hitCount, hitCountMode, expressionError ? "" : expression, expressionMode );
+            watchPointsWrite.setBreakpointCondition( ident, hitCount, hitCountMode, expressionError ? "" : expression, expressionMode );
             break;
         case DebuggerAction::ExceptionPoint:
-            exceptionPoints.setBreakpointCondition( addr, hitCount, hitCountMode, expressionError ? "" : expression, expressionMode );
+            exceptionPoints.setBreakpointCondition( ident, hitCount, hitCountMode, expressionError ? "" : expression, expressionMode );
             break;
         default: break;
     }
@@ -1754,12 +1754,12 @@ auto SuperCpu::setWatchpointCondition(DebuggerAction action, unsigned addr, unsi
     return !expressionError;
 }
 
-auto SuperCpu::debuggerAdd(DebuggerAction action, uint32_t addr, uint32_t addrTo) -> void {
+auto SuperCpu::debuggerAdd(DebuggerAction action, unsigned ident, uint32_t addr, uint32_t addrTo) -> void {
     switch (action) {
-        case DebuggerAction::Breakpoint:        breakPoints.add( addr ); break;
-        case DebuggerAction::Watchpoint:        watchPoints.add( addr ); break;
-        case DebuggerAction::WatchpointWrite:   watchPointsWrite.add( addr ); break;
-        case DebuggerAction::ExceptionPoint:    exceptionPoints.add( addr ); break;
+        case DebuggerAction::Breakpoint:        breakPoints.add( ident, addr, addrTo ); break;
+        case DebuggerAction::Watchpoint:        watchPoints.add( ident, addr, addrTo ); break;
+        case DebuggerAction::WatchpointWrite:   watchPointsWrite.add(ident,  addr, addrTo ); break;
+        case DebuggerAction::ExceptionPoint:    exceptionPoints.add( ident, addr, addr ); break;
         case DebuggerAction::History:           historyHandler.enable(); break;
         case DebuggerAction::ModifiedCode:      modifiedCode.add( addr, addrTo ); break;
         default:
@@ -1767,12 +1767,12 @@ auto SuperCpu::debuggerAdd(DebuggerAction action, uint32_t addr, uint32_t addrTo
     }
 }
 
-auto SuperCpu::debuggerRemove(DebuggerAction action, uint32_t addr) -> void {
+auto SuperCpu::debuggerRemove(DebuggerAction action, unsigned ident) -> void {
     switch (action) {
-        case DebuggerAction::Breakpoint:        breakPoints.remove( addr ); break;
-        case DebuggerAction::Watchpoint:        watchPoints.remove( addr ); break;
-        case DebuggerAction::WatchpointWrite:   watchPointsWrite.remove( addr ); break;
-        case DebuggerAction::ExceptionPoint:    exceptionPoints.remove( addr ); break;
+        case DebuggerAction::Breakpoint:        breakPoints.remove( ident ); break;
+        case DebuggerAction::Watchpoint:        watchPoints.remove( ident ); break;
+        case DebuggerAction::WatchpointWrite:   watchPointsWrite.remove( ident ); break;
+        case DebuggerAction::ExceptionPoint:    exceptionPoints.remove( ident ); break;
         case DebuggerAction::History:           historyHandler.disable( ); break;
         default:
             break;
@@ -1792,7 +1792,7 @@ auto SuperCpu::debuggerRemove(DebuggerAction action) -> void {
     }
 }
 
-auto SuperCpu::debugPointReached(int source, unsigned addr) -> void {
+auto SuperCpu::debugPointReached(int source, Emulator::WatchPoints& wp, unsigned addr) -> void {
     Emulator::Interface::DebuggerAction action;
 
     switch (source) {
@@ -1803,7 +1803,7 @@ auto SuperCpu::debugPointReached(int source, unsigned addr) -> void {
         case SoftStop: action = DebuggerAction::Softstop; break;
         default: return;
     }
-    system->debugPointReached(DebuggerTheme::SCPU, action, addr);
+    system->debugPointReached(DebuggerTheme::SCPU, action, wp, addr);
 }
 
 }
