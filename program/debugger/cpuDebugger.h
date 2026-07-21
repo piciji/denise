@@ -42,6 +42,7 @@ struct CpuDebugger : Debugger {
 
             struct Adder : GUIKIT::HorizontalLayout {
                 GUIKIT::LineEdit address;
+                GUIKIT::LineEdit endAddress;
                 GUIKIT::Button add;
                 Adder();
             } adder;
@@ -160,7 +161,7 @@ struct CpuDebugger : Debugger {
 
     auto getTheme() -> DebuggerTheme override { return DebuggerTheme::CPU; }
 
-    auto addEntry(unsigned address, DebuggerAction action) -> void;
+    auto addEntry(unsigned address, unsigned endAddress, DebuggerAction action) -> void;
     auto deleteEntry(unsigned address, DebuggerAction action) -> void;
     auto enableEntry(unsigned address, DebuggerAction action, bool enable) -> void;
     auto addCondition(unsigned address, DebuggerAction action, const std::string& condition) -> bool;

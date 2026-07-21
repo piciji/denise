@@ -6,7 +6,9 @@
 
 struct DbgWatcher {
     unsigned addr;
-    std::string ident;
+    unsigned endAddr;
+    unsigned ident;
+    std::string desc;
     DebuggerAction action;
     bool enabled;
 
@@ -26,10 +28,12 @@ struct WatcherHelper {
 
     auto updateList() -> void;
     auto updateBreakpointVisuals(unsigned row, DbgWatcher* watcher, bool preventColumResizing = false) -> void;
-    auto addToList(unsigned addr, DebuggerAction action, const std::string& ident = "") -> void;
-    auto removeFromList(unsigned addr, DebuggerAction action) -> void;
-    auto findBy(unsigned addr, DebuggerAction action) -> DbgWatcher*;
-    auto findRowBy(unsigned addr, DebuggerAction action) -> std::optional<unsigned>;
+    auto addToList(unsigned addr, unsigned endAddr, DebuggerAction action, const std::string& desc = "") -> DbgWatcher*;
+    auto removeFromList(unsigned ident) -> void;
+    auto findBy(unsigned ident) -> DbgWatcher*;
+    auto findBy(unsigned addr, DebuggerAction action) -> std::vector<DbgWatcher*>;
+    auto findEnabled(unsigned addr, DebuggerAction action) -> std::vector<DbgWatcher*>;
+    auto findRowBy(unsigned ident) -> std::optional<unsigned>;
     auto elements() const -> unsigned { return watchers.size(); }
     auto getWatcher(unsigned pos) -> DbgWatcher& { return watchers[pos]; }
 };

@@ -25,6 +25,7 @@ CpuDebugger::CPU::WatcherLayout::MemoryAccessLayout::MemoryAccessLayout() {
 CpuDebugger::CPU::WatcherLayout::Adder::Adder() {
     address.setMaxLength( 8 );
     append(address, {~0u, 0u}, 10);
+    append(endAddress, {~0u, 0u}, 10);
     append(add, {0u, 0u});
 
     setAlignment( 0.5 );
@@ -223,22 +224,31 @@ auto CpuDebugger::buildTheme() -> GUIKIT::Layout* {
         if (column == 0) {
             emuThread->lock();
             auto& inst = instructions[row];
-            DbgWatcher* watcher = watcherHelper.findBy(inst.addr, DebuggerAction::Breakpoint);
-            if (!watcher) {
-                watcherHelper.addToList( inst.addr, DebuggerAction::Breakpoint );
-                watcher = watcherHelper.findBy(inst.addr, DebuggerAction::Breakpoint);
-                emulator->debuggerAdd(getTheme(), DebuggerAction::Breakpoint, inst.addr);
+            std::vector<DbgWatcher*> watchers = watcherHelper.findBy(inst.addr, DebuggerAction::Breakpoint);
+
+            if (watchers.empty()) {
+                auto watcher = watcherHelper.addToList( inst.addr, inst.addr, DebuggerAction::Breakpoint );
+                watchers.push_back( watcher );
+                emulator->debuggerAdd(getTheme(), DebuggerAction::Breakpoint, watcher->ident, watcher->addr, watcher->addr);
             } else {
-                watcher->enabled ^= 1;
-                if (watcher->enabled) {
-                    emulator->debuggerAdd(getTheme(), DebuggerAction::Breakpoint, inst.addr);
-                    updateWatchpointCondition( *watcher );
-                } else
-                    emulator->debuggerRemove(getTheme(), DebuggerAction::Breakpoint, inst.addr);
+                auto watchersEn = watcherHelper.findEnabled(inst.addr, DebuggerAction::Breakpoint);
+
+                if (!watchersEn.empty()) { // at least one enabled
+                    for (auto watcher : watchersEn) {
+                        watcher->enabled = false;
+                        emulator->debuggerRemove(getTheme(), DebuggerAction::Breakpoint, watcher->ident);
+                    }
+                } else { // all disabled
+                    for (auto watcher : watchers) {
+                        watcher->enabled = true;
+                        emulator->debuggerAdd(getTheme(), DebuggerAction::Breakpoint, watcher->ident, watcher->addr, watcher->addr);
+                        updateWatchpointCondition( *watcher );
+                    }
+                }
             }
             watcherHelper.updateList();
             emuThread->unlock();
-            updateInstructionBreakpointVisuals(instructionList, row, watcher);
+            updateInstructionBreakpointVisuals(instructionList, row, watchers);
             instructionList.setSelection( currentInstRow.has_value() ? currentInstRow.value_or(0) : 0 );
         } else if (isPaused()) {
             auto& inst = instructions[row];
@@ -250,9 +260,9 @@ auto CpuDebugger::buildTheme() -> GUIKIT::Layout* {
     cpu->instructionLayout.list.onContext = [this](unsigned row, unsigned column, GUIKIT::Position position ) {
         if (column == 0) {
             auto& inst = instructions[row];
-            DbgWatcher* watcher = watcherHelper.findBy(inst.addr, DebuggerAction::Breakpoint);
-            if (watcher) {
-                openConditionView(watcher, position);
+            auto watchers = watcherHelper.findBy(inst.addr, DebuggerAction::Breakpoint);
+            if (watchers.size() == 1) {
+                openConditionView(watchers[0], position);
             }
 
             cpu->instructionLayout.list.setSelection( currentInstRow.has_value() ? currentInstRow.value_or(0) : 0 );
@@ -291,19 +301,25 @@ auto CpuDebugger::buildTheme() -> GUIKIT::Layout* {
             watcher.enabled ^= 1;
             watcherHelper.updateBreakpointVisuals(row, &watcher);
             if (watcher.enabled) {
-                emulator->debuggerAdd(getTheme(), watcher.action, watcher.addr);
+                emulator->debuggerAdd(getTheme(), watcher.action, watcher.ident, watcher.addr, watcher.endAddr);
                 updateWatchpointCondition( watcher );
             } else
-                emulator->debuggerRemove(getTheme(), watcher.action, watcher.addr);
+                emulator->debuggerRemove(getTheme(), watcher.action, watcher.ident);
 
             if (instRow.has_value())
-                updateInstructionBreakpointVisuals(instructionList, instRow.value_or(0), &watcher);
+                updateInstructionBreakpointVisuals(instructionList, instRow.value_or(0), watcherHelper.findBy(watcher.addr, DebuggerAction::Breakpoint));
         } else if (column == 3) {
-            emulator->debuggerRemove( getTheme(), watcher.action, watcher.addr);
-            if (instRow.has_value())
-                removeInstructionBreakpointVisuals(instructionList, instRow.value_or(0));
+            emulator->debuggerRemove( getTheme(), watcher.action, watcher.ident);
+            watcherHelper.removeFromList(watcher.ident);
 
-            watcherHelper.removeFromList(watcher.addr, watcher.action);
+            if (instRow.has_value()) {
+                auto watchers = watcherHelper.findBy(watcher.addr, DebuggerAction::Breakpoint);
+                if (watchers.empty())
+                    removeInstructionBreakpointVisuals(instructionList, instRow.value_or(0));
+                else
+                    updateInstructionBreakpointVisuals(instructionList, instRow.value_or(0), watchers);
+            }
+
             watcherHelper.updateList();
         }
 
@@ -314,15 +330,10 @@ auto CpuDebugger::buildTheme() -> GUIKIT::Layout* {
     cpu->watcher.excAdder.add.onActivate = [this]() {
         unsigned vector = (int)cpu->watcher.excAdder.exceptionCombo.userData();
 
-        DebuggerAction action = DebuggerAction::ExceptionPoint;
-
-        if (watcherHelper.findBy( vector, action ))
-            return;
-
         emuThread->lock();
-        watcherHelper.addToList( vector, action, cpu->watcher.excAdder.exceptionCombo.text() );
+        auto watcher = watcherHelper.addToList( vector, vector, DebuggerAction::ExceptionPoint, cpu->watcher.excAdder.exceptionCombo.text() );
         watcherHelper.updateList();
-        emulator->debuggerAdd(getTheme(), action, vector);
+        emulator->debuggerAdd(getTheme(), DebuggerAction::ExceptionPoint, watcher->ident, watcher->addr, watcher->endAddr);
         emuThread->unlock();
     };
 
@@ -332,6 +343,7 @@ auto CpuDebugger::buildTheme() -> GUIKIT::Layout* {
 
     cpu->watcher.adder.address.onReturn = [this]() {
         std::string addressText = cpu->watcher.adder.address.text();
+        std::string endAddressText = cpu->watcher.adder.endAddress.text();
         if (addressText.empty())
             return;
 
@@ -339,16 +351,22 @@ auto CpuDebugger::buildTheme() -> GUIKIT::Layout* {
         if (address == -1)
             return;
 
+        int endAddress = address;
+        if (!endAddressText.empty()) {
+            endAddress = GUIKIT::String::convertHexToInt(addressText, -1);
+            if (endAddress == -1)
+                return;
+        }
+
         DebuggerAction action = DebuggerAction::Breakpoint;
         if (cpu->watcher.memoryAccessLayout.watchPoint.checked()) {
             action = DebuggerAction::Watchpoint;
-            if (cpu->watcher.memoryAccessLayout.writeCheck.checked()) {
+            if (cpu->watcher.memoryAccessLayout.writeCheck.checked())
                 action = DebuggerAction::WatchpointWrite;
-            }
         }
 
         emuThread->lock();
-        addEntry( address, action );
+        addEntry( address, endAddress, action );
         emuThread->unlock();
     };
 
@@ -453,11 +471,11 @@ auto CpuDebugger::updateInstructionList() -> void {
         instructionList.resetRowForegroundColor( i );
         instructionList.append({ "",parts[0], parts.size() < 2 ? "" : parts[1], inst.disassembled }, true);
 
-        auto breakPoint = watcherHelper.findBy( inst.addr, DebuggerAction::Breakpoint );
-        if (!breakPoint) {
+        auto watchers = watcherHelper.findBy( inst.addr, DebuggerAction::Breakpoint );
+        if (watchers.empty()) {
             instructionList.setImage( i, 0, nullImg, true );
         } else {
-            updateInstructionBreakpointVisuals(instructionList, i, breakPoint, true);
+            updateInstructionBreakpointVisuals(instructionList, i, watchers, true);
         }
     }
     instructionList.autoSizeColumns();
@@ -532,9 +550,9 @@ auto CpuDebugger::updateBreakpointVisuals(DbgWatcher* watcher) -> void {
     std::optional<unsigned> instRow = findInstructionRowBy(watcher->addr);
 
     if (instRow.has_value())
-        updateInstructionBreakpointVisuals(cpu->instructionLayout.list, instRow.value_or(0), watcher);
+        updateInstructionBreakpointVisuals(cpu->instructionLayout.list, instRow.value_or(0), watcherHelper.findBy(watcher->addr, DebuggerAction::Breakpoint));
 
-    instRow = watcherHelper.findRowBy( watcher->addr, watcher->action );
+    instRow = watcherHelper.findRowBy( watcher->ident );
 
     if (instRow.has_value())
         watcherHelper.updateBreakpointVisuals(instRow.value_or(0), watcher);
@@ -544,6 +562,7 @@ auto CpuDebugger::updateWatcherSelection() -> void {
     auto& watcherList = cpu->watcher.list;
     auto& t = snapshot->callbackTheme;
     auto& act = snapshot->callbackAction;
+    auto& idents = snapshot->watcherIdents;
     bool hiLight = false;
 
     if (t == getTheme()) {
@@ -888,21 +907,19 @@ auto CpuDebugger::translateTheme() -> void {
     }
 }
 
-auto CpuDebugger::addEntry(unsigned address, DebuggerAction action) -> void {
+auto CpuDebugger::addEntry(unsigned address, unsigned endAddress, DebuggerAction action) -> void {
     auto& instructionList = cpu->instructionLayout.list;
-    if (watcherHelper.findBy( address, action ))
-        return;
 
-    watcherHelper.addToList( static_cast<unsigned>(address), action );
+    auto watcher = watcherHelper.addToList( address, endAddress, action );
     watcherHelper.updateList();
 
-    if (action == DebuggerAction::Breakpoint) {
-        auto instRow = findInstructionRowBy(static_cast<unsigned>(address));
+    if (action == DebuggerAction::Breakpoint && (address == endAddress)) {
+        auto instRow = findInstructionRowBy(address);
         if (instRow.has_value())
             updateInstructionBreakpointVisuals(instructionList, instRow.value_or(0), watcherHelper.findBy( address, action ));
     }
 
-    emulator->debuggerAdd(getTheme(), action, address);
+    emulator->debuggerAdd(getTheme(), action, watcher->ident, watcher->addr, watcher->endAddr);
 }
 
 auto CpuDebugger::addCondition(unsigned address, DebuggerAction action, const std::string& condition) -> bool {

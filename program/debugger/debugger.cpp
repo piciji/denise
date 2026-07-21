@@ -653,9 +653,20 @@ auto Debugger::changeMemory(const std::string& addrStr, const std::string& valSt
     emuThread->unlock();
 }
 
-auto Debugger::updateInstructionBreakpointVisuals(GUIKIT::ListView& listView, unsigned row, DbgWatcher* watcher, bool preventColumResizing) -> void {
-    if (watcher->enabled) {
-        if (watcher->useHitCount || watcher->useExpression)
+auto Debugger::updateInstructionBreakpointVisuals(GUIKIT::ListView& listView, unsigned row, std::vector<DbgWatcher*> watchers, bool preventColumResizing) -> void {
+    bool _enabled = false;
+    bool _conditions = false;
+
+    for (auto* watcher : watchers) {
+        if (watcher->enabled) {
+            _enabled = true;
+            if (watcher->useHitCount || watcher->useExpression)
+                _conditions = true;
+        }
+    }
+
+    if (_enabled) {
+        if (_conditions)
             listView.setImage( row, 0, breakCondEnableImg, preventColumResizing );
         else
             listView.setImage( row, 0, breakEnableImg, preventColumResizing );
@@ -668,6 +679,21 @@ auto Debugger::updateInstructionBreakpointVisuals(GUIKIT::ListView& listView, un
     }
 }
 
+// auto Debugger::updateInstructionBreakpointVisuals(GUIKIT::ListView& listView, unsigned row, DbgWatcher* watcher, bool preventColumResizing) -> void {
+//     if (watcher->enabled) {
+//         if (watcher->useHitCount || watcher->useExpression)
+//             listView.setImage( row, 0, breakCondEnableImg, preventColumResizing );
+//         else
+//             listView.setImage( row, 0, breakEnableImg, preventColumResizing );
+//
+//         listView.setRowForegroundColor( DEBUG_COLOR, row );
+//     } else {
+//         listView.setImage( row, 0, breakDisableImg, preventColumResizing);
+//         if (!preventColumResizing)
+//             listView.resetRowForegroundColor( row );
+//     }
+// }
+
 auto Debugger::removeInstructionBreakpointVisuals(GUIKIT::ListView& listView, unsigned row) -> void {
     listView.setImage( row, 0, nullImg);
     listView.resetRowForegroundColor( row );
@@ -676,7 +702,7 @@ auto Debugger::removeInstructionBreakpointVisuals(GUIKIT::ListView& listView, un
 auto Debugger::updateWatchpointCondition(DbgWatcher& watcher) -> bool {
     unsigned hitCount = watcher.useHitCount ? watcher.hitCount : 0;
     const auto& expression = watcher.useExpression ? watcher.expression : "";
-    return emulator->setWatchpointCondition( getTheme(), watcher.action, watcher.addr, hitCount, watcher.hitCountCompare, expression, watcher.expressionCompare );
+    return emulator->setWatchpointCondition( getTheme(), watcher.action, watcher.ident, hitCount, watcher.hitCountCompare, expression, watcher.expressionCompare );
 }
 
 auto Debugger::openConditionView(DbgWatcher* watcher, GUIKIT::Position position) -> void {
@@ -688,6 +714,7 @@ auto Debugger::openConditionView(DbgWatcher* watcher, GUIKIT::Position position)
     conditionViewDebugger->create(watcher, position);
     conditionViewDebugger->open();
 }
+
 auto Debugger::getCpuTheme() -> DebuggerTheme {
     if (isAmiga())
         return DebuggerTheme::CPU;
