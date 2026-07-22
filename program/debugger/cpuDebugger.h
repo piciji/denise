@@ -162,9 +162,9 @@ struct CpuDebugger : Debugger {
     auto getTheme() -> DebuggerTheme override { return DebuggerTheme::CPU; }
 
     auto addEntry(unsigned address, unsigned endAddress, DebuggerAction action) -> void;
-    auto deleteEntry(unsigned address, DebuggerAction action) -> void;
-    auto enableEntry(unsigned address, DebuggerAction action, bool enable) -> void;
-    auto addCondition(unsigned address, DebuggerAction action, const std::string& condition) -> bool;
+    auto deleteEntry(DbgWatcher* watcher) -> void;
+    auto enableEntry(DbgWatcher* watcher, bool enable) -> void;
+    auto addCondition(DbgWatcher* watcher, const std::string& condition) -> bool;
 
     virtual auto getDriveId() -> unsigned { return 0; }
 };

@@ -272,13 +272,13 @@ auto BinaryMonitor::toggleCheckpoints(Command& command) -> void {
             auto* cpuDebugger = dynamic_cast<CpuDebugger*>(debugger);
             cp.enable = _enable;
 
-            if (cp.op & 1) {
-                cpuDebugger->enableEntry( cp.address, DebuggerAction::Watchpoint, _enable);
-            } if (cp.op & 2) {
-                cpuDebugger->enableEntry( cp.address, DebuggerAction::WatchpointWrite, _enable);
-            } if (cp.op & 4) {
-                cpuDebugger->enableEntry( cp.address, DebuggerAction::Breakpoint, _enable);
-            }
+            // if (cp.op & 1) {
+            //     cpuDebugger->enableEntry( cp.address, DebuggerAction::Watchpoint, _enable);
+            // } if (cp.op & 2) {
+            //     cpuDebugger->enableEntry( cp.address, DebuggerAction::WatchpointWrite, _enable);
+            // } if (cp.op & 4) {
+            //     cpuDebugger->enableEntry( cp.address, DebuggerAction::Breakpoint, _enable);
+            // }
         }
     } else {
         CheckPoint* cp = findCheckpoint( num );
@@ -300,16 +300,16 @@ auto BinaryMonitor::toggleCheckpoints(Command& command) -> void {
 
         auto* cpuDebugger = dynamic_cast<CpuDebugger*>(debugger);
 
-        if (cp->op & 1) {
-            bool enable = hasEnabledCheckpoint( cp->address, cp->theme, 1 );
-            cpuDebugger->enableEntry( cp->address, DebuggerAction::Watchpoint, enable);
-        } if (cp->op & 2) {
-            bool enable = hasEnabledCheckpoint( cp->address, cp->theme, 2 );
-            cpuDebugger->enableEntry( cp->address, DebuggerAction::WatchpointWrite, enable);
-        } if (cp->op & 4) {
-            bool enable = hasEnabledCheckpoint( cp->address, cp->theme, 4 );
-            cpuDebugger->enableEntry( cp->address, DebuggerAction::Breakpoint, enable);
-        }
+        // if (cp->op & 1) {
+        //     bool enable = hasEnabledCheckpoint( cp->address, cp->theme, 1 );
+        //     cpuDebugger->enableEntry( cp->address, DebuggerAction::Watchpoint, enable);
+        // } if (cp->op & 2) {
+        //     bool enable = hasEnabledCheckpoint( cp->address, cp->theme, 2 );
+        //     cpuDebugger->enableEntry( cp->address, DebuggerAction::WatchpointWrite, enable);
+        // } if (cp->op & 4) {
+        //     bool enable = hasEnabledCheckpoint( cp->address, cp->theme, 4 );
+        //     cpuDebugger->enableEntry( cp->address, DebuggerAction::Breakpoint, enable);
+        // }
     }
 
     sendResponse(0, Type::CHECKPOINT_TOGGLE, Error::OK, command.requestId, nullptr);
@@ -359,13 +359,13 @@ auto BinaryMonitor::deleteCheckpoint(Command& command) -> void {
 
             auto* cpuDebugger = dynamic_cast<CpuDebugger*>(debugger);
 
-            if (cp.op & 1) {
-                cpuDebugger->deleteEntry( cp.address, DebuggerAction::Watchpoint);
-            } if (cp.op & 2) {
-                cpuDebugger->deleteEntry( cp.address, DebuggerAction::WatchpointWrite);
-            } if (cp.op & 4) {
-                cpuDebugger->deleteEntry( cp.address, DebuggerAction::Breakpoint);
-            }
+            // if (cp.op & 1) {
+            //     cpuDebugger->deleteEntry( cp.address, DebuggerAction::Watchpoint);
+            // } if (cp.op & 2) {
+            //     cpuDebugger->deleteEntry( cp.address, DebuggerAction::WatchpointWrite);
+            // } if (cp.op & 4) {
+            //     cpuDebugger->deleteEntry( cp.address, DebuggerAction::Breakpoint);
+            // }
         }
 
         checkPoints.clear();
@@ -409,29 +409,29 @@ auto BinaryMonitor::deleteCheckpoint(CheckPoint* cp) -> bool {
 
     auto* cpuDebugger = dynamic_cast<CpuDebugger*>(debugger);
 
-    if (op & 1) {
-        if (!hasCheckpoint( address, theme, 1 ))
-            cpuDebugger->deleteEntry( address, DebuggerAction::Watchpoint);
-        else {
-            bool enable = hasEnabledCheckpoint( address, theme, 1 );
-            cpuDebugger->enableEntry( address, DebuggerAction::Watchpoint, enable);
-        }
-
-    } if (op & 2) {
-        if (!hasCheckpoint( address, theme, 2 ))
-            cpuDebugger->deleteEntry( address, DebuggerAction::WatchpointWrite);
-        else {
-            bool enable = hasEnabledCheckpoint( address, theme, 2 );
-            cpuDebugger->enableEntry( address, DebuggerAction::WatchpointWrite, enable);
-        }
-    } if (op & 4) {
-        if (!hasCheckpoint( address, theme, 4 ))
-            cpuDebugger->deleteEntry( address, DebuggerAction::Breakpoint);
-        else {
-            bool enable = hasEnabledCheckpoint( address, theme, 4 );
-            cpuDebugger->enableEntry( address, DebuggerAction::Breakpoint, enable);
-        }
-    }
+    // if (op & 1) {
+    //     if (!hasCheckpoint( address, theme, 1 ))
+    //         cpuDebugger->deleteEntry( address, DebuggerAction::Watchpoint);
+    //     else {
+    //         bool enable = hasEnabledCheckpoint( address, theme, 1 );
+    //         cpuDebugger->enableEntry( address, DebuggerAction::Watchpoint, enable);
+    //     }
+    //
+    // } if (op & 2) {
+    //     if (!hasCheckpoint( address, theme, 2 ))
+    //         cpuDebugger->deleteEntry( address, DebuggerAction::WatchpointWrite);
+    //     else {
+    //         bool enable = hasEnabledCheckpoint( address, theme, 2 );
+    //         cpuDebugger->enableEntry( address, DebuggerAction::WatchpointWrite, enable);
+    //     }
+    // } if (op & 4) {
+    //     if (!hasCheckpoint( address, theme, 4 ))
+    //         cpuDebugger->deleteEntry( address, DebuggerAction::Breakpoint);
+    //     else {
+    //         bool enable = hasEnabledCheckpoint( address, theme, 4 );
+    //         cpuDebugger->enableEntry( address, DebuggerAction::Breakpoint, enable);
+    //     }
+    // }
 
     return true;
 }
@@ -501,19 +501,19 @@ auto BinaryMonitor::setCheckpoint(Command& command) -> void {
     cp.enable = command.body[5] >= 1;
     checkPoints.push_back( cp );
 
-    if (cp.op & 1) {
-        cpuDebugger->addEntry( cp.address, DebuggerAction::Watchpoint);
-        bool enable = hasEnabledCheckpoint( cp.address, cp.theme, 1 );
-        cpuDebugger->enableEntry( cp.address, DebuggerAction::Watchpoint, enable);
-    } if (cp.op & 2) {
-        cpuDebugger->addEntry( cp.address, DebuggerAction::WatchpointWrite);
-        bool enable = hasEnabledCheckpoint( cp.address, cp.theme, 2 );
-        cpuDebugger->enableEntry( cp.address, DebuggerAction::WatchpointWrite, enable);
-    } if (cp.op & 4) {
-        cpuDebugger->addEntry( cp.address, DebuggerAction::Breakpoint);
-        bool enable = hasEnabledCheckpoint( cp.address, cp.theme, 4 );
-        cpuDebugger->enableEntry( cp.address, DebuggerAction::Breakpoint, enable);
-    }
+    // if (cp.op & 1) {
+    //     cpuDebugger->addEntry( cp.address, DebuggerAction::Watchpoint);
+    //     bool enable = hasEnabledCheckpoint( cp.address, cp.theme, 1 );
+    //     cpuDebugger->enableEntry( cp.address, DebuggerAction::Watchpoint, enable);
+    // } if (cp.op & 2) {
+    //     cpuDebugger->addEntry( cp.address, DebuggerAction::WatchpointWrite);
+    //     bool enable = hasEnabledCheckpoint( cp.address, cp.theme, 2 );
+    //     cpuDebugger->enableEntry( cp.address, DebuggerAction::WatchpointWrite, enable);
+    // } if (cp.op & 4) {
+    //     cpuDebugger->addEntry( cp.address, DebuggerAction::Breakpoint);
+    //     bool enable = hasEnabledCheckpoint( cp.address, cp.theme, 4 );
+    //     cpuDebugger->enableEntry( cp.address, DebuggerAction::Breakpoint, enable);
+    // }
 
     sendCheckpointInfo(command.requestId, cp, false);
     emuThread->unlock();
@@ -636,12 +636,12 @@ auto BinaryMonitor::setCondition(Command& command) -> void {
     auto* cpuDebugger = dynamic_cast<CpuDebugger*>(debugger);
     bool result = false;
 
-    if (cp->op & 1)
-        result |= cpuDebugger->addCondition( cp->address, DebuggerAction::Watchpoint, condStr );
-    if (cp->op & 2)
-        result |= cpuDebugger->addCondition( cp->address, DebuggerAction::WatchpointWrite, condStr );
-    if (cp->op & 4)
-        result |= cpuDebugger->addCondition( cp->address, DebuggerAction::Breakpoint, condStr );
+    // if (cp->op & 1)
+    //     result |= cpuDebugger->addCondition( cp->address, DebuggerAction::Watchpoint, condStr );
+    // if (cp->op & 2)
+    //     result |= cpuDebugger->addCondition( cp->address, DebuggerAction::WatchpointWrite, condStr );
+    // if (cp->op & 4)
+    //     result |= cpuDebugger->addCondition( cp->address, DebuggerAction::Breakpoint, condStr );
 
     emuThread->unlock();
     if (!result) {

@@ -101,7 +101,7 @@ struct CopperDebugger : Debugger {
     auto findInstructionRowBy(Copper::List* list, unsigned addr) -> std::optional<unsigned>;
     auto updateInstructionList(Copper::List* list, bool forceUpdate = false) -> void;
     auto updateWatcherSelection() -> void;
-    auto updateInstructionBreakpointVisualsInOtherList(Copper::List* lPtr, unsigned addr, DbgWatcher* watcher) -> void;
+    auto updateInstructionBreakpointVisualsInOtherList(Copper::List* lPtr, unsigned addr, std::vector<DbgWatcher*> watchers) -> void;
     auto updateInstructionViews(bool forceUpdate = false) -> void;
     auto searchAddress(Copper::List* list, unsigned addr) -> void;
     auto memChanged() -> void;
