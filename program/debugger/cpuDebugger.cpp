@@ -288,26 +288,13 @@ auto CpuDebugger::buildTheme() -> GUIKIT::Layout* {
             return false;
 
         auto& watcher = watcherHelper.getWatcher(row);
-        std::optional<unsigned> instRow = std::nullopt;
-
-        if (watcher.action == DebuggerAction::Breakpoint)
-            instRow = findInstructionRowBy(watcher.addr);
 
         emuThread->lock();
 
         auto& instructionList = cpu->instructionLayout.list;
 
         if (column == 0) {
-            watcher.enabled ^= 1;
-            watcherHelper.updateBreakpointVisuals(row, &watcher);
-            if (watcher.enabled) {
-                emulator->debuggerAdd(getTheme(), watcher.action, watcher.ident, watcher.addr, watcher.endAddr);
-                updateWatchpointCondition( watcher );
-            } else
-                emulator->debuggerRemove(getTheme(), watcher.action, watcher.ident);
-
-            if (instRow.has_value())
-                updateInstructionBreakpointVisuals(instructionList, instRow.value_or(0), watcherHelper.findBy(watcher.addr, DebuggerAction::Breakpoint));
+            enableEntry(&watcher, !watcher.enabled );
         } else if (column == 4) {
             deleteEntry(&watcher);
         }
@@ -536,10 +523,14 @@ auto CpuDebugger::findInstructionRowBy(unsigned addr) -> std::optional<unsigned>
 }
 
 auto CpuDebugger::updateBreakpointVisuals(DbgWatcher* watcher) -> void {
-    std::optional<unsigned> instRow = findInstructionRowBy(watcher->addr);
+    std::optional<unsigned> instRow = std::nullopt;
+    
+    if (watcher->action == DebuggerAction::Breakpoint) {
+        instRow = findInstructionRowBy(watcher->addr);
 
-    if (instRow.has_value())
-        updateInstructionBreakpointVisuals(cpu->instructionLayout.list, instRow.value_or(0), watcherHelper.findBy(watcher->addr, DebuggerAction::Breakpoint));
+        if (instRow.has_value())
+            updateInstructionBreakpointVisuals(cpu->instructionLayout.list, instRow.value_or(0), watcherHelper.findBy(watcher->addr, DebuggerAction::Breakpoint));
+    }
 
     instRow = watcherHelper.findRowBy( watcher->ident );
 
@@ -951,9 +942,6 @@ auto CpuDebugger::deleteEntry(DbgWatcher* watcher) -> void {
 }
 
 auto CpuDebugger::enableEntry(DbgWatcher* watcher, bool enable) -> void {
-    if (!watcher || (watcher->enabled == enable))
-        return;
-
     watcher->enabled = enable;
 
     updateBreakpointVisuals(watcher);

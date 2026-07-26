@@ -446,15 +446,18 @@ auto BinaryMonitor::setCheckpoint(Command& command) -> void {
 
     if (op & 1) {
         cp.loadPoint = cpuDebugger->addEntry( wp.addr, wp.endAddr, DebuggerAction::Watchpoint);
-        cpuDebugger->enableEntry( cp.loadPoint, wp.enabled );
+        if (!wp.enabled)
+            cpuDebugger->enableEntry( cp.loadPoint, false );
     }
     if (op & 2) {
         cp.storePoint = cpuDebugger->addEntry( wp.addr, wp.endAddr, DebuggerAction::WatchpointWrite);
-        cpuDebugger->enableEntry( cp.storePoint, wp.enabled );
+        if (!wp.enabled)
+            cpuDebugger->enableEntry( cp.storePoint, false );
     }
     if (op & 4) {
         cp.breakPoint = cpuDebugger->addEntry( wp.addr, wp.endAddr, DebuggerAction::Breakpoint);
-        cpuDebugger->enableEntry( cp.breakPoint, wp.enabled );
+        if (!wp.enabled)
+            cpuDebugger->enableEntry( cp.breakPoint, false );
     }
     
     cp.theme = theme;
