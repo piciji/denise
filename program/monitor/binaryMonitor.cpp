@@ -99,8 +99,8 @@ auto BinaryMonitor::update() -> void {
                 toDelete.push_back(&cp);
         }
         for (auto& cp : toDelete) {
-            _log("Socket: temporary checkpoint ID %i removed", cp->watchPoint.ident );
-            deleteCheckpoint( cp );
+            _log("Socket: temporary checkpoint ID %i removed", cp->num );
+            deleteCheckpoint( *cp );
         }
     }
 
@@ -211,7 +211,7 @@ auto BinaryMonitor::handleCommand(uint8_t* buffer) -> void {
             listCheckpoints( command );
             break;
         case Type::CHECKPOINT_TOGGLE:
-            toggleCheckpoints( command );
+            toggleCheckpoint( command );
             break;
         case Type::ADVANCE_INSTRUCTIONS:
             advanceInstruction( command );
@@ -248,7 +248,7 @@ auto BinaryMonitor::listCheckpoints(Command& command) -> void {
     _log("Socket: list %i checkpoints", static_cast<int>(checkPoints.size()) )
 }
 
-auto BinaryMonitor::toggleCheckpoints(Command& command) -> void {
+auto BinaryMonitor::toggleCheckpoint(Command& command) -> void {
     if (command.length < 5) {
         sendError( Error::CMD_INVALID_LENGTH, command.requestId );
         return;
@@ -262,22 +262,11 @@ auto BinaryMonitor::toggleCheckpoints(Command& command) -> void {
 
     if (num == ~0) {
         for (auto& cp : checkPoints) {
-            Debugger* debugger = program->getDebugger( activeEmulator, cp.theme );
-            if (!debugger) {
+            if (!toggleCheckpoint(cp, _enable)) {
                 sendError( Error::CMD_FAILURE, command.requestId );
                 emuThread->unlock();
                 return;
             }
-
-            auto* cpuDebugger = dynamic_cast<CpuDebugger*>(debugger);
-            cp.watchPoint.enabled = _enable;
-
-            if (cp.loadPoint)
-                 cpuDebugger->enableEntry( cp.loadPoint, _enable);
-            if (cp.storePoint)
-                 cpuDebugger->enableEntry( cp.storePoint, _enable);
-            if (cp.breakPoint)
-                 cpuDebugger->enableEntry( cp.breakPoint, _enable);
         }
     } else {
         CheckPoint* cp = findCheckpoint( num );
@@ -287,24 +276,12 @@ auto BinaryMonitor::toggleCheckpoints(Command& command) -> void {
             emuThread->unlock();
             return;
         }
-
-        cp->watchPoint.enabled = _enable;
-
-        Debugger* debugger = program->getDebugger( activeEmulator, cp->theme );
-        if (!debugger) {
+        
+        if (!toggleCheckpoint(*cp, _enable)) {
             sendError( Error::CMD_FAILURE, command.requestId );
             emuThread->unlock();
             return;
         }
-
-        auto* cpuDebugger = dynamic_cast<CpuDebugger*>(debugger);
-
-        if (cp->loadPoint)
-            cpuDebugger->enableEntry( cp->loadPoint, _enable);
-        if (cp->storePoint)
-            cpuDebugger->enableEntry( cp->storePoint, _enable);
-        if (cp->breakPoint)
-            cpuDebugger->enableEntry( cp->breakPoint, _enable);
     }
 
     sendResponse(0, Type::CHECKPOINT_TOGGLE, Error::OK, command.requestId, nullptr);
@@ -312,6 +289,33 @@ auto BinaryMonitor::toggleCheckpoints(Command& command) -> void {
     emuThread->unlock();
 
     _log("Socket: toggle checkpoint ID %i", num )
+}
+
+auto BinaryMonitor::toggleCheckpoint(CheckPoint& cp, bool enable) -> bool {
+    Debugger* debugger = program->getDebugger( activeEmulator, cp.theme );
+    if (!debugger)
+        return false;
+    
+    cp.enabled = enable;
+
+    auto* cpuDebugger = dynamic_cast<CpuDebugger*>(debugger);
+    
+    if (cp.loadIdent.has_value()) {
+        auto watcher = cpuDebugger->findBy(cp.loadIdent.value_or(0));
+        if (watcher)
+            cpuDebugger->enableEntry( watcher, cp.enabled);
+    }
+    if (cp.storeIdent.has_value()) {
+        auto watcher = cpuDebugger->findBy(cp.storeIdent.value_or(0));
+        if (watcher)
+            cpuDebugger->enableEntry( watcher, cp.enabled);
+    }
+    if (cp.breakIdent.has_value()) {
+        auto watcher = cpuDebugger->findBy(cp.breakIdent.value_or(0));
+        if (watcher)
+            cpuDebugger->enableEntry( watcher, cp.enabled);
+    }
+    return true;
 }
 
 auto BinaryMonitor::getCheckpoint(Command& command) -> void {
@@ -345,7 +349,7 @@ auto BinaryMonitor::deleteCheckpoint(Command& command) -> void {
     emuThread->lock(  );
     if (num == ~0) {
         for (auto& cp : checkPoints) {
-            if (!deleteCheckpoint(&cp)) {
+            if (!deleteCheckpoint(cp)) {
                 sendError( Error::CMD_FAILURE, command.requestId );
                 emuThread->unlock();
                 return;
@@ -362,7 +366,7 @@ auto BinaryMonitor::deleteCheckpoint(Command& command) -> void {
             return;
         }
 
-        if (!deleteCheckpoint(cp)) {
+        if (!deleteCheckpoint(*cp)) {
             sendError( Error::CMD_FAILURE, command.requestId );
             emuThread->unlock();
             return;
@@ -374,24 +378,32 @@ auto BinaryMonitor::deleteCheckpoint(Command& command) -> void {
     _log("Socket: delete checkpoint ID %i", num )
 }
 
-auto BinaryMonitor::deleteCheckpoint(CheckPoint* cp) -> bool {
-    Debugger* debugger = program->getDebugger( activeEmulator, cp->theme );
-    if (!debugger) {
+auto BinaryMonitor::deleteCheckpoint(CheckPoint& cp) -> bool {
+    Debugger* debugger = program->getDebugger( activeEmulator, cp.theme );
+    if (!debugger)
         return false;
-    }
 
     auto* cpuDebugger = dynamic_cast<CpuDebugger*>(debugger);
     
-    if (cp->loadPoint)
-        cpuDebugger->deleteEntry( cp->loadPoint );
-    if (cp->storePoint)
-        cpuDebugger->deleteEntry( cp->storePoint );
-    if (cp->breakPoint)
-        cpuDebugger->deleteEntry( cp->breakPoint );
+    if (cp.loadIdent.has_value()) {
+        auto watcher = cpuDebugger->findBy(cp.loadIdent.value_or(0));
+        if (watcher)
+            cpuDebugger->deleteEntry( watcher );
+    }
+    if (cp.storeIdent.has_value()) {
+        auto watcher = cpuDebugger->findBy(cp.storeIdent.value_or(0));
+        if (watcher)
+            cpuDebugger->deleteEntry( watcher );
+    }
+    if (cp.breakIdent.has_value()) {
+        auto watcher = cpuDebugger->findBy(cp.breakIdent.value_or(0));
+        if (watcher)
+            cpuDebugger->deleteEntry( watcher );
+    }
 
     auto iter = std::remove_if(checkPoints.begin(), checkPoints.end(),
        [cp](const CheckPoint& _cp) {
-           return _cp.watchPoint.ident == cp->watchPoint.ident;
+           return _cp.num == cp.num;
        });
         
     checkPoints.erase(iter, checkPoints.end());
@@ -401,7 +413,7 @@ auto BinaryMonitor::deleteCheckpoint(CheckPoint* cp) -> bool {
 
 auto BinaryMonitor::findCheckpoint(unsigned num) -> CheckPoint* {
     for (auto& cp : checkPoints) {
-        if (cp.watchPoint.ident == num)
+        if (cp.num == num)
             return &cp;
     }
     return nullptr;
@@ -437,27 +449,30 @@ auto BinaryMonitor::setCheckpoint(Command& command) -> void {
     uint8_t op = command.body[6];
     
     CheckPoint cp;
-    auto& wp = cp.watchPoint;
-    wp.ident = num++;
-    wp.addr = copyBufferToInt<uint16_t>(&command.body[0]);
-    wp.endAddr = copyBufferToInt<uint16_t>(&command.body[2]);
-    wp.enabled = command.body[5] >= 1;
-    wp.useExpression = false;
+    cp.num = num++;
+    cp.startAddr = copyBufferToInt<uint16_t>(&command.body[0]);
+    cp.endAddr = copyBufferToInt<uint16_t>(&command.body[2]);
+    cp.enabled = command.body[5] >= 1;
+    cp.useCondition = false;
+    DbgWatcher* watcher;
 
     if (op & 1) {
-        cp.loadPoint = cpuDebugger->addEntry( wp.addr, wp.endAddr, DebuggerAction::Watchpoint);
-        if (!wp.enabled)
-            cpuDebugger->enableEntry( cp.loadPoint, false );
+        watcher = cpuDebugger->addEntry( cp.startAddr, cp.endAddr, DebuggerAction::Watchpoint);
+        cp.loadIdent = watcher->ident;
+        if (!cp.enabled)
+            cpuDebugger->enableEntry( watcher, false );
     }
     if (op & 2) {
-        cp.storePoint = cpuDebugger->addEntry( wp.addr, wp.endAddr, DebuggerAction::WatchpointWrite);
-        if (!wp.enabled)
-            cpuDebugger->enableEntry( cp.storePoint, false );
+        watcher = cpuDebugger->addEntry( cp.startAddr, cp.endAddr, DebuggerAction::WatchpointWrite);
+        cp.storeIdent = watcher->ident;
+        if (!cp.enabled)
+            cpuDebugger->enableEntry( watcher, false );
     }
     if (op & 4) {
-        cp.breakPoint = cpuDebugger->addEntry( wp.addr, wp.endAddr, DebuggerAction::Breakpoint);
-        if (!wp.enabled)
-            cpuDebugger->enableEntry( cp.breakPoint, false );
+        watcher = cpuDebugger->addEntry( cp.startAddr, cp.endAddr, DebuggerAction::Breakpoint);
+        cp.breakIdent = watcher->ident;
+        if (!cp.enabled)
+            cpuDebugger->enableEntry( watcher, false );
     }
     
     cp.theme = theme;
@@ -469,7 +484,7 @@ auto BinaryMonitor::setCheckpoint(Command& command) -> void {
     sendCheckpointInfo(command.requestId, cp, false);
     emuThread->unlock();
 
-    _log("Socket: set checkpoint ID %i", wp.ident )
+    _log("Socket: set checkpoint ID %i", cp.num )
 }
 
 auto BinaryMonitor::advanceLines(Command& command) -> void {
@@ -587,12 +602,21 @@ auto BinaryMonitor::setCondition(Command& command) -> void {
     auto* cpuDebugger = dynamic_cast<CpuDebugger*>(debugger);
     bool result = false;
 
-     if (cp->loadPoint)
-         result |= cpuDebugger->addCondition( cp->loadPoint, condStr );
-     if (cp->storePoint)
-         result |= cpuDebugger->addCondition( cp->storePoint, condStr );
-     if (cp->breakPoint)
-         result |= cpuDebugger->addCondition( cp->breakPoint, condStr );
+    if (cp->loadIdent.has_value()) {
+        auto watcher = cpuDebugger->findBy(cp->loadIdent.value_or(0));
+        if (watcher)
+            result |= cpuDebugger->addCondition( watcher, condStr );
+    }
+    if (cp->storeIdent.has_value()) {
+        auto watcher = cpuDebugger->findBy(cp->storeIdent.value_or(0));
+        if (watcher)
+            result |= cpuDebugger->addCondition( watcher, condStr );
+    }
+    if (cp->breakIdent.has_value()) {
+        auto watcher = cpuDebugger->findBy(cp->breakIdent.value_or(0));
+        if (watcher)
+            result |= cpuDebugger->addCondition( watcher, condStr );
+    }
 
     emuThread->unlock();
     if (!result) {
@@ -600,26 +624,25 @@ auto BinaryMonitor::setCondition(Command& command) -> void {
         return;
     }
 
-    cp->watchPoint.useExpression = true;
+    cp->useCondition = true;
     sendResponse(0, Type::CONDITION_SET, Error::OK, command.requestId, nullptr);
 
-    _log("Socket: set condition for ID %i", cp->watchPoint.ident )
+    _log("Socket: set condition for ID %i", cp->num )
 }
 
 auto BinaryMonitor::sendCheckpointInfo(uint32_t requestId, CheckPoint& cp, bool hit) -> void {
     uint8_t response[23];
-    auto& wp = cp.watchPoint;
-    copyIntToBuffer<uint32_t>( &response[0], wp.ident);
+    copyIntToBuffer<uint32_t>( &response[0], cp.num);
     response[4] = hit;
-    copyIntToBuffer<uint16_t>( &response[5], wp.addr);
-    copyIntToBuffer<uint16_t>( &response[7], wp.endAddr);
+    copyIntToBuffer<uint16_t>( &response[5], cp.startAddr);
+    copyIntToBuffer<uint16_t>( &response[7], cp.endAddr);
     response[9] = cp.stop;
-    response[10] = wp.enabled;
+    response[10] = cp.enabled;
     response[11] = getOp(cp);
     response[12] = cp.temporary;
     copyIntToBuffer<uint32_t>( &response[13], hit ? 1 : 0); // hit count
     copyIntToBuffer<uint32_t>( &response[17], 0); // ignore count
-    response[21] = wp.useExpression;
+    response[21] = cp.useCondition;
     response[22] = getSpace(cp.theme);
     cp.hit |= hit;
 
@@ -789,16 +812,16 @@ auto BinaryMonitor::responseStopped(LIBC64::DebuggerSnapshot* snap) -> void {
         
         for (auto& cp : checkPoints) {
             bool match = false;
-            if ((cp.loadPoint) && (cp.loadPoint->ident == ident)) {
-                _log("Socket: hit watchpoint ID %i", cp.watchPoint.ident)
+            if (cp.loadIdent.has_value() && (cp.loadIdent.value_or(0) == ident)) {
+                _log("Socket: hit watchpoint ID %i", cp.num)
                 match = true;
             }
-            if ((cp.storePoint) && (cp.storePoint->ident == ident)) {
-                _log("Socket: hit store watchpoint ID %i", cp.watchPoint.ident)
+            if (cp.storeIdent.has_value() && (cp.storeIdent.value_or(0) == ident)) {
+                _log("Socket: hit store watchpoint ID %i", cp.num)
                 match = true;
             }
-            if ((cp.breakPoint) && (cp.breakPoint->ident == ident)) {
-                _log("Socket: hit breakPoint ID %i", cp.watchPoint.ident)
+            if (cp.breakIdent.has_value() && (cp.breakIdent.value_or(0) == ident)) {
+                _log("Socket: hit breakPoint ID %i", cp.num)
                 match = true;
             }
             
@@ -1132,9 +1155,9 @@ auto BinaryMonitor::getSpace(DebuggerTheme theme) -> uint8_t {
 
 auto BinaryMonitor::getOp(CheckPoint& cp) -> uint8_t {
     uint8_t op = 0;
-    if (cp.loadPoint) op |= 1;
-    if (cp.storePoint) op |= 2;
-    if (cp.breakPoint) op |= 4;
+    if (cp.loadIdent.has_value()) op |= 1;
+    if (cp.storeIdent.has_value()) op |= 2;
+    if (cp.breakIdent.has_value()) op |= 4;
     return op;
 }
 

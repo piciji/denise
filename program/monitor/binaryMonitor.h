@@ -62,11 +62,15 @@ struct BinaryMonitor {
     };
 
     struct CheckPoint {
-        DbgWatcher watchPoint;
-        DbgWatcher* loadPoint = nullptr;
-        DbgWatcher* storePoint = nullptr;
-        DbgWatcher* breakPoint = nullptr;
+        std::optional<unsigned> loadIdent = std::nullopt;
+        std::optional<unsigned> storeIdent = std::nullopt;
+        std::optional<unsigned> breakIdent = std::nullopt;
         
+        unsigned num;
+        uint16_t startAddr;
+        uint16_t endAddr;
+        bool enabled;
+        bool useCondition;
         uint8_t temporary;
         bool hit;
         uint8_t stop;
@@ -142,11 +146,12 @@ struct BinaryMonitor {
     auto getCheckpoint(Command& command) -> void;
 
     auto deleteCheckpoint(Command& command) -> void;
-    auto deleteCheckpoint(CheckPoint* cp) -> bool;
+    auto deleteCheckpoint(CheckPoint& cp) -> bool;
 
     auto listCheckpoints(Command& command) -> void;
 
-    auto toggleCheckpoints(Command& command) -> void;
+    auto toggleCheckpoint(Command& command) -> void;
+    auto toggleCheckpoint(CheckPoint& cp, bool enable) -> bool;
 
     auto advanceInstruction(Command& command) -> void;
 

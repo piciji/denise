@@ -291,8 +291,6 @@ auto CpuDebugger::buildTheme() -> GUIKIT::Layout* {
 
         emuThread->lock();
 
-        auto& instructionList = cpu->instructionLayout.list;
-
         if (column == 0) {
             enableEntry(&watcher, !watcher.enabled );
         } else if (column == 4) {
@@ -929,13 +927,12 @@ auto CpuDebugger::deleteEntry(DbgWatcher* watcher) -> void {
     emulator->debuggerRemove( getTheme(), watcher->action, watcher->ident);
     watcherHelper.removeFromList(watcher->ident);
     
-    auto instRow = findInstructionRowBy(_addr);
-    if (instRow.has_value()) {
-        auto watchers = watcherHelper.findBy(_addr, DebuggerAction::Breakpoint);
-        if (watchers.empty())
-            removeInstructionBreakpointVisuals(instructionList, instRow.value_or(0));
-        else
+    if (watcher->action == DebuggerAction::Breakpoint) {
+        auto instRow = findInstructionRowBy(_addr);
+        if (instRow.has_value()) {
+            auto watchers = watcherHelper.findBy(_addr, DebuggerAction::Breakpoint);
             updateInstructionBreakpointVisuals(instructionList, instRow.value_or(0), watchers);
+        }
     }
     
     watcherHelper.updateList();

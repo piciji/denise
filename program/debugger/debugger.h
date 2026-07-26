@@ -120,7 +120,6 @@ struct Debugger : GUIKIT::Window {
     auto changeMemory(const std::string& addrStr, const std::string& valStr) -> void;
 
     auto updateInstructionBreakpointVisuals(GUIKIT::ListView& listView, unsigned row, std::vector<DbgWatcher*> watchers, bool preventColumResizing = false) -> void;
-    auto removeInstructionBreakpointVisuals(GUIKIT::ListView& listView, unsigned row) -> void;
 
     auto openConditionView(DbgWatcher* watcher, GUIKIT::Position position) -> void;
     auto updateWatchpointCondition(DbgWatcher& watcher) -> bool;

@@ -165,6 +165,8 @@ struct CpuDebugger : Debugger {
     auto deleteEntry(DbgWatcher* watcher) -> void;
     auto enableEntry(DbgWatcher* watcher, bool enable) -> void;
     auto addCondition(DbgWatcher* watcher, const std::string& condition) -> bool;
+    
+    auto findBy(unsigned ident) -> DbgWatcher* { return watcherHelper.findBy(ident); }
 
     virtual auto getDriveId() -> unsigned { return 0; }
 };

@@ -656,6 +656,13 @@ auto Debugger::changeMemory(const std::string& addrStr, const std::string& valSt
 auto Debugger::updateInstructionBreakpointVisuals(GUIKIT::ListView& listView, unsigned row, std::vector<DbgWatcher*> watchers, bool preventColumResizing) -> void {
     bool _enabled = false;
     bool _conditions = false;
+    
+    if (watchers.empty()) {
+        listView.setImage( row, 0, nullImg, preventColumResizing);
+        if (!preventColumResizing)
+            listView.resetRowForegroundColor( row );
+        return;
+    }
 
     for (auto* watcher : watchers) {
         if (watcher->enabled) {
@@ -677,26 +684,6 @@ auto Debugger::updateInstructionBreakpointVisuals(GUIKIT::ListView& listView, un
         if (!preventColumResizing)
             listView.resetRowForegroundColor( row );
     }
-}
-
-// auto Debugger::updateInstructionBreakpointVisuals(GUIKIT::ListView& listView, unsigned row, DbgWatcher* watcher, bool preventColumResizing) -> void {
-//     if (watcher->enabled) {
-//         if (watcher->useHitCount || watcher->useExpression)
-//             listView.setImage( row, 0, breakCondEnableImg, preventColumResizing );
-//         else
-//             listView.setImage( row, 0, breakEnableImg, preventColumResizing );
-//
-//         listView.setRowForegroundColor( DEBUG_COLOR, row );
-//     } else {
-//         listView.setImage( row, 0, breakDisableImg, preventColumResizing);
-//         if (!preventColumResizing)
-//             listView.resetRowForegroundColor( row );
-//     }
-// }
-
-auto Debugger::removeInstructionBreakpointVisuals(GUIKIT::ListView& listView, unsigned row) -> void {
-    listView.setImage( row, 0, nullImg);
-    listView.resetRowForegroundColor( row );
 }
 
 auto Debugger::updateWatchpointCondition(DbgWatcher& watcher) -> bool {

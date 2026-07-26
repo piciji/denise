@@ -253,15 +253,7 @@ auto CopperDebugger::buildTheme() -> GUIKIT::Layout* {
 
             auto watchers = watcherHelper.findBy(_addr, DebuggerAction::Breakpoint);
 
-            if (column == 0) {
-                updateInstructionBreakpointVisuals(lPtr->listView, instRow.value_or(0), watchers);
-            } else if (column == 3) {
-                if (watchers.empty())
-                    removeInstructionBreakpointVisuals(lPtr->listView, instRow.value_or(0));
-                else
-                    updateInstructionBreakpointVisuals(lPtr->listView, instRow.value_or(0), watchers);
-
-            }
+            updateInstructionBreakpointVisuals(lPtr->listView, instRow.value_or(0), watchers);
         }
 
         emuThread->unlock();
