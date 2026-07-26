@@ -309,18 +309,7 @@ auto CpuDebugger::buildTheme() -> GUIKIT::Layout* {
             if (instRow.has_value())
                 updateInstructionBreakpointVisuals(instructionList, instRow.value_or(0), watcherHelper.findBy(watcher.addr, DebuggerAction::Breakpoint));
         } else if (column == 4) {
-            emulator->debuggerRemove( getTheme(), watcher.action, watcher.ident);
-            watcherHelper.removeFromList(watcher.ident);
-
-            if (instRow.has_value()) {
-                auto watchers = watcherHelper.findBy(watcher.addr, DebuggerAction::Breakpoint);
-                if (watchers.empty())
-                    removeInstructionBreakpointVisuals(instructionList, instRow.value_or(0));
-                else
-                    updateInstructionBreakpointVisuals(instructionList, instRow.value_or(0), watchers);
-            }
-
-            watcherHelper.updateList();
+            deleteEntry(&watcher);
         }
 
         emuThread->unlock();
@@ -565,28 +554,20 @@ auto CpuDebugger::updateWatcherSelection() -> void {
     auto& idents = snapshot->watcherIdents;
     bool hiLight = false;
     watcherList.resetRowColors();
-    fprintf( stdout, "reset\n" );
 
     if (t == getTheme() && !idents.empty()) {
         if (act == DebuggerAction::Watchpoint
         || act == DebuggerAction::WatchpointWrite
         || act == DebuggerAction::Breakpoint
         || act == DebuggerAction::ExceptionPoint) {
-            if (idents.size() == 1) {
-                auto row = watcherHelper.findRowBy(idents[0]);
+            for (unsigned i = 0; i < idents.size(); i++) {
+                auto row = watcherHelper.findRowBy(idents[i]);
                 if (row.has_value()) {
-                    watcherList.setSelection( row.value_or(0) );
-                    hiLight = true;
-                }
-            } else {
-                fprintf( stdout, "ident count: %i\n", idents.size() );
-                for (unsigned i = 0; i < idents.size(); i++) {
-
-                    auto row = watcherHelper.findRowBy(idents[i]);
-                    if (row.has_value()) {
-                        fprintf( stdout, "ident: %i\n", idents[i] );
-                        watcherList.setRowBackgroundColor( DEBUG_COLOR, row.value_or(0) );
+                    if (!hiLight) {
+                        watcherList.setSelection( row.value_or(0) );
+                        hiLight = true;
                     }
+                    watcherList.setRowForegroundColor( DEBUG_COLOR, row.value_or(0) );
                 }
             }
         }
@@ -921,7 +902,7 @@ auto CpuDebugger::translateTheme() -> void {
     }
 }
 
-auto CpuDebugger::addEntry(unsigned address, unsigned endAddress, DebuggerAction action) -> void {
+auto CpuDebugger::addEntry(unsigned address, unsigned endAddress, DebuggerAction action) -> DbgWatcher* {
     auto& instructionList = cpu->instructionLayout.list;
 
     auto watcher = watcherHelper.addToList( address, endAddress, action );
@@ -934,6 +915,8 @@ auto CpuDebugger::addEntry(unsigned address, unsigned endAddress, DebuggerAction
     }
 
     emulator->debuggerAdd(getTheme(), action, watcher->ident, watcher->addr, watcher->endAddr);
+    
+    return watcher;
 }
 
 auto CpuDebugger::addCondition(DbgWatcher* watcher, const std::string& condition) -> bool {
@@ -951,13 +934,19 @@ auto CpuDebugger::addCondition(DbgWatcher* watcher, const std::string& condition
 
 auto CpuDebugger::deleteEntry(DbgWatcher* watcher) -> void {
     auto& instructionList = cpu->instructionLayout.list;
-
+    unsigned _addr = watcher->addr;
     emulator->debuggerRemove( getTheme(), watcher->action, watcher->ident);
-    auto instRow = findInstructionRowBy(watcher->addr);
-    if (instRow.has_value())
-        removeInstructionBreakpointVisuals(instructionList, instRow.value_or(0));
-
     watcherHelper.removeFromList(watcher->ident);
+    
+    auto instRow = findInstructionRowBy(_addr);
+    if (instRow.has_value()) {
+        auto watchers = watcherHelper.findBy(_addr, DebuggerAction::Breakpoint);
+        if (watchers.empty())
+            removeInstructionBreakpointVisuals(instructionList, instRow.value_or(0));
+        else
+            updateInstructionBreakpointVisuals(instructionList, instRow.value_or(0), watchers);
+    }
+    
     watcherHelper.updateList();
 }
 

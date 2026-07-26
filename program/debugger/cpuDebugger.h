@@ -161,7 +161,7 @@ struct CpuDebugger : Debugger {
 
     auto getTheme() -> DebuggerTheme override { return DebuggerTheme::CPU; }
 
-    auto addEntry(unsigned address, unsigned endAddress, DebuggerAction action) -> void;
+    auto addEntry(unsigned address, unsigned endAddress, DebuggerAction action) -> DbgWatcher*;
     auto deleteEntry(DbgWatcher* watcher) -> void;
     auto enableEntry(DbgWatcher* watcher, bool enable) -> void;
     auto addCondition(DbgWatcher* watcher, const std::string& condition) -> bool;

@@ -62,16 +62,14 @@ struct BinaryMonitor {
     };
 
     struct CheckPoint {
-        unsigned num;
-        uint16_t address;
-        uint16_t endAddress;
-        uint8_t op;
+        DbgWatcher watchPoint;
+        DbgWatcher* loadPoint = nullptr;
+        DbgWatcher* storePoint = nullptr;
+        DbgWatcher* breakPoint = nullptr;
+        
         uint8_t temporary;
         bool hit;
-        uint8_t enable;
         uint8_t stop;
-        bool condition;
-        uint8_t space;
         DebuggerTheme theme;
     };
 
@@ -139,9 +137,6 @@ struct BinaryMonitor {
 
     auto findCheckpoint(unsigned num) -> CheckPoint*;
 
-    auto hasCheckpoint(uint16_t address, DebuggerTheme theme, uint8_t op) -> bool;
-    auto hasEnabledCheckpoint(uint16_t address, DebuggerTheme theme, uint8_t op) -> bool;
-
     auto setCheckpoint(Command& command) -> void;
 
     auto getCheckpoint(Command& command) -> void;
@@ -168,6 +163,10 @@ struct BinaryMonitor {
     auto getMem(Command& command) -> void;
 
     auto getTheme(uint8_t space) -> DebuggerTheme;
+    
+    auto getSpace(DebuggerTheme theme) -> uint8_t;
+    
+    auto getOp(CheckPoint& cp) -> uint8_t;
 
     auto initDebugger(Emulator::Interface* emulator, DebuggerTheme theme) -> Debugger*;
 };

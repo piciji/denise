@@ -149,6 +149,7 @@ struct pLineEdit : pWidget {
     auto setDroppable(bool droppable) -> void;
     auto setPlaceholder(const std::string& placeholder) -> void;
     auto setAlign( LineEdit::Align align ) -> void;
+    auto setForegroundColor(unsigned color) -> void;
 
     pLineEdit(LineEdit& lineEdit) : pWidget(lineEdit), lineEdit(lineEdit) { }
 };

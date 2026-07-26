@@ -224,6 +224,8 @@ auto CopperDebugger::buildTheme() -> GUIKIT::Layout* {
 
         emuThread->lock();
         auto& watcher = watcherHelper.getWatcher(row);
+        unsigned _addr = watcher.addr;
+        
         if (column == 0) {
             watcher.enabled ^= 1;
             watcherHelper.updateBreakpointVisuals(row, &watcher);
@@ -244,12 +246,12 @@ auto CopperDebugger::buildTheme() -> GUIKIT::Layout* {
 
             std::optional<unsigned> instRow = std::nullopt;
             if (watcher.action == DebuggerAction::Breakpoint)
-                instRow = findInstructionRowBy(lPtr, watcher.addr);
+                instRow = findInstructionRowBy(lPtr, _addr);
 
             if (!instRow.has_value())
                 continue;
 
-            auto watchers = watcherHelper.findBy(watcher.addr, DebuggerAction::Breakpoint);
+            auto watchers = watcherHelper.findBy(_addr, DebuggerAction::Breakpoint);
 
             if (column == 0) {
                 updateInstructionBreakpointVisuals(lPtr->listView, instRow.value_or(0), watchers);

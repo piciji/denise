@@ -142,5 +142,9 @@ auto pLineEdit::init() -> void {
         setEditable(lineEdit.editable());
     }
 }
+    
+auto pLineEdit::setForegroundColor(unsigned color) -> void {
+    [(id)cocoaView setTextColor: getTextColor()];
+}
 
 }        
