@@ -984,3 +984,5 @@ show images = show images
 Disable Sprite Sprite Collisions = Disable Sprite-Sprite collisions
 Disable Sprite Character Collisions = Disable Sprite-Character collisions
 no shader when warp = no shader when warp
+until = until
+address range tooltip = an end address (optional) repeatedly halts execution within an address space. This is useful in conjunction with a condition.

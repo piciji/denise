@@ -653,6 +653,11 @@ auto pListView::updateRowColors() -> void {
     InvalidateRect(hwnd, 0, false);
 }
 
+auto pListView::updateRowForegroundColors() -> void {
+    if (!hwnd) return;
+    InvalidateRect(hwnd, 0, false);
+}
+
 auto pListView::measureItem(LPMEASUREITEMSTRUCT lpmis) -> void {
     
     if (!hfont)

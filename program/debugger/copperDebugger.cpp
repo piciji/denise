@@ -258,6 +258,9 @@ auto CopperDebugger::translateTheme() -> void {
     bool showTips = showTipsItem.checked();
 
     copper->watcher.adder.address.setPlaceholder( trans->getA( "address" ) );
+    copper->watcher.adder.endAddress.setPlaceholder( trans->getA( "until" ) );
+    copper->watcher.adder.endAddress.setTooltip( trans->getA( "address range tooltip" ) );
+
     copper->watcher.typeLayout.breakPoint.setText( trans->getA( "instruction" ) );
     copper->watcher.typeLayout.watchPoint.setText( trans->getA( "register access" ) );
     copper->watcher.control.labelCopPc.setText( "COP-PC" );
