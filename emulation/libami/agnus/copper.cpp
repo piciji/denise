@@ -404,10 +404,10 @@ auto Copper::reset() -> void {
     listUse = 0;
 }
 
-auto Copper::debuggerAdd(DebuggerAction action, unsigned ident, unsigned addr) -> void {
+auto Copper::debuggerAdd(DebuggerAction action, unsigned ident, unsigned addr, unsigned endAddr) -> void {
     switch (action) {
-        case DebuggerAction::Breakpoint:    breakPoints.add( ident, addr, addr ); break;
-        case DebuggerAction::Watchpoint:    watchPoints.add( ident, addr, addr ); break;
+        case DebuggerAction::Breakpoint:    breakPoints.add( ident, addr, endAddr ); break;
+        case DebuggerAction::Watchpoint:    watchPoints.add( ident, addr, endAddr ); break;
         case DebuggerAction::Softstop:      debuggerState |= SoftStep; break;
         default:
             break;
@@ -450,7 +450,7 @@ auto Copper::checkBreakpoints() -> void {
             agnus.addDmaLogEntry();
 
         action = DebuggerAction::Breakpoint;
-    } else if ((debuggerState & BreakPoint) && breakPoints.check(copPtr, true)) {
+    } if ((debuggerState & BreakPoint) && breakPoints.check(copPtr, true)) {
         if (agnus.debugger.dmaLog)
             agnus.addDmaLogEntry();
 

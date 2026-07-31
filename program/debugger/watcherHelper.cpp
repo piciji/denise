@@ -4,7 +4,6 @@
 auto WatcherHelper::updateList() -> void {
     watcherList->lockRedraw();
     watcherList->reset();
-    bool ranged = watcherList->columnCount() == 5;
 
     for (auto& w : watchers) {
         if (w.desc.empty()) {
@@ -12,20 +11,14 @@ auto WatcherHelper::updateList() -> void {
 
             std::string _adr = GUIKIT::String::convertToHex(w.addr, format);
 
-            if (ranged) {
-                std::string _endAdr;
-                if (w.addr != w.endAddr)
-                    _endAdr = GUIKIT::String::convertToHex(w.endAddr, format);
+            std::string _endAdr;
+            if (w.addr != w.endAddr)
+                _endAdr = GUIKIT::String::convertToHex(w.endAddr, format);
 
-                watcherList->append( {"", _adr,_endAdr, "", ""}, true );
-            } else
-                watcherList->append( {"", _adr, "", ""}, true );
+            watcherList->append( {"", _adr,_endAdr, "", ""}, true );
 
         } else {
-            if (ranged)
-                watcherList->append( {"", w.desc, "", "", ""}, true );
-            else
-                watcherList->append( {"", w.desc, "",  ""}, true );
+            watcherList->append( {"", w.desc, "", "", ""}, true );
         }
 
         unsigned row = watcherList->rowCount() - 1;
@@ -33,15 +26,15 @@ auto WatcherHelper::updateList() -> void {
         updateBreakpointVisuals( row, &w, true );
 
         if (w.action == DebuggerAction::Watchpoint)
-            watcherList->setImage( row, ranged ? 3 : 2, debugger->memoryImg, true );
+            watcherList->setImage( row, 3, debugger->memoryImg, true );
         else if (w.action == DebuggerAction::WatchpointWrite)
-            watcherList->setImage( row, ranged ? 3 : 2, debugger->memoryBorderImg, true );
+            watcherList->setImage( row, 3, debugger->memoryBorderImg, true );
         else if (w.action == DebuggerAction::ExceptionPoint)
-            watcherList->setImage( row, ranged ? 3 : 2, debugger->exceptionImg, true );
+            watcherList->setImage( row, 3, debugger->exceptionImg, true );
         else
-            watcherList->setImage( row, ranged ? 3 : 2, debugger->processorImg, true );
+            watcherList->setImage( row, 3, debugger->processorImg, true );
 
-        watcherList->setImage( row, ranged ? 4 : 3, debugger->trashImg, true );
+        watcherList->setImage( row, 4, debugger->trashImg, true );
     }
 
     watcherList->autoSizeColumns();

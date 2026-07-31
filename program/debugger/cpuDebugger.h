@@ -144,6 +144,8 @@ struct CpuDebugger : Debugger {
     auto updateTraceList() -> void;
 
     auto updateBreakpointVisuals(DbgWatcher* watcher) -> void override;
+    auto updateInstructionBreakpointVisuals(unsigned addr, DebuggerAction action) -> void;
+    auto updateWatcherBreakpointVisuals(DbgWatcher* watcher) -> void;
 
     auto findInstructionRowBy(unsigned addr) -> std::optional<unsigned>;
 
@@ -161,7 +163,7 @@ struct CpuDebugger : Debugger {
 
     auto getTheme() -> DebuggerTheme override { return DebuggerTheme::CPU; }
 
-    auto addEntry(unsigned address, unsigned endAddress, DebuggerAction action) -> DbgWatcher*;
+    auto addEntry(unsigned address, unsigned endAddress, DebuggerAction action, const std::string& desc = "") -> DbgWatcher*;
     auto deleteEntry(DbgWatcher* watcher) -> void;
     auto enableEntry(DbgWatcher* watcher, bool enable) -> void;
     auto addCondition(DbgWatcher* watcher, const std::string& condition) -> bool;

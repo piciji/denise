@@ -771,7 +771,7 @@ auto System::debuggerAdd(DebuggerTheme theme, DebuggerAction action, unsigned id
                     debuggerSnapshot.themes |= (unsigned)theme;
                     break;
                 default:
-                    agnus.copper.debuggerAdd(action, ident, data0);
+                    agnus.copper.debuggerAdd(action, ident, data0, data1);
                     break;
             } break;
 
