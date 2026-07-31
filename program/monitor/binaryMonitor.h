@@ -62,16 +62,18 @@ struct BinaryMonitor {
     };
 
     struct CheckPoint {
+        std::optional<unsigned> loadIdent = std::nullopt;
+        std::optional<unsigned> storeIdent = std::nullopt;
+        std::optional<unsigned> breakIdent = std::nullopt;
+        
         unsigned num;
-        uint16_t address;
-        uint16_t endAddress;
-        uint8_t op;
+        uint16_t startAddr;
+        uint16_t endAddr;
+        bool enabled;
+        bool useCondition;
         uint8_t temporary;
         bool hit;
-        uint8_t enable;
         uint8_t stop;
-        bool condition;
-        uint8_t space;
         DebuggerTheme theme;
     };
 
@@ -139,19 +141,17 @@ struct BinaryMonitor {
 
     auto findCheckpoint(unsigned num) -> CheckPoint*;
 
-    auto hasCheckpoint(uint16_t address, DebuggerTheme theme, uint8_t op) -> bool;
-    auto hasEnabledCheckpoint(uint16_t address, DebuggerTheme theme, uint8_t op) -> bool;
-
     auto setCheckpoint(Command& command) -> void;
 
     auto getCheckpoint(Command& command) -> void;
 
     auto deleteCheckpoint(Command& command) -> void;
-    auto deleteCheckpoint(CheckPoint* cp) -> bool;
+    auto deleteCheckpoint(CheckPoint& cp) -> bool;
 
     auto listCheckpoints(Command& command) -> void;
 
-    auto toggleCheckpoints(Command& command) -> void;
+    auto toggleCheckpoint(Command& command) -> void;
+    auto toggleCheckpoint(CheckPoint& cp, bool enable) -> bool;
 
     auto advanceInstruction(Command& command) -> void;
 
@@ -168,6 +168,10 @@ struct BinaryMonitor {
     auto getMem(Command& command) -> void;
 
     auto getTheme(uint8_t space) -> DebuggerTheme;
+    
+    auto getSpace(DebuggerTheme theme) -> uint8_t;
+    
+    auto getOp(CheckPoint& cp) -> uint8_t;
 
     auto initDebugger(Emulator::Interface* emulator, DebuggerTheme theme) -> Debugger*;
 };

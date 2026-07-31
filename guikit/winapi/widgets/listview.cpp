@@ -650,6 +650,12 @@ auto pListView::setSelectionColor(unsigned foregroundColor, unsigned backgroundC
 auto pListView::updateRowColors() -> void {
     if (!hwnd) return;
     clearBrush();
+    InvalidateRect(hwnd, 0, false);
+}
+
+auto pListView::updateRowForegroundColors() -> void {
+    if (!hwnd) return;
+    InvalidateRect(hwnd, 0, false);
 }
 
 auto pListView::measureItem(LPMEASUREITEMSTRUCT lpmis) -> void {

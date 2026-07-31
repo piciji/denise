@@ -1318,6 +1318,8 @@ auto ListView::resetRowBackgroundColor(unsigned row) -> void {
 }
 
 auto ListView::resetRowColors() -> void {
+    if (state.rowBackgroundColor.empty() && state.rowForegroundColor.empty())
+        return;
     state.rowBackgroundColor.clear();
     state.rowForegroundColor.clear();
     p.updateRowColors();

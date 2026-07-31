@@ -589,12 +589,12 @@ auto IecBus::selectListing( Emulator::Interface::Media* media,  std::string file
     drives[ media->id ]->structure.selectListing( fileName, options );
 }
 
-auto IecBus::debuggerAdd( DebuggerTheme theme, DebuggerAction action, uint16_t addr, uint16_t addrTo) -> void {
-    drives[ getDriveId(theme) ]->cpu.debuggerAdd( action, addr, addrTo );
+auto IecBus::debuggerAdd( DebuggerTheme theme, DebuggerAction action, unsigned ident, uint16_t addr, uint16_t addrTo) -> void {
+    drives[ getDriveId(theme) ]->cpu.debuggerAdd( action, ident, addr, addrTo );
 }
 
-auto IecBus::debuggerRemove( DebuggerTheme theme, DebuggerAction action, uint16_t addr) -> void {
-    drives[ getDriveId(theme) ]->cpu.debuggerRemove( action, addr );
+auto IecBus::debuggerRemove( DebuggerTheme theme, DebuggerAction action, unsigned ident) -> void {
+    drives[ getDriveId(theme) ]->cpu.debuggerRemove( action, ident );
 }
 
 auto IecBus::debuggerRemove( DebuggerTheme theme, DebuggerAction action) -> void {
@@ -637,8 +637,8 @@ auto IecBus::updateViaSnapshot( DebuggerTheme theme, DebuggerSnapshot& snap ) ->
     drives[ getDriveId(theme) ]->updateViaDebuggerSnapshot( snap );
 }
 
-auto IecBus::setWatchpointCondition(DebuggerTheme theme, DebuggerAction action, unsigned addr, unsigned hitCount, unsigned hitCountMode, const std::string& expression, unsigned expressionMode) -> bool {
-    return drives[ getDriveId(theme) ]->cpu.setWatchpointCondition( action, addr, hitCount, hitCountMode, expression, expressionMode );
+auto IecBus::setWatchpointCondition(DebuggerTheme theme, DebuggerAction action, unsigned ident, unsigned hitCount, unsigned hitCountMode, const std::string& expression, unsigned expressionMode) -> bool {
+    return drives[ getDriveId(theme) ]->cpu.setWatchpointCondition( action, ident, hitCount, hitCountMode, expression, expressionMode );
 }
 
 auto IecBus::editMemory(DebuggerTheme theme, uint32_t addr, std::vector<uint16_t> values) -> void {

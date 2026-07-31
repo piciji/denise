@@ -814,8 +814,8 @@ auto Interface::editMemory(DebuggerTheme theme, uint32_t addr, std::vector<uint1
     system->editMemory( addr, values );
 }
 
-auto Interface::debuggerAdd(DebuggerTheme theme, DebuggerAction action, unsigned addr, unsigned addrTo) -> void {
-    system->debuggerAdd( theme, action, addr, addrTo );
+auto Interface::debuggerAdd(DebuggerTheme theme, DebuggerAction action, unsigned ident, unsigned data0, unsigned data1) -> void {
+    system->debuggerAdd( theme, action, ident, data0, data1 );
 }
 
 auto Interface::debuggerRemove(DebuggerTheme theme, DebuggerAction action, std::optional<unsigned> addr) -> void {

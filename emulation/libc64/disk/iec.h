@@ -105,13 +105,13 @@ struct IecBus {
     auto setTrackZeroSensor(bool state) -> void;
     auto hasTrackZeroSensor() -> bool;
 
-    auto debuggerAdd( DebuggerTheme theme, DebuggerAction action, uint16_t addr, uint16_t addrTo = 0) -> void;
-    auto debuggerRemove( DebuggerTheme theme, DebuggerAction action, uint16_t addr) -> void;
+    auto debuggerAdd( DebuggerTheme theme, DebuggerAction action, unsigned ident, uint16_t addr, uint16_t addrTo = 0) -> void;
+    auto debuggerRemove( DebuggerTheme theme, DebuggerAction action, unsigned ident) -> void;
     auto debuggerRemove( DebuggerTheme theme, DebuggerAction action) -> void;
     auto updateCpuSnapshot( DebuggerTheme theme, DebuggerSnapshot& snap ) -> void;
     auto updateFromCpuSnapshot( DebuggerTheme theme, DebuggerSnapshot& snap ) -> void;
     auto updateViaSnapshot( DebuggerTheme theme, DebuggerSnapshot& snap ) -> void;
-    auto setWatchpointCondition(DebuggerTheme theme, DebuggerAction action, unsigned addr, unsigned hitCount, unsigned hitCountMode, const std::string& expression, unsigned expressionMode) -> bool;
+    auto setWatchpointCondition(DebuggerTheme theme, DebuggerAction action, unsigned ident, unsigned hitCount, unsigned hitCountMode, const std::string& expression, unsigned expressionMode) -> bool;
 
     auto disassemble(DebuggerTheme theme, uint16_t addr, unsigned& bytes) -> std::string;
     auto disassembleData(DebuggerTheme theme, uint16_t addr, unsigned bytes) -> std::string;

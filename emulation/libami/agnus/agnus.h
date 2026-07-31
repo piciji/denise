@@ -176,6 +176,7 @@ struct Agnus {
     struct Debugger {
         Emulator::Interface::DebuggerAction action = Emulator::Interface::DebuggerAction::None;
         Emulator::Interface::DebuggerTheme theme = Emulator::Interface::DebuggerTheme::Unspecified;
+        std::vector<unsigned> watcherIdents;
         uint32_t addr;
 
         unsigned dmaLog = DmaLogNone;
@@ -524,7 +525,8 @@ struct Agnus {
 
     inline auto updateDdfEnableCache() -> void;
 
-    auto debugPointReached(int source, unsigned addr) -> void;
+    auto debugPointReached(int source, Emulator::WatchPoints& wp, unsigned addr) -> void;
+    auto debugPointReached(DebuggerTheme theme, DebuggerAction action, Emulator::WatchPoints& wp, unsigned addr) -> void;
     auto debugPointReached(DebuggerTheme theme, DebuggerAction action, unsigned addr) -> void;
     auto oneTimeDebuggerAction() -> void;
     auto updateSnapshot(DebuggerSnapshot& snap) -> void;

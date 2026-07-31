@@ -58,6 +58,7 @@ struct CopperDebugger : Debugger {
 
             struct Adder : GUIKIT::HorizontalLayout {
                 GUIKIT::LineEdit address;
+                GUIKIT::LineEdit endAddress;
                 GUIKIT::Button add;
                 Adder();
             } adder;
@@ -97,13 +98,18 @@ struct CopperDebugger : Debugger {
     auto closeTheme() -> void override;
     auto buildControl() -> GUIKIT::Layout* override;
     auto updateBreakpointVisuals(DbgWatcher* watcher) -> void override;
+    auto updateInstructionBreakpointVisuals(unsigned addr, DebuggerAction action) -> void;
+    auto updateWatcherBreakpointVisuals(DbgWatcher* watcher) -> void;
 
     auto findInstructionRowBy(Copper::List* list, unsigned addr) -> std::optional<unsigned>;
     auto updateInstructionList(Copper::List* list, bool forceUpdate = false) -> void;
     auto updateWatcherSelection() -> void;
-    auto updateInstructionBreakpointVisualsInOtherList(Copper::List* lPtr, unsigned addr, DbgWatcher* watcher) -> void;
     auto updateInstructionViews(bool forceUpdate = false) -> void;
     auto searchAddress(Copper::List* list, unsigned addr) -> void;
     auto memChanged() -> void;
     auto getTheme() -> DebuggerTheme override { return DebuggerTheme::Copper; }
+    
+    auto addEntry(unsigned address, unsigned endAddress, DebuggerAction action) -> DbgWatcher*;
+    auto enableEntry(DbgWatcher* watcher, bool enable) -> void;
+    auto deleteEntry(DbgWatcher* watcher) -> void;
 };

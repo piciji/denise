@@ -37,6 +37,7 @@ CopperDebugger::Copper::List::List() {
 
 CopperDebugger::Copper::Watcher::Adder::Adder() {
     append(address, {~0u, 0u}, 10u);
+    append(endAddress, {~0u, 0u}, 10);
     append(add, {0u, 0u});
 
     setAlignment( 0.5 );
@@ -62,7 +63,7 @@ CopperDebugger::Copper::Watcher::Control::Control() {
 }
 
 CopperDebugger::Copper::Watcher::Watcher() {
-    listView.setHeaderText( { "", "","", "" } );
+    listView.setHeaderText( { "", "", "", "", "" } );
 
     append( listView, {~0u, ~0u}, 10 );
     append( typeLayout, {0u, 0u}, 10 );
@@ -95,16 +96,6 @@ CopperDebugger::~CopperDebugger() {
     }
 }
 
-auto CopperDebugger::updateInstructionBreakpointVisualsInOtherList(Copper::List* lPtr, unsigned addr, DbgWatcher* watcher) -> void {
-    for (auto& list : copper->lists) {
-        if (&list != lPtr) {
-            auto row = findInstructionRowBy( &list, addr );
-            if (row.has_value())
-                updateInstructionBreakpointVisuals(list.listView, row.value_or( 0 ), watcher);
-        }
-    }
-}
-
 auto CopperDebugger::buildTheme() -> GUIKIT::Layout* {
     copper = new Copper;
     copper->watcher.adder.add.setImage( &addImg );
@@ -120,27 +111,24 @@ auto CopperDebugger::buildTheme() -> GUIKIT::Layout* {
                 emuThread->lock();
                 auto& inst = lPtr->instructions[row];
 
-                DbgWatcher* watcher = watcherHelper.findBy(inst.addr, DebuggerAction::Breakpoint);
-                if (!watcher) {
-                    watcherHelper.addToList( inst.addr, DebuggerAction::Breakpoint );
-                    watcher = watcherHelper.findBy(inst.addr, DebuggerAction::Breakpoint);
-                    emulator->debuggerAdd(getTheme(), DebuggerAction::Breakpoint, inst.addr);
+                std::vector<DbgWatcher*> watchers = watcherHelper.findBy(inst.addr, DebuggerAction::Breakpoint);
+                
+                if (watchers.empty()) {
+                    addEntry(inst.addr, inst.addr, DebuggerAction::Breakpoint);
                 } else {
-                    watcher->enabled ^= 1;
-                    if (watcher->enabled) {
-                        emulator->debuggerAdd(getTheme(), DebuggerAction::Breakpoint, inst.addr);
-                        updateWatchpointCondition( *watcher );
-                    } else
-                        emulator->debuggerRemove(getTheme(), DebuggerAction::Breakpoint, inst.addr);
+                    auto watchersEn = watcherHelper.findEnabled(inst.addr, DebuggerAction::Breakpoint);
+                    
+                    if (!watchersEn.empty()) { // at least one enabled
+                        for (auto watcher : watchersEn)
+                            enableEntry(watcher, false);
+                    } else { // all disabled
+                        for (auto watcher : watchers)
+                            enableEntry(watcher, true);
+                    }
                 }
-                watcherHelper.updateList();
+
                 emuThread->unlock();
-                updateInstructionBreakpointVisuals(lPtr->listView, row, watcher);
 
-                updateInstructionBreakpointVisualsInOtherList(lPtr, inst.addr, watcher);
-
-              //  if (lPtr->currentInstRow.has_value())
-                //    lPtr->listView.setSelection( lPtr->currentInstRow.value_or(0) );
             } else if (isPaused()) {
                 if (row < lPtr->instructions.size()) {
                     auto& inst = lPtr->instructions[row];
@@ -153,12 +141,9 @@ auto CopperDebugger::buildTheme() -> GUIKIT::Layout* {
         list.listView.onContext = [this, lPtr](unsigned row, unsigned column, GUIKIT::Position position ) {
             if (column == 0) {
                 auto& inst = lPtr->instructions[row];
-                DbgWatcher* watcher = watcherHelper.findBy(inst.addr, DebuggerAction::Breakpoint);
-                if (watcher)
-                    openConditionView( watcher, position);
-
-             //   if (lPtr->currentInstRow.has_value())
-               //     lPtr->listView.setSelection( lPtr->currentInstRow.value_or(0) );
+                auto watchers = watcherHelper.findBy(inst.addr, DebuggerAction::Breakpoint);
+                if (watchers.size() == 1)
+                    openConditionView( watchers[0], position);
             }
         };
 
@@ -210,42 +195,17 @@ auto CopperDebugger::buildTheme() -> GUIKIT::Layout* {
         if (row >= watcherHelper.elements())
             return false;
 
-        if (column != 0 && column != 3)
+        if (column != 0 && column != 4)
             return false;
 
         emuThread->lock();
         auto& watcher = watcherHelper.getWatcher(row);
+        unsigned _addr = watcher.addr;
+        
         if (column == 0) {
-            watcher.enabled ^= 1;
-            watcherHelper.updateBreakpointVisuals(row, &watcher);
-            if (watcher.enabled) {
-                emulator->debuggerAdd(getTheme(), watcher.action, watcher.addr);
-                updateWatchpointCondition( watcher );
-            } else
-                emulator->debuggerRemove(getTheme(), watcher.action, watcher.addr);
-        }
-
-        for (auto& list : copper->lists) {
-            Copper::List* lPtr = &list;
-
-            std::optional<unsigned> instRow = std::nullopt;
-            if (watcher.action == DebuggerAction::Breakpoint)
-                instRow = findInstructionRowBy(lPtr, watcher.addr);
-
-            if (!instRow.has_value())
-                continue;
-
-            if (column == 0) {
-                updateInstructionBreakpointVisuals(lPtr->listView, instRow.value_or(0), &watcher);
-            } else if (column == 3) {
-                removeInstructionBreakpointVisuals(lPtr->listView, instRow.value_or(0));
-            }
-        }
-
-        if (column == 3) {
-            emulator->debuggerRemove( getTheme(), watcher.action, watcher.addr);
-            watcherHelper.removeFromList(watcher.addr, watcher.action);
-            watcherHelper.updateList();
+            enableEntry(&watcher, !watcher.enabled );
+        } else if (column == 4) {
+            deleteEntry(&watcher);
         }
 
         emuThread->unlock();
@@ -255,39 +215,36 @@ auto CopperDebugger::buildTheme() -> GUIKIT::Layout* {
     copper->watcher.adder.add.onActivate = [this]() {
         copper->watcher.adder.address.onReturn();
     };
+    
+    copper->watcher.adder.endAddress.onReturn = [this]() {
+        copper->watcher.adder.address.onReturn();
+    };
 
     copper->watcher.adder.address.onReturn = [this]() {
         std::string addressText = copper->watcher.adder.address.text();
+        std::string endAddressText = copper->watcher.adder.endAddress.text();
+        
         if (addressText.empty())
             return;
 
         int address = GUIKIT::String::convertHexToInt(addressText, -1);
         if (address == -1)
             return;
+        
+        int endAddress = address;
+        if (!endAddressText.empty()) {
+            endAddress = GUIKIT::String::convertHexToInt(endAddressText, -1);
+            if (endAddress == -1)
+                return;
+        }
 
         DebuggerAction action = DebuggerAction::Breakpoint;
         if (copper->watcher.typeLayout.watchPoint.checked()) {
             action = DebuggerAction::Watchpoint;
         }
 
-        if (watcherHelper.findBy( address, action ))
-            return;
-
         emuThread->lock();
-        watcherHelper.addToList( static_cast<unsigned>(address), action );
-        watcherHelper.updateList();
-
-        if (action == DebuggerAction::Breakpoint) {
-            for (auto& list : copper->lists) {
-                Copper::List* lPtr = &list;
-
-                auto instRow = findInstructionRowBy(lPtr, static_cast<unsigned>(address));
-                if (instRow.has_value())
-                    updateInstructionBreakpointVisuals(lPtr->listView, instRow.value_or(0), watcherHelper.findBy( address, action ));
-            }
-        }
-
-        emulator->debuggerAdd(getTheme(), action, address);
+        addEntry( address, endAddress, action );
         emuThread->unlock();
     };
 
@@ -301,6 +258,9 @@ auto CopperDebugger::translateTheme() -> void {
     bool showTips = showTipsItem.checked();
 
     copper->watcher.adder.address.setPlaceholder( trans->getA( "address" ) );
+    copper->watcher.adder.endAddress.setPlaceholder( trans->getA( "until" ) );
+    copper->watcher.adder.endAddress.setTooltip( trans->getA( "address range tooltip" ) );
+
     copper->watcher.typeLayout.breakPoint.setText( trans->getA( "instruction" ) );
     copper->watcher.typeLayout.watchPoint.setText( trans->getA( "register access" ) );
     copper->watcher.control.labelCopPc.setText( "COP-PC" );
@@ -445,10 +405,10 @@ auto CopperDebugger::initTheme() -> void {
 
     for (auto& watcher : watcherHelper.watchers) {
         if (watcher.enabled) {
-            emulator->debuggerAdd( getTheme(), watcher.action, watcher.addr );
+            emulator->debuggerAdd( getTheme(), watcher.action, watcher.ident, watcher.addr, watcher.endAddr );
             updateWatchpointCondition(watcher);
         } else
-            emulator->debuggerRemove( getTheme(), watcher.action, watcher.addr );
+            emulator->debuggerRemove( getTheme(), watcher.action, watcher.ident );
     }
 }
 
@@ -465,22 +425,6 @@ auto CopperDebugger::saveIdent() -> std::string {
 
 auto CopperDebugger::titleIdent() -> std::string {
     return emulator->ident + " Debugger Copper";
-}
-
-auto CopperDebugger::updateBreakpointVisuals(DbgWatcher* watcher) -> void {
-    for (auto& list : copper->lists) {
-        Copper::List* lPtr = &list;
-
-        std::optional<unsigned> instRow = findInstructionRowBy(lPtr, watcher->addr);
-
-        if (instRow.has_value())
-            updateInstructionBreakpointVisuals(lPtr->listView, instRow.value_or(0), watcher);
-    }
-
-    std::optional<unsigned> instRow = watcherHelper.findRowBy( watcher->addr, watcher->action );
-
-    if (instRow.has_value())
-        watcherHelper.updateBreakpointVisuals(instRow.value_or(0), watcher);
 }
 
 auto CopperDebugger::findInstructionRowBy(Copper::List* list, unsigned addr) -> std::optional<unsigned> {
@@ -547,11 +491,11 @@ auto CopperDebugger::updateInstructionList(Copper::List* list, bool forceUpdate)
                 instructionList.setText( i, 2, disassembled, true );
             }
 
-            auto breakPoint = watcherHelper.findBy( addr, DebuggerAction::Breakpoint );
-            if (!breakPoint) {
+            auto watchers = watcherHelper.findBy( inst.addr, DebuggerAction::Breakpoint );
+            if (watchers.empty()) {
                 instructionList.setImage( i, 0, nullImg, true );
             } else {
-                updateInstructionBreakpointVisuals(instructionList, i, breakPoint, true);
+                Debugger::updateInstructionBreakpointVisuals(instructionList, i, watchers, true);
             }
 
             inst.addr = addr;
@@ -580,14 +524,21 @@ auto CopperDebugger::updateWatcherSelection() -> void {
     auto& watcherList = copper->watcher.listView;
     auto& t = snapshot->callbackTheme;
     auto& act = snapshot->callbackAction;
+    auto& idents = snapshot->watcherIdents;
     bool hiLight = false;
+    watcherList.resetRowColors();
 
     if (t == getTheme()) {
         if (act == DebuggerAction::Watchpoint || act == DebuggerAction::Breakpoint) {
-            auto row = watcherHelper.findRowBy(snapshot->callbackAddress, snapshot->callbackAction);
-            if (row.has_value()) {
-                watcherList.setSelection( row.value_or(0) );
-                hiLight = true;
+            for (unsigned i = 0; i < idents.size(); i++) {
+                auto row = watcherHelper.findRowBy(idents[i]);
+                if (row.has_value()) {
+                    if (!hiLight) {
+                        watcherList.setSelection( row.value_or(0) );
+                        hiLight = true;
+                    }
+                    watcherList.setRowForegroundColor( DEBUG_COLOR, row.value_or(0) );
+                }
             }
         }
     }
@@ -605,4 +556,65 @@ auto CopperDebugger::searchAddress(Copper::List* list, unsigned addr) -> void {
 auto CopperDebugger::memChanged() -> void {
     prepareTheme(true);
     updateTheme();
+}
+
+auto CopperDebugger::addEntry(unsigned address, unsigned endAddress, DebuggerAction action) -> DbgWatcher* {
+    
+    auto watcher = watcherHelper.addToList( address, endAddress, action );
+    watcherHelper.updateList();
+    
+    updateInstructionBreakpointVisuals(watcher->addr, watcher->action);
+    
+    emulator->debuggerAdd(getTheme(), action, watcher->ident, watcher->addr, watcher->endAddr);
+    
+    return watcher;
+}
+
+auto CopperDebugger::enableEntry(DbgWatcher* watcher, bool enable) -> void {
+    watcher->enabled = enable;
+    
+    updateBreakpointVisuals(watcher);
+    
+    if (watcher->enabled) {
+        emulator->debuggerAdd(getTheme(), watcher->action, watcher->ident, watcher->addr, watcher->endAddr);
+        updateWatchpointCondition( *watcher );
+    } else
+        emulator->debuggerRemove(getTheme(), watcher->action, watcher->ident);
+}
+
+auto CopperDebugger::deleteEntry(DbgWatcher* watcher) -> void {
+    unsigned _addr = watcher->addr;
+    auto _action = watcher->action;
+    emulator->debuggerRemove( getTheme(), watcher->action, watcher->ident);
+    watcherHelper.removeFromList(watcher->ident);
+    watcherHelper.updateList();
+    
+    updateInstructionBreakpointVisuals(_addr, _action);
+}
+
+auto CopperDebugger::updateBreakpointVisuals(DbgWatcher* watcher) -> void {
+    updateInstructionBreakpointVisuals(watcher->addr, watcher->action);
+    updateWatcherBreakpointVisuals(watcher);
+}
+
+auto CopperDebugger::updateInstructionBreakpointVisuals(unsigned addr, DebuggerAction action) -> void {
+    if (action != DebuggerAction::Breakpoint)
+        return;
+    
+    auto watchers = watcherHelper.findBy(addr, DebuggerAction::Breakpoint);
+    
+    for (auto& list : copper->lists) {
+        auto instRow = findInstructionRowBy(&list, addr);
+        
+        if (instRow.has_value())
+            Debugger::updateInstructionBreakpointVisuals(list.listView, instRow.value_or(0), watchers);
+    }
+}
+
+auto CopperDebugger::updateWatcherBreakpointVisuals(DbgWatcher* watcher) -> void {
+    
+    std::optional<unsigned> instRow = watcherHelper.findRowBy( watcher->ident );
+    
+    if (instRow.has_value())
+        watcherHelper.updateBreakpointVisuals(instRow.value_or(0), watcher);
 }

@@ -363,6 +363,7 @@ struct Interface {
         DebuggerAction callbackAction;
         DebuggerTheme callbackTheme;
         uint32_t callbackAddress;
+        std::vector<unsigned> watcherIdents;
         bool codeMaybeModified = false;
         std::mutex mutex;
     };
@@ -681,9 +682,9 @@ struct Interface {
     virtual auto setMonitorFpsRatio(double ratio) -> void {}
 
     // debugger
-    virtual auto debuggerAdd(DebuggerTheme theme, DebuggerAction action, unsigned addr, unsigned addrTo = 0) -> void {}
-    virtual auto debuggerRemove(DebuggerTheme theme, DebuggerAction action, std::optional<unsigned> addr = std::nullopt) -> void {}
-    virtual auto setWatchpointCondition(DebuggerTheme theme, DebuggerAction action, unsigned addr, unsigned hitCount, unsigned hitCountMode, const std::string& expression, unsigned expressionMode) -> bool { return true; }
+    virtual auto debuggerAdd(DebuggerTheme theme, DebuggerAction action, unsigned ident, unsigned data0 = 0, unsigned data1 = 0) -> void {}
+    virtual auto debuggerRemove(DebuggerTheme theme, DebuggerAction action, std::optional<unsigned> ident = std::nullopt) -> void {}
+    virtual auto setWatchpointCondition(DebuggerTheme theme, DebuggerAction action, unsigned ident, unsigned hitCount, unsigned hitCountMode, const std::string& expression, unsigned expressionMode) -> bool { return true; }
 
     virtual auto debuggerStepOver(DebuggerTheme theme, bool subroutineOnly) -> void {}
     virtual auto debuggerStepInto(DebuggerTheme theme) -> void {}

@@ -26,6 +26,7 @@
 namespace Emulator {
     struct PowerSupply;
     struct Serialzer;
+    struct WatchPoints;
 }
 
 namespace LIBC64 {
@@ -247,6 +248,7 @@ struct System {
         Emulator::Interface::DebuggerAction action = Emulator::Interface::DebuggerAction::None;
         Emulator::Interface::DebuggerTheme theme = Emulator::Interface::DebuggerTheme::Unspecified;
         uint32_t addr;
+        std::vector<unsigned> watcherIdents;
         uint32_t dmaWatchers[4] = { 0 };
     } debugger;
 
@@ -340,9 +342,9 @@ struct System {
     auto set2Mhz(bool state) -> void;
     auto toggle2Mhz() -> bool;
 
-    auto debuggerAdd(Emulator::Interface::DebuggerTheme theme, Emulator::Interface::DebuggerAction action, uint32_t addr, uint32_t addrTo) -> void;
-	auto debuggerRemove(Emulator::Interface::DebuggerTheme theme, Emulator::Interface::DebuggerAction action, std::optional<unsigned> addr) -> void;
-    auto setWatchpointCondition(DebuggerTheme theme, Emulator::Interface::DebuggerAction action, unsigned addr, unsigned hitCount, unsigned hitCountMode, const std::string& expression, unsigned expressionMode) -> bool;
+    auto debuggerAdd(DebuggerTheme theme, DebuggerAction action, unsigned ident, unsigned data0, unsigned data1) -> void;
+	auto debuggerRemove(Emulator::Interface::DebuggerTheme theme, Emulator::Interface::DebuggerAction action, std::optional<unsigned> ident) -> void;
+    auto setWatchpointCondition(DebuggerTheme theme, Emulator::Interface::DebuggerAction action, unsigned ident, unsigned hitCount, unsigned hitCountMode, const std::string& expression, unsigned expressionMode) -> bool;
 
 	auto debuggerStepOver(DebuggerTheme theme, bool subroutineOnly) -> void;
 	auto debuggerStepInto(DebuggerTheme theme) -> void;
@@ -354,7 +356,7 @@ struct System {
     auto memoryDumpCart(uint16_t startAddr, uint16_t endAddr, uint8_t* dump) -> void;
     auto getMemory(DebuggerTheme theme, DebuggerAction action, unsigned startAddr, unsigned endAddr, uint8_t* dump) -> void;
 
-    auto debugPointReached(Emulator::Interface::DebuggerTheme theme, Emulator::Interface::DebuggerAction action, unsigned addr) -> void;
+    auto debugPointReached(Emulator::Interface::DebuggerTheme theme, Emulator::Interface::DebuggerAction action, Emulator::WatchPoints& wp, unsigned addr) -> void;
     auto updateDebuggerSnapshot() -> void;
     auto applyRemoteSnapshotChanges() -> void;
     auto debuggerUpdate() -> void;

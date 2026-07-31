@@ -61,7 +61,7 @@ DmaDebugger::Dma::DmaLine::DmaLine(DmaDebugger* debugger) {
 }
 
 DmaDebugger::Dma::DmaFrame::BusUsage::BusUsage() {
-    append(enableUsage, {110u, 0u}, 10);
+    append(enableUsage, {0u, 0u}, 10);
     append(canvas, {15u, 10u});
 
     setAlignment( 0.5 );
@@ -560,6 +560,11 @@ auto DmaDebugger::translateTheme() -> void {
         if (watcher.button.getStore() == -1)
             watcher.button.setText( trans->getA( "connect" ) );
     }
+    
+    std::vector<GUIKIT::Layout*> entries;
+    for(auto entry : dma->dmaFrame.usages )
+        entries.push_back(entry);
+    GUIKIT::Layout::alignChildWidth(entries);
 }
 
 auto DmaDebugger::saveIdent() -> std::string {

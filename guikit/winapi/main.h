@@ -712,7 +712,7 @@ struct pListView : pWidget {
     auto setSelectionColor(unsigned foregroundColor = 0, unsigned backgroundColor = 0) -> void;
     auto findRowBrush(unsigned row) -> HBRUSH;
     auto updateRowColors() -> void;
-    auto updateRowForegroundColors() -> void {}
+    auto updateRowForegroundColors() -> void;
     auto updateSpacing() -> void;
 
     pListView(ListView& listView) : pWidget(listView), listView(listView) {}

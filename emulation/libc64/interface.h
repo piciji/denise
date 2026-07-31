@@ -214,9 +214,9 @@ struct Interface : Emulator::Interface {
     auto setRewind(bool state) -> void;
 
     // debugger
-    auto debuggerAdd(DebuggerTheme theme, DebuggerAction action, unsigned addr, unsigned addrTo = 0) -> void;
-    auto debuggerRemove(DebuggerTheme theme, DebuggerAction action, std::optional<unsigned> addr = std::nullopt) -> void;
-    auto setWatchpointCondition(DebuggerTheme theme, DebuggerAction action, unsigned addr, unsigned hitCount, unsigned hitCountMode, const std::string& expression, unsigned expressionMode) -> bool;
+    auto debuggerAdd(DebuggerTheme theme, DebuggerAction action, unsigned ident, unsigned data0 = 0, unsigned data1 = 0) -> void;
+    auto debuggerRemove(DebuggerTheme theme, DebuggerAction action, std::optional<unsigned> ident = std::nullopt) -> void;
+    auto setWatchpointCondition(DebuggerTheme theme, DebuggerAction action, unsigned ident, unsigned hitCount, unsigned hitCountMode, const std::string& expression, unsigned expressionMode) -> bool;
 
     auto debuggerStepOver(DebuggerTheme theme, bool subroutineOnly) -> void;
     auto debuggerStepInto(DebuggerTheme theme) -> void;

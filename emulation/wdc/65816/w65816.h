@@ -231,7 +231,7 @@ protected:
     virtual auto setMemoryLock(bool state) -> void {} // MLB hints other BUS participants not to interfere RMW
     virtual auto trapHandler() -> bool { return false; } // trap COP instruction
 
-    virtual auto debugPointReached(int source, unsigned addr) -> void {}
+    virtual auto debugPointReached(int source, Emulator::WatchPoints& wp, unsigned addr) -> void {}
 #endif
 
     auto observeRegLength(uint8_t newVal) -> void;

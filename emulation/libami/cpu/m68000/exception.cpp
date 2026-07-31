@@ -194,7 +194,7 @@ auto M68000::addressException(uint32_t adr, uint32_t _pc, uint8_t flags, uint16_
 
 auto M68000::executeAt(uint16_t adr, uint8_t group) -> void { // 18 cycles
     if ((control & ExceptionPoint) && exceptionPoints.check( adr >> 2, true )) {
-        DEBUG_POINT_REACHED(ExceptionPoint, adr >> 2);
+        DEBUG_POINT_REACHED(ExceptionPoint, exceptionPoints, adr >> 2);
     }
     pc = read<Long>(adr);
     

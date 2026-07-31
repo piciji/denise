@@ -143,13 +143,13 @@ struct System {
     auto getHDDAsync() -> bool;
     auto cropFrame( Emulator::Interface::CropType type, Emulator::Interface::Crop crop ) -> void;
 
-    auto debuggerAdd(Emulator::Interface::DebuggerTheme theme, Emulator::Interface::DebuggerAction action, unsigned addr, unsigned addrTo) -> void;
-    auto debuggerRemove(Emulator::Interface::DebuggerTheme theme, Emulator::Interface::DebuggerAction action, std::optional<unsigned> addr) -> void;
+    auto debuggerAdd(DebuggerTheme theme, DebuggerAction action, unsigned ident, unsigned data0, unsigned data1) -> void;
+    auto debuggerRemove(Emulator::Interface::DebuggerTheme theme, Emulator::Interface::DebuggerAction action, std::optional<unsigned> ident) -> void;
     auto updateDebuggerSnapshot() -> void;
     auto updateCiaDebuggerSnapshot(DebuggerSnapshot& snap) -> void;
     auto debuggerUpdate() -> void;
     auto editMemory(uint32_t addr, std::vector<uint16_t> values) -> void;
-    auto setWatchpointCondition(DebuggerTheme theme, Emulator::Interface::DebuggerAction action, unsigned addr, unsigned hitCount, unsigned hitCountMode, const std::string& expression, unsigned expressionMode) -> bool;
+    auto setWatchpointCondition(DebuggerTheme theme, Emulator::Interface::DebuggerAction action, unsigned ident, unsigned hitCount, unsigned hitCountMode, const std::string& expression, unsigned expressionMode) -> bool;
 };
 
 
