@@ -309,7 +309,7 @@ auto System::memoryDump(uint8_t page, uint8_t* dump) -> void {
 }
 
 auto System::memoryDumpCart(uint16_t startAddr, uint16_t endAddr, uint8_t* dump) -> void {
-    for (unsigned addr = startAddr; addr < endAddr; addr++) {
+    for (unsigned addr = startAddr; addr <= endAddr; addr++) {
         if (addr >= 0x8000 && addr <= 0x9fff) {
             *dump++ = peekRomL( addr );
         } else if (addr >= 0xa000 && addr <= 0xbfff) {
@@ -322,7 +322,7 @@ auto System::memoryDumpCart(uint16_t startAddr, uint16_t endAddr, uint8_t* dump)
 auto System::memoryDumpROM(uint16_t startAddr, uint16_t endAddr, uint8_t* dump) -> void {
     bool scpu = dynamic_cast<SuperCpu*>(expansionPort);
 
-    for (unsigned addr = startAddr; addr < endAddr; addr++) {
+    for (unsigned addr = startAddr; addr <= endAddr; addr++) {
         if (addr >= 0xa000 && addr <= 0xbfff) {
             if (scpu)
                 *dump++ = superCpu->readSramB1<true>( addr );
@@ -343,7 +343,7 @@ auto System::memoryDumpROM(uint16_t startAddr, uint16_t endAddr, uint8_t* dump) 
 auto System::memoryDumpIO(uint16_t startAddr, uint16_t endAddr, uint8_t* dump) -> void {
     bool scpu = dynamic_cast<SuperCpu*>(expansionPort);
 
-    for (unsigned addr = startAddr; addr < endAddr; addr++) {
+    for (unsigned addr = startAddr; addr <= endAddr; addr++) {
         switch (addr & 0xff00) {
             case 0xd000:
                 if (scpu) {

@@ -1633,19 +1633,19 @@ auto System::getMemoryDumpPage(DebuggerTheme theme, uint8_t page, uint8_t* dump)
 auto System::getMemory(DebuggerTheme theme, DebuggerAction action, unsigned startAddr, unsigned endAddr, uint8_t* dump) -> void {
     switch (theme) {
         case DebuggerTheme::Drive8Memory:
-            for (unsigned addr = startAddr; addr < endAddr; addr++)
+            for (unsigned addr = startAddr; addr <= endAddr; addr++)
                 *dump++ = iecBus.drives[0]->cpuRead<true>(addr);
             break;
         case DebuggerTheme::Drive9Memory:
-            for (unsigned addr = startAddr; addr < endAddr; addr++)
+            for (unsigned addr = startAddr; addr <= endAddr; addr++)
                 *dump++ = iecBus.drives[1]->cpuRead<true>(addr);
             break;
         case DebuggerTheme::Drive10Memory:
-            for (unsigned addr = startAddr; addr < endAddr; addr++)
+            for (unsigned addr = startAddr; addr <= endAddr; addr++)
                 *dump++ = iecBus.drives[2]->cpuRead<true>(addr);
             break;
         case DebuggerTheme::Drive11Memory:
-            for (unsigned addr = startAddr; addr < endAddr; addr++)
+            for (unsigned addr = startAddr; addr <= endAddr; addr++)
                 *dump++ = iecBus.drives[3]->cpuRead<true>(addr);
             break;
         case DebuggerTheme::Memory:
@@ -1656,7 +1656,7 @@ auto System::getMemory(DebuggerTheme theme, DebuggerAction action, unsigned star
             } else if (action == DebuggerAction::MemCART) {
                 memoryDumpCart( startAddr, endAddr, dump );
             } else {
-                for (unsigned addr = startAddr; addr < endAddr; addr++)
+                for (unsigned addr = startAddr; addr <= endAddr; addr++)
                     *dump++ = ram[addr & 0xffff];
             }
             break;
@@ -1666,10 +1666,10 @@ auto System::getMemory(DebuggerTheme theme, DebuggerAction action, unsigned star
         case DebuggerTheme::SCPU:
         case DebuggerTheme::MemorySCPU:
             if (expansionPort->haltMainCpu()) {
-                for (unsigned addr = startAddr; addr < endAddr; addr++)
+                for (unsigned addr = startAddr; addr <= endAddr; addr++)
                     *dump++ = superCpu->peekByte( addr & 0xffffff );
             } else {
-                for (unsigned addr = startAddr; addr < endAddr; addr++)
+                for (unsigned addr = startAddr; addr <= endAddr; addr++)
                     *dump++ = memoryCpu.peek( addr );
             }
             break;
