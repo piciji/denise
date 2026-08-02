@@ -1961,7 +1961,7 @@ auto M6502New::parseExpressionValue(const std::string& input, int& pos) -> uint3
 
             switch (cond.vector) {
                 default: return 0;
-                case 0: return system->vicII->getVcounter();
+                case 0: return system->vicII->getVcounterHR();
                 case 1: return system->vicII->getCycle();
                 case 2: return pc;
                 case 3: return regX;

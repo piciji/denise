@@ -35,7 +35,7 @@ auto M6510::parseExpressionValue(const std::string& input, int& pos) -> uint32_t
 
             switch (cond.vector) {
                 default: return 0;
-                case 0: return vicII->getVcounter();
+                case 0: return vicII->getVcounterHR();
                 case 1: return vicII->getCycle();
                 case 2: return pc;
                 case 3: return regX;

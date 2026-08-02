@@ -466,7 +466,7 @@ auto VicIIBase::updateDmaSnapshot(DebuggerSnapshot& snap) -> void {
 }
 
 auto VicIIBase::updatePositionSnapshot(DebuggerSnapshot& snap) -> void {
-    snap.vPos = vCounter;
+    snap.vPos = getVcounterHR();
     snap.hPos = cycle;
 }
 

@@ -139,6 +139,7 @@ struct VicIIBase {
     auto isBaLow() -> bool { return baLow; }
     
     auto getVcounter() -> unsigned { return vCounter; }
+    auto getVcounterHR() -> unsigned { return initVCounter ? 0 : vCounter; }
 	
 	auto isNTSCGeometry() -> bool { return ntscGeometry; }
 	auto isNTSCEncoding() -> bool { return ntscEncoding; }
