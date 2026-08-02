@@ -179,6 +179,8 @@ struct pWidget {
     virtual auto _setForegroundColor(unsigned color) -> void;
     virtual auto setForegroundColorThreaded(unsigned color) -> void;
     virtual auto setBackgroundColor(unsigned color) -> void;
+    virtual auto lockRedraw() -> void {}
+    virtual auto unlockRedraw() -> void {}
 	auto getMinimumSize() -> Size;
     auto getMinimumFontSize() -> Size;
     auto setTooltip(std::string tooltip) -> void;
