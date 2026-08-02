@@ -21,6 +21,11 @@ auto pComboButton::append(std::string text, const std::string& _font) -> void {
     calculatedMinimumSize.updated = false;
 }
 
+auto pComboButton::appendMulti(const std::vector<ComboButton::Entry>& rows) -> void {
+    for (auto& [text, userData, font] : rows)
+        append( text, font );
+}
+
 auto pComboButton::minimumSize() -> Size {
 
 	static Size containerSize = pWidget::getScaledContainerSize( { pApplication::useDark ? 26u : 24u, pApplication::useDark ? 6u : 8u } );
@@ -111,7 +116,7 @@ auto pComboButton::create() -> void {
     hwnd = CreateWindow(
         WC_COMBOBOX, L"",
         WS_CHILD | WS_TABSTOP | CBS_DROPDOWNLIST | CBS_HASSTRINGS |
-        (comboButton.hintVerticalScrollbar ? WS_VSCROLL : 0) | 
+        (comboButton.hintVerticalScrollbar ? WS_VSCROLL : 0) |
         ((comboButton.hintMultiFonts || pApplication::useDark) ? CBS_OWNERDRAWFIXED : 0),
         0, 0, 0, 0,
         getParentHandle(), (HMENU)(unsigned long long)comboButton.id, GetModuleHandle(0), 0

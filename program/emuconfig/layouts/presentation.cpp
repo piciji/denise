@@ -350,7 +350,7 @@ VideoScreenTextLayout::ColorBoxLayout::ColorBoxLayout() {
     setPadding(10);
 }
 
-VideoScreenTextLayout::Options::Font::Font() : fontType(false, true) {
+VideoScreenTextLayout::Options::Font::Font() : fontType(true, true) {
     append(labelFontSize, {0u, 0u}, 10);
     append(fontSize, {0u, 0u}, 10);
     append(labelFontType, {0u, 0u}, 10);
@@ -358,9 +358,13 @@ VideoScreenTextLayout::Options::Font::Font() : fontType(false, true) {
     append(removeFont, {0u, 0u}, 10);
     append(addFont, {0u, 0u});
 
+    std::vector<GUIKIT::ComboButton::Entry> rows;
+
     for(unsigned s = 8; s <= 36; s++) {
-        fontSize.append(std::to_string(s), s);
+       // fontSize.append(std::to_string(s), s);
+        rows.emplace_back(std::to_string(s), s, "" );
     }
+    fontSize.appendMulti( rows );
 
     setAlignment(0.5);
 }
@@ -1735,8 +1739,8 @@ auto PresentationLayout::fillFontTypeList() -> void {
     if (fontTypes.rows())
         selUserId = fontTypes.userData();
 
-    fontTypes.reset();
-    fontTypes.append( trans->getA("default"), 0 );
+ //   fontTypes.reset();
+   // fontTypes.append( trans->getA("default"), 0 );
 
     list = GUIKIT::File::getFolderListAlt(program->fontFolder(), {".ttf", ".otf", ".ttc"}, false);
     for(auto& file : list)
@@ -1754,8 +1758,14 @@ auto PresentationLayout::fillFontTypeList() -> void {
         return _sA < _sB;
     });
 
+    std::vector<GUIKIT::ComboButton::Entry> rows;
+    rows.emplace_back(trans->getA("default"), 0, "" );
+
     for(auto& displayFont : displayFonts)
-        fontTypes.append( displayFont.name, displayFont.ident, displayFont.name );
+       // fontTypes.append( displayFont.name, displayFont.ident, displayFont.name );
+        rows.emplace_back(displayFont.name, displayFont.ident, displayFont.name );
+
+    fontTypes.appendMulti( rows );
 
     fontTypes.setSelectionByUserId(selUserId);
 }

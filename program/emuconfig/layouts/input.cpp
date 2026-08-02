@@ -445,14 +445,18 @@ auto InputLayout::loadDeviceList() -> void {
 
     unsigned selection = selector.device.selection();
 
-    selector.device.reset();
+    //selector.device.reset();
+    std::vector<GUIKIT::ComboButton::Entry> rows;
 
     for (auto& device : emulator->devices) {
         if (device.inputs.size() == 0)
             continue;
 
-        selector.device.append( trans->get( device.name ), device.id );
+        //selector.device.append( trans->get( device.name ), device.id );
+        rows.emplace_back(trans->get( device.name ), device.id, "" );
     }
+
+    selector.device.appendMulti( rows );
 
     selector.device.setSelection( selection );
 

@@ -359,10 +359,14 @@ GeometryLayout::GeometryLayout(TabWindow* tabWindow) {
         emuThread->lock();
         auto displayId = monitorResolutionLayout.display.userData();
 
-        monitorResolutionLayout.displaySettings.reset();
+       // monitorResolutionLayout.displaySettings.reset();
+        std::vector<GUIKIT::ComboButton::Entry> rows;
 
         for( auto& resolution : GUIKIT::Monitor::getSettings( displayId ) )
-            monitorResolutionLayout.displaySettings.append( resolution.name, resolution.id );
+            //monitorResolutionLayout.displaySettings.append( resolution.name, resolution.id );
+            rows.emplace_back( resolution.name, resolution.id, "" );
+
+        monitorResolutionLayout.displaySettings.appendMulti( rows );
 
         _settings->set<unsigned>("fullscreen_display", (unsigned)monitorResolutionLayout.display.userData() );
 
@@ -483,8 +487,13 @@ GeometryLayout::GeometryLayout(TabWindow* tabWindow) {
         emuThread->unlock();
     };
 
+    std::vector<GUIKIT::ComboButton::Entry> rows;
+
     for( auto& display : GUIKIT::Monitor::getDisplays() )
-        monitorResolutionLayout.display.append(display.name, display.id);
+        //monitorResolutionLayout.display.append(display.name, display.id);
+        rows.emplace_back( display.name, display.id, "" );
+
+    monitorResolutionLayout.display.appendMulti( rows );
 
     loadSettings();
 }

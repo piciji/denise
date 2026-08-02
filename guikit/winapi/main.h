@@ -278,6 +278,9 @@ struct pWidget {
 	auto getParentHandle() -> HWND;
 	auto getParentTabWidget() -> Widget*;
 	auto needRebuild() -> bool;
+
+    auto lockRedraw() -> void;
+    auto unlockRedraw() -> void;
 	
     virtual auto minimumSize() -> Size { return {0,0}; }
     virtual auto borderSize() -> unsigned { return 2; }
@@ -587,6 +590,7 @@ struct pComboButton : pWidget {
     std::vector<HFONT> hfonts;
 
     auto append(std::string text, const std::string& _font) -> void;
+    auto appendMulti(const std::vector<ComboButton::Entry>& rows) -> void;
     auto remove(unsigned selection) -> void;
     auto minimumSize() -> Size;
     auto reset() -> void;
@@ -693,8 +697,6 @@ struct pListView : pWidget {
     auto relayMesssageToToolTip(HWND hwnd, UINT umsg, WPARAM wparam, LPARAM lparam) -> void;
     auto updateRowToolTip(HWND hwnd, int curItem, RECT rect) -> void;
     auto colorRowTooltips( bool colorTip ) -> void {}
-    auto lockRedraw() -> void;
-    auto unlockRedraw() -> void;
     auto getFirstVisibleRow() -> unsigned;
     static auto getThemeHeaderColors(HPEN& captionPen) -> HBRUSH;
 

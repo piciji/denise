@@ -964,19 +964,25 @@ auto MediaLayout::updateMediaBlock(MediaGroupLayout::Block* block, FileSetting* 
     if (block->selector.edit)
         block->selector.edit->setText( fSetting->path );
 
-    if (block->selector.pathCombo) {
+    auto& pathCombo = block->selector.pathCombo;
+
+    if (pathCombo) {
         auto recentFile = fileloader->getRecentFile(emulator);
         auto& files = recentFile->list(block->media->group, block->media->secondary, fSetting->path);
 
-        block->selector.pathCombo->reset();
+        //pathCombo->reset();
+        std::vector<GUIKIT::ComboButton::Entry> rows;
 
         for (auto& file : files)
-            block->selector.pathCombo->append(file);
+       //     pathCombo->append(file);
+           rows.emplace_back(file, 0, "" );
+
+        pathCombo->appendMulti( rows );
 
         if (fSetting->path.empty())
-            block->selector.pathCombo->unselect();
+            pathCombo->unselect();
         else
-            block->selector.pathCombo->setSelectionByRow(fSetting->path);
+            pathCombo->setSelectionByRow(fSetting->path);
     }
 
     if (!IPMode) {

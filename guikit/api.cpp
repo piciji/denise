@@ -954,6 +954,23 @@ auto ComboButton::append(const std::string& text, int userData, const std::strin
     p.append(text, font);
 }
 
+auto ComboButton::appendMulti(const std::vector<Entry>& rows, bool clearBefore) -> void {
+    p.lockRedraw();
+
+    if (clearBefore)
+        reset();
+
+    for (auto& [text, userData, font] : rows ) {
+        state.rows.push_back(text);
+        state.userData.push_back(userData);
+        state.fonts.push_back(font);
+    }
+
+    p.appendMulti(rows);
+
+    p.unlockRedraw();
+}
+
 auto ComboButton::remove(unsigned selection) -> void {
     if(selection >= state.rows.size()) return;
     state.rows.erase(state.rows.begin() + selection);

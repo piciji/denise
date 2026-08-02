@@ -691,6 +691,7 @@ struct CheckBox : Widget {
 struct ComboButton : Widget {
     std::function<void()> onChange = nullptr;
     std::function<void(std::vector<std::string>)> onDrop = nullptr;
+    using Entry = std::tuple<const std::string, int, const std::string>;
 
     auto rows() const -> unsigned { return state.rows.size(); }
     auto selection() const -> unsigned { return state.selection; }
@@ -701,6 +702,7 @@ struct ComboButton : Widget {
     auto droppable() -> bool const { return state.droppable; }
 
     auto append(const std::string& text = "", int userData = 0, const std::string& font = "") -> void;
+    auto appendMulti(const std::vector<Entry>& rows, bool clearBefore = true) -> void;
     auto remove(unsigned selection) -> void;
     auto reset() -> void;
     auto setSelection(unsigned selection) -> void;
