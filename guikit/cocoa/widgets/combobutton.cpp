@@ -36,14 +36,14 @@
 
 namespace GUIKIT {
     
-auto pComboButton::append(std::string text, const std::string& font) -> void {
+auto pComboButton::append(const ComboButton::Entry& entry) -> void {
     calculatedMinimumSize.updated = false;
     @autoreleasepool {
         int tries = 0;
-        int expectedCount = comboButton.rows();
-        std::string altText = text;
+        int expectedCount = comboButton.rowCount();
+        std::string altText = entry.text;
         
-        NSString* nsStr = [NSString stringWithUTF8String:text.c_str()];
+        NSString* nsStr = [NSString stringWithUTF8String:entry.text.c_str()];
         if (nsStr)
             [(id)cocoaView addItemWithTitle:nsStr];
         
@@ -54,15 +54,15 @@ auto pComboButton::append(std::string text, const std::string& font) -> void {
             if(tries > 5)
                 return;
                 
-            altText = text + "_" + std::to_string(tries);
+            altText = entry.text + "_" + std::to_string(tries);
             nsStr = [NSString stringWithUTF8String:altText.c_str()];
             if (nsStr)
                 [(id)cocoaView addItemWithTitle:nsStr];
             realCount = [(id)cocoaView numberOfItems];
         }
         
-        if (!font.empty()) {
-            NSFont* nsfont = pFont::cocoaFont(font);
+        if (!entry.font.empty()) {
+            NSFont* nsfont = pFont::cocoaFont(entry.font);
             
             if (nsfont != nil) {
                 NSDictionary* attrsDictionary = [NSDictionary dictionaryWithObject:nsfont forKey:NSFontAttributeName];
