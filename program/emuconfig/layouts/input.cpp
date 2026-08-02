@@ -452,8 +452,7 @@ auto InputLayout::loadDeviceList() -> void {
         if (device.inputs.size() == 0)
             continue;
 
-        //selector.device.append( trans->get( device.name ), device.id );
-        rows.emplace_back(trans->get( device.name ), device.id, "" );
+        rows.push_back( {trans->get( device.name ), (int)device.id, ""} );
     }
 
     selector.device.appendMulti( rows );
@@ -618,7 +617,7 @@ auto InputLayout::updateKeyLayout() -> void {
 
     auto layout = _settings->get<int>( "keyboard_layout", InputManager::assumeLayoutType() );
 
-    for( unsigned row = 0; row < mapControl.keyLayout.rows(); row++ ) {
+    for( unsigned row = 0; row < mapControl.keyLayout.rowCount(); row++ ) {
 
         if ( layout == mapControl.keyLayout.userData( row ) ) {
             mapControl.keyLayout.setSelection( row );

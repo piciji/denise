@@ -740,8 +740,8 @@ AudioLayout::AudioLayout(TabWindow* tabWindow) {
     driveLayout->floppySelection.reload.onActivate = [this]() {
         updateFloppyProfileList();
 
-        driveLayout->floppySelection.combo.setSelectionByRow( audioManager->drive.getFloppyFolder(emulator, false) );
-        driveLayout->floppySelection.comboExt.setSelectionByRow( audioManager->drive.getFloppyFolder(emulator, true) );
+        driveLayout->floppySelection.combo.setSelectionByText( audioManager->drive.getFloppyFolder(emulator, false) );
+        driveLayout->floppySelection.comboExt.setSelectionByText( audioManager->drive.getFloppyFolder(emulator, true) );
 
         // in case if content doesn't match setting anymore
         _settings->set<std::string>(audioManager->drive.getFloppyFolderIdent(emulator, false), driveLayout->floppySelection.combo.text() );
@@ -819,7 +819,7 @@ AudioLayout::AudioLayout(TabWindow* tabWindow) {
     driveLayout->tapeSelection.reload.onActivate = [this]() {
         updateTapeProfileList();
 
-        driveLayout->tapeSelection.combo.setSelectionByRow( _settings->get<std::string>("audio_tape_folder", "") );
+        driveLayout->tapeSelection.combo.setSelectionByText( _settings->get<std::string>("audio_tape_folder", "") );
 
         // in case if content doesn't match setting anymore
         _settings->set<std::string>("audio_tape_folder", driveLayout->tapeSelection.combo.text() );
@@ -1128,7 +1128,7 @@ auto AudioLayout::loadSettings() -> void {
 
     std::string folder = audioManager->drive.getFloppyFolder(emulator, false);;
 
-    driveLayout->floppySelection.combo.setSelectionByRow( folder );
+    driveLayout->floppySelection.combo.setSelectionByText( folder );
 
     folder = driveLayout->floppySelection.combo.text();
 
@@ -1136,7 +1136,7 @@ auto AudioLayout::loadSettings() -> void {
 
     folder = audioManager->drive.getFloppyFolder(emulator, true);
 
-    driveLayout->floppySelection.comboExt.setSelectionByRow( folder );
+    driveLayout->floppySelection.comboExt.setSelectionByText( folder );
 
     folder = driveLayout->floppySelection.comboExt.text();
 
@@ -1152,7 +1152,7 @@ auto AudioLayout::loadSettings() -> void {
 
     folder = _settings->get<std::string>("audio_tape_folder", "");
 
-    driveLayout->tapeSelection.combo.setSelectionByRow( folder );
+    driveLayout->tapeSelection.combo.setSelectionByText( folder );
 
     folder = driveLayout->tapeSelection.combo.text();
 

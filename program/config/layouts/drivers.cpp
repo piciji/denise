@@ -103,7 +103,7 @@ DriversLayout::DriversLayout() {
         emuThread->unlock();
     };
 
-    if (vdl.top.driver.combo.rows() == 1) vdl.top.driver.setEnabled(false);
+    if (vdl.top.driver.combo.rowCount() == 1) vdl.top.driver.setEnabled(false);
 
     // if( showExclusiveFullscreenCheck ) {
     //     vdl.top.exclusiveFullscreen.setEnabled(false);
@@ -146,7 +146,7 @@ DriversLayout::DriversLayout() {
         i++;
     }
 
-    if (adl.top.driver.combo.rows() == 1) adl.top.driver.setEnabled(false);
+    if (adl.top.driver.combo.rowCount() == 1) adl.top.driver.setEnabled(false);
 
     adl.top.driver.combo.onChange = [this]() {
         emuThread->lock();
@@ -189,16 +189,12 @@ DriversLayout::DriversLayout() {
 
     float _rate = globalSettings->get<float>("rate_control_delta", 0.005, {0.0, 0.010});
     int curRate = (int)(_rate * 10000.0 + 0.5);
-    adl.top.maxRateEditCombo.setSelectionByUserId( 50 );
-    for(unsigned i = 0; i < adl.top.maxRateEditCombo.rows(); i++) {
-        if(adl.top.maxRateEditCombo.userData(i) == curRate) {
-            adl.top.maxRateEditCombo.setSelection(i);
-            break;
-        }
-    }
+
+    if (!adl.top.maxRateEditCombo.setSelectionByUserData(curRate))
+        adl.top.maxRateEditCombo.setSelectionByUserData(50);
 
     auto valFre = globalSettings->get<unsigned>("audio_frequency_v2", 48000);
-    for(unsigned i = 0; i < adl.top.frequencyCombo.rows(); i++) {
+    for(unsigned i = 0; i < adl.top.frequencyCombo.rowCount(); i++) {
         if(adl.top.frequencyCombo.userData(i) == valFre) {
             adl.top.frequencyCombo.setSelection(i);
             break;
@@ -215,7 +211,7 @@ DriversLayout::DriversLayout() {
         i++;
     }
 
-    if (idl.top.driver.combo.rows() == 1) idl.top.driver.setEnabled(false);
+    if (idl.top.driver.combo.rowCount() == 1) idl.top.driver.setEnabled(false);
 
     idl.top.driver.combo.onChange = [this]() {
         emuThread->lock();

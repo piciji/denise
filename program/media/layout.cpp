@@ -125,7 +125,7 @@ MediaGroupLayout::Block::Selector::Selector(Emulator::Interface::Media* media, E
                 combo.append( pcb.name, pcb.id );
 
             if (media->pcbLayout == &pcb)
-                combo.setSelection( combo.rows() - 1 );
+                combo.setSelection( combo.rowCount() - 1 );
         }
         
         append(combo, {0u, 0u}, 10);
@@ -189,7 +189,7 @@ DiskCreatorLayout::DiskCreatorLayout( Emulator::Interface* emulator, Emulator::I
         
     append(formatName, {0u, 0u}, 10);        
     
-    if (format.rows() == 1)
+    if (format.rowCount() == 1)
         format.setEnabled(false);
     
     append(format, {0u, 0u}, 10);
@@ -251,7 +251,7 @@ HdCreatorLayout::Creator::Creator(Emulator::Interface::MediaGroup* mediaGroup) {
 
     append(formatName, { 0u, 0u }, 10);
 
-    if (format.rows() == 1)
+    if (format.rowCount() == 1)
         format.setEnabled(false);
 
     append(format, { 0u, 0u }, 10);
@@ -488,7 +488,7 @@ auto MediaGroupLayout::loadSettings() -> void {
         if (mediaGroup->expansion) {
             for (auto& pcb : mediaGroup->expansion->pcbs) {
                 if (media.pcbLayout && (media.pcbLayout == &pcb) )
-                    block->selector.combo.setSelectionByUserId( pcb.id );                
+                    block->selector.combo.setSelectionByUserData( pcb.id );
             }
 
             setJumperSettings( &media );
@@ -516,7 +516,7 @@ auto DialogPreviewLayout::updateWidgets(GUIKIT::Settings* settings, Emulator::In
         case 2: mode.softwarePreviewRadio.setChecked(); break;
     }
 
-    control.fontSizeCombo.setSelectionByUserId((int)fontSize);
+    control.fontSizeCombo.setSelectionByUserData((int)fontSize);
     control.option.tooltips.setChecked(tooltips);
     control.option.commodoreHighlight.setChecked(commodoreHi);
     dimension.dialogWidth.slider.setPosition( dialogWidth - 200 );

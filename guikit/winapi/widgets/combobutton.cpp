@@ -4,7 +4,9 @@ pComboButton::~pComboButton() {
         pFont::free(_f);
 }
 
-auto pComboButton::append(std::string text, const std::string& _font) -> void {
+auto pComboButton::append(const ComboButton::Entry& entry) -> void {
+    auto& [_text, _id, _font] = entry;
+
     if (_font.empty())
         hfonts.push_back(nullptr);
     else
@@ -12,18 +14,13 @@ auto pComboButton::append(std::string text, const std::string& _font) -> void {
 
     if (!hwnd)
         return;
-    
-    SendMessage(hwnd, CB_ADDSTRING, 0, (LPARAM)(wchar_t*)utf16_t(text));
+
+    SendMessage(hwnd, CB_ADDSTRING, 0, (LPARAM)(wchar_t*)utf16_t(_text));
     
     if(SendMessage(hwnd, CB_GETCOUNT, 0, 0) == 1)
         setSelection(0);
 
     calculatedMinimumSize.updated = false;
-}
-
-auto pComboButton::appendMulti(const std::vector<ComboButton::Entry>& rows) -> void {
-    for (auto& [text, userData, font] : rows)
-        append( text, font );
 }
 
 auto pComboButton::minimumSize() -> Size {
@@ -34,7 +31,7 @@ auto pComboButton::minimumSize() -> Size {
         return calculatedMinimumSize.minimumSize; 
     
     unsigned maximumWidth = 0;
-    for (int i = 0; i < comboButton.rows(); i++) {
+    for (int i = 0; i < comboButton.rowCount(); i++) {
         auto text = comboButton.text(i);
         HFONT _hfont = hfonts[i];
         if (!_hfont)
@@ -165,7 +162,7 @@ auto pComboButton::measureItem(LPMEASUREITEMSTRUCT lpmis) -> bool {
     int maxHeight = 0;
 
     if (comboButton.hintMultiFonts) {
-        for(int i = 0; i < comboButton.rows(); i++) {
+        for(int i = 0; i < comboButton.rowCount(); i++) {
             std::string _str = comboButton.text(i);
             HFONT _hfont = hfonts[i];
             if (!_hfont)
@@ -248,8 +245,8 @@ auto pComboButton::rebuild() -> void {
     create();
     setFont( widget.font() );
 
-    for (int i = 0; i < comboButton.rows(); i++)
-        append(comboButton.state.rows[i], comboButton.state.fonts[i]);
+    for( auto& entry : comboButton.rows())
+        append(entry);
     
     setSelection(comboButton.selection());
     setDroppable(comboButton.droppable());

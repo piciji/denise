@@ -360,10 +360,9 @@ VideoScreenTextLayout::Options::Font::Font() : fontType(true, true) {
 
     std::vector<GUIKIT::ComboButton::Entry> rows;
 
-    for(unsigned s = 8; s <= 36; s++) {
-       // fontSize.append(std::to_string(s), s);
-        rows.emplace_back(std::to_string(s), s, "" );
-    }
+    for(int s = 8; s <= 36; s++)
+        rows.push_back( {std::to_string(s), s, ""} );
+
     fontSize.appendMulti( rows );
 
     setAlignment(0.5);
@@ -1736,11 +1735,8 @@ auto PresentationLayout::fillFontTypeList() -> void {
     auto& fontTypes = layScreenText.options.font.fontType;
 
     int selUserId = 0;
-    if (fontTypes.rows())
+    if (fontTypes.rowCount())
         selUserId = fontTypes.userData();
-
- //   fontTypes.reset();
-   // fontTypes.append( trans->getA("default"), 0 );
 
     list = GUIKIT::File::getFolderListAlt(program->fontFolder(), {".ttf", ".otf", ".ttc"}, false);
     for(auto& file : list)
@@ -1759,15 +1755,14 @@ auto PresentationLayout::fillFontTypeList() -> void {
     });
 
     std::vector<GUIKIT::ComboButton::Entry> rows;
-    rows.emplace_back(trans->getA("default"), 0, "" );
+    rows.push_back( {trans->getA("default"), 0, ""} );
 
     for(auto& displayFont : displayFonts)
-       // fontTypes.append( displayFont.name, displayFont.ident, displayFont.name );
-        rows.emplace_back(displayFont.name, displayFont.ident, displayFont.name );
+        rows.push_back( {displayFont.name, displayFont.ident, displayFont.name} );
 
     fontTypes.appendMulti( rows );
 
-    fontTypes.setSelectionByUserId(selUserId);
+    fontTypes.setSelectionByUserData(selUserId);
 }
 
 auto PresentationLayout::addTTF(unsigned mode, const std::string& _fontFile) -> void {
@@ -2476,11 +2471,11 @@ auto PresentationLayout::loadSettings(bool init) -> void {
     unsigned fontIndex = _settings->get<unsigned>("screen_text_findex", 0);
     unsigned screenTextPosition = _settings->get<unsigned>("screen_text_position", 0);
 
-    layScreenText.options.font.fontSize.setSelectionByUserId(screenTextFontSize);
+    layScreenText.options.font.fontSize.setSelectionByUserData(screenTextFontSize);
 
     auto displayFont = getTTF(screenTextFont, fontIndex);
     if (displayFont)
-        layScreenText.options.font.fontType.setSelectionByUserId(displayFont->ident);
+        layScreenText.options.font.fontType.setSelectionByUserData(displayFont->ident);
 
     updateFontVisibilities();
 

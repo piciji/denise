@@ -51,8 +51,7 @@ ModelLayout::Line::Block::Block(Emulator::Interface::Model* model, ModelLayout* 
 	    std::vector<GUIKIT::ComboButton::Entry> rows;
 
 		for(auto& option : model->options)
-			//combo->append( option, i++ );
-			rows.emplace_back(option, i++, "" );
+			rows.push_back({option, i++, "" });
 
 	    combo->appendMulti( rows );
 		
@@ -519,7 +518,7 @@ auto ModelLayout::nextOption(unsigned id) -> unsigned {
                 else if (block->model->isCombo() ) {
                     val = block->combo->selection() + 1;
                     
-                    if (val == block->combo->rows())
+                    if (val == block->combo->rowCount())
                         val = 0;
                     
                     block->combo->setSelection( val );

@@ -363,8 +363,7 @@ GeometryLayout::GeometryLayout(TabWindow* tabWindow) {
         std::vector<GUIKIT::ComboButton::Entry> rows;
 
         for( auto& resolution : GUIKIT::Monitor::getSettings( displayId ) )
-            //monitorResolutionLayout.displaySettings.append( resolution.name, resolution.id );
-            rows.emplace_back( resolution.name, resolution.id, "" );
+            rows.push_back( {resolution.name, (int)resolution.id, ""} );
 
         monitorResolutionLayout.displaySettings.appendMulti( rows );
 
@@ -490,8 +489,7 @@ GeometryLayout::GeometryLayout(TabWindow* tabWindow) {
     std::vector<GUIKIT::ComboButton::Entry> rows;
 
     for( auto& display : GUIKIT::Monitor::getDisplays() )
-        //monitorResolutionLayout.display.append(display.name, display.id);
-        rows.emplace_back( display.name, display.id, "" );
+        rows.push_back( {display.name, (int)display.id, ""} );
 
     monitorResolutionLayout.display.appendMulti( rows );
 
@@ -686,13 +684,13 @@ auto GeometryLayout::loadSettings() -> void {
 
     auto displayId = _settings->get<unsigned>("fullscreen_display", 0 );
 
-    monitorResolutionLayout.display.setSelectionByUserId( displayId );
+    monitorResolutionLayout.display.setSelectionByUserData( displayId );
 
     monitorResolutionLayout.displaySettings.reset();
     for( auto& resolution : GUIKIT::Monitor::getSettings( displayId ) )
         monitorResolutionLayout.displaySettings.append( resolution.name, resolution.id );
 
-    monitorResolutionLayout.displaySettings.setSelectionByUserId( _settings->get<unsigned>("fullscreen_setting", 0 ) );
+    monitorResolutionLayout.displaySettings.setSelectionByUserData( _settings->get<unsigned>("fullscreen_setting", 0 ) );
 
     monitorResolutionLayout.display.setEnabled( monitorResolutionLayout.active.checked() );
     monitorResolutionLayout.displaySettings.setEnabled( monitorResolutionLayout.active.checked() );

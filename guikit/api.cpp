@@ -948,10 +948,9 @@ auto CheckBox::toggle() -> void {
 CheckBox::CheckBox() : Widget(*new pCheckBox(*this)), p((pCheckBox&)Widget::p) { p.init(); }
 
 auto ComboButton::append(const std::string& text, int userData, const std::string& font) -> void {
-    state.rows.push_back(text);
-    state.userData.push_back(userData);
-    state.fonts.push_back(font);
-    p.append(text, font);
+    Entry entry{text, userData, font};
+    state.rows.push_back( entry );
+    p.append(entry);
 }
 
 auto ComboButton::appendMulti(const std::vector<Entry>& rows, bool clearBefore) -> void {
@@ -960,35 +959,30 @@ auto ComboButton::appendMulti(const std::vector<Entry>& rows, bool clearBefore) 
     if (clearBefore)
         reset();
 
-    for (auto& [text, userData, font] : rows ) {
-        state.rows.push_back(text);
-        state.userData.push_back(userData);
-        state.fonts.push_back(font);
+    for (auto& entry : rows ) {
+        state.rows.push_back( entry );
+        p.append(entry);
     }
-
-    p.appendMulti(rows);
 
     p.unlockRedraw();
 }
 
 auto ComboButton::remove(unsigned selection) -> void {
-    if(selection >= state.rows.size()) return;
+    if(selection >= rowCount())
+        return;
     state.rows.erase(state.rows.begin() + selection);
-    state.userData.erase(state.userData.begin() + selection);
-    state.fonts.erase(state.fonts.begin() + selection);
     p.remove(selection);
 }
 
 auto ComboButton::reset() -> void {
     state.selection = 0;
     state.rows.clear();
-    state.userData.clear();
-    state.fonts.clear();
     p.reset();
 }
 
 auto ComboButton::setSelection(unsigned selection) -> void {
-    if(selection >= state.rows.size()) return;
+    if(selection >= rowCount())
+        return;
     state.selection = selection;
     p.setSelection(selection);
 }
@@ -998,25 +992,30 @@ auto ComboButton::activate(unsigned selection) -> void {
     if(onChange) onChange();
 }
 
-auto ComboButton::setSelectionByUserId(int userId) -> void {
-    unsigned selection = 0;
-    
-    for( auto& _id : state.userData) {        
-        if (_id == userId)
-            break;
-        
-        selection++;
-    }
-    
-    setSelection( selection );
-}
-
-auto ComboButton::setSelectionByRow(const std::string& row) -> void {
+auto ComboButton::setSelectionByUserData(int userData) -> bool {
     unsigned selection = 0;
 
     bool found = false;
-    for( auto& _row : state.rows) {
-        if (_row == row) {
+    for( auto& entry : state.rows) {
+        if (entry.userData == userData) {
+            found = true;
+            break;
+        }
+        
+        selection++;
+    }
+
+    if (found)
+        setSelection( selection );
+    return found;
+}
+
+auto ComboButton::setSelectionByText(const std::string& text) -> bool {
+    unsigned selection = 0;
+
+    bool found = false;
+    for( auto& entry : state.rows) {
+        if (entry.text == text) {
             found = true;
             break;
         }
@@ -1025,27 +1024,44 @@ auto ComboButton::setSelectionByRow(const std::string& row) -> void {
     }
 
     setSelection( found ? selection : 0 );
+    return found;
 }
 
 auto ComboButton::setText(unsigned selection, const std::string& text) -> void {
-    if(selection >= state.rows.size()) return;
-    state.rows[selection] = text;
+    if(selection >= rowCount())
+        return;
+
+    auto& entry = state.rows[selection];
+
+    entry.text = text;
     p.setText(selection, text);
 }
 
 auto ComboButton::text(unsigned selection) const -> std::string {
-    if(selection >= state.rows.size()) return "";
-    return state.rows[selection];
+    if(selection >= rowCount())
+        return "";
+
+    auto& entry = state.rows[selection];
+
+    return entry.text;
 }
 
 auto ComboButton::setUserData(unsigned selection, int userData) -> void {
-    if(selection >= state.userData.size()) return;
-    state.userData[selection] = userData;
+    if(selection >= rowCount())
+        return;
+
+    auto& entry = state.rows[selection];
+
+    entry.userData = userData;
 }
 
 auto ComboButton::userData(unsigned selection) const -> int {
-    if(selection >= state.userData.size()) return 0;
-    return state.userData[selection];
+    if(selection >= rowCount())
+        return 0;
+
+    auto& entry = state.rows[selection];
+
+    return entry.userData;
 }
 
 auto ComboButton::setDroppable(bool droppable) -> void {

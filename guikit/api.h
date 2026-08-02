@@ -691,9 +691,15 @@ struct CheckBox : Widget {
 struct ComboButton : Widget {
     std::function<void()> onChange = nullptr;
     std::function<void(std::vector<std::string>)> onDrop = nullptr;
-    using Entry = std::tuple<const std::string, int, const std::string>;
 
-    auto rows() const -> unsigned { return state.rows.size(); }
+    struct Entry {
+        std::string text;
+        int userData;
+        std::string font;
+    };
+
+    auto rowCount() const -> unsigned { return state.rows.size(); }
+    auto rows() -> std::vector<Entry>& { return state.rows; }
     auto selection() const -> unsigned { return state.selection; }
     auto userData() const -> int { return userData( state.selection ); }
     auto userData(unsigned selection) const -> int;
@@ -701,14 +707,14 @@ struct ComboButton : Widget {
     auto text(unsigned selection) const -> std::string;
     auto droppable() -> bool const { return state.droppable; }
 
-    auto append(const std::string& text = "", int userData = 0, const std::string& font = "") -> void;
+    auto append(const std::string& text, int userData = 0, const std::string& font = "") -> void;
     auto appendMulti(const std::vector<Entry>& rows, bool clearBefore = true) -> void;
     auto remove(unsigned selection) -> void;
     auto reset() -> void;
     auto setSelection(unsigned selection) -> void;
     auto activate(unsigned selection) -> void;
-    auto setSelectionByUserId(int userId) -> void;
-    auto setSelectionByRow(const std::string& row) -> void;
+    auto setSelectionByUserData(int userData) -> bool;
+    auto setSelectionByText(const std::string& text) -> bool;
     auto unselect() -> void;
     auto setText(unsigned selection, const std::string& text) -> void;
     auto setUserData(unsigned selection, int userData) -> void;
@@ -718,9 +724,7 @@ struct ComboButton : Widget {
     struct {
         unsigned selection = 0;
         bool droppable = false;
-        std::vector<std::string> rows;
-        std::vector<std::string> fonts;
-        std::vector<int> userData;
+        std::vector<Entry> rows;
     } state;
 
     bool hintVerticalScrollbar = false;

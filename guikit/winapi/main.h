@@ -589,8 +589,7 @@ struct pComboButton : pWidget {
     ComboButton& comboButton;
     std::vector<HFONT> hfonts;
 
-    auto append(std::string text, const std::string& _font) -> void;
-    auto appendMulti(const std::vector<ComboButton::Entry>& rows) -> void;
+    auto append(const ComboButton::Entry& entry) -> void;
     auto remove(unsigned selection) -> void;
     auto minimumSize() -> Size;
     auto reset() -> void;
