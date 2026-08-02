@@ -1,7 +1,7 @@
 
-auto pComboButton::append(std::string text, const std::string& _font) -> void {
-    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(gtkWidget), text.c_str());
-    if(comboButton.rows() == 1) setSelection(0);
+auto pComboButton::append(const ComboButton::Entry& entry) -> void {
+    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(gtkWidget), entry.text.c_str());
+    if(comboButton.rowCount() == 1) setSelection(0);
 	calculatedMinimumSize.updated = false;
 }
 
@@ -49,8 +49,10 @@ auto pComboButton::create() -> void {
 auto pComboButton::init() -> void {
     create();
     locked = true;
-    for (int i = 0; i < comboButton.rows(); i++)
-        append(comboButton.state.rows[i], comboButton.state.fonts[i]);
+
+    for( auto& entry : comboButton.rows())
+        append(entry);
+
     locked = false;
     setSelection(comboButton.selection());
     setDroppable(comboButton.droppable());
