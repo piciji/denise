@@ -49,6 +49,8 @@
 		9D0C382E2CB5C17900363301 /* OpenAL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9D0C382D2CB5C17900363301 /* OpenAL.framework */; };
 		9D0C948B2E5E345E00A9B56C /* diskGuesser.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D0C94892E5E345E00A9B56C /* diskGuesser.cpp */; };
 		9D0C948C2E5E345E00A9B56C /* diskGuesser.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D0C94892E5E345E00A9B56C /* diskGuesser.cpp */; };
+		9D11571C3020E2C1003065FA /* expert.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D11571A3020E2C1003065FA /* expert.cpp */; };
+		9D11571D3020E2C1003065FA /* expert.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D11571A3020E2C1003065FA /* expert.cpp */; };
 		9D13389E3008C456008C6652 /* USBSID.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D1338993008C456008C6652 /* USBSID.cpp */; settings = {COMPILER_FLAGS = "-I$(PROJECT_DIR)/data/libs/include/"; }; };
 		9D13389F3008C456008C6652 /* LICENSE in Resources */ = {isa = PBXBuildFile; fileRef = 9D1338963008C456008C6652 /* LICENSE */; };
 		9D1338A03008C456008C6652 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 9D1338973008C456008C6652 /* README.md */; };
@@ -619,6 +621,8 @@
 		9D0C382D2CB5C17900363301 /* OpenAL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenAL.framework; path = System/Library/Frameworks/OpenAL.framework; sourceTree = SDKROOT; };
 		9D0C94892E5E345E00A9B56C /* diskGuesser.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = diskGuesser.cpp; sourceTree = "<group>"; };
 		9D0C948A2E5E345E00A9B56C /* diskGuesser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = diskGuesser.h; sourceTree = "<group>"; };
+		9D1157193020E2C1003065FA /* expert.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = expert.h; sourceTree = "<group>"; };
+		9D11571A3020E2C1003065FA /* expert.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = expert.cpp; sourceTree = "<group>"; };
 		9D1338963008C456008C6652 /* LICENSE */ = {isa = PBXFileReference; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
 		9D1338973008C456008C6652 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		9D1338983008C456008C6652 /* USBSID.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = USBSID.h; sourceTree = "<group>"; };
@@ -1474,6 +1478,15 @@
 			);
 			name = stb;
 			path = deps/stb;
+			sourceTree = "<group>";
+		};
+		9D11571B3020E2C1003065FA /* trilogicExpert */ = {
+			isa = PBXGroup;
+			children = (
+				9D1157193020E2C1003065FA /* expert.h */,
+				9D11571A3020E2C1003065FA /* expert.cpp */,
+			);
+			path = trilogicExpert;
 			sourceTree = "<group>";
 		};
 		9D13389C3008C456008C6652 /* USBSID-Pico */ = {
@@ -2470,6 +2483,7 @@
 		9D8FAD232CB40DF7006905BE /* expansionPort */ = {
 			isa = PBXGroup;
 			children = (
+				9D11571B3020E2C1003065FA /* trilogicExpert */,
 				9D5539572D5A8FBC0083E91B /* finalChessCard */,
 				9D5539542D5A8F4D0083E91B /* superCpu */,
 				9D8FAD242CB40DF7006905BE /* reu */,
@@ -3295,6 +3309,7 @@
 				9D8FAE2F2CB40DF9006905BE /* filesystem.cpp in Sources */,
 				9D4D10442F071C6B00296467 /* ciaDebugger.cpp in Sources */,
 				9D8FAB0E2CB3F6EF006905BE /* handler.cpp in Sources */,
+				9D11571C3020E2C1003065FA /* expert.cpp in Sources */,
 				9D07CD012E296CD000A9787E /* lha_input_stream.cpp in Sources */,
 				9D32BA8A2F940DF900AC6442 /* agnusDebugger.cpp in Sources */,
 				9D8FAE4D2CB40DF9006905BE /* input.cpp in Sources */,
@@ -3518,6 +3533,7 @@
 				9DECF96D2E45F309005C0BBA /* filesystem.cpp in Sources */,
 				9D4D10452F071C6B00296467 /* ciaDebugger.cpp in Sources */,
 				9DECF96E2E45F309005C0BBA /* handler.cpp in Sources */,
+				9D11571D3020E2C1003065FA /* expert.cpp in Sources */,
 				9DECF96F2E45F309005C0BBA /* lha_input_stream.cpp in Sources */,
 				9D32BA8B2F940DF900AC6442 /* agnusDebugger.cpp in Sources */,
 				9DECF9702E45F309005C0BBA /* input.cpp in Sources */,
