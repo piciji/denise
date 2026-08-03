@@ -948,23 +948,49 @@ auto CheckBox::toggle() -> void {
 CheckBox::CheckBox() : Widget(*new pCheckBox(*this)), p((pCheckBox&)Widget::p) { p.init(); }
 
 auto ComboButton::append(const std::string& text, int userData, const std::string& font) -> void {
-    Entry entry{text, userData, font};
+    std::string _text = text;
+    unsigned ident = 1;
+    while (hasDuplicate(_text)) {
+        fprintf(stderr, "combo duplicate: %s\n", _text.c_str());
+        _text = text + "_" + std::to_string(ident++);
+    }
+    
+    Entry entry{_text, userData, font};
     state.rows.push_back( entry );
     p.append(entry);
 }
 
-auto ComboButton::appendMulti(const std::vector<Entry>& rows, bool clearBefore) -> void {
+auto ComboButton::appendMulti(std::vector<Entry>& rows, bool clearBefore) -> void {
     p.lockRedraw();
 
     if (clearBefore)
         reset();
 
+    unsigned ident = 1;
+    
     for (auto& entry : rows ) {
+        std::string _text = entry.text;
+        
+        while (hasDuplicate(_text)) {
+            fprintf(stderr, "combo multi insert duplicate: %s\n", _text.c_str());
+            _text = entry.text + "_" + std::to_string(ident++);
+        }
+        entry.text = _text;
+        
         state.rows.push_back( entry );
-        p.append(entry);
     }
+    
+    p.appendMulti(rows);
 
     p.unlockRedraw();
+}
+
+auto ComboButton::hasDuplicate(const std::string& text) -> bool {
+    for (const auto& row : state.rows) {
+        if (row.text == text)
+            return true;
+    }
+    return false;
 }
 
 auto ComboButton::remove(unsigned selection) -> void {

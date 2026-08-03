@@ -708,7 +708,7 @@ struct ComboButton : Widget {
     auto droppable() -> bool const { return state.droppable; }
 
     auto append(const std::string& text, int userData = 0, const std::string& font = "") -> void;
-    auto appendMulti(const std::vector<Entry>& rows, bool clearBefore = true) -> void;
+    auto appendMulti(std::vector<Entry>& rows, bool clearBefore = true) -> void;
     auto remove(unsigned selection) -> void;
     auto reset() -> void;
     auto setSelection(unsigned selection) -> void;
@@ -720,6 +720,7 @@ struct ComboButton : Widget {
     auto setUserData(unsigned selection, int userData) -> void;
     auto setText(const std::string& text) -> void = delete;
     auto setDroppable(bool droppable = true) -> void;
+    auto hasDuplicate(const std::string& text) -> bool;
 
     struct {
         unsigned selection = 0;

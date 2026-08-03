@@ -39,27 +39,9 @@ namespace GUIKIT {
 auto pComboButton::append(const ComboButton::Entry& entry) -> void {
     calculatedMinimumSize.updated = false;
     @autoreleasepool {
-        int tries = 0;
-        int expectedCount = comboButton.rowCount();
-        std::string altText = entry.text;
-        
         NSString* nsStr = [NSString stringWithUTF8String:entry.text.c_str()];
         if (nsStr)
             [(id)cocoaView addItemWithTitle:nsStr];
-        
-        int realCount = [(id)cocoaView numberOfItems]; //expects unique names
-        
-        while (realCount < expectedCount) {
-            tries++;
-            if(tries > 5)
-                return;
-                
-            altText = entry.text + "_" + std::to_string(tries);
-            nsStr = [NSString stringWithUTF8String:altText.c_str()];
-            if (nsStr)
-                [(id)cocoaView addItemWithTitle:nsStr];
-            realCount = [(id)cocoaView numberOfItems];
-        }
         
         if (!entry.font.empty()) {
             NSFont* nsfont = pFont::cocoaFont(entry.font);
@@ -68,9 +50,30 @@ auto pComboButton::append(const ComboButton::Entry& entry) -> void {
                 NSDictionary* attrsDictionary = [NSDictionary dictionaryWithObject:nsfont forKey:NSFontAttributeName];
                 NSAttributedString* attrString = [[NSAttributedString alloc] initWithString:nsStr attributes:attrsDictionary];
                 
-                [[(id)cocoaView itemAtIndex:expectedCount-1] setAttributedTitle:attrString];
+                [[(id)cocoaView itemAtIndex:[(id)cocoaView numberOfItems] - 1] setAttributedTitle:attrString];
             }
         }
+    }
+}
+
+auto pComboButton::appendMulti(std::vector<ComboButton::Entry>& rows) -> void {
+    @autoreleasepool {
+        bool useFont = false;
+        NSMutableArray* arr = [NSMutableArray array];
+        
+        for(auto& entry : rows) {
+            if (!entry.font.empty()) {
+                useFont = true;
+                break;
+            }
+            [arr addObject:[NSString stringWithUTF8String:entry.text.c_str()]];
+        }
+        
+        if (useFont) {
+            for(auto& entry : rows)
+                append(entry);
+        } else
+            [(id)cocoaView addItemsWithTitles:arr];
     }
 }
 

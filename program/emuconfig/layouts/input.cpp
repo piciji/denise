@@ -85,10 +85,10 @@ InputMapControl::InputMapControl() : analogSensitivity("%") {
 
     automap.setEnabled( false );
     keyLayout.setEnabled( false );
-    keyLayout.append( "", -1 );
+    keyLayout.append( "positional", -1 );
 
     for ( auto& keyboardLayout : InputManager::keyboardLayouts ) {
-        keyLayout.append( "", (unsigned)keyboardLayout.type );
+        keyLayout.append( keyboardLayout.language, (unsigned)keyboardLayout.type );
     }
 }
 

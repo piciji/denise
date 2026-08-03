@@ -341,6 +341,7 @@ struct pComboButton : pWidget {
     ComboButton& comboButton;
 
     auto append(const ComboButton::Entry& entry) -> void;
+    auto appendMulti(std::vector<ComboButton::Entry>& rows) -> void;
     auto remove(unsigned selection) -> void;
     auto minimumSize() -> Size;
     auto setGeometry(Geometry geometry) -> void;
