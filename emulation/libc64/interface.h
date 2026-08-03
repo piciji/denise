@@ -40,6 +40,7 @@ struct Interface : Emulator::Interface {
         MediaGroupIdExpansionFreezer = 6, MediaGroupIdExpansionRetroReplay = 7,        
         MediaGroupIdExpansionGeoRam = 8, MediaGroupIdExpansionReu = 9, MediaGroupIdExpansionRS232 = 10, MediaGroupIdExpansionFastloader = 11,
     	MediaGroupIdExpansionFinalChessCard = 12, MediaGroupIdExpansionSuperCpu = 13,
+        MediaGroupIdExpansionExpert = 14,
     };
     
     enum ExpansionId {
@@ -47,6 +48,7 @@ struct Interface : Emulator::Interface {
         ExpansionIdFreezer = 4, ExpansionIdRetroReplay = 5, ExpansionIdGeoRam = 6, ExpansionIdReu = 7,
         ExpansionIdReuRetroReplay = 8, ExpansionIdRS232 = 9, ExpansionIdFastloader = 10,
         ExpansionIdFinalChessCard = 11, ExpansionIdSuperCpu = 12, ExpansionIdSuperCpuReu = 13,
+        ExpansionIdExpert = 14,
     };
     
     enum CartridgeId {
@@ -65,7 +67,8 @@ struct Interface : Emulator::Interface {
         CartridgeIdSuperSnapshotV5 = 20, CartridgeIdComal80 = 21, CartridgeIdSilverrock = 55, CartridgeIdRGCD = 57,
     	CartridgeIdStarDos = 31, CartridgeIdProfDos = 1000, CartridgeIdPrologicDos = 1001, CartridgeIdTurboTrans = 1002,
         CartridgeIdRGCDHucky = 571, CartridgeIdEasyCalc = 59, CartridgeIdHyperBasic = 79, CartridgeIdBusinessBasic/*KingSoft*/ = 54,
-    	CartridgeIdMagicDesk2 = 85, CartridgeIdStructuredBasic = 22, CartridgeIdProphet64 = 43,
+	    CartridgeIdMagicDesk2 = 85, CartridgeIdStructuredBasic = 22, CartridgeIdProphet64 = 43,
+        CartridgeIdExpert = 6,
     };
 
     enum FirmwareId {

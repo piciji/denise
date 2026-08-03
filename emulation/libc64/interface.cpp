@@ -20,6 +20,7 @@
 #include "expansionPort/acia/acia.h"
 #include "expansionPort/fastloader/fastloader.h"
 #include "expansionPort/finalChessCard/chessCard.h"
+#include "expansionPort/trilogicExpert/expert.h"
 #include "disk/structure/structure.h"
 #include "system/gluelogic.h"
 #include "../tools/crop.h"
@@ -60,7 +61,7 @@ auto Interface::prepareMedia() -> void {
     mediaGroups.push_back({MediaGroupIdExpansionFastloader, "Fast Loader", MediaGroup::Type::Expansion,{"bin", "crt","rom"} });
     mediaGroups.push_back({MediaGroupIdExpansionFinalChessCard, "Final Chesscard", MediaGroup::Type::Expansion,{"bin","rom"}, {"bin"} });
     mediaGroups.push_back({MediaGroupIdExpansionSuperCpu, "SuperCPU", MediaGroup::Type::Expansion,{"bin","rom"} });
-        	
+    mediaGroups.push_back({MediaGroupIdExpansionExpert, "Trilogic Expert", MediaGroup::Type::Expansion,{"crt"}, {} });
 
 	{   auto& group = mediaGroups[MediaGroupIdDisk];
     
@@ -187,7 +188,12 @@ auto Interface::prepareMedia() -> void {
 	    group.media.push_back({1, "SuperCPU 2", 0, &group});
 	    group.selected = &group.media[0];
     }
-    
+
+    {   auto& group = mediaGroups[MediaGroupIdExpansionExpert];
+        group.media.push_back({0, "Trilogic Expert", 0, &group});
+        group.selected = &group.media[0];
+    }
+
     for(auto& group : mediaGroups) {
         group.expansion = nullptr;
         
@@ -220,6 +226,7 @@ auto Interface::prepareExpansions() -> void {
     expansions.push_back( { ExpansionIdFinalChessCard, "Final Chesscard", Expansion::Type::Battery, &mediaGroups[MediaGroupIdExpansionFinalChessCard], nullptr } );
     expansions.push_back( { ExpansionIdSuperCpu, "SuperCPU", Expansion::Type::TurboCart | Expansion::Type::Ram, &mediaGroups[MediaGroupIdExpansionSuperCpu], nullptr } );
     expansions.push_back( { ExpansionIdSuperCpuReu, "SuperCPU + REU", Expansion::Type::TurboCart | Expansion::Type::Ram, &mediaGroups[MediaGroupIdExpansionSuperCpu], &mediaGroups[MediaGroupIdExpansionReu] });
+    expansions.push_back( { ExpansionIdExpert, "Trilogic Expert", Expansion::Type::Ram | Expansion::Type::Freezer, &mediaGroups[MediaGroupIdExpansionExpert], nullptr } );
     
     {   auto& expansion = expansions[ExpansionIdGame];        
         expansion.pcbs.push_back( {CartridgeIdDefault, "Default"} );
@@ -359,6 +366,12 @@ auto Interface::prepareExpansions() -> void {
         expansion.jumpers.push_back({ 0, "Turbo", true });
         expansion.jumpers.push_back({ 1, "JiffyDOS" });
         expansion.jumpers.push_back({ 2, "DRAM Boost" });
+    }
+
+    {   auto& expansion = expansions[ExpansionIdExpert];
+        expansion.jumpers.push_back( {0, "ON", false} );
+        expansion.jumpers.push_back( {1, "PRG", false} );
+        mediaGroups[MediaGroupIdExpansionExpert].expansion = &expansion;
     }
 
     for(auto& group : mediaGroups) {
@@ -1294,6 +1307,8 @@ auto Interface::insertExpansionImage(Media* media, uint8_t* data, unsigned size)
         system->finalChessCard->setRom(media, data, size);
     else if (group->expansion->id == ExpansionIdSuperCpu)
         system->superCpu->setRom(media, data, size);
+    else if (group->expansion->id == ExpansionIdExpert)
+        system->expert->setRom(media, data, size);
 }
 
 auto Interface::writeProtectExpansion(Media* media, bool state) -> void {
@@ -1390,6 +1405,8 @@ auto Interface::ejectExpansionImage(Media* media) -> void {
         system->finalChessCard->setRom(media, nullptr, 0);
     else if (group->expansion->id == ExpansionIdSuperCpu)
         system->superCpu->setRom(media, nullptr, 0);
+    else if (group->expansion->id == ExpansionIdExpert)
+        system->expert->setRom(media, nullptr, 0);
 }
 
 auto Interface::createExpansionImage(MediaGroup* group, unsigned& imageSize, uint8_t id) -> uint8_t* {
@@ -1927,6 +1944,9 @@ auto Interface::setExpansionJumper( Media* media, unsigned jumperId, bool state 
     } else if (group->expansion->id == ExpansionIdSuperCpu) {
         if (system->superCpu->media == media)
             system->superCpu->setJumper( jumperId, state );
+    } else if (group->expansion->id == ExpansionIdExpert) {
+        if (system->expert->media == media)
+            system->expert->setJumper(jumperId, state);
     }
 }
 
@@ -1953,6 +1973,9 @@ auto Interface::getExpansionJumper( Media* media, unsigned jumperId ) -> bool {
 
     else if (group->expansion->id == ExpansionIdSuperCpu)
         return system->superCpu->getJumper(jumperId);
+
+    else if (group->expansion->id == ExpansionIdExpert)
+        return system->expert->getJumper(jumperId);
 
     return false;
 }

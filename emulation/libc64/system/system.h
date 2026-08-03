@@ -52,6 +52,7 @@ struct SuperCpu;
 struct M6510;
 struct IecBus;
 struct Prg;
+struct Expert;
 
 struct System {   
     
@@ -139,6 +140,7 @@ struct System {
     GeoRam* geoRam;
     Gmod2* gmod2;
     RetroReplay* retroReplay;
+    Expert* expert;
     Reu* reu;
 	FinalChessCard* finalChessCard;
 	SuperCpu* superCpu;

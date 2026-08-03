@@ -12,6 +12,7 @@
 #include "../expansionPort/fastloader/fastloader.h"
 #include "../expansionPort/finalChessCard/chessCard.h"
 #include "../expansionPort/superCpu/superCpu.h"
+#include "../expansionPort/trilogicExpert/expert.h"
 
 namespace LIBC64 {
  
@@ -97,6 +98,9 @@ auto System::setExpansion( Interface::ExpansionId id ) -> void {
             reu->setExpander(nullptr);
             reu->vicII = vicII;
             break;
+        case Interface::ExpansionIdExpert:
+            expansionPort = expert;
+            break;
     }
 
     cpu.expansionPort = expansionPort;
@@ -127,13 +131,15 @@ auto System::createExpansions() -> void {
 	fastloader = new Fastloader(this);
     finalChessCard = new FinalChessCard(this);
     superCpu = new SuperCpu(this, sysTimer, cia1, cia2, sidManager, traps);
+    expert = new Expert(this);
     noExpansion = new ExpansionPort(this);
 
     setExpansion(Interface::ExpansionIdNone);
     
     setExpansionCallbacks( reu );
     setExpansionCallbacks( freezer );
-    setExpansionCallbacks( retroReplay );    
+    setExpansionCallbacks( retroReplay );
+    setExpansionCallbacks( expert );
     setExpansionCallbacks( easyFlash3 );
     setExpansionCallbacks( acia );
     setExpansionCallbacks( finalChessCard );
@@ -152,6 +158,7 @@ auto System::destroyExpansions() -> void {
 	delete acia;
     delete finalChessCard;
     delete superCpu;
+    delete expert;
     delete noExpansion;	
 }
 
@@ -190,6 +197,9 @@ auto System::analyzeExpansion(uint8_t* data, unsigned size, std::string suffix) 
             break;
         case Interface::CartridgeIdStarDos:
             useExpansion = &interface->expansions[Interface::ExpansionIdFastloader];
+            break;
+        case Interface::CartridgeIdExpert:
+            useExpansion = &interface->expansions[Interface::ExpansionIdExpert];
             break;
         default:
             break;
