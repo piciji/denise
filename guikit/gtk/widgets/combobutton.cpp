@@ -5,6 +5,11 @@ auto pComboButton::append(const ComboButton::Entry& entry) -> void {
 	calculatedMinimumSize.updated = false;
 }
 
+auto pComboButton::appendMulti(std::vector<ComboButton::Entry>& rows) -> void {
+    for (auto& entry : rows)
+        append( entry );
+}
+
 auto pComboButton::minimumSize() -> Size {
     Size size = getMinimumSize();
     return {size.width, size.height};

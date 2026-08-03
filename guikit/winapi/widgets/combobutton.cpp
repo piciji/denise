@@ -4,18 +4,21 @@ pComboButton::~pComboButton() {
         pFont::free(_f);
 }
 
-auto pComboButton::append(const ComboButton::Entry& entry) -> void {
-    auto& [_text, _id, _font] = entry;
+auto pComboButton::appendMulti(std::vector<ComboButton::Entry>& rows) -> void {
+    for (auto& entry : rows)
+        append( entry );
+}
 
-    if (_font.empty())
+auto pComboButton::append(const ComboButton::Entry& entry) -> void {
+    if (entry.font.empty())
         hfonts.push_back(nullptr);
     else
-        hfonts.push_back(pFont::create(_font ));
+        hfonts.push_back(pFont::create(entry.font ));
 
     if (!hwnd)
         return;
 
-    SendMessage(hwnd, CB_ADDSTRING, 0, (LPARAM)(wchar_t*)utf16_t(_text));
+    SendMessage(hwnd, CB_ADDSTRING, 0, (LPARAM)(wchar_t*)utf16_t(entry.text));
     
     if(SendMessage(hwnd, CB_GETCOUNT, 0, 0) == 1)
         setSelection(0);
