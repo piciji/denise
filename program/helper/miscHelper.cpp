@@ -16,7 +16,7 @@
 
 std::vector<MiscHelper::DisplayFont> MiscHelper::displayFonts;
 
-auto MiscHelper::addCustomFont() -> void {
+auto MiscHelper::addFileFonts() -> void {
     for(auto emulator : emulators) {
         if ( dynamic_cast<LIBC64::Interface*>(emulator)) {
             GUIKIT::CustomFont font;
@@ -42,21 +42,18 @@ auto MiscHelper::addCustomFont() -> void {
         }
     }
 
-    if (GUIKIT::Application::isGtk()) {
-        // for GTK fonts needs to be added before initializing
-        addTTF();
-    }
+    addFonts();
 }
 
-auto MiscHelper::addTTF() -> void {
+auto MiscHelper::addFonts() -> void {
     std::vector<std::string> list;
     list = GUIKIT::File::getFolderListAlt(program->fontFolder(), {".ttf", ".otf", ".ttc"}, false);
     for(auto& file : list)
-        addTTF(1, file);
+        addFonts(1, file);
 
     list = GUIKIT::File::getFolderListAlt(FileHelper::generatedFolder("fonts"), { ".ttf", ".otf", ".ttc" }, false);
     for(auto& file : list)
-        addTTF(2, file);
+        addFonts(2, file);
 
     std::sort(displayFonts.begin(), displayFonts.end(), [](DisplayFont& a, DisplayFont& b) -> bool {
         std::string _sA = a.name;
@@ -67,7 +64,7 @@ auto MiscHelper::addTTF() -> void {
     });
 }
 
-auto MiscHelper::addTTF(unsigned mode, const std::string& _fontFile) -> void {
+auto MiscHelper::addFonts(unsigned mode, const std::string& _fontFile) -> void {
     static int counter = 0;
     uint16_t ident = mode << 14;
     GUIKIT::CustomFont font;
@@ -91,9 +88,12 @@ auto MiscHelper::addTTF(unsigned mode, const std::string& _fontFile) -> void {
         return;
 
     if (!screenTextFontPath.empty()) {
-      //  GUIKIT::TTF ttf(screenTextFontPath);
-      //  fontNames = ttf.getFontNames();
-        fontNames = DRIVER::Video::getFontNames(screenTextFontPath);
+        if (GUIKIT::Application::isWinApi()) {
+            GUIKIT::TTF ttf(screenTextFontPath);
+            fontNames = ttf.getFontNames();
+        } else
+            fontNames = DRIVER::Video::getFontNames(screenTextFontPath);
+
         font.filePath = screenTextFontPath;
     }
 
@@ -118,7 +118,7 @@ auto MiscHelper::addTTF(unsigned mode, const std::string& _fontFile) -> void {
         GUIKIT::Window::addCustomFont(font);
 }
 
-auto MiscHelper::getTTF(uint16_t ident) -> DisplayFont* {
+auto MiscHelper::getFont(uint16_t ident) -> DisplayFont* {
     for(auto& displayFont : displayFonts) {
         if (displayFont.ident == ident)
             return &displayFont;
@@ -126,23 +126,23 @@ auto MiscHelper::getTTF(uint16_t ident) -> DisplayFont* {
     return nullptr;
 }
 
-auto MiscHelper::getTTF(const std::string& file, int fontIndex) -> DisplayFont* {
+auto MiscHelper::getFont(const std::string& file, int fontIndex) -> DisplayFont* {
     for(auto& displayFont : displayFonts) {
         if ((displayFont.file == file) && ((fontIndex < 0) || (displayFont.index == fontIndex)))
             return &displayFont;
     }
     if (fontIndex > 0)
-        return getTTF(file, 0);
+        return getFont(file, 0);
 
     return nullptr;
 }
 
-auto MiscHelper::removeTTF(const std::string& file, uint8_t mode) -> bool {
+auto MiscHelper::removeFont(const std::string& file, uint8_t mode) -> bool {
     for(int i = 0; i < displayFonts.size(); i++) {
         DisplayFont& displayFont = displayFonts[i];
         if (displayFont.getMode() == mode && displayFont.file == file) {
             bool result = GUIKIT::Vector::eraseVectorPos(displayFonts, i);
-            return result | removeTTF(file, mode);
+            return result | removeFont(file, mode);
         }
     }
     return false;

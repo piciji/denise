@@ -241,7 +241,7 @@ auto Program::init() -> void {
 	logger->setSavePath( FileHelper::generatedFolder("") );
 
 	if (!cmd->debug)
-        MiscHelper::addCustomFont();
+        MiscHelper::addFileFonts();
 
     upgradeCropSettings();
 }

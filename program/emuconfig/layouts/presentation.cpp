@@ -1398,7 +1398,7 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
         if (!userData) {
             _settings->set<std::string>("screen_text_font", "");
         } else {
-            auto displayFont = MiscHelper::getTTF(userData);
+            auto displayFont = MiscHelper::getFont(userData);
             if (displayFont) {
                 _settings->set<std::string>("screen_text_font", displayFont->file);
                 _settings->set<unsigned>("screen_text_findex", displayFont->index);
@@ -1430,7 +1430,7 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
                 && !GUIKIT::String::findString(_fn, ".ttc")))
             return;
 
-        if (MiscHelper::getTTF(_fn, -1))
+        if (MiscHelper::getFont(_fn, -1))
             return;
 
         std::string _path = FileHelper::generatedFolder("fonts", true);
@@ -1448,7 +1448,7 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
         if (!userData)
             return;
 
-        auto displayFont = MiscHelper::getTTF(userData);
+        auto displayFont = MiscHelper::getFont(userData);
         if (!displayFont)
             return;
 
@@ -1461,7 +1461,7 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
         if (_path.empty())
             return;
 
-        if (!MiscHelper::removeTTF(_fn, displayFont->getMode()))
+        if (!MiscHelper::removeFont(_fn, displayFont->getMode()))
             return;
 
         emuThread->lock();
@@ -1737,7 +1737,7 @@ auto PresentationLayout::fillFontTypeList() -> void {
     if (fontTypes.rowCount())
         selUserId = fontTypes.userData();
 
-    MiscHelper::addTTF();
+    MiscHelper::addFonts();
 
     std::vector<GUIKIT::ComboButton::Entry> rows;
     rows.push_back( {trans->getA("default"), 0, ""} );
@@ -2378,7 +2378,7 @@ auto PresentationLayout::loadSettings(bool init) -> void {
 
     layScreenText.options.font.fontSize.setSelectionByUserData(screenTextFontSize);
 
-    auto displayFont = MiscHelper::getTTF(screenTextFont, fontIndex);
+    auto displayFont = MiscHelper::getFont(screenTextFont, fontIndex);
     if (displayFont)
         layScreenText.options.font.fontType.setSelectionByUserData(displayFont->ident);
 

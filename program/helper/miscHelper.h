@@ -26,11 +26,11 @@ struct MiscHelper {
     static auto toggle2Mhz() -> void;
     static auto hasSuperCpuActive() -> bool;
 
-    static auto addCustomFont() -> void;
-    static auto addTTF() -> void;
-    static auto addTTF(unsigned mode, const std::string& _fontFile) -> void;
-    static auto getTTF(uint16_t ident) -> DisplayFont*;
-    static auto getTTF(const std::string& file, int fontIndex) -> DisplayFont*;
-    static auto removeTTF(const std::string& file, uint8_t mode) -> bool;
+    static auto addFileFonts() -> void;
+    static auto addFonts() -> void;
+    static auto addFonts(unsigned mode, const std::string& _fontFile) -> void;
+    static auto getFont(uint16_t ident) -> DisplayFont*;
+    static auto getFont(const std::string& file, int fontIndex) -> DisplayFont*;
+    static auto removeFont(const std::string& file, uint8_t mode) -> bool;
 };
 
