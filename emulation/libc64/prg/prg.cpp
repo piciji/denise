@@ -107,33 +107,10 @@ auto Prg::inject( ) -> void {
     for (unsigned i = 0; i < useChunk->size; i++)
         ram[ useChunk->offset + i ] = *(useChunk->data + i);
 
-    uint16_t end = useChunk->offset + useChunk->size;    
+    uint16_t end = useChunk->offset + useChunk->size;
 
-    // e.g. hi byte is 0x1c (C128), correct it to 0x08 (C64)
-    if (matchStart) {
-        uint16_t offset = 0;
-
-        for (unsigned i = 4; i < useChunk->size; i++) {
-            uint16_t _offset = useChunk->offset + i;
-
-            if (ram[_offset] == 0) { // end of line
-                _offset += 1;
-                uint16_t fixLink = useChunk->offset + offset;
-
-                if (ram[fixLink + 1] == 0) // hi byte is zero page ? cancel correction
-                    break;
-
-                ram[fixLink] = _offset & 0xff;
-                ram[fixLink + 1] = (_offset >> 8) & 0xff;
-                
-                if ((ram[_offset] | (ram[_offset + 1] << 8)) == 0)
-                    break; // last basic line
-
-                offset = i + 1;
-                i += 4; // skip next pointer and line number
-            }
-        }
-    }
+    if (matchStart && updateLinkedList(start, end, true))
+        updateLinkedList(start, end);
 
     ram[0x2b] = ram[0xac] = ram[0x2b];
     ram[0x2c] = ram[0xad] = ram[0x2c];
@@ -153,6 +130,52 @@ auto Prg::inject( ) -> void {
         ram[0x2d] = ram[0x2f] = ram[0x31] = ram[0xae] = end & 0xff;
         ram[0x2e] = ram[0x30] = ram[0x32] = ram[0xaf] = end >> 8;
     }
+}
+
+auto Prg::updateLinkedList( uint16_t addr, uint16_t endAddr, bool dryRun ) -> bool {
+    uint8_t* ram = system->ram;
+    bool willChange = false;
+
+    while (addr + 4 <= endAddr) {
+        uint16_t lineStart = addr;
+        addr += 4;
+
+        // Find end-of-line marker
+        while (addr < endAddr && ram[addr] != 0)
+            ++addr;
+
+        if (addr >= endAddr)
+            break;
+
+        ++addr;
+
+        willChange = true;
+
+        if (addr >= endAddr) {
+            if (dryRun) {
+                //fprintf( stdout, "last line\n" );
+            } else {
+                ram[lineStart]     = 0;
+                ram[lineStart + 1] = 0;
+            }
+            break;
+        }
+
+        if (dryRun) {
+            //if (ram[lineStart + 1] != ((addr >> 8) & 0xff))
+              //  fprintf( stdout, "HI byte mismatch %x %x\n", ram[lineStart + 1], addr >> 8);
+
+            if (ram[lineStart] != (addr & 0xff)) {
+                //fprintf( stdout, "LO byte mismatch %x %x\n", ram[lineStart], addr & 0xff);
+                return false;
+            }
+        } else {
+            // ram[lineStart]     = addr & 0xff;
+            ram[lineStart + 1] = addr >> 8;
+        }
+    }
+
+    return willChange;
 }
 
 auto Prg::getMemory(unsigned& prgSize, uint8_t* ram) -> uint8_t* {
