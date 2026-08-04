@@ -422,6 +422,7 @@ struct pCheckBox : pWidget {
 
 struct pComboButton : pWidget {
     ComboButton& comboButton;
+	GtkListStore* store = nullptr;
 
 	auto append(const ComboButton::Entry& entry) -> void;
     auto appendMulti(std::vector<ComboButton::Entry>& rows) -> void;

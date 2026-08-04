@@ -354,8 +354,15 @@ auto pFont::systemFontFile() -> std::string {
 auto pFont::add( CustomFont& customFont ) -> bool {
 
     const FcChar8* file = (const FcChar8 *) customFont.filePath.c_str();
-    
-    return FcConfigAppFontAddFile(FcConfigGetCurrent(), file);
+
+	FcConfig* config = FcConfigGetCurrent();
+
+    bool result = FcConfigAppFontAddFile(config, file);
+
+	if (result)
+		FcConfigBuildFonts(config);
+
+	return result;
 }
 
 auto pFont::create(const std::string& desc) -> PangoFontDescription* {

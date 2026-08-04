@@ -12,13 +12,12 @@
 #include "../../helper/fileHelper.h"
 #include "../../helper/settingsHelper.h"
 #include "../../video/shaderParser.h"
+#include "../../helper/miscHelper.h"
 #include <cmath>
 
 #define _settings this->tabWindow->settings
 
 namespace EmuConfigView {
-
-std::vector<DisplayFont> PresentationLayout::displayFonts;
 
 VideoBaseLayout::View::Mode::Mode(bool withSpectrum) {
     if (withSpectrum) {
@@ -1399,7 +1398,7 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
         if (!userData) {
             _settings->set<std::string>("screen_text_font", "");
         } else {
-            auto displayFont = getTTF(userData);
+            auto displayFont = MiscHelper::getTTF(userData);
             if (displayFont) {
                 _settings->set<std::string>("screen_text_font", displayFont->file);
                 _settings->set<unsigned>("screen_text_findex", displayFont->index);
@@ -1431,7 +1430,7 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
                 && !GUIKIT::String::findString(_fn, ".ttc")))
             return;
 
-        if (getTTF(_fn, -1))
+        if (MiscHelper::getTTF(_fn, -1))
             return;
 
         std::string _path = FileHelper::generatedFolder("fonts", true);
@@ -1449,7 +1448,7 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
         if (!userData)
             return;
 
-        auto displayFont = getTTF(userData);
+        auto displayFont = MiscHelper::getTTF(userData);
         if (!displayFont)
             return;
 
@@ -1462,7 +1461,7 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
         if (_path.empty())
             return;
 
-        if (!removeTTF(_fn, displayFont->getMode()))
+        if (!MiscHelper::removeTTF(_fn, displayFont->getMode()))
             return;
 
         emuThread->lock();
@@ -1738,111 +1737,17 @@ auto PresentationLayout::fillFontTypeList() -> void {
     if (fontTypes.rowCount())
         selUserId = fontTypes.userData();
 
-    list = GUIKIT::File::getFolderListAlt(program->fontFolder(), {".ttf", ".otf", ".ttc"}, false);
-    for(auto& file : list)
-        addTTF(1, file);
-
-    list = GUIKIT::File::getFolderListAlt(FileHelper::generatedFolder("fonts"), { ".ttf", ".otf", ".ttc" }, false);
-    for(auto& file : list)
-        addTTF(2, file);
-
-    std::sort(displayFonts.begin(), displayFonts.end(), [](DisplayFont& a, DisplayFont& b) -> bool {
-        std::string _sA = a.name;
-        std::string _sB = b.name;
-        GUIKIT::String::toLowerCase(_sA);
-        GUIKIT::String::toLowerCase(_sB);
-        return _sA < _sB;
-    });
+    MiscHelper::addTTF();
 
     std::vector<GUIKIT::ComboButton::Entry> rows;
     rows.push_back( {trans->getA("default"), 0, ""} );
 
-    for(auto& displayFont : displayFonts)
+    for(auto& displayFont : MiscHelper::displayFonts)
         rows.push_back( {displayFont.name, displayFont.ident, displayFont.name} );
 
     fontTypes.appendMulti( rows );
 
     fontTypes.setSelectionByUserData(selUserId);
-}
-
-auto PresentationLayout::addTTF(unsigned mode, const std::string& _fontFile) -> void {
-    static int counter = 0;
-    uint16_t ident = mode << 14;
-    GUIKIT::CustomFont font;
-    font.filePath = "";
-    font.name = "";
-    font.refPtr = nullptr;
-
-    for(auto& displayFont : displayFonts) {
-        if ((displayFont.ident & 0xc000) == ident && displayFont.file == _fontFile)
-            return;
-    }
-
-    std::vector<std::string> fontNames;
-    std::string screenTextFontPath = "";
-
-    if (mode == 1) {
-        screenTextFontPath = program->fontFolder() + _fontFile;
-    } else if (mode == 2) {
-        screenTextFontPath = FileHelper::generatedFolder("fonts") + _fontFile;
-    } else
-        return;
-
-    if (!screenTextFontPath.empty()) {
-        GUIKIT::TTF ttf(screenTextFontPath);
-        fontNames = ttf.getFontNames();
-        font.filePath = screenTextFontPath;
-    }
-
-    bool found = false;
-    for(unsigned fIndex = 0; fIndex < fontNames.size(); fIndex++) {
-        auto& fontName = fontNames[fIndex];
-        if (!fontName.empty()) {
-            uint16_t _ident = ident + counter++;
-            displayFonts.push_back({_fontFile, fontName, fIndex, _ident});
-            if (!found)
-                font.name = fontName;
-            found = true;
-        }
-    }
-
-    if (!found) {
-        ident += counter++;
-        displayFonts.push_back({_fontFile, _fontFile, 0, ident});
-    }
-
-    if (!font.name.empty())
-        GUIKIT::Window::addCustomFont(font);
-}
-
-auto PresentationLayout::getTTF(uint16_t ident) -> DisplayFont* {
-    for(auto& displayFont : displayFonts) {
-        if (displayFont.ident == ident)
-            return &displayFont;
-    }
-    return nullptr;
-}
-
-auto PresentationLayout::getTTF(const std::string& file, int fontIndex) -> DisplayFont* {
-    for(auto& displayFont : displayFonts) {
-        if ((displayFont.file == file) && ((fontIndex < 0) || (displayFont.index == fontIndex)))
-            return &displayFont;
-    }
-    if (fontIndex > 0)
-        return getTTF(file, 0);
-
-    return nullptr;
-}
-
-auto PresentationLayout::removeTTF(const std::string& file, uint8_t mode) -> bool {
-    for(int i = 0; i < displayFonts.size(); i++) {
-        DisplayFont& displayFont = displayFonts[i];
-        if (displayFont.getMode() == mode && displayFont.file == file) {
-            bool result = GUIKIT::Vector::eraseVectorPos(displayFonts, i);
-            return result | removeTTF(file, mode);
-        }
-    }
-    return false;
 }
 
 auto PresentationLayout::updateFontVisibilities() -> void {
@@ -2473,7 +2378,7 @@ auto PresentationLayout::loadSettings(bool init) -> void {
 
     layScreenText.options.font.fontSize.setSelectionByUserData(screenTextFontSize);
 
-    auto displayFont = getTTF(screenTextFont, fontIndex);
+    auto displayFont = MiscHelper::getTTF(screenTextFont, fontIndex);
     if (displayFont)
         layScreenText.options.font.fontType.setSelectionByUserData(displayFont->ident);
 

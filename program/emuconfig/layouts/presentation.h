@@ -378,17 +378,6 @@ struct VideoRewindLayout : GUIKIT::FramedVerticalLayout {
     VideoRewindLayout();
 };
 
-struct DisplayFont {
-    std::string file;
-    std::string name;
-    unsigned index;
-    uint16_t ident;
-
-    auto getMode() -> uint8_t {
-        return (ident >> 14) & 3;
-    }
-};
-
 struct PresentationLayout;
 
 struct ParamEditor : GUIKIT::Window {
@@ -463,7 +452,6 @@ struct PresentationLayout : GUIKIT::HorizontalLayout {
 
     unsigned selectedPassId;
     unsigned selectedParamId;
-    static std::vector<DisplayFont> displayFonts;
     std::vector<std::pair<unsigned, unsigned>> params;
     ParamEditor* paramEditor = nullptr;
     	
@@ -491,10 +479,6 @@ struct PresentationLayout : GUIKIT::HorizontalLayout {
     auto fillFontTypeList() -> void;
     auto updateFontVisibilities() -> void;
     auto updateBfiVisibilities() -> void;
-    static auto addTTF(unsigned mode, const std::string& _fontFile) -> void;
-    static auto getTTF(uint16_t ident) -> DisplayFont*;
-    static auto getTTF(const std::string& file, int fontIndex) -> DisplayFont*;
-    static auto removeTTF(const std::string& file, uint8_t mode) -> bool;
     auto updateRecordingPath() -> void;
     auto selectViewScreenshot() -> void;
     auto isSecondaryViewSelected() -> bool;

@@ -75,6 +75,32 @@ struct Freetype {
     virtual auto ftBuildTexture(std::string text, bool keepOldSize = false) -> void = 0;
     virtual auto ftSetCoordsPosition() -> void {}
 
+    static auto getFontNames(const std::string& fontPath) -> std::vector<std::string> {
+        std::vector<std::string> out;
+        FT_Library ft2;
+        FT_Init_FreeType(&ft2);
+
+        FT_Face face2;
+        FT_New_Face(ft2, fontPath.c_str(), -1, &face2);
+
+        long numFaces = face2->num_faces;
+
+        FT_Done_Face(face2);
+
+        for (long i = 0; i < numFaces; i++) {
+            if (FT_New_Face(ft2, fontPath.c_str(), i, &face2) == 0) {
+                std::string name = std::string(face2->family_name) + " " + std::string(face2->style_name);
+                out.emplace_back(name );
+
+                FT_Done_Face(face2);
+            }
+        }
+
+        FT_Done_FreeType(ft2);
+
+        return out;
+    }
+
     auto ftLoadFont(const std::string& fontPath, unsigned fontIndex) -> bool {
         ftUnload();
 

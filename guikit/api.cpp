@@ -222,15 +222,17 @@ auto Window::remove(Layout& layout) -> void {
     layout.Sizable::state.window = nullptr;
 }
 
-auto Window::addCustomFont( CustomFont& customFont ) -> bool {	
+auto Window::addCustomFont( CustomFont& customFont ) -> bool {
     for (auto& cF : customFonts) {
         if (cF.name == customFont.name)
             return true;
     }
 
 	bool ok = pWindow::addCustomFont( customFont );
-	if (ok)
-        customFonts.push_back( customFont );
+	if (ok) {
+	    //fprintf(stdout, "cus font: %s\n", customFont.name.c_str());
+	    customFonts.push_back( customFont );
+	}
 
 	return ok;
 }

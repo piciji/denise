@@ -15,6 +15,7 @@
 #include "../../media/fileloader.h"
 #include "../../media/autoloader.h"
 #include "../../helper/fileHelper.h"
+#include "../../helper/miscHelper.h"
 #include "firmware.h"
 #include "geometry.h"
 #include "input.h"
@@ -542,7 +543,7 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow)
         if (mes->question( trans->get("undock settings") ) ) {
             emuThread->lock();
             SettingsHelper::undockSettings();
-            PresentationLayout::displayFonts.clear();
+            MiscHelper::displayFonts.clear();
 
             for(auto _emulator : emulators) {
                 PaletteManager* paletteManager = PaletteManager::getInstance(_emulator);
