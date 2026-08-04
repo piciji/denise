@@ -44,7 +44,9 @@ auto pComboButton::append(const ComboButton::Entry& entry) -> void {
             [(id)cocoaView addItemWithTitle:nsStr];
         
         if (!entry.font.empty()) {
-            NSFont* nsfont = pFont::cocoaFont(entry.font);
+          //  NSFont* nsfont = pFont::cocoaFont(entry.font);
+            NSString* fontName = [NSString stringWithUTF8String:entry.font.c_str()];
+            NSFont* nsfont = [NSFont fontWithName:fontName size:11.0];
             
             if (nsfont != nil) {
                 NSDictionary* attrsDictionary = [NSDictionary dictionaryWithObject:nsfont forKey:NSFontAttributeName];

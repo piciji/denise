@@ -88,7 +88,7 @@ auto MiscHelper::addFonts(unsigned mode, const std::string& _fontFile) -> void {
         return;
 
     if (!screenTextFontPath.empty()) {
-        if (GUIKIT::Application::isWinApi()) {
+        if (!GUIKIT::Application::isGtk()) {
             GUIKIT::TTF ttf(screenTextFontPath);
             fontNames = ttf.getFontNames();
         } else
