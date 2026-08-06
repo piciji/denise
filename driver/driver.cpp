@@ -88,6 +88,10 @@
 
 namespace DRIVER {
 
+auto Video::getFontNames(const std::string& fontPath) -> std::vector<std::string> {
+	return Freetype::getFontNames(fontPath);
+}
+
 auto Video::available() -> std::vector<std::string> {
     std::vector<std::string> out = {
     #ifdef DRV_DIRECT3D11

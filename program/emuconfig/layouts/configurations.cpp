@@ -15,6 +15,7 @@
 #include "../../media/fileloader.h"
 #include "../../media/autoloader.h"
 #include "../../helper/fileHelper.h"
+#include "../../helper/miscHelper.h"
 #include "firmware.h"
 #include "geometry.h"
 #include "input.h"
@@ -401,13 +402,13 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow)
 
         memoryPattern->fifthLine.preConfigured1.onActivate = [this]() {
             memoryPattern->firstLine.valueStepper.setValue(0);
-            memoryPattern->firstLine.invertValueEveryCombo.setSelectionByUserId(64);
+            memoryPattern->firstLine.invertValueEveryCombo.setSelectionByUserData(64);
             memoryPattern->secondLine.valueStepper.setValue(0);
-            memoryPattern->secondLine.invertValueEveryCombo.setSelectionByUserId(0);
-            memoryPattern->thirdLine.lengthRandomCombo.setSelectionByUserId(0);
-            memoryPattern->thirdLine.repeatRandomEveryCombo.setSelectionByUserId(0);
+            memoryPattern->secondLine.invertValueEveryCombo.setSelectionByUserData(0);
+            memoryPattern->thirdLine.lengthRandomCombo.setSelectionByUserData(0);
+            memoryPattern->thirdLine.repeatRandomEveryCombo.setSelectionByUserData(0);
             memoryPattern->fourthLine.randomChanceStepper.setValue(0);
-            memoryPattern->fourthLine.offsetCombo.setSelectionByUserId(0);
+            memoryPattern->fourthLine.offsetCombo.setSelectionByUserData(0);
 
             _settings->set<unsigned>("memory_value", 0);
             _settings->set<unsigned>("memory_invert_every", 64);
@@ -423,13 +424,13 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow)
 
         memoryPattern->fifthLine.preConfigured2.onActivate = [this]() {
             memoryPattern->firstLine.valueStepper.setValue(256);
-            memoryPattern->firstLine.invertValueEveryCombo.setSelectionByUserId(64);
+            memoryPattern->firstLine.invertValueEveryCombo.setSelectionByUserData(64);
             memoryPattern->secondLine.valueStepper.setValue(0);
-            memoryPattern->secondLine.invertValueEveryCombo.setSelectionByUserId(0);
-            memoryPattern->thirdLine.lengthRandomCombo.setSelectionByUserId(1);
-            memoryPattern->thirdLine.repeatRandomEveryCombo.setSelectionByUserId(256);
+            memoryPattern->secondLine.invertValueEveryCombo.setSelectionByUserData(0);
+            memoryPattern->thirdLine.lengthRandomCombo.setSelectionByUserData(1);
+            memoryPattern->thirdLine.repeatRandomEveryCombo.setSelectionByUserData(256);
             memoryPattern->fourthLine.randomChanceStepper.setValue(0);
-            memoryPattern->fourthLine.offsetCombo.setSelectionByUserId(0);
+            memoryPattern->fourthLine.offsetCombo.setSelectionByUserData(0);
 
             _settings->set<unsigned>("memory_value", 255);
             _settings->set<unsigned>("memory_invert_every", 64);
@@ -445,13 +446,13 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow)
 
         memoryPattern->fifthLine.preConfigured3.onActivate = [this]() {
             memoryPattern->firstLine.valueStepper.setValue(0);
-            memoryPattern->firstLine.invertValueEveryCombo.setSelectionByUserId(4);
+            memoryPattern->firstLine.invertValueEveryCombo.setSelectionByUserData(4);
             memoryPattern->secondLine.valueStepper.setValue(255);
-            memoryPattern->secondLine.invertValueEveryCombo.setSelectionByUserId(16384);
-            memoryPattern->thirdLine.lengthRandomCombo.setSelectionByUserId(0);
-            memoryPattern->thirdLine.repeatRandomEveryCombo.setSelectionByUserId(0);
+            memoryPattern->secondLine.invertValueEveryCombo.setSelectionByUserData(16384);
+            memoryPattern->thirdLine.lengthRandomCombo.setSelectionByUserData(0);
+            memoryPattern->thirdLine.repeatRandomEveryCombo.setSelectionByUserData(0);
             memoryPattern->fourthLine.randomChanceStepper.setValue(1);
-            memoryPattern->fourthLine.offsetCombo.setSelectionByUserId(2);
+            memoryPattern->fourthLine.offsetCombo.setSelectionByUserData(2);
 
             _settings->set<unsigned>("memory_value", 0);
             _settings->set<unsigned>("memory_invert_every", 4);
@@ -467,13 +468,13 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow)
 
         memoryPattern->fifthLine.preConfigured4.onActivate = [this]() {
             memoryPattern->firstLine.valueStepper.setValue(255);
-            memoryPattern->firstLine.invertValueEveryCombo.setSelectionByUserId(2);
+            memoryPattern->firstLine.invertValueEveryCombo.setSelectionByUserData(2);
             memoryPattern->secondLine.valueStepper.setValue(128);
-            memoryPattern->secondLine.invertValueEveryCombo.setSelectionByUserId(1);
-            memoryPattern->thirdLine.lengthRandomCombo.setSelectionByUserId(0);
-            memoryPattern->thirdLine.repeatRandomEveryCombo.setSelectionByUserId(0);
+            memoryPattern->secondLine.invertValueEveryCombo.setSelectionByUserData(1);
+            memoryPattern->thirdLine.lengthRandomCombo.setSelectionByUserData(0);
+            memoryPattern->thirdLine.repeatRandomEveryCombo.setSelectionByUserData(0);
             memoryPattern->fourthLine.randomChanceStepper.setValue(0);
-            memoryPattern->fourthLine.offsetCombo.setSelectionByUserId(0);
+            memoryPattern->fourthLine.offsetCombo.setSelectionByUserData(0);
 
             _settings->set<unsigned>("memory_value", 255);
             _settings->set<unsigned>("memory_invert_every", 2);
@@ -542,7 +543,7 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow)
         if (mes->question( trans->get("undock settings") ) ) {
             emuThread->lock();
             SettingsHelper::undockSettings();
-            PresentationLayout::displayFonts.clear();
+            MiscHelper::displayFonts.clear();
 
             for(auto _emulator : emulators) {
                 PaletteManager* paletteManager = PaletteManager::getInstance(_emulator);
@@ -1193,15 +1194,15 @@ auto ConfigurationsLayout::loadSettings() -> void {
         program->getMemoryPatternFromConfig(emulator, pattern);
 
         memoryPattern->firstLine.valueStepper.setValue( pattern.value );
-        memoryPattern->firstLine.invertValueEveryCombo.setSelectionByUserId( pattern.invertEvery );
+        memoryPattern->firstLine.invertValueEveryCombo.setSelectionByUserData( pattern.invertEvery );
         memoryPattern->secondLine.valueStepper.setValue( pattern.secondValue );
-        memoryPattern->secondLine.invertValueEveryCombo.setSelectionByUserId( pattern.secondInvertEvery );
+        memoryPattern->secondLine.invertValueEveryCombo.setSelectionByUserData( pattern.secondInvertEvery );
 
-        memoryPattern->thirdLine.lengthRandomCombo.setSelectionByUserId( pattern.randomPatternLength );
-        memoryPattern->thirdLine.repeatRandomEveryCombo.setSelectionByUserId( pattern.repeatRandomPattern );
+        memoryPattern->thirdLine.lengthRandomCombo.setSelectionByUserData( pattern.randomPatternLength );
+        memoryPattern->thirdLine.repeatRandomEveryCombo.setSelectionByUserData( pattern.repeatRandomPattern );
 
         memoryPattern->fourthLine.randomChanceStepper.setValue( pattern.randomChance );
-        memoryPattern->fourthLine.offsetCombo.setSelectionByUserId( pattern.offset );
+        memoryPattern->fourthLine.offsetCombo.setSelectionByUserData( pattern.offset );
 
         updateMemoryPreview();
     }

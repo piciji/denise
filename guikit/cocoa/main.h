@@ -126,6 +126,8 @@ struct pWidget {
     virtual auto setBackgroundColor(unsigned color) -> void {}
     virtual auto setForegroundColor(unsigned color) -> void {}
     virtual auto setForegroundColorThreaded(unsigned color) -> void {}
+    virtual auto lockRedraw() -> void {}
+    virtual auto unlockRedraw() -> void {}
     auto setAttributedText() -> void;
     auto getTextColor() -> NSColor*;
     auto getMinimumSize() -> Size;
@@ -338,7 +340,8 @@ struct pCheckBox : pWidget {
 struct pComboButton : pWidget {
     ComboButton& comboButton;
 
-    auto append(std::string text, const std::string& font) -> void;
+    auto append(const ComboButton::Entry& entry) -> void;
+    auto appendMulti(std::vector<ComboButton::Entry>& rows) -> void;
     auto remove(unsigned selection) -> void;
     auto minimumSize() -> Size;
     auto setGeometry(Geometry geometry) -> void;
@@ -432,8 +435,6 @@ struct pListView : pWidget {
     auto createCustomTooltip() -> void;
     auto updateTooltipUsage() -> void;
     auto colorRowTooltips( bool colorTip ) -> void;
-    auto lockRedraw() -> void {}
-    auto unlockRedraw() -> void {}
     auto setSelectionColor(unsigned foregroundColor = 0, unsigned backgroundColor = 0) -> void {}
     auto updateRowColors() -> void;
     auto updateRowForegroundColors() -> void;

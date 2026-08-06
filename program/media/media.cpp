@@ -255,7 +255,7 @@ auto MediaLayout::build() -> void {
     for(unsigned i = 8; i <= 16; i++) {
         fontSizeLayout.combo.append(std::to_string(i), i);
     }
-    fontSizeLayout.combo.setSelectionByUserId((int)previewFontSize);
+    fontSizeLayout.combo.setSelectionByUserData((int)previewFontSize);
     dialogPreviewLayout.updateWidgets(settings, emulator);
 
     moduleFrame.append(fontSizeLayout, {0u, 0u}, 10);
@@ -964,19 +964,24 @@ auto MediaLayout::updateMediaBlock(MediaGroupLayout::Block* block, FileSetting* 
     if (block->selector.edit)
         block->selector.edit->setText( fSetting->path );
 
-    if (block->selector.pathCombo) {
+    auto& pathCombo = block->selector.pathCombo;
+
+    if (pathCombo) {
         auto recentFile = fileloader->getRecentFile(emulator);
         auto& files = recentFile->list(block->media->group, block->media->secondary, fSetting->path);
 
-        block->selector.pathCombo->reset();
+        //pathCombo->reset();
+        std::vector<GUIKIT::ComboButton::Entry> rows;
 
         for (auto& file : files)
-            block->selector.pathCombo->append(file);
+           rows.push_back( {file, 0, ""} );
+
+        pathCombo->appendMulti( rows );
 
         if (fSetting->path.empty())
-            block->selector.pathCombo->unselect();
+            pathCombo->unselect();
         else
-            block->selector.pathCombo->setSelectionByRow(fSetting->path);
+            pathCombo->setSelectionByText(fSetting->path);
     }
 
     if (!IPMode) {
@@ -1675,7 +1680,7 @@ auto MediaLayout::loadSettings() -> void {
     int previewFontSize = settings->get<unsigned>("software_preview_fontsize", 12, {8, 16});
 
     if (previewFontSize != previewFontSizeCur) {
-        fontSizeLayout.combo.setSelectionByUserId(previewFontSize);
+        fontSizeLayout.combo.setSelectionByUserData(previewFontSize);
         updateListingFont(previewFontSize);
     }
     dialogPreviewLayout.updateWidgets(settings, emulator);

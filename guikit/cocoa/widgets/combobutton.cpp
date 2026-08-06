@@ -36,41 +36,46 @@
 
 namespace GUIKIT {
     
-auto pComboButton::append(std::string text, const std::string& font) -> void {
+auto pComboButton::append(const ComboButton::Entry& entry) -> void {
     calculatedMinimumSize.updated = false;
     @autoreleasepool {
-        int tries = 0;
-        int expectedCount = comboButton.rows();
-        std::string altText = text;
-        
-        NSString* nsStr = [NSString stringWithUTF8String:text.c_str()];
+        NSString* nsStr = [NSString stringWithUTF8String:entry.text.c_str()];
         if (nsStr)
             [(id)cocoaView addItemWithTitle:nsStr];
         
-        int realCount = [(id)cocoaView numberOfItems]; //expects unique names
-        
-        while (realCount < expectedCount) {
-            tries++;
-            if(tries > 5)
-                return;
-                
-            altText = text + "_" + std::to_string(tries);
-            nsStr = [NSString stringWithUTF8String:altText.c_str()];
-            if (nsStr)
-                [(id)cocoaView addItemWithTitle:nsStr];
-            realCount = [(id)cocoaView numberOfItems];
-        }
-        
-        if (!font.empty()) {
-            NSFont* nsfont = pFont::cocoaFont(font);
+        if (!entry.font.empty()) {
+          //  NSFont* nsfont = pFont::cocoaFont(entry.font);
+            NSString* fontName = [NSString stringWithUTF8String:entry.font.c_str()];
+            NSFont* nsfont = [NSFont fontWithName:fontName size:11.0];
             
             if (nsfont != nil) {
                 NSDictionary* attrsDictionary = [NSDictionary dictionaryWithObject:nsfont forKey:NSFontAttributeName];
                 NSAttributedString* attrString = [[NSAttributedString alloc] initWithString:nsStr attributes:attrsDictionary];
                 
-                [[(id)cocoaView itemAtIndex:expectedCount-1] setAttributedTitle:attrString];
+                [[(id)cocoaView itemAtIndex:[(id)cocoaView numberOfItems] - 1] setAttributedTitle:attrString];
             }
         }
+    }
+}
+
+auto pComboButton::appendMulti(std::vector<ComboButton::Entry>& rows) -> void {
+    @autoreleasepool {
+        bool useFont = false;
+        NSMutableArray* arr = [NSMutableArray array];
+        
+        for(auto& entry : rows) {
+            if (!entry.font.empty()) {
+                useFont = true;
+                break;
+            }
+            [arr addObject:[NSString stringWithUTF8String:entry.text.c_str()]];
+        }
+        
+        if (useFont) {
+            for(auto& entry : rows)
+                append(entry);
+        } else
+            [(id)cocoaView addItemsWithTitles:arr];
     }
 }
 

@@ -1,8 +1,30 @@
 
-auto pComboButton::append(std::string text, const std::string& _font) -> void {
-    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(gtkWidget), text.c_str());
-    if(comboButton.rows() == 1) setSelection(0);
+auto pComboButton::append(const ComboButton::Entry& entry) -> void {
+    gint count;
+
+    if (comboButton.hintMultiFonts) {
+        GtkTreeIter iter;
+
+        gtk_list_store_append(store, &iter);
+
+        gtk_list_store_set(store, &iter,
+                           0, entry.text.c_str(),
+                           1, entry.font.c_str(),
+                           -1);
+
+        count = gtk_tree_model_iter_n_children(GTK_TREE_MODEL(store), NULL);
+    } else {
+        gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(gtkWidget), entry.text.c_str());
+        count = gtk_tree_model_iter_n_children(GTK_TREE_MODEL(gtk_combo_box_get_model(GTK_COMBO_BOX(gtkWidget))), NULL);
+    }
+
+    if(count == 1) setSelection(0);
 	calculatedMinimumSize.updated = false;
+}
+
+auto pComboButton::appendMulti(std::vector<ComboButton::Entry>& rows) -> void {
+    for (auto& entry : rows)
+        append( entry );
 }
 
 auto pComboButton::minimumSize() -> Size {
@@ -12,7 +34,14 @@ auto pComboButton::minimumSize() -> Size {
 
 auto pComboButton::remove(unsigned selection) -> void {
     locked = true;
-    gtk_combo_box_text_remove(GTK_COMBO_BOX_TEXT(gtkWidget), selection);
+    if (comboButton.hintMultiFonts) {
+        GtkTreeIter iter;
+
+        if (gtk_tree_model_iter_nth_child(GTK_TREE_MODEL(store), &iter, NULL, selection))
+            gtk_list_store_remove(store, &iter);
+    } else
+        gtk_combo_box_text_remove(GTK_COMBO_BOX_TEXT(gtkWidget), selection);
+
     locked = false;
 
     if(selection == comboButton.selection()) comboButton.setSelection(0);
@@ -20,7 +49,10 @@ auto pComboButton::remove(unsigned selection) -> void {
 
 auto pComboButton::reset() -> void {
     locked = true;
-    gtk_list_store_clear(GTK_LIST_STORE(gtk_combo_box_get_model(GTK_COMBO_BOX(gtkWidget))));
+    if (comboButton.hintMultiFonts)
+        gtk_list_store_clear(store);
+    else
+        gtk_list_store_clear(GTK_LIST_STORE(gtk_combo_box_get_model(GTK_COMBO_BOX(gtkWidget))));
     locked = false;
 }
 
@@ -32,8 +64,16 @@ auto pComboButton::setSelection(unsigned selection) -> void {
 
 auto pComboButton::setText(unsigned selection, const std::string& text) -> void {
     locked = true;
-    gtk_combo_box_text_remove(GTK_COMBO_BOX_TEXT(gtkWidget), selection);
-    gtk_combo_box_text_insert_text(GTK_COMBO_BOX_TEXT(gtkWidget), selection, text.c_str());
+    if (comboButton.hintMultiFonts) {
+        GtkTreeIter iter;
+
+        if (gtk_tree_model_iter_nth_child(GTK_TREE_MODEL(store), &iter, NULL, selection))
+            gtk_list_store_set(store, &iter, 0, text.c_str(), -1);
+    } else {
+        gtk_combo_box_text_remove(GTK_COMBO_BOX_TEXT(gtkWidget), selection);
+        gtk_combo_box_text_insert_text(GTK_COMBO_BOX_TEXT(gtkWidget), selection, text.c_str());
+    }
+
     gtk_combo_box_set_active(GTK_COMBO_BOX(gtkWidget), comboButton.selection());
 	calculatedMinimumSize.updated = false;
     locked = false;
@@ -41,7 +81,23 @@ auto pComboButton::setText(unsigned selection, const std::string& text) -> void 
 
 auto pComboButton::create() -> void {
     destroy();
-    gtkWidget = gtk_combo_box_text_new();
+
+    if (comboButton.hintMultiFonts) {
+        store = gtk_list_store_new(2, G_TYPE_STRING, G_TYPE_STRING);
+
+        gtkWidget = gtk_combo_box_new_with_model(GTK_TREE_MODEL(store));
+
+        GtkCellRenderer* renderer = gtk_cell_renderer_text_new();
+
+        gtk_cell_layout_pack_start(GTK_CELL_LAYOUT(gtkWidget), renderer, TRUE);
+
+        gtk_cell_layout_set_attributes(GTK_CELL_LAYOUT(gtkWidget), renderer,
+                                           "text", 0,
+                                           "font", 1,
+                                           NULL);
+    } else
+        gtkWidget = gtk_combo_box_text_new();
+
     g_signal_connect_swapped(G_OBJECT(gtkWidget), "changed", G_CALLBACK(pComboButton::onChange), (gpointer)&comboButton);
     g_signal_connect(G_OBJECT(gtkWidget), "drag-data-received", G_CALLBACK(pComboButton::dropEvent), (gpointer)&comboButton);
 }
@@ -49,8 +105,10 @@ auto pComboButton::create() -> void {
 auto pComboButton::init() -> void {
     create();
     locked = true;
-    for (int i = 0; i < comboButton.rows(); i++)
-        append(comboButton.state.rows[i], comboButton.state.fonts[i]);
+
+    for( auto& entry : comboButton.rows())
+        append(entry);
+
     locked = false;
     setSelection(comboButton.selection());
     setDroppable(comboButton.droppable());

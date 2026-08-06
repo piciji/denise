@@ -222,15 +222,17 @@ auto Window::remove(Layout& layout) -> void {
     layout.Sizable::state.window = nullptr;
 }
 
-auto Window::addCustomFont( CustomFont& customFont ) -> bool {	
+auto Window::addCustomFont( CustomFont& customFont ) -> bool {
     for (auto& cF : customFonts) {
         if (cF.name == customFont.name)
             return true;
     }
 
 	bool ok = pWindow::addCustomFont( customFont );
-	if (ok)
-        customFonts.push_back( customFont );
+	if (ok) {
+	    //fprintf(stdout, "cus font: %s\n", customFont.name.c_str());
+	    customFonts.push_back( customFont );
+	}
 
 	return ok;
 }
@@ -948,30 +950,67 @@ auto CheckBox::toggle() -> void {
 CheckBox::CheckBox() : Widget(*new pCheckBox(*this)), p((pCheckBox&)Widget::p) { p.init(); }
 
 auto ComboButton::append(const std::string& text, int userData, const std::string& font) -> void {
-    state.rows.push_back(text);
-    state.userData.push_back(userData);
-    state.fonts.push_back(font);
-    p.append(text, font);
+    std::string _text = text;
+    unsigned ident = 1;
+    while (hasDuplicate(_text)) {
+        fprintf(stderr, "combo duplicate: %s\n", _text.c_str());
+        _text = text + "_" + std::to_string(ident++);
+    }
+    
+    Entry entry{_text, userData, font};
+    state.rows.push_back( entry );
+    p.append(entry);
+}
+
+auto ComboButton::appendMulti(std::vector<Entry>& rows, bool clearBefore) -> void {
+    p.lockRedraw();
+
+    if (clearBefore)
+        reset();
+
+    unsigned ident = 1;
+    
+    for (auto& entry : rows ) {
+        std::string _text = entry.text;
+        
+        while (hasDuplicate(_text)) {
+            fprintf(stderr, "combo multi insert duplicate: %s\n", _text.c_str());
+            _text = entry.text + "_" + std::to_string(ident++);
+        }
+        entry.text = _text;
+        
+        state.rows.push_back( entry );
+    }
+    
+    p.appendMulti(rows);
+
+    p.unlockRedraw();
+}
+
+auto ComboButton::hasDuplicate(const std::string& text) -> bool {
+    for (const auto& row : state.rows) {
+        if (row.text == text)
+            return true;
+    }
+    return false;
 }
 
 auto ComboButton::remove(unsigned selection) -> void {
-    if(selection >= state.rows.size()) return;
+    if(selection >= rowCount())
+        return;
     state.rows.erase(state.rows.begin() + selection);
-    state.userData.erase(state.userData.begin() + selection);
-    state.fonts.erase(state.fonts.begin() + selection);
     p.remove(selection);
 }
 
 auto ComboButton::reset() -> void {
     state.selection = 0;
     state.rows.clear();
-    state.userData.clear();
-    state.fonts.clear();
     p.reset();
 }
 
 auto ComboButton::setSelection(unsigned selection) -> void {
-    if(selection >= state.rows.size()) return;
+    if(selection >= rowCount())
+        return;
     state.selection = selection;
     p.setSelection(selection);
 }
@@ -981,25 +1020,30 @@ auto ComboButton::activate(unsigned selection) -> void {
     if(onChange) onChange();
 }
 
-auto ComboButton::setSelectionByUserId(int userId) -> void {
-    unsigned selection = 0;
-    
-    for( auto& _id : state.userData) {        
-        if (_id == userId)
-            break;
-        
-        selection++;
-    }
-    
-    setSelection( selection );
-}
-
-auto ComboButton::setSelectionByRow(const std::string& row) -> void {
+auto ComboButton::setSelectionByUserData(int userData) -> bool {
     unsigned selection = 0;
 
     bool found = false;
-    for( auto& _row : state.rows) {
-        if (_row == row) {
+    for( auto& entry : state.rows) {
+        if (entry.userData == userData) {
+            found = true;
+            break;
+        }
+        
+        selection++;
+    }
+
+    if (found)
+        setSelection( selection );
+    return found;
+}
+
+auto ComboButton::setSelectionByText(const std::string& text) -> bool {
+    unsigned selection = 0;
+
+    bool found = false;
+    for( auto& entry : state.rows) {
+        if (entry.text == text) {
             found = true;
             break;
         }
@@ -1008,27 +1052,44 @@ auto ComboButton::setSelectionByRow(const std::string& row) -> void {
     }
 
     setSelection( found ? selection : 0 );
+    return found;
 }
 
 auto ComboButton::setText(unsigned selection, const std::string& text) -> void {
-    if(selection >= state.rows.size()) return;
-    state.rows[selection] = text;
+    if(selection >= rowCount())
+        return;
+
+    auto& entry = state.rows[selection];
+
+    entry.text = text;
     p.setText(selection, text);
 }
 
 auto ComboButton::text(unsigned selection) const -> std::string {
-    if(selection >= state.rows.size()) return "";
-    return state.rows[selection];
+    if(selection >= rowCount())
+        return "";
+
+    auto& entry = state.rows[selection];
+
+    return entry.text;
 }
 
 auto ComboButton::setUserData(unsigned selection, int userData) -> void {
-    if(selection >= state.userData.size()) return;
-    state.userData[selection] = userData;
+    if(selection >= rowCount())
+        return;
+
+    auto& entry = state.rows[selection];
+
+    entry.userData = userData;
 }
 
 auto ComboButton::userData(unsigned selection) const -> int {
-    if(selection >= state.userData.size()) return 0;
-    return state.userData[selection];
+    if(selection >= rowCount())
+        return 0;
+
+    auto& entry = state.rows[selection];
+
+    return entry.userData;
 }
 
 auto ComboButton::setDroppable(bool droppable) -> void {

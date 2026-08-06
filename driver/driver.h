@@ -152,6 +152,8 @@ struct Video {
     static auto create(const std::string& driver) -> Video*;
 	static auto available() -> std::vector<std::string>;
 	static auto preferred() -> std::string;
+
+	static auto getFontNames(const std::string& fontPath) -> std::vector<std::string>;
 };
 
 struct Audio {

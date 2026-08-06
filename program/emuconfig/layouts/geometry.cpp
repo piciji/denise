@@ -359,10 +359,13 @@ GeometryLayout::GeometryLayout(TabWindow* tabWindow) {
         emuThread->lock();
         auto displayId = monitorResolutionLayout.display.userData();
 
-        monitorResolutionLayout.displaySettings.reset();
+       // monitorResolutionLayout.displaySettings.reset();
+        std::vector<GUIKIT::ComboButton::Entry> rows;
 
         for( auto& resolution : GUIKIT::Monitor::getSettings( displayId ) )
-            monitorResolutionLayout.displaySettings.append( resolution.name, resolution.id );
+            rows.push_back( {resolution.name, (int)resolution.id, ""} );
+
+        monitorResolutionLayout.displaySettings.appendMulti( rows );
 
         _settings->set<unsigned>("fullscreen_display", (unsigned)monitorResolutionLayout.display.userData() );
 
@@ -483,8 +486,12 @@ GeometryLayout::GeometryLayout(TabWindow* tabWindow) {
         emuThread->unlock();
     };
 
+    std::vector<GUIKIT::ComboButton::Entry> rows;
+
     for( auto& display : GUIKIT::Monitor::getDisplays() )
-        monitorResolutionLayout.display.append(display.name, display.id);
+        rows.push_back( {display.name, (int)display.id, ""} );
+
+    monitorResolutionLayout.display.appendMulti( rows );
 
     loadSettings();
 }
@@ -677,13 +684,13 @@ auto GeometryLayout::loadSettings() -> void {
 
     auto displayId = _settings->get<unsigned>("fullscreen_display", 0 );
 
-    monitorResolutionLayout.display.setSelectionByUserId( displayId );
+    monitorResolutionLayout.display.setSelectionByUserData( displayId );
 
     monitorResolutionLayout.displaySettings.reset();
     for( auto& resolution : GUIKIT::Monitor::getSettings( displayId ) )
         monitorResolutionLayout.displaySettings.append( resolution.name, resolution.id );
 
-    monitorResolutionLayout.displaySettings.setSelectionByUserId( _settings->get<unsigned>("fullscreen_setting", 0 ) );
+    monitorResolutionLayout.displaySettings.setSelectionByUserData( _settings->get<unsigned>("fullscreen_setting", 0 ) );
 
     monitorResolutionLayout.display.setEnabled( monitorResolutionLayout.active.checked() );
     monitorResolutionLayout.displaySettings.setEnabled( monitorResolutionLayout.active.checked() );

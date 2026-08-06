@@ -4,16 +4,21 @@ pComboButton::~pComboButton() {
         pFont::free(_f);
 }
 
-auto pComboButton::append(std::string text, const std::string& _font) -> void {
-    if (_font.empty())
+auto pComboButton::appendMulti(std::vector<ComboButton::Entry>& rows) -> void {
+    for (auto& entry : rows)
+        append( entry );
+}
+
+auto pComboButton::append(const ComboButton::Entry& entry) -> void {
+    if (entry.font.empty())
         hfonts.push_back(nullptr);
     else
-        hfonts.push_back(pFont::create(_font ));
+        hfonts.push_back(pFont::create(entry.font ));
 
     if (!hwnd)
         return;
-    
-    SendMessage(hwnd, CB_ADDSTRING, 0, (LPARAM)(wchar_t*)utf16_t(text));
+
+    SendMessage(hwnd, CB_ADDSTRING, 0, (LPARAM)(wchar_t*)utf16_t(entry.text));
     
     if(SendMessage(hwnd, CB_GETCOUNT, 0, 0) == 1)
         setSelection(0);
@@ -29,7 +34,7 @@ auto pComboButton::minimumSize() -> Size {
         return calculatedMinimumSize.minimumSize; 
     
     unsigned maximumWidth = 0;
-    for (int i = 0; i < comboButton.rows(); i++) {
+    for (int i = 0; i < comboButton.rowCount(); i++) {
         auto text = comboButton.text(i);
         HFONT _hfont = hfonts[i];
         if (!_hfont)
@@ -111,7 +116,7 @@ auto pComboButton::create() -> void {
     hwnd = CreateWindow(
         WC_COMBOBOX, L"",
         WS_CHILD | WS_TABSTOP | CBS_DROPDOWNLIST | CBS_HASSTRINGS |
-        (comboButton.hintVerticalScrollbar ? WS_VSCROLL : 0) | 
+        (comboButton.hintVerticalScrollbar ? WS_VSCROLL : 0) |
         ((comboButton.hintMultiFonts || pApplication::useDark) ? CBS_OWNERDRAWFIXED : 0),
         0, 0, 0, 0,
         getParentHandle(), (HMENU)(unsigned long long)comboButton.id, GetModuleHandle(0), 0
@@ -160,7 +165,7 @@ auto pComboButton::measureItem(LPMEASUREITEMSTRUCT lpmis) -> bool {
     int maxHeight = 0;
 
     if (comboButton.hintMultiFonts) {
-        for(int i = 0; i < comboButton.rows(); i++) {
+        for(int i = 0; i < comboButton.rowCount(); i++) {
             std::string _str = comboButton.text(i);
             HFONT _hfont = hfonts[i];
             if (!_hfont)
@@ -243,8 +248,8 @@ auto pComboButton::rebuild() -> void {
     create();
     setFont( widget.font() );
 
-    for (int i = 0; i < comboButton.rows(); i++)
-        append(comboButton.state.rows[i], comboButton.state.fonts[i]);
+    for( auto& entry : comboButton.rows())
+        append(entry);
     
     setSelection(comboButton.selection());
     setDroppable(comboButton.droppable());

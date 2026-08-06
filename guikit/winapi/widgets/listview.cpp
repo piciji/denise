@@ -32,18 +32,6 @@ auto pListView::append(const std::vector<std::string>& list, bool preventColumnR
         autoSizeColumns();
 }
 
-auto pListView::lockRedraw() -> void {
-    if (hwnd)
-        SendMessage( hwnd, WM_SETREDRAW, 0, 0);
-}
-
-auto pListView::unlockRedraw() -> void {
-    if (hwnd) {
-        SendMessage( hwnd, WM_SETREDRAW, 1, 0);
-        InvalidateRect(hwnd, 0, false);
-    }
-}
-
 auto pListView::remove(unsigned selection, bool preventColumnResizing) -> void {
     if (!hwnd) return;
     ListView_DeleteItem(hwnd, selection);

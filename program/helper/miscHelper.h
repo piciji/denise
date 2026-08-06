@@ -5,7 +5,18 @@
 #include "../../guikit/api.h"
 
 struct MiscHelper {
-    static auto addCustomFont() -> void;
+
+    struct DisplayFont {
+        std::string file;
+        std::string name;
+        unsigned index;
+        uint16_t ident;
+
+        auto getMode() const -> uint8_t {
+            return (ident >> 14) & 3;
+        }
+    };
+    static std::vector<DisplayFont> displayFonts;
 
     static auto libraryMissing(std::string plugin) -> void;
     static auto initExpansionRom(Emulator::Interface* emulator, const std::string& ident, const std::string& file) -> void;
@@ -14,5 +25,12 @@ struct MiscHelper {
     static auto prepareSocket(Emulator::Interface::Media* media, Emulator::Interface* emulator, std::string address) -> void;
     static auto toggle2Mhz() -> void;
     static auto hasSuperCpuActive() -> bool;
+
+    static auto addFileFonts() -> void;
+    static auto addFonts() -> void;
+    static auto addFonts(unsigned mode, const std::string& _fontFile) -> void;
+    static auto getFont(uint16_t ident) -> DisplayFont*;
+    static auto getFont(const std::string& file, int fontIndex) -> DisplayFont*;
+    static auto removeFont(const std::string& file, uint8_t mode) -> bool;
 };
 

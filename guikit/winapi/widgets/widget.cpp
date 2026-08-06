@@ -250,3 +250,15 @@ auto pWidget::setEditFieldColor(WPARAM wparam) -> HBRUSH {
 
     return nullptr;
 }
+
+auto pWidget::lockRedraw() -> void {
+    if (hwnd)
+        SendMessage( hwnd, WM_SETREDRAW, 0, 0);
+}
+
+auto pWidget::unlockRedraw() -> void {
+    if (hwnd) {
+        SendMessage( hwnd, WM_SETREDRAW, 1, 0);
+        InvalidateRect(hwnd, 0, false);
+    }
+}

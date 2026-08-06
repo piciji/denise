@@ -46,9 +46,14 @@ ModelLayout::Line::Block::Block(Emulator::Interface::Model* model, ModelLayout* 
 		append(*label, {0u, 0u}, 5 );
 		
 		int i = 0;
-        combo = new GUIKIT::ComboButton(model->isCombo() && model->isAudioSettings());
-		for(auto& option : model->options)			
-			combo->append( option, i++ );
+        combo = new GUIKIT::ComboButton(model->isAudioSettings());
+
+	    std::vector<GUIKIT::ComboButton::Entry> rows;
+
+		for(auto& option : model->options)
+			rows.push_back({option, i++, "" });
+
+	    combo->appendMulti( rows );
 		
 		append( *combo, {0u, 0u} );
 
@@ -513,7 +518,7 @@ auto ModelLayout::nextOption(unsigned id) -> unsigned {
                 else if (block->model->isCombo() ) {
                     val = block->combo->selection() + 1;
                     
-                    if (val == block->combo->rows())
+                    if (val == block->combo->rowCount())
                         val = 0;
                     
                     block->combo->setSelection( val );

@@ -148,7 +148,7 @@ auto pFont::add(CustomFont& customFont) -> bool {
 
     return success;
     /* The following function should only be used for fonts that are not distributed by the APP, as the font will be locked by Windows.
-     * The font file cannot be overwritten or deleted for this session, and cannot even be transferred to GIT.
+     * The font file cannot be overwritten or deleted for this session.
      * The font can be unregistered when the APP is terminated, but in case of a crash, the font is locked.
      * I would only use this function with fonts that are installed directly in the Windows Fonts folder.
      */

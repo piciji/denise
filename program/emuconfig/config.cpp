@@ -249,11 +249,9 @@ auto TabWindow::prepareLayout(Layout layout, unsigned tabPos) -> void {
             } break;
         case Layout::Palette:
             if (!paletteLayout && dynamic_cast<LIBC64::Interface*>(emulator)) {
-                if (dynamic_cast<LIBC64::Interface*>(emulator)) {
-                    paletteLayout = new PaletteLayout( this );
-                    tab.setLayout( tabPos, *paletteLayout, {~0u, ~0u} );
-                    paletteLayout->translate();
-                }
+                paletteLayout = new PaletteLayout( this );
+                tab.setLayout( tabPos, *paletteLayout, {~0u, ~0u} );
+                paletteLayout->translate();
             } break;
         case Layout::Audio:
             if (!audioLayout) {
@@ -267,7 +265,7 @@ auto TabWindow::prepareLayout(Layout layout, unsigned tabPos) -> void {
                 geometryLayout->translate();
                 tab.setLayout( tabPos, *geometryLayout, {~0u, ~0u} );
             } break;
-        case Layout::Misc:
+        case Layout::Misc: 
             if (!miscLayout) {
                 miscLayout = new MiscLayout( this );
                 miscLayout->translate();
