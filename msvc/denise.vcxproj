@@ -191,6 +191,7 @@
     <ClInclude Include="..\emulation\libc64\expansionPort\retroReplay\retroReplay.h" />
     <ClInclude Include="..\emulation\libc64\expansionPort\reu\reu.h" />
     <ClInclude Include="..\emulation\libc64\expansionPort\superCpu\superCpu.h" />
+    <ClInclude Include="..\emulation\libc64\expansionPort\trilogicExpert\expert.h" />
     <ClInclude Include="..\emulation\libc64\input\controlPort\analogControl.h" />
     <ClInclude Include="..\emulation\libc64\input\controlPort\controlPort.h" />
     <ClInclude Include="..\emulation\libc64\input\controlPort\lightControl.h" />
@@ -1101,6 +1102,7 @@
     <ClCompile Include="..\emulation\libc64\expansionPort\retroReplay\retroReplay.cpp" />
     <ClCompile Include="..\emulation\libc64\expansionPort\reu\reu.cpp" />
     <ClCompile Include="..\emulation\libc64\expansionPort\superCpu\superCpu.cpp" />
+    <ClCompile Include="..\emulation\libc64\expansionPort\trilogicExpert\expert.cpp" />
     <ClCompile Include="..\emulation\libc64\input\controlPort\cga.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|win32'">true</ExcludedFromBuild>

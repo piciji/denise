@@ -56,7 +56,7 @@ struct Cart : ExpansionPort {
     virtual auto serialize(Emulator::Serializer& s) -> void;
     virtual auto serializeStep2(Emulator::Serializer& s) -> void;	
         
-    auto rebuild(Interface::CartridgeId cartridgeId, uint8_t* _rom, unsigned _romSize) -> Cart*;
+    auto build(Interface::CartridgeId cartridgeId, uint8_t* _rom, unsigned _romSize) -> Cart*;
     virtual auto create( Interface::CartridgeId cartridgeId, unsigned _size ) -> Cart* { return nullptr; }
     virtual auto assign(Cart* cart) -> void {}
 	virtual auto write() -> void {}

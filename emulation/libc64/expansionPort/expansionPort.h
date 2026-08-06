@@ -121,6 +121,8 @@ struct ExpansionPort {
     }
     
     virtual auto setJumper( unsigned jumperId, bool state ) -> void {}
+
+    virtual auto getJumper( unsigned jumperId ) -> bool { return false; }
     
     virtual inline auto clock() -> void {}
     

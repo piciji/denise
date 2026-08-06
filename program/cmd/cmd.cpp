@@ -676,21 +676,24 @@ auto Cmd::setReuSize(std::string arg) -> void {
 
     auto emulator = program->getEmulator("C64");
     auto settings = Program::getSettings( emulator );
-    auto& expansion = emulator->expansions[ LIBC64::Interface::ExpansionIdReu ];
-    std::vector<int> ids = {128, 256, 512, 1024, 2048, 4096, 8192, 16384};
+    auto expansion = emulator->getExpansionById( LIBC64::Interface::ExpansionIdReu );
 
-    int pos = GUIKIT::Vector::findPos<int>(ids, reuSize);
+    if (expansion) {
+        std::vector<int> ids = {128, 256, 512, 1024, 2048, 4096, 8192, 16384};
 
-    updateModel(emulator, LIBC64::Interface::ModelIdReuRam, pos);
-    settings->set<unsigned>( "expansion", expansion.id);
+        int pos = GUIKIT::Vector::findPos<int>(ids, reuSize);
+
+        updateModel(emulator, LIBC64::Interface::ModelIdReuRam, pos);
+        settings->set<unsigned>( "expansion", expansion->id);
+    }
 }
 
 auto Cmd::setGeoRamSize(std::string arg) -> void {
-    
+
     if (!GUIKIT::String::isNumber( arg ))
         return;
-        
-    unsigned geoRamSize = 0;    
+
+    unsigned geoRamSize = 0;
     try {
         geoRamSize = std::stoi(arg);
     } catch(...) {
@@ -699,13 +702,16 @@ auto Cmd::setGeoRamSize(std::string arg) -> void {
 
     auto emulator = program->getEmulator("C64");
     auto settings = Program::getSettings( emulator );
-    auto& expansion = emulator->expansions[ LIBC64::Interface::ExpansionIdGeoRam ];
-    std::vector<int> ids = {64, 128, 256, 512, 1024, 2048, 4096};
+    auto expansion = emulator->getExpansionById( LIBC64::Interface::ExpansionIdGeoRam );
 
-    int pos = GUIKIT::Vector::findPos<int>(ids, geoRamSize);
+    if (expansion) {
+        std::vector<int> ids = {64, 128, 256, 512, 1024, 2048, 4096};
 
-    updateModel(emulator, LIBC64::Interface::ModelIdGeoRam, pos);
-    settings->set<unsigned>( "expansion", expansion.id);
+        int pos = GUIKIT::Vector::findPos<int>(ids, geoRamSize);
+
+        updateModel(emulator, LIBC64::Interface::ModelIdGeoRam, pos);
+        settings->set<unsigned>( "expansion", expansion->id);
+    }
 }
 
 auto Cmd::setCustomConfig(std::string& ident, std::string path) -> void {

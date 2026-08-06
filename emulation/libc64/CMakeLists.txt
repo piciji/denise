@@ -70,6 +70,7 @@ set(headers
         expansionPort/gmod/gmod2.h
         expansionPort/retroReplay/memoryHandler.cpp
         expansionPort/retroReplay/retroReplay.h
+        expansionPort/trilogicExpert/expert.h
         expansionPort/reu/reu.h
         expansionPort/superCpu/superCpu.h
         expansionPort/expansionPort.h
@@ -206,6 +207,7 @@ target_sources(coreC64 PRIVATE
         expansionPort/easyFlash/easyFlash.cpp
         expansionPort/easyFlash/easyFlash3.cpp
         expansionPort/retroReplay/retroReplay.cpp
+        expansionPort/trilogicExpert/expert.cpp
         expansionPort/gmod/gmod2.cpp
         expansionPort/fastloader/fastloader.cpp
         expansionPort/finalChessCard/chessCard.cpp

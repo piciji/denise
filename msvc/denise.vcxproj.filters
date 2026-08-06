@@ -347,6 +347,9 @@
     <Filter Include="program\monitor">
       <UniqueIdentifier>{a2d9dd64-7181-46d0-87e6-7141bf21de97}</UniqueIdentifier>
     </Filter>
+    <Filter Include="emulation\libc64\expansionPort\trilogicExpert">
+      <UniqueIdentifier>{24164dbf-2131-4698-9b95-2b489bb295e5}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\emulation\interface.h">
@@ -1416,6 +1419,9 @@
     </ClInclude>
     <ClInclude Include="..\program\monitor\binaryMonitor.h">
       <Filter>program\monitor</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libc64\expansionPort\trilogicExpert\expert.h">
+      <Filter>emulation\libc64\expansionPort\trilogicExpert</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -2768,6 +2774,9 @@
     </ClCompile>
     <ClCompile Include="..\program\monitor\binaryMonitor.cpp">
       <Filter>program\monitor</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\expansionPort\trilogicExpert\expert.cpp">
+      <Filter>emulation\libc64\expansionPort\trilogicExpert</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

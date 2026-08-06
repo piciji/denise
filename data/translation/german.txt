@@ -986,3 +986,6 @@ Disable Sprite Character Collisions = Sprite-Character Kollisionen deaktivieren
 no shader when warp = kein Shader bei Warp
 until = bis
 address range tooltip = eine End-Adresse (optional) hält die Ausführung wiederholt innerhalb eines Adressraumes an. Dies ist sinnvoll in Verbindung mit einer Bedingung.
+trilogic expert_insert = Trilogic Expert einstecken
+trilogic expert_image = Trilogic Expert Abbild
+select_trilogic expert_image = Trilogic Expert Abbild auswählen ...

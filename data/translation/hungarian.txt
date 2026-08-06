@@ -986,3 +986,6 @@ Disable Sprite Character Collisions = Disable Sprite-Character collisions
 no shader when warp = no shader when warp
 until = until
 address range tooltip = an end address (optional) repeatedly halts execution within an address space. This is useful in conjunction with a condition.
+trilogic expert_insert = Insert Trilogic Expert
+trilogic expert_image = Trilogic Expert image
+select_trilogic expert_image = select Trilogic Expert image ...
