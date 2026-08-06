@@ -221,14 +221,14 @@ auto Interface::prepareExpansions() -> void {
     expansions.push_back( { ExpansionIdGeoRam, "GeoRam", Expansion::Type::Ram | Expansion::Type::Battery, &mediaGroups[MediaGroupIdExpansionGeoRam], nullptr } );
     expansions.push_back( { ExpansionIdReu, "REU", Expansion::Type::Ram, &mediaGroups[MediaGroupIdExpansionReu], nullptr } );
 	expansions.push_back( { ExpansionIdReuRetroReplay, "REU + Retro Replay", Expansion::Type::Ram | Expansion::Type::Freezer | Expansion::Type::Flash, &mediaGroups[MediaGroupIdExpansionReu], &mediaGroups[MediaGroupIdExpansionRetroReplay] } );
-	expansions.push_back( { ExpansionIdRS232, "RS-232", Expansion::Type::RS232, &mediaGroups[MediaGroupIdExpansionRS232], nullptr } );
+    expansions.push_back( { ExpansionIdExpert, "Trilogic Expert", Expansion::Type::Ram | Expansion::Type::Freezer, &mediaGroups[MediaGroupIdExpansionExpert], nullptr } );
     expansions.push_back( { ExpansionIdFastloader, "Fast Loader", Expansion::Type::Fastloader, &mediaGroups[MediaGroupIdExpansionFastloader], nullptr } );
     expansions.push_back( { ExpansionIdFinalChessCard, "Final Chesscard", Expansion::Type::Battery, &mediaGroups[MediaGroupIdExpansionFinalChessCard], nullptr } );
     expansions.push_back( { ExpansionIdSuperCpu, "SuperCPU", Expansion::Type::TurboCart | Expansion::Type::Ram, &mediaGroups[MediaGroupIdExpansionSuperCpu], nullptr } );
     expansions.push_back( { ExpansionIdSuperCpuReu, "SuperCPU + REU", Expansion::Type::TurboCart | Expansion::Type::Ram, &mediaGroups[MediaGroupIdExpansionSuperCpu], &mediaGroups[MediaGroupIdExpansionReu] });
-    expansions.push_back( { ExpansionIdExpert, "Trilogic Expert", Expansion::Type::Ram | Expansion::Type::Freezer, &mediaGroups[MediaGroupIdExpansionExpert], nullptr } );
+    expansions.push_back( { ExpansionIdRS232, "RS-232", Expansion::Type::RS232, &mediaGroups[MediaGroupIdExpansionRS232], nullptr } );
     
-    {   auto& expansion = expansions[ExpansionIdGame];        
+    {   auto& expansion = *getExpansionById( ExpansionIdGame );
         expansion.pcbs.push_back( {CartridgeIdDefault, "Default"} );
         expansion.pcbs.push_back( {CartridgeIdDefault8k, "Default 8k"} );
         expansion.pcbs.push_back( {CartridgeIdDefault16k, "Default 16k"} );
@@ -264,12 +264,12 @@ auto Interface::prepareExpansions() -> void {
         mediaGroups[MediaGroupIdExpansionGame].expansion = &expansion;
     }
                 
-    {   auto& expansion = expansions[ExpansionIdReu];        
+    {   auto& expansion = *getExpansionById( ExpansionIdReu );
     
         mediaGroups[MediaGroupIdExpansionReu].expansion = &expansion;
     }
     
-    {   auto& expansion = expansions[ExpansionIdFreezer];
+    {   auto& expansion = *getExpansionById( ExpansionIdFreezer );
         expansion.pcbs.push_back( {CartridgeIdDefault, "Default"} );
         expansion.pcbs.push_back( {CartridgeIdActionReplayMK2, "Action Replay MK2"} );
         expansion.pcbs.push_back( {CartridgeIdActionReplayMK3, "Action Replay MK3"} );
@@ -286,7 +286,7 @@ auto Interface::prepareExpansions() -> void {
         mediaGroups[MediaGroupIdExpansionFreezer].expansion = &expansion;
     }
     
-    {   auto& expansion = expansions[ExpansionIdEasyFlash];
+    {   auto& expansion = *getExpansionById( ExpansionIdEasyFlash );
 
         expansion.jumpers.push_back( {0, "Flash", false} );
 		expansion.creationIdents.push_back( "EasyFlash" );
@@ -294,7 +294,7 @@ auto Interface::prepareExpansions() -> void {
         mediaGroups[MediaGroupIdExpansionEasyFlash].expansion = &expansion;
     }
 
-    {   auto& expansion = expansions[ExpansionIdEasyFlash3];
+    {   auto& expansion = *getExpansionById( ExpansionIdEasyFlash3 );
 
         expansion.pcbs.push_back( {0, "Slots 0 - 7"} );
         expansion.pcbs.push_back( {1, "Slot 0"} );
@@ -302,7 +302,7 @@ auto Interface::prepareExpansions() -> void {
         mediaGroups[MediaGroupIdExpansionEasyFlash3].expansion = &expansion;
     }
     
-    {   auto& expansion = expansions[ExpansionIdRetroReplay];
+    {   auto& expansion = *getExpansionById( ExpansionIdRetroReplay );
         expansion.pcbs.push_back( {CartridgeIdDefault, "Default"} );
         expansion.pcbs.push_back( {CartridgeIdRetroReplay, "Retro Replay"} );
         expansion.pcbs.push_back( {CartridgeIdNordicReplay, "Nordic Replay"} );
@@ -315,14 +315,14 @@ auto Interface::prepareExpansions() -> void {
         mediaGroups[MediaGroupIdExpansionRetroReplay].expansion = &expansion;
     }
 
-	{   auto& expansion = expansions[ExpansionIdGeoRam];        
+	{   auto& expansion = *getExpansionById( ExpansionIdGeoRam );
     
 		expansion.creationIdents.push_back( "GeoRam" );
 		
         mediaGroups[MediaGroupIdExpansionGeoRam].expansion = &expansion;
     }
 
-    {   auto& expansion = expansions[ExpansionIdRS232];
+    {   auto& expansion = *getExpansionById( ExpansionIdRS232 );
         expansion.pcbs.push_back( {CartridgeIdDefault, "Default"} );
         expansion.pcbs.push_back( {CartridgeIdSwiftlink, "Swiftlink"} );
         expansion.pcbs.push_back( {CartridgeIdTurbo232, "Turbo232"} );
@@ -335,7 +335,7 @@ auto Interface::prepareExpansions() -> void {
         mediaGroups[MediaGroupIdExpansionRS232].expansion = &expansion;
     }
 
-    {   auto& expansion = expansions[ExpansionIdFastloader];
+    {   auto& expansion = *getExpansionById( ExpansionIdFastloader );
         expansion.jumpers.push_back( {0, "Kernal Replacement", true} );
         expansion.pcbs.push_back( {CartridgeIdProfDos, "ProfDOS"} );
         expansion.pcbs.push_back( {CartridgeIdPrologicDos, "PrologicDOS"} );
@@ -344,7 +344,7 @@ auto Interface::prepareExpansions() -> void {
         mediaGroups[MediaGroupIdExpansionFastloader].expansion = &expansion;
     }
 
-    {   auto& expansion = expansions[ExpansionIdFinalChessCard];
+    {   auto& expansion = *getExpansionById( ExpansionIdFinalChessCard );
         expansion.jumpers.push_back({0, "+10 MHz"} );
         expansion.jumpers.push_back({1, "+20 MHz"} );
         expansion.jumpers.push_back({2, "+30 MHz"} );
@@ -354,7 +354,7 @@ auto Interface::prepareExpansions() -> void {
         mediaGroups[MediaGroupIdExpansionFinalChessCard].expansion = &expansion;
     }
 
-    {   auto& expansion = expansions[ExpansionIdSuperCpu];
+    {   auto& expansion = *getExpansionById( ExpansionIdSuperCpu );
         expansion.jumpers.push_back({0, "Turbo", true} );
         expansion.jumpers.push_back({1, "JiffyDOS"} );
         expansion.jumpers.push_back({2, "DRAM Boost"} );
@@ -362,13 +362,13 @@ auto Interface::prepareExpansions() -> void {
         mediaGroups[MediaGroupIdExpansionSuperCpu].expansion = &expansion;
     }
 
-    {   auto& expansion = expansions[ExpansionIdSuperCpuReu];
+    {   auto& expansion = *getExpansionById( ExpansionIdSuperCpuReu );
         expansion.jumpers.push_back({ 0, "Turbo", true });
         expansion.jumpers.push_back({ 1, "JiffyDOS" });
         expansion.jumpers.push_back({ 2, "DRAM Boost" });
     }
 
-    {   auto& expansion = expansions[ExpansionIdExpert];
+    {   auto& expansion = *getExpansionById( ExpansionIdExpert );
         expansion.jumpers.push_back( {0, "ON", false} );
         expansion.jumpers.push_back( {1, "PRG", false} );
         mediaGroups[MediaGroupIdExpansionExpert].expansion = &expansion;

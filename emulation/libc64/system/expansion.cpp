@@ -165,12 +165,12 @@ auto System::destroyExpansions() -> void {
 auto System::analyzeExpansion(uint8_t* data, unsigned size, std::string suffix) -> Emulator::Interface::Expansion* {
     
     if (suffix == "reu")
-        return &interface->expansions[Interface::ExpansionIdReu];
+        return interface->getExpansionById( Interface::ExpansionIdReu );
     
     auto cart = new Cart(this);
     cart->rom = data;
     cart->romSize = size;
-    Emulator::Interface::Expansion* useExpansion = &interface->expansions[Interface::ExpansionIdGame];
+    Emulator::Interface::Expansion* useExpansion = interface->getExpansionById( Interface::ExpansionIdGame );
     
     if (!cart->readHeader())
         goto end;
@@ -187,19 +187,19 @@ auto System::analyzeExpansion(uint8_t* data, unsigned size, std::string suffix) 
         case Interface::CartridgeIdDiashowMaker:
         case Interface::CartridgeIdSuperSnapshotV5:
         case Interface::CartridgeIdKcsPower:
-            useExpansion = &interface->expansions[Interface::ExpansionIdFreezer];
+            useExpansion = interface->getExpansionById( Interface::ExpansionIdFreezer );
             break; 
         case Interface::CartridgeIdEasyFlash:
-            useExpansion = &interface->expansions[Interface::ExpansionIdEasyFlash];
+            useExpansion = interface->getExpansionById( Interface::ExpansionIdEasyFlash );
             break;
         case Interface::CartridgeIdRetroReplay:
-            useExpansion = &interface->expansions[Interface::ExpansionIdRetroReplay];
+            useExpansion = interface->getExpansionById( Interface::ExpansionIdRetroReplay );
             break;
         case Interface::CartridgeIdStarDos:
-            useExpansion = &interface->expansions[Interface::ExpansionIdFastloader];
+            useExpansion = interface->getExpansionById( Interface::ExpansionIdFastloader );
             break;
         case Interface::CartridgeIdExpert:
-            useExpansion = &interface->expansions[Interface::ExpansionIdExpert];
+            useExpansion = interface->getExpansionById( Interface::ExpansionIdExpert );
             break;
         default:
             break;
