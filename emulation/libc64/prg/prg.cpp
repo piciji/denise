@@ -149,21 +149,22 @@ auto Prg::updateLinkedList( uint16_t addr, uint16_t endAddr, bool dryRun ) -> bo
 
         ++addr;
 
-        willChange = true;
-
         if (addr >= endAddr) {
             if (dryRun) {
                 //fprintf( stdout, "last line\n" );
             } else {
-                ram[lineStart]     = 0;
-                ram[lineStart + 1] = 0;
+             //   ram[lineStart]     = 0;
+             //   ram[lineStart + 1] = 0;
             }
             break;
         }
 
         if (dryRun) {
-            //if (ram[lineStart + 1] != ((addr >> 8) & 0xff))
-              //  fprintf( stdout, "HI byte mismatch %x %x\n", ram[lineStart + 1], addr >> 8);
+            if (ram[lineStart + 1] != ((addr >> 8) & 0xff)) {
+                // fix relocation
+                willChange = true;
+                //  fprintf( stdout, "HI byte mismatch %x %x\n", ram[lineStart + 1], addr >> 8);
+            }
 
             if (ram[lineStart] != (addr & 0xff)) {
                 //fprintf( stdout, "LO byte mismatch %x %x\n", ram[lineStart], addr & 0xff);
