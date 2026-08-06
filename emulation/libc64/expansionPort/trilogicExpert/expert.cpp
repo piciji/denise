@@ -3,6 +3,24 @@
 
 namespace LIBC64 {
 
+auto Expert::assign( Cart* cart ) -> void {
+    // don't rebuild
+}
+
+auto Expert::create( Interface::CartridgeId cartridgeId, unsigned _size ) -> Cart* {
+    // don't rebuild
+    return this;
+}
+
+auto Expert::setRom(Emulator::Interface::Media* media, uint8_t* rom, unsigned romSize) -> void {
+    if ( (this->rom == nullptr) && (rom == nullptr) )
+        return;
+
+    build( Interface::CartridgeIdExpert, rom, romSize );
+
+    this->media = media;
+}
+
 auto Expert::readChips() -> bool {
     bool found = Cart::readChips();
 
@@ -54,8 +72,6 @@ auto Expert::setSwitchMode(SwitchMode mode) -> void {
             ioRegisterEnabled = false;
             break;
     }
-
-    refreshMemoryMap();
 }
 
 auto Expert::setJumper(unsigned jumperId, bool state) -> void {
@@ -110,10 +126,29 @@ auto Expert::reset(bool softReset) -> void {
     /* Deliberately do not copy the CRT initializer on reset. */
 }
 
+auto Expert::clock() -> void {
+    /* didFreeze() may enable the RAM for the current NMI-vector access. */
+    FreezeButton::clock();
+
+    bool requestedGame = true;
+
+    if (imageValid && ramEnabled) {
+        uint16_t addr = system->cpu.addressBus();
+        bool romLSelected = addr >= 0x8000 && addr <= 0x9fff;
+        bool romHSelected = switchMode == SwitchMode::On && addr >= 0xe000;
+
+        requestedGame = !(romLSelected || romHSelected);
+    }
+
+    if (game != requestedGame) {
+        game = requestedGame;
+        system->changeExpansionPortMemoryMode(exRom, game, true);
+    }
+}
+
 auto Expert::didFreeze() -> void {
     if (imageValid && switchMode == SwitchMode::On) {
         enableOnMode();
-        refreshMemoryMap();
     }
 
     /* Release the cartridge-generated NMI so another freeze can occur. */
@@ -123,22 +158,8 @@ auto Expert::didFreeze() -> void {
 auto Expert::observeNmi(bool state) -> void {
     if (state && !nmiObserved && imageValid && switchMode == SwitchMode::On) {
         enableOnMode();
-        refreshMemoryMap();
     }
     nmiObserved = state;
-}
-
-auto Expert::memoryMapUpdated() -> void {
-    if (imageValid && (switchMode == SwitchMode::Prg
-        || (switchMode == SwitchMode::On && ramEnabled))) {
-        system->memoryCpu.map(&system->readRomL, &system->peekRomL,
-            &system->writeRomL, 0x80, 0x9f);
-        }
-
-    if (imageValid && switchMode == SwitchMode::On && ramEnabled) {
-        system->memoryCpu.map(&system->readRomH, &system->peekRomH,
-            &system->writeUltimaxRomH, 0xe0, 0xff);
-    }
 }
 
 auto Expert::serialize(Emulator::Serializer& s) -> void {
@@ -157,7 +178,6 @@ auto Expert::serialize(Emulator::Serializer& s) -> void {
     if (s.mode() == Emulator::Serializer::Mode::Load) {
         exRom = true;
         game = true;
-        refreshMemoryMap();
     }
 }
 
@@ -182,12 +202,6 @@ auto Expert::io1Access() -> void {
      * unlike VICE's compatibility model, it cannot toggle back on.
      */
     disableRam();
-    refreshMemoryMap();
-}
-
-auto Expert::refreshMemoryMap() -> void {
-    if (system && system->expansionPort == this)
-        system->remapCpu();
 }
 
 }

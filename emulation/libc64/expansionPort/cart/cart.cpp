@@ -35,7 +35,7 @@ auto Cart::setRom(Emulator::Interface::Media* media, uint8_t* rom, unsigned romS
 	
     auto _cartridgeId = (media && media->pcbLayout) ? media->pcbLayout->id : 0;
     
-    auto newCart = rebuild( (Interface::CartridgeId)_cartridgeId, rom, romSize );
+    auto newCart = build( (Interface::CartridgeId)_cartridgeId, rom, romSize );
 	
 	newCart->media = media;
 	newCart->prepare();
@@ -43,7 +43,7 @@ auto Cart::setRom(Emulator::Interface::Media* media, uint8_t* rom, unsigned romS
     assign( newCart );
 }
     
-auto Cart::rebuild( Interface::CartridgeId cartridgeId, uint8_t* _rom, unsigned _romSize ) -> Cart* {
+auto Cart::build( Interface::CartridgeId cartridgeId, uint8_t* _rom, unsigned _romSize ) -> Cart* {
     
     if (!_rom || (_romSize == 0) )
         cartridgeId = Interface::CartridgeIdNoRom;
@@ -62,7 +62,7 @@ auto Cart::rebuild( Interface::CartridgeId cartridgeId, uint8_t* _rom, unsigned 
 			if (!cart->protectFromDeletion())
 				delete cart;                        
             // lets recreate by detected type
-            return rebuild( cartridgeId, _rom, _romSize );            
+            return build( cartridgeId, _rom, _romSize );
         }        
     } else
         cart->cartridgeId = cartridgeId;
