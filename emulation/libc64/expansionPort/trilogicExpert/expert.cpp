@@ -19,6 +19,7 @@ auto Expert::setRom(Emulator::Interface::Media* media, uint8_t* rom, unsigned ro
     build( Interface::CartridgeIdExpert, rom, romSize );
 
     this->media = media;
+    prepare();
 }
 
 auto Expert::readChips() -> bool {
