@@ -56,7 +56,7 @@ Debugger::Control::Control(Debugger* debugger) {
     append( line, {0u, 0u}, 10 );
     append( lineEdit, {50u, 0u}, 5 );
     append( toLine, {0u, 0u}, 10 );
-    append( position, {100u, 0u}, 0 );
+    append( position, {getWidth(12, false), 0u}, 0 );
 
     if (auto _control = debugger->buildControl())
         append(*_control, {~0u, 0u}, 10);

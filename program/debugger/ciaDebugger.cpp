@@ -17,7 +17,7 @@ CiaDebugger::CIA::Chip::Port::Port() {
     prVal.setEditable( false );
     ddrVal.setEditable( false );
 
-    append(pr, {50u, 0u}, 5);
+    append(pr, {50u, 0u}, 10);
     append(prVal, {getWidth(2, true), 0u}, 10);
     append(ddr, {40u, 0u}, 5);
     append(ddrVal, {getWidth(2, true), 0u});
@@ -28,7 +28,7 @@ CiaDebugger::CIA::Chip::Port::Port() {
 CiaDebugger::CIA::Chip::PortIO::PortIO(uint8_t chipNr, uint8_t portNr, Debugger* debugger) {
     portLabel.setFont( GUIKIT::Font::system( "bold" ) );
 
-    append( portLabel, {50u, 0u}, 5 );
+    append( portLabel, {50u, 0u}, 10 );
     const Emulator::Interface::DebuggerIdent* idents = debugger->isAmiga() ? &LIBAMI::DebuggerSnapshot::CiaPorts[chipNr][portNr][0]
     : &LIBC64::DebuggerSnapshot::CiaPorts[chipNr][portNr][0];
 
@@ -60,7 +60,7 @@ CiaDebugger::CIA::Chip::Timer::Timer() {
     pbOut.setReadonly();
     toggleOut.setReadonly();
 
-    append(label, {50u, 0u}, 5);
+    append(label, {50u, 0u}, 10);
     append(val, {getWidth(4, true), 0u}, 10);
     append(latch, {0u, 0u}, 5);
     append(latchVal, {getWidth(4, true), 0u}, 10);
@@ -85,7 +85,7 @@ CiaDebugger::CIA::Chip::Intr::Intr(bool isMask) {
     ta.setReadonly();
     tb.setReadonly();
 
-    append(label, {50u, 0u}, 5);
+    append(label, {50u, 0u}, 10);
     append(val, {getWidth(2, true), 0u}, 10);
     append(ir, {0u, 0u}, 5);
     append(flag, {0u, 0u}, 5);
@@ -108,7 +108,7 @@ CiaDebugger::CIA::Chip::Tod24bit::Tod24bit(Debugger* debugger) {
     counter.setEditable( false );
     counterAlarm.setEditable( false );
 
-    append(label, {50u, 0u}, 5);
+    append(label, {50u, 0u}, 10);
     append(counter, {getWidth( debugger->isC64() ? 8 : 6, true), 0u}, 10);
     append(labelAlarm, {0u, 0u}, 5);
     append(counterAlarm, {getWidth(debugger->isC64() ? 8 : 6, true), 0u});
@@ -126,7 +126,7 @@ CiaDebugger::CIA::Chip::Shifter::Shifter() {
     sdr.setEditable( false );
     shiftCount.setEditable( false );
 
-    append(label, {50u, 0u}, 5);
+    append(label, {50u, 0u}, 10);
     append(sdr, {getWidth(2, true), 0u}, 10);
     append(labelShiftCount, {0u, 0u}, 5);
     append(shiftCount, {getWidth(2, true), 0u}, 10);
@@ -299,6 +299,19 @@ auto CiaDebugger::translateTheme() -> void {
         c.shifter.label.setText( "SDR:" );
         c.shifter.labelShiftCount.setText("Shifter" );
         c.shifter.output.setText("Output" );
+
+        std::vector<GUIKIT::Layout*> entries;
+        entries.push_back( &c.port[0] );
+        entries.push_back( &c.port[1] );
+        entries.push_back( &c.portIO[0] );
+        entries.push_back( &c.portIO[1] );
+        entries.push_back( &c.timer[0] );
+        entries.push_back( &c.timer[1] );
+        entries.push_back( &c.icr );
+        entries.push_back( &c.icrMask );
+        entries.push_back( &c.tod24bit );
+        entries.push_back( &c.shifter );
+        GUIKIT::Layout::alignChildWidth( entries );
     }
 }
 

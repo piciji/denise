@@ -88,7 +88,7 @@ MemDebugger::Memory::Memory(Debugger* debugger)
     bankList.autoSizeColumns();
     pageList.autoSizeColumns();
 
-    append(bankList, {200u, ~0u}, 10);
+    append(bankList, {GUIKIT::Font::scale(200), ~0u}, 10);
     append(pageList, {~0u, ~0u}, 10);
     append(options, {0u, 0u} );
 }

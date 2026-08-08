@@ -11,8 +11,12 @@
 #include "../thread/emuThread.h"
 
 CopperDebugger::Copper::List::Control::Control() {
+    copLc.setAlign( GUIKIT::LineEdit::Align::Right );
+    copLc.setEditable( false );
+    copLc.setFont( GUIKIT::Font::monospace() );
+
     append(labelCopLc, {0u, 0u}, 10);
-    append(copLc, {70u, 0u});
+    append(copLc, {getWidth(6, true), 0u});
 
     append(spacer, {~0u, 0u});
     append(addrEdit, {80u, 0u}, 10);
@@ -20,8 +24,6 @@ CopperDebugger::Copper::List::Control::Control() {
     append(valueEdit, {80u, 0u}, 10);
     append(valueView, {0u, 0u}, 10);
 
-    copLc.setAlign( GUIKIT::LineEdit::Align::Right );
-    copLc.setEditable( false );
     setAlignment( 0.5 );
 }
 
@@ -53,12 +55,14 @@ CopperDebugger::Copper::Watcher::TypeLayout::TypeLayout() {
 }
 
 CopperDebugger::Copper::Watcher::Control::Control() {
-    append(labelCopPc, {0u, 0u}, 10u);
-    append(copPc, {50u, 0u}, 10u);
-    append(cdang, {0u, 0u});
-
     cdang.setReadonly(  );
     copPc.setEditable( false );
+    copPc.setFont( GUIKIT::Font::monospace() );
+
+    append(labelCopPc, {0u, 0u}, 10u);
+    append(copPc, {getWidth( 6, true ), 0u}, 10u);
+    append(cdang, {0u, 0u});
+
     setAlignment( 0.5 );
 }
 
@@ -74,7 +78,7 @@ CopperDebugger::Copper::Watcher::Watcher() {
 CopperDebugger::Copper::Copper() {
     append( lists[0], {~0u, ~0u}, 10 );
     append( lists[1], {~0u, ~0u}, 10 );
-    append( watcher, {210u, ~0u} );
+    append( watcher, {GUIKIT::Font::scale( 210u ), ~0u} );
 }
 
 CopperDebugger::CopperControl::CopperControl() {
@@ -259,7 +263,7 @@ auto CopperDebugger::translateTheme() -> void {
 
     copper->watcher.adder.address.setPlaceholder( trans->getA( "address" ) );
     copper->watcher.adder.endAddress.setPlaceholder( trans->getA( "until" ) );
-    copper->watcher.adder.endAddress.setTooltip( trans->getA( "address range tooltip" ) );
+    copper->watcher.adder.endAddress.setTooltip( showTips ? trans->getA( "address range tooltip" ) : "" );
 
     copper->watcher.typeLayout.breakPoint.setText( trans->getA( "instruction" ) );
     copper->watcher.typeLayout.watchPoint.setText( trans->getA( "register access" ) );

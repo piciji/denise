@@ -346,7 +346,7 @@ auto pStatusBar::update() -> void {
         }
 
         if (trackBar) {
-            MoveWindow(trackBar, pos, 3, part.width - 1, getHeight() - 2, true);
+            MoveWindow(trackBar, pos, 4, part.width - 1, getHeight() - 4, true);
 
             if (!IsWindowVisible(trackBar))
                 ShowWindow(trackBar, SW_SHOWNORMAL);
@@ -421,15 +421,15 @@ auto pStatusBar::drawItem(WPARAM wparam, LPARAM lparam) -> void {
     
     if (part.image) {
 		// use SB_SETICON for updates, but following for initialisation
-        unsigned yPos = rect.bottom - rect.top;
-        
+        unsigned drawHeight = rect.bottom - rect.top;
+
         Image* image = part.image;
         
         HICON hIcon = CreateHIcon( *image );
 
-        yPos = rect.top + (unsigned)((yPos - image->height) / 2);
+        unsigned yPos = rect.top + (unsigned)((drawHeight - image->height) / 2);
         
-        DrawIconEx( hDC, rect.left + (!part.position ? 3 : 0), yPos - ((getVersionNew() > Windows7) ? 1 : 0), hIcon, image->width, image->height, 0, NULL, DI_NORMAL);
+        DrawIconEx( hDC, rect.left + (!part.position ? 3 : 0), yPos - ((drawHeight & 1) ? 1 : 0), hIcon, image->width, image->height, 0, NULL, DI_NORMAL);
         
         if(hIcon)
             DestroyIcon(hIcon);

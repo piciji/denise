@@ -801,7 +801,7 @@ auto CpuDebugger::translateTheme() -> void {
 
     cpu->watcher.adder.address.setPlaceholder( trans->getA( "address" ) );
     cpu->watcher.adder.endAddress.setPlaceholder( trans->getA( "until" ) );
-    cpu->watcher.adder.endAddress.setTooltip( trans->getA( "address range tooltip" ) );
+    cpu->watcher.adder.endAddress.setTooltip( showTips ? trans->getA( "address range tooltip" ) : "" );
     cpu->watcher.breakPoint.setText( trans->getA( "instruction" ) );
     cpu->watcher.memoryAccessLayout.watchPoint.setText( trans->getA( "memory access" ) );
     cpu->watcher.memoryAccessLayout.writeCheck.setText( trans->getA( "write" ) );

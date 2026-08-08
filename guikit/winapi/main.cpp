@@ -876,6 +876,10 @@ auto pWindow::applyMaximizeCorrection(Geometry& geo) -> void {
     }
 }
 
+auto pWindow::getScrollbarWidth() -> unsigned {
+    return pWidget::getScaledDim(25);
+}
+
 //auto pWindow::updateFullScreen( bool inUse, unsigned displayId, unsigned settingId) -> void {
 //    locked = true;
 //    unfullscreenZoomed = IsZoomed(hwnd);

@@ -182,7 +182,7 @@ struct pWindow {
     auto isOffscreen() -> bool;
     auto handle() -> uintptr_t;
     auto setForeground() -> void;
-    auto getScrollbarWidth() -> unsigned { return 25; }
+    auto getScrollbarWidth() -> unsigned;
     auto applyAspectRatio() -> void {}
     auto applyMaximizeCorrection(Geometry& geo) -> void;
     static auto fixMenuBarInDarkMode(HWND& _hwnd) -> bool;
