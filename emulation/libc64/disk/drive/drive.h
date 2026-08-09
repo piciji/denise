@@ -117,6 +117,7 @@ struct Drive {
     uint8_t speeder = 0;
     uint8_t nibble = 0;
     bool profDosAutoSpeed;
+    bool profDosFallback;
     bool prologic40TrackMode;
     uint8_t prologic2Mhz;
     bool extendedMemoryMap;
@@ -225,6 +226,7 @@ struct Drive {
     auto byteFetched( bool overflowNotThisCycle ) -> void;
     auto byteWritten( bool overflowNotThisCycle ) -> void;
 
+    auto setCycleSpeed(bool _2mhz) -> void;
     auto updateCycleSpeed(bool mhz2x, bool init = true) -> void;
     auto setFirmwareByType( ) -> void;
     auto use2Mhz() -> bool { return frequency == 2000000; }
@@ -238,7 +240,6 @@ struct Drive {
     auto turboTransWriteControl(uint16_t addr, uint8_t data) -> bool;
 
     auto profDosClockControl(uint16_t addr) -> void;
-    auto profDosAutoClockControl(uint16_t addr) -> void;
     auto prologicControlClassic(uint8_t addr, uint8_t data) -> void;
     auto prologicControl(uint16_t addr) -> void;
     auto stepSound(bool headBang) -> void;

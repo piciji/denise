@@ -141,7 +141,7 @@ auto Drive::cpuWrite(uint16_t addr, uint8_t data) -> void {
                     return;
                 }
                 if (profDosAutoSpeed)
-                    profDosAutoClockControl(addr);
+                    setCycleSpeed((addr & 0x4000) == 0);
 
             } else if (speeder == 7) {  // profdos R4
                 if ((addr & 0x6800) == 0x6800) {
@@ -149,8 +149,13 @@ auto Drive::cpuWrite(uint16_t addr, uint8_t data) -> void {
                     return;
                 }
                 if (profDosAutoSpeed)
-                    profDosAutoClockControl(addr);
+                    setCycleSpeed((addr & 0x4000) == 0);
 
+            } else if (speeder == 16) {  // disk demon
+                if ((addr & 0x6800) == 0x6800) {
+                    profDosFallback = (addr & 2) == 0;
+                    setCycleSpeed((addr & 0x4) != 0);
+                }
             } else if (speeder == 10) {  // prologic classic
 
                 if ((addr & 0xfff0) == 0xb800) {
@@ -271,7 +276,7 @@ template<bool peek> auto Drive::cpuRead(uint16_t addr) -> uint8_t {
                 }
             } else if (speeder == 6) {
                 if (!peek & profDosAutoSpeed)
-                    profDosAutoClockControl(addr);
+                    setCycleSpeed((addr & 0x4000) == 0);
 
                 if((addr & 0xe000) == 0x8000) {
                     return readProfDosEncoderV1(addr);
@@ -282,7 +287,7 @@ template<bool peek> auto Drive::cpuRead(uint16_t addr) -> uint8_t {
 
             } else if (speeder == 7) {
                 if (!peek & profDosAutoSpeed)
-                    profDosAutoClockControl(addr);
+                    setCycleSpeed((addr & 0x4000) == 0);
 
                 if((addr & 0xe000) == 0x6000) {
                     return readProfDosEncoder(addr);
@@ -290,6 +295,13 @@ template<bool peek> auto Drive::cpuRead(uint16_t addr) -> uint8_t {
                 if((addr & 0xe000) == 0xe000) {
                     return this->romExpanded[ (0x2000 | (addr & 0x1fff)) & romExpandedMask ];
                 }
+            } else if (speeder == 16) {
+                if((addr & 0xe000) == 0x6000)
+                    return readProfDosEncoder(addr);
+
+                if((addr & 0xe000) == 0xe000)
+                    return this->romExpanded[ ((profDosFallback ? 0x6000 : 0x2000) | (addr & 0x1fff)) & romExpandedMask ];
+
             } else if (speeder == 10) {
                 if ((addr & 0xfff0) == 0xb800) {
                     addr = (addr >> 2) & 3;
@@ -523,7 +535,8 @@ structure(system, this) {
 	operation = DECODEDDATA_LEVEL;
     expandMemory = 0;
     speeder = 0;
-    profDosAutoSpeed = 0;
+    profDosAutoSpeed = false;
+    profDosFallback = false;
     extendedMemoryMap = false;
 
     wasAttachDetached = false;
@@ -1095,6 +1108,7 @@ auto Drive::power( ) -> void {
 
     proSpeedControl = 0xff;
     profDosAutoSpeed = false;
+    profDosFallback = false;
     prologic40TrackMode = false;
     turboTransVisible = 1;
     turboTransPage = 0;
@@ -1153,6 +1167,16 @@ auto Drive::power( ) -> void {
 
         if (motorOn)
             system->interface->mixDriveSound( media, DriveSound::FloppySpinUp, operation & DRIVE_MODE_158x );
+    }
+}
+
+auto Drive::setCycleSpeed(bool _2mhz) -> void {
+    if (_2mhz) {
+        if (refCyclesInCpuCycle == 16)
+            updateCycleSpeed(true, false);
+    } else {
+        if (refCyclesInCpuCycle == 8)
+            updateCycleSpeed(false, false);
     }
 }
 

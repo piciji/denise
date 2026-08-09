@@ -14,7 +14,7 @@ auto Drive::readProfDosEncoder(uint16_t addr)->uint8_t {
         nibble = addr & 15;
     }
 
-    return this->romExpanded[ (addr & 0x1fff) & romExpandedMask];
+    return this->romExpanded[ ((profDosFallback ? 0x4000 : 0) | (addr & 0x1fff)) & romExpandedMask];
 }
 
 auto Drive::readProfDosEncoderV1(uint16_t addr)->uint8_t {
@@ -35,35 +35,14 @@ auto Drive::profDosClockControl(uint16_t addr)->void {
 
     profDosAutoSpeed = false;
     if (addr & 2) {
-        if (refCyclesInCpuCycle == 8) {
-            updateCycleSpeed(false, false);
-        //    system->interface->log("force 1 mhz", 1);
-        }
+        setCycleSpeed(false);
+
     } else if (addr & 4) {
-        if (refCyclesInCpuCycle == 16) {
-            updateCycleSpeed(true, false);
-          //  system->interface->log("force 2 mhz", 1);
-        }
+        setCycleSpeed(true);
+
     } else {
         profDosAutoSpeed = true;
-        profDosAutoClockControl(addr);
-    }
-}
-
-auto Drive::profDosAutoClockControl(uint16_t addr)->void {
-
-    bool mhz2 = (addr & 0x4000) == 0;
-
-    if (mhz2) {
-        if (refCyclesInCpuCycle == 16) {
-            updateCycleSpeed(true, false);
-        //    system->interface->log("auto 2", 1);
-        }
-    } else {
-        if (refCyclesInCpuCycle == 8) {
-            updateCycleSpeed(false, false);
-          //  system->interface->log("auto 1", 1);
-        }
+        setCycleSpeed((addr & 0x4000) == 0);
     }
 }
 

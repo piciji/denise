@@ -27,7 +27,7 @@
 
 namespace LIBC64 {
 
-const std::string Interface::Version = "231";
+const std::string Interface::Version = "232";
     
 Interface::Interface() : Emulator::Interface( "C64" ) {
     
@@ -642,9 +642,9 @@ auto Interface::prepareModels() -> void {
 
     models.push_back({ModelIdCiaBurstMode, "CIA Burst Modification", Model::Type::Switch, Model::Purpose::DriveSettings, 0});
 
-    models.push_back({ModelIdDriveFastLoader, "Fast Loader", Model::Type::Combo, Model::Purpose::DriveSettings, 0, {0, 15},
+    models.push_back({ModelIdDriveFastLoader, "Fast Loader", Model::Type::Combo, Model::Purpose::DriveSettings, 0, {0, 16},
         { "Manual", "SpeedDOS 1541", "DolphinDOS v2 1541", "DolphinDOS v2 Ultimate", "DolphinDOS v3 1541", "DolphinDOS v3 157x",
-          "ProfDOS v1 1541", "ProfDOS R3/R4 1541", "ProfDOS R5 1570", "ProfDOS R6 1571", "PrologicDOS Classic 1541", "PrologicDOS 1541", "Turbo Trans", "ProSpeed 1571 v2.0", "StarDOS", "SuperCard+"}});
+          "ProfDOS v1 1541", "ProfDOS R3/R4 1541", "ProfDOS R5 1570", "ProfDOS R6 1571", "PrologicDOS Classic 1541", "PrologicDOS 1541", "Turbo Trans", "ProSpeed 1571 v2.0", "StarDOS", "SuperCard+", "Disk Demon 1541"}});
 
     models.push_back({ModelIdTrackZeroSensor, "1541C Track-0 Sensor", Model::Type::Switch, Model::Purpose::DriveSettings, 0 });
     models.push_back({ModelIdTapeDrivesConnected, "Tape Drives", Model::Type::Combo, Model::Purpose::DriveSettings, 0, {0, 1},

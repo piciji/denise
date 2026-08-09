@@ -78,6 +78,7 @@ auto Drive::serialize(Emulator::Serializer& s) -> void {
     s.integer( syncPos );
     s.integer( nibble );
     s.integer( profDosAutoSpeed );
+    s.integer( profDosFallback );
     s.integer( prologic40TrackMode );
     s.integer( prologic2Mhz );
     s.integer( extendedMemoryMap );

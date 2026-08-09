@@ -892,6 +892,9 @@ auto ModelLayout::hintDriveSettings() -> void {
         blockParallel->checkBox->toggle();
         blockRam60->checkBox->toggle();
         blockDriveModel->combo->setSelection(1);
+    } else if (selection == 16) { // Disk Demon 1541
+        blockRam40->checkBox->toggle();
+        blockDriveModel->combo->setSelection(0);
     }
 
     blockDriveModel->combo->onChange();

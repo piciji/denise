@@ -14,15 +14,7 @@ auto Drive::prologicControlClassic(uint8_t addr, uint8_t data) -> void {
 
         bool mhz2 = (data & 1) == 0;
 
-        if (mhz2) {
-            if (refCyclesInCpuCycle == 16) {
-                updateCycleSpeed(true, false);
-            }
-        } else {
-            if (refCyclesInCpuCycle == 8) {
-                updateCycleSpeed(false, false);
-            }
-        }
+        setCycleSpeed(mhz2);
     }
 }
 
@@ -34,17 +26,7 @@ auto Drive::prologicControl(uint16_t addr) -> void {
     } else  if ((addr & 0xf000) == 0xa000) {
         prologic2Mhz = (addr & 0x20) ? 1 : 0;
 
-        if (prologic2Mhz) {
-            if (refCyclesInCpuCycle == 16) {
-               // system->interface->log("2 mhz");
-                updateCycleSpeed(true, false);
-            }
-        } else {
-            if (refCyclesInCpuCycle == 8) {
-               // system->interface->log("1 mhz");
-                updateCycleSpeed(false, false);
-            }
-        }
+        setCycleSpeed(prologic2Mhz);
     }
 }
 
