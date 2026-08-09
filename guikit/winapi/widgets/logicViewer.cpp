@@ -1,6 +1,6 @@
 
 #define SCROLLBAR_HEIGHT 20
-#define DMA_SLOT_WIDTH 70
+#define DMA_SLOT_WIDTH (pFont::scale(70))
 
 #define HI_LOGIC_WRITE  RGB(0xff, 0x6f, 0x61)
 #define HI_LOGIC_MNEMONIC RGB(0x87, 0xce, 0xfa)
@@ -366,14 +366,14 @@ auto pLogicViewer::buildDmaSlot(Gdiplus::Graphics& g, LogicState& logicState, RE
     LineTo(drawDC, rc.right, rc.bottom);
     int addrLength = logicViewer.addrAs24bit() ? 6 : 4;
 
-    rc.top += 5;
-    rc.bottom = rc.top + 20;
+    rc.top += pFont::scale( 5 );
+    rc.bottom = rc.top + pFont::scale( 20 );
 
     setTextColor(logicState);
 
     DrawText(drawDC, utf16_t(std::to_string( logicState.position )), -1, &rc, DT_CENTER);
     rc.top = rc.bottom;
-    rc.bottom = rc.top + 5;
+    rc.bottom = rc.top + pFont::scale( 5 );
 
     if (logicState.display != LogicState::Display::EmptyBlock) {
         FillRect(drawDC, &rc, getBrush(logicState.color));
@@ -440,17 +440,30 @@ auto pLogicViewer::buildDmaSlot(Gdiplus::Graphics& g, LogicState& logicState, RE
 }
 
 inline auto pLogicViewer::setBox(RECT& rc, int offset) -> void {
-    unsigned y;
+    static Position dpi = pFont::dpi();
+
+    int y;
     auto o = logicViewer.state.offsets;
     y = o[offset];
 
-    if (offset == 0 || offset == 3)
-        y += 4;
+    // hack
+    if (offset == 0 || offset == 3 || offset == 4)
+        y += 1;
+    else if (offset >= 7)
+        y -= 2;
 
-    y = y > 22 ? y - 22 : y;
+    if (dpi.y >= 144) // 150 %
+        y += 5;
+    else if (dpi.y >= 120) // 125 %
+        y += 2;
+
+    y -= pFont::scale( 20 );
+
+    if (y < 0)
+        y = 0;
 
     rc.top = y;
-    rc.bottom = rc.top + 20;
+    rc.bottom = rc.top + pFont::scale( 20 );
 }
 
 inline auto pLogicViewer::drawLine(RECT& rc) -> void {

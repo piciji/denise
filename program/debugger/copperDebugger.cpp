@@ -19,9 +19,9 @@ CopperDebugger::Copper::List::Control::Control() {
     append(copLc, {getWidth(6, true), 0u});
 
     append(spacer, {~0u, 0u});
-    append(addrEdit, {80u, 0u}, 10);
+    append(addrEdit, {getWidth(6, true), 0u}, 10);
     append(addrView, {0u, 0u}, 10);
-    append(valueEdit, {80u, 0u}, 10);
+    append(valueEdit, {getWidth(6, true), 0u}, 10);
     append(valueView, {0u, 0u}, 10);
 
     setAlignment( 0.5 );
@@ -34,7 +34,6 @@ CopperDebugger::Copper::List::List() {
 
     append( listView, {~0u, ~0u}, 10 );
     append( control, {~0u, 0u} );
-    append( spacer, {~0u, 10u} );
 }
 
 CopperDebugger::Copper::Watcher::Adder::Adder() {

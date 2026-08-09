@@ -120,13 +120,13 @@ CpuDebugger::CPU::State::State::Trace::Trace() {
 
 CpuDebugger::CPU::State::Options::Address::Address(Debugger* debugger) {
     edit.setMaxLength( debugger->isAmiga() ? 6 : 4 );
-    append(edit, {80u, 0u}, 5);
+    append(edit, {getWidth(6, true), 0u}, 5);
     append(view, {0u, 0u});
     setAlignment( 0.5 );
 }
 
 CpuDebugger::CPU::State::Options::Value::Value(Debugger* debugger) {
-    append(edit, {80u, 0u}, 5);
+    append(edit, {getWidth(6, true), 0u}, 5);
     append(view, {0u, 0u});
     setAlignment( 0.5 );
 }
@@ -189,7 +189,7 @@ CpuDebugger::CPU::CPU(Debugger* debugger)
     switchLayout.setLayout( 1, traceLayout, {~0u, ~0u} );
 
     append(switchLayout, {~0u, ~0u}, 20);
-    append(watcher, {200u, ~0u}, 10);
+    append(watcher, {GUIKIT::Font::scale( 200u ), ~0u}, 10);
     append(state, {0u, 0u});
 }
 

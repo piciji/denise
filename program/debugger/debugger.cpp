@@ -138,7 +138,7 @@ auto Debugger::build() -> void {
     layout.setMargin( 10 );
 
     themeLayout = buildTheme();
-    layout.append( *themeLayout, {~0u, ~0u}, 10 );
+    layout.append( *themeLayout, {~0u, ~0u}, 20 );
     layout.append( *control, {~0u, 0u} );
 
     append( layout );

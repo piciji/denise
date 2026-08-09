@@ -34,7 +34,6 @@ struct CopperDebugger : Debugger {
                 Control();
             } control;
 
-            GUIKIT::Widget spacer;
             std::vector<Instructions> instructions;
             std::optional<unsigned> currentInstRow = std::nullopt;
             uint8_t* memory = nullptr;

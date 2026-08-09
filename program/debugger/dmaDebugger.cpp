@@ -30,19 +30,19 @@ DmaDebugger::Dma::Legend::Legend() {
     cpuAddr.setAlign(GUIKIT::Label::Align::Right);
     cpuData.setAlign(GUIKIT::Label::Align::Right);
     
-    append( spacer, {0u, 0u}, 37 );
-    append( dma, {100u, 0u}, 14 );
-    append( dmaAddr, {100u, 0u}, 14 );
-    append( dmaData, {100u, 0u}, 14 );
-    append( mnemonic, {100u, 0u}, 16 );
-    append( cpu, {100u, 0u}, 14 );
-    append( cpuAddr, {100u, 0u}, 14 );
-    append( cpuData, {100u, 0u}, 16 );
+    append( spacer, {0u, 0u}, GUIKIT::Font::scale(37) );
+    append( dma, {100u, 0u}, GUIKIT::Font::scale(14) );
+    append( dmaAddr, {100u, 0u}, GUIKIT::Font::scale(14) );
+    append( dmaData, {100u, 0u}, GUIKIT::Font::scale(14) );
+    append( mnemonic, {100u, 0u}, GUIKIT::Font::scale(16) );
+    append( cpu, {100u, 0u}, GUIKIT::Font::scale(14) );
+    append( cpuAddr, {100u, 0u}, GUIKIT::Font::scale(14) );
+    append( cpuData, {100u, 0u}, GUIKIT::Font::scale(16) );
 
     int i = 0;
     for (auto& watcher : watchers) {
         watcher.position = i++;
-        append( watcher, {0u, 0u}, 13 );
+        append( watcher, {0u, 0u}, GUIKIT::Font::scale(13) );
     }
 }
 
@@ -55,7 +55,7 @@ DmaDebugger::DmaControl::DmaControl(DmaDebugger* debugger) {
 }
 
 DmaDebugger::Dma::DmaLine::DmaLine(DmaDebugger* debugger) {
-    append(viewer, {~0u, 440u});
+    append(viewer, {~0u, ~0u});
     if (debugger->isAmiga())
         viewer.setAddrAs24bit();
 }
@@ -95,7 +95,7 @@ DmaDebugger::Dma::DmaFrame::DmaFrame(DmaDebugger* debugger) {
 DmaDebugger::Dma::Dma(DmaDebugger* debugger)
 : dmaFrame( debugger ), dmaLine( debugger ) {
     append(legend, {100u, 0u}, 10);
-    append(dmaLine, {~0u, 0u}, 10);
+    append(dmaLine, {~0u, ~0u}, 10);
     append(dmaFrame, {0u, 0u});
 }
 
