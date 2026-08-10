@@ -94,14 +94,16 @@ MemDebugger::Memory::Memory(Debugger* debugger)
 }
 
 MemDebugger::Memory::Options::Address::Address(Debugger* debugger) {
+    edit.setFont( GUIKIT::Font::monospace() );
     edit.setMaxLength( debugger->isAmiga() || debugger->getTheme() == DebuggerTheme::MemorySCPU ? 6 : 4 );
-    append(edit, {getWidth(6, true), 0u}, 5);
+    append(edit, {getWidth(7, true), 0u}, 5);
     append(view, {0u, 0u});
     setAlignment( 0.5 );
 }
 
 MemDebugger::Memory::Options::Value::Value(Debugger* debugger) {
-    append(edit, {getWidth(6, true), 0u}, 5);
+    edit.setFont( GUIKIT::Font::monospace() );
+    append(edit, {getWidth(7, true), 0u}, 5);
     append(view, {0u, 0u});
     setAlignment( 0.5 );
 }

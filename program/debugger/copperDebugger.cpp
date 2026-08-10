@@ -14,14 +14,16 @@ CopperDebugger::Copper::List::Control::Control() {
     copLc.setAlign( GUIKIT::LineEdit::Align::Right );
     copLc.setEditable( false );
     copLc.setFont( GUIKIT::Font::monospace() );
+    addrEdit.setFont( GUIKIT::Font::monospace() );
+    valueEdit.setFont( GUIKIT::Font::monospace() );
 
     append(labelCopLc, {0u, 0u}, 10);
     append(copLc, {getWidth(6, true), 0u});
 
     append(spacer, {~0u, 0u});
-    append(addrEdit, {getWidth(6, true), 0u}, 10);
+    append(addrEdit, {getWidth(7, true), 0u}, 10);
     append(addrView, {0u, 0u}, 10);
-    append(valueEdit, {getWidth(6, true), 0u}, 10);
+    append(valueEdit, {getWidth(7, true), 0u}, 10);
     append(valueView, {0u, 0u}, 10);
 
     setAlignment( 0.5 );
