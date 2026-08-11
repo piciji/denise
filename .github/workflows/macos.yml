@@ -30,36 +30,9 @@ jobs:
           python3 -m pip install --upgrade pip
           python3 -m pip install dmgbuild==1.6.7
 
-      - name: Cache sshpass source
-        if: github.ref_type == 'tag'
-        uses: actions/cache@v5
-        with:
-          path: sshpass-1.08.tar.gz
-          key: sshpass-1.08
-
-      - name: Download sshpass
-        if: github.ref_type == 'tag'
-        shell: bash
-        run: |
-          if [ -e sshpass-1.08.tar.gz ]; then
-            echo "sshpass found"
-          else
-            curl -L \
-              "https://onboardcloud.dl.sourceforge.net/project/sshpass/sshpass/1.08/sshpass-1.08.tar.gz" \
-              --output sshpass-1.08.tar.gz
-          fi
-          
-          tar -zxf sshpass-1.08.tar.gz
-
       - name: Build
         shell: bash
-        run: |
-          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
-            cd sshpass-1.08
-            ./configure && make && sudo make install
-            cd ..
-          fi
-          
+        run: |          
           cmake \
             -B builds/release \
             -DCMAKE_OSX_ARCHITECTURES=arm64 \
@@ -89,7 +62,7 @@ jobs:
           echo "ARTIFACT=${gzTarget}.bz2" >> "${GITHUB_ENV}"
 
       - name: Upload GitHub Actions artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: macos-arm-artifact
           path: ${{ env.ARTIFACT }}
@@ -97,7 +70,7 @@ jobs:
 
 
   build-macos-intel:
-    runs-on: macos-12
+    runs-on: macos-15-intel
 
     env:
       MACOSX_DEPLOYMENT_TARGET: "10.13"
@@ -117,36 +90,9 @@ jobs:
           python3 -m pip install --upgrade pip
           python3 -m pip install dmgbuild==1.6.7
 
-      - name: Cache sshpass source
-        if: github.ref_type == 'tag'
-        uses: actions/cache@v5
-        with:
-          path: sshpass-1.08.tar.gz
-          key: sshpass-1.08
-
-      - name: Download sshpass
-        if: github.ref_type == 'tag'
-        shell: bash
-        run: |
-          if [ -e sshpass-1.08.tar.gz ]; then
-            echo "sshpass found"
-          else
-            curl -L \
-              "https://onboardcloud.dl.sourceforge.net/project/sshpass/sshpass/1.08/sshpass-1.08.tar.gz" \
-              --output sshpass-1.08.tar.gz
-          fi
-          
-          tar -zxf sshpass-1.08.tar.gz
-
       - name: Build
         shell: bash
-        run: |
-          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
-            cd sshpass-1.08
-            ./configure && make && sudo make install
-            cd ..
-          fi
-          
+        run: |          
           cmake \
             -B builds/release \
             -DCMAKE_INSTALL_PREFIX=builds/release \
@@ -175,7 +121,7 @@ jobs:
           echo "ARTIFACT=${gzTarget}.bz2" >> "${GITHUB_ENV}"
 
       - name: Upload GitHub Actions artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: macos-intel-artifact
           path: ${{ env.ARTIFACT }}
@@ -193,13 +139,13 @@ jobs:
 
     steps:
       - name: Download macOS arm artifact
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v6
         with:
           name: macos-arm-artifact
           path: release
 
       - name: Download macOS intel artifact
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v6
         with:
           name: macos-intel-artifact
           path: release
@@ -218,3 +164,32 @@ jobs:
               --prerelease \
               release/*
           fi
+
+      - name: Install sshpass
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y sshpass
+
+      - name: Deploy to SourceForge
+        if: github.ref_type == 'tag'
+        shell: bash
+        env:
+          FTP_PSW: ${{ secrets.FTP_PSW }}
+          FTP_FOLDER: ${{ secrets.FTP_FOLDER }}
+        run: |                    
+          printf '%s\n' "${FTP_PSW}" > ftp.txt
+          trap 'rm -f ftp.txt' EXIT
+          
+          for file in release/*; do          
+            sshpass -f "ftp.txt" \
+              scp \
+                -o StrictHostKeyChecking=no \
+                -o UserKnownHostsFile=/dev/null \
+                "${file}" \
+                "piciji@frs.sourceforge.net:${FTP_FOLDER}${GITHUB_REF_NAME}/"
+          done
+
+      - name: Clean up
+        if: always()
+        run: rm -rf release
