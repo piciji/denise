@@ -8,11 +8,8 @@ on:
       - 'test*.*'
   workflow_dispatch:
 
-permissions:
-  contents: write
-
 jobs:
-  build-macos:
+  build-macos-arm:
     runs-on: macos-latest
 
     env:
@@ -91,43 +88,133 @@ jobs:
           
           echo "ARTIFACT=${gzTarget}.bz2" >> "${GITHUB_ENV}"
 
-#      - name: Upload GitHub Actions artifact
-#        uses: actions/upload-artifact@v5
-#        with:
-#          name: ${{ env.ARTIFACT }}
-#          path: ${{ env.ARTIFACT }}
-          
-      - name: Create GitHub nightly release
-        if: github.ref_type != 'tag'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          gh release create "nightly-${GITHUB_SHA::7}" \
-          --title "Nightly build ${GITHUB_SHA::7}" \
-          --prerelease \
-          "${ARTIFACT}"
+      - name: Upload GitHub Actions artifact
+        uses: actions/upload-artifact@v5
+        with:
+          name: macos-arm-artifact
+          path: ${{ env.ARTIFACT }}
+          retention-days: 1
 
-      - name: Upload to GitHub Release
+
+  build-macos-intel:
+    runs-on: macos-12
+
+    env:
+      MACOSX_DEPLOYMENT_TARGET: "10.13"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.10"
+
+      - name: Install build tools
+        shell: bash
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install dmgbuild==1.6.7
+
+      - name: Cache sshpass source
         if: github.ref_type == 'tag'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          gh release upload "${GITHUB_REF_NAME}" \
-            "${ARTIFACT}"
+        uses: actions/cache@v5
+        with:
+          path: sshpass-1.08.tar.gz
+          key: sshpass-1.08
 
-      - name: Deploy to SourceForge
+      - name: Download sshpass
         if: github.ref_type == 'tag'
         shell: bash
         run: |
-          gzTarget="denise_osx_arm64_${GITHUB_REF_NAME}.dmg.bz2"
+          if [ -e sshpass-1.08.tar.gz ]; then
+            echo "sshpass found"
+          else
+            curl -L \
+              "https://onboardcloud.dl.sourceforge.net/project/sshpass/sshpass/1.08/sshpass-1.08.tar.gz" \
+              --output sshpass-1.08.tar.gz
+          fi
           
-          printf '%s\n' "${{ secrets.FTP_PSW }}" > ftp.txt
+          tar -zxf sshpass-1.08.tar.gz
+
+      - name: Build
+        shell: bash
+        run: |
+          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+            cd sshpass-1.08
+            ./configure && make && sudo make install
+            cd ..
+          fi
           
-          trap 'rm -f ftp.txt' EXIT
+          cmake \
+            -B builds/release \
+            -DCMAKE_INSTALL_PREFIX=builds/release \
+            -DENABLE_LTO=ON
           
-          sshpass -f "ftp.txt" \
-            scp \
-              -o StrictHostKeyChecking=no \
-              -o UserKnownHostsFile=/dev/null \
-              "${gzTarget}" \
-              "piciji@frs.sourceforge.net:${{ secrets.FTP_FOLDER }}${GITHUB_REF_NAME}/"
+          cmake --build builds/release
+          cmake --install builds/release
+          
+          dmgbuild \
+            -s data/dmgSettings.py \
+            "Denise" \
+            builds/release/denise.dmg
+
+      - name: Prepare artifact
+        shell: bash
+        run: |
+          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+            gzTarget="denise_osx_intel_${GITHUB_REF_NAME}.dmg"
+          else
+            gzTarget="denise_osx_intel_build_${GITHUB_SHA::7}.dmg"
+          fi
+          
+          mv builds/release/denise.dmg "${gzTarget}"
+          bzip2 -z "${gzTarget}"
+          
+          echo "ARTIFACT=${gzTarget}.bz2" >> "${GITHUB_ENV}"
+
+      - name: Upload GitHub Actions artifact
+        uses: actions/upload-artifact@v5
+        with:
+          name: macos-intel-artifact
+          path: ${{ env.ARTIFACT }}
+          retention-days: 1
+
+  release:
+    needs:
+      - build-macos-arm
+      - build-macos-intel
+
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download macOS arm artifact
+        uses: actions/download-artifact@v5
+        with:
+          name: macos-arm-artifact
+          path: release
+
+      - name: Download macOS intel artifact
+        uses: actions/download-artifact@v5
+        with:
+          name: macos-intel-artifact
+          path: release
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+            gh release create "${GITHUB_REF_NAME}" \
+              --title "${GITHUB_REF_NAME}" \
+              release/*
+          else
+            gh release create "nightly ${GITHUB_SHA::7}" \
+              --title "nightly ${GITHUB_SHA::7}" \
+              --prerelease \
+              release/*
+          fi

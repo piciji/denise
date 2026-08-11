@@ -8,7 +8,7 @@
 
 [Downloads](https://sourceforge.net/projects/deniseemu/files/) - [IssueTracker](https://sourceforge.net/p/deniseemu/tickets) - [Nightlies Windows | macOS](https://ci.appveyor.com/project/piciji/denise/history) - [Nightlies Linux](https://sourceforge.net/projects/deniseemu/files/nightlies/) - [Build info](https://github.com/piciji/denise/blob/master/data/buildinfo)
 
-# changelog
+## changelog
 
 ## 2.8
 * Amiga Debugger/Disassembler for:

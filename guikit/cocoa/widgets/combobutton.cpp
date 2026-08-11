@@ -85,7 +85,7 @@ auto pComboButton::minimumSize() -> Size {
     
 auto pComboButton::setGeometry(Geometry geometry) -> void {
     if(@available(macOS 26.0, *)) {
-        // geometry.y -= 1;  // uncomment when we don't build on Sonoma for newer versions like Tahoe
+        geometry.y -= 1;
     } else
         geometry.y += 1;
     
