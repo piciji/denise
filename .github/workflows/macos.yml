@@ -139,13 +139,13 @@ jobs:
 
     steps:
       - name: Download macOS arm artifact
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7
         with:
           name: macos-arm-artifact
           path: release
 
       - name: Download macOS intel artifact
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7
         with:
           name: macos-intel-artifact
           path: release
@@ -156,10 +156,12 @@ jobs:
         run: |
           if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
             gh release create "${GITHUB_REF_NAME}" \
+              --repo "${GITHUB_REPOSITORY}" \
               --title "${GITHUB_REF_NAME}" \
               release/*
           else
             gh release create "nightly ${GITHUB_SHA::7}" \
+              --repo "${GITHUB_REPOSITORY}" \
               --title "nightly ${GITHUB_SHA::7}" \
               --prerelease \
               release/*
