@@ -19,10 +19,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.10"
 
@@ -33,7 +33,8 @@ jobs:
           python3 -m pip install dmgbuild==1.6.7
 
       - name: Cache sshpass source
-        uses: actions/cache@v4
+        if: github.ref_type == 'tag'
+        uses: actions/cache@v5
         with:
           path: sshpass-1.08.tar.gz
           key: sshpass-1.08
@@ -43,7 +44,7 @@ jobs:
         shell: bash
         run: |
           if [ -e sshpass-1.08.tar.gz ]; then
-            echo "sshpass exists"
+            echo "sshpass found"
           else
             curl -L \
               "https://onboardcloud.dl.sourceforge.net/project/sshpass/sshpass/1.08/sshpass-1.08.tar.gz" \
@@ -57,7 +58,7 @@ jobs:
         run: |
           if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
             cd sshpass-1.08
-            ./configure && make install
+            ./configure && make && sudo make install
             cd ..
           fi
           
@@ -81,7 +82,7 @@ jobs:
           if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
             gzTarget="denise_osx_arm64_${GITHUB_REF_NAME}.dmg"
           else
-            gzTarget="denise_osx_arm64_build_$(echo "${GITHUB_SHA}" | cut -c 1-7).dmg"
+            gzTarget="denise_osx_arm64_build_${GITHUB_SHA::7}.dmg"
           fi
           
           mv builds/release/denise.dmg "${gzTarget}"
@@ -89,11 +90,29 @@ jobs:
           
           echo "ARTIFACT=${gzTarget}.bz2" >> "${GITHUB_ENV}"
 
-      - name: Upload GitHub Actions artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ env.ARTIFACT }}
-          path: ${{ env.ARTIFACT }}
+#      - name: Upload GitHub Actions artifact
+#        uses: actions/upload-artifact@v5
+#        with:
+#          name: ${{ env.ARTIFACT }}
+#          path: ${{ env.ARTIFACT }}
+          
+      - name: Create GitHub nightly release
+        if: github.ref_type != 'tag'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "nightly-${GITHUB_SHA::7}" \
+          --title "Nightly build ${GITHUB_SHA::7}" \
+          --prerelease \
+          "${ARTIFACT}"
+
+      - name: Upload to GitHub Release
+        if: github.ref_type == 'tag'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release upload "${GITHUB_REF_NAME}" \
+            "${ARTIFACT}"
 
       - name: Deploy to SourceForge
         if: github.ref_type == 'tag'
