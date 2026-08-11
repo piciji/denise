@@ -1,9 +1,13 @@
 
-[![Build status](https://ci.appveyor.com/api/projects/status/5xq83txi0tfv222a?svg=true)](https://ci.appveyor.com/project/piciji/denise)
+[![Build status](https://ci.appveyor.com/api/projects/status/96jroj40a83wfqg2?svg=true)](https://ci.appveyor.com/project/piciji/denise)
 
 ![Denise Logo](https://deniseemu.sourceforge.io/logo.png)
 
-[Downloads](https://sourceforge.net/projects/deniseemu/files/) - [IssueTracker](https://sourceforge.net/p/deniseemu/tickets) - [Nightlies Windows | macOS](https://ci.appveyor.com/project/piciji/denise/history) - [Nightlies Linux](https://sourceforge.net/projects/deniseemu/files/nightlies/) - [Build info](https://bitbucket.org/piciji/denise/src/master/data/buildinfo) - [License](https://bitbucket.org/piciji/denise/src/master/licence.md)
+
+## cycle-accurate Amiga and C64 emulator
+___
+
+[Downloads](https://sourceforge.net/projects/deniseemu/files/) - [IssueTracker](https://sourceforge.net/p/deniseemu/tickets) - [Nightlies Windows | macOS](https://ci.appveyor.com/project/piciji/denise/history) - [Nightlies Linux](https://sourceforge.net/projects/deniseemu/files/nightlies/) - [Build info](https://github.com/piciji/denise/blob/master/data/buildinfo) - [License](https://github.com/piciji/denise/blob/master/licence.md)
 
 # changelog
 
