@@ -179,7 +179,7 @@ jobs:
           if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
             DEST_FOLDER="${GITHUB_REF_NAME}"
           else
-            DEST_FOLDER="nightly"
+            DEST_FOLDER="nightlies"
           fi
           
           for file in release/*; do          
