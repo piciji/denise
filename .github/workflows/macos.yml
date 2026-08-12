@@ -151,21 +151,15 @@ jobs:
           path: release
 
       - name: Create GitHub release
+        if: github.ref_type == 'tag'
         env:
           GH_TOKEN: ${{ github.token }}
-        run: |
-          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
-            gh release create "${GITHUB_REF_NAME}" \
-              --repo "${GITHUB_REPOSITORY}" \
-              --title "${GITHUB_REF_NAME}" \
-              release/*
-          else
-            gh release create "nightly ${GITHUB_SHA::7}" \
-              --repo "${GITHUB_REPOSITORY}" \
-              --title "nightly ${GITHUB_SHA::7}" \
-              --prerelease \
-              release/*
-          fi
+        run: |          
+          gh release create "${GITHUB_REF_NAME}" \
+            --repo "${GITHUB_REPOSITORY}" \
+            --title "${GITHUB_REF_NAME}" \
+            release/*
+
 
       - name: Install sshpass
         shell: bash
@@ -174,7 +168,6 @@ jobs:
           sudo apt-get install -y sshpass
 
       - name: Deploy to SourceForge
-        if: github.ref_type == 'tag'
         shell: bash
         env:
           FTP_PSW: ${{ secrets.FTP_PSW }}
@@ -183,13 +176,19 @@ jobs:
           printf '%s\n' "${FTP_PSW}" > ftp.txt
           trap 'rm -f ftp.txt' EXIT
           
+          if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
+            DEST_FOLDER="${GITHUB_REF_NAME}"
+          else
+            DEST_FOLDER="nightly"
+          fi
+          
           for file in release/*; do          
             sshpass -f "ftp.txt" \
               scp \
                 -o StrictHostKeyChecking=no \
                 -o UserKnownHostsFile=/dev/null \
                 "${file}" \
-                "piciji@frs.sourceforge.net:${FTP_FOLDER}${GITHUB_REF_NAME}/"
+                "piciji@frs.sourceforge.net:${FTP_FOLDER}${DEST_FOLDER}/"
           done
 
       - name: Clean up
