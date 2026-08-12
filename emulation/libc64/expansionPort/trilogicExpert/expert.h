@@ -43,7 +43,7 @@ struct Expert : FreezeButton {
 
     auto assign(Cart* cart) -> void override;
 
-    auto setRom(Emulator::Interface::Media* media, uint8_t* rom, unsigned romSize) -> void;
+    auto setRom(Emulator::Interface::Media* media, uint8_t* rom, unsigned romSize) -> void override;
 
     auto readChips() -> bool override;
 
@@ -74,15 +74,15 @@ struct Expert : FreezeButton {
 
     auto setSwitchMode(SwitchMode mode) -> void;
 
-    auto setJumper(unsigned jumperId, bool state) -> void;
+    auto setJumper(unsigned jumperId, bool state) -> void override;
 
-    auto getJumper(unsigned jumperId) -> bool;
+    auto getJumper(unsigned jumperId) -> bool override;
 
     auto reset(bool softReset = false) -> void override;
 
     auto clock() -> void override;
 
-    auto didFreeze() -> void;
+    auto didFreeze() -> void override;
 
     auto observeNmi(bool state) -> void override;
 
@@ -137,7 +137,7 @@ struct Expert : FreezeButton {
         (void)value;
     }
 
-    auto serialize(Emulator::Serializer& s) -> void;
+    auto serialize(Emulator::Serializer& s) -> void override;
 
 private:
     auto enableOnMode() -> void;

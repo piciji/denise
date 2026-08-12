@@ -205,7 +205,6 @@ auto CopperDebugger::buildTheme() -> GUIKIT::Layout* {
 
         emuThread->lock();
         auto& watcher = watcherHelper.getWatcher(row);
-        unsigned _addr = watcher.addr;
         
         if (column == 0) {
             enableEntry(&watcher, !watcher.enabled );

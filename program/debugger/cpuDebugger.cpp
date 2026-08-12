@@ -870,8 +870,6 @@ auto CpuDebugger::translateTheme() -> void {
 }
 
 auto CpuDebugger::addEntry(unsigned address, unsigned endAddress, DebuggerAction action, const std::string& desc) -> DbgWatcher* {
-    auto& instructionList = cpu->instructionLayout.list;
-
     auto watcher = watcherHelper.addToList( address, endAddress, action, desc );
     watcherHelper.updateList();
     
@@ -896,7 +894,6 @@ auto CpuDebugger::addCondition(DbgWatcher* watcher, const std::string& condition
 }
 
 auto CpuDebugger::deleteEntry(DbgWatcher* watcher) -> void {
-    auto& instructionList = cpu->instructionLayout.list;
     unsigned _addr = watcher->addr;
     auto _action = watcher->action;
     emulator->debuggerRemove( getTheme(), watcher->action, watcher->ident);
