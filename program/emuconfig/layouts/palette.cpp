@@ -47,7 +47,7 @@ PaletteLayout::PaletteLayout(TabWindow* tabWindow) {
     PaletteManager* paletteManager = PaletteManager::getInstance( emulator );
     GUIKIT::HorizontalLayout* colorLine = nullptr;
     
-    paletteLayout.append(controlLayout, {~0u, 0u}, 10);
+    paletteLayout.append(controlLayout, {~0u, 0u}, 20);
     
     controlLayout.title.onChange = [this]() {
         
@@ -144,11 +144,12 @@ PaletteLayout::PaletteLayout(TabWindow* tabWindow) {
             updateChange(result.value_or( defaultColor ));
         };
 
-        if ((i % 3) != 0)
-            colorLayout->color.setAlign( GUIKIT::Label::Align::Right );
-        else if (i == (paletteManager->getSize()-1))
-            colorLayout->color.setAlign( GUIKIT::Label::Align::Right );
+        // if ((i % 3) != 0)
+        //     colorLayout->color.setAlign( GUIKIT::Label::Align::Right );
+        // else if (i == (paletteManager->getSize()-1))
+        //     colorLayout->color.setAlign( GUIKIT::Label::Align::Right );
 
+        colorLayout->color.setAlign( GUIKIT::Label::Align::Right );
         colorLine->append( *colorLayout, {~0u, 0u} );
 
         colorLayouts.push_back( colorLayout );
