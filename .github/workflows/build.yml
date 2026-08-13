@@ -10,6 +10,7 @@ on:
 
 jobs:
   build-macos-arm:
+    if: false
     runs-on: macos-latest
 
     env:
@@ -70,6 +71,7 @@ jobs:
 
 
   build-macos-intel:
+    if: false
     runs-on: macos-15-intel
 
     env:
@@ -127,10 +129,86 @@ jobs:
           path: ${{ env.ARTIFACT }}
           retention-days: 1
 
+  build-windows:
+    runs-on: windows-latest
+
+    strategy:
+      matrix:
+        include:
+          - target: win64
+            mingw_archive: x86_64-14.2.0-release-posix-seh-msvcrt-rt_v12-rev2.7z
+            mingw_dir: mingw64
+
+          - target: win32
+            mingw_archive: i686-14.2.0-release-posix-dwarf-msvcrt-rt_v12-rev2.7z
+            mingw_dir: mingw32
+
+    env:
+      mingw_archive: ${{ matrix.mingw_archive }}
+      mingw_dir: ${{ matrix.mingw_dir }}
+      mingw_url: https://github.com/niXman/mingw-builds-binaries/releases/download/14.2.0-rt_v12-rev2/${{ matrix.mingw_archive }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Cache MinGW archive
+        id: cache-mingw
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.mingw_archive }}
+          key: mingw-${{ env.mingw_archive }}
+
+      - name: Download MinGW
+        if: steps.cache-mingw.outputs.cache-hit != 'true'
+        shell: cmd
+        run: |
+          curl -L "%mingw_url%" -o "%mingw_archive%"
+
+      - name: Extract MinGW
+        shell: cmd
+        run: |
+          7z x -y "%mingw_archive%" > nul
+          
+      - name: Setup MinGW
+        shell: cmd
+        run: |
+          echo %CD%\%mingw_dir%\bin>>"%GITHUB_PATH%"
+          g++ -v          
+
+      - name: Build
+        shell: cmd
+        run: |
+          cmake -G "MinGW Makefiles" -B builds/release -DENABLE_LTO=ON
+          cmake --build builds/release
+          cmake --install builds/release
+
+      - name: Prepare artifact
+        shell: bash
+        run: |
+          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+            zipTarget="denise_${{ matrix.target }}_${GITHUB_REF_NAME}"
+          else
+            zipTarget="denise_${{ matrix.target }}_build_${GITHUB_SHA::7}"
+          fi
+
+          mv builds/release/out "${zipTarget}"
+          zip -r "${zipTarget}.zip" "${zipTarget}"
+
+          echo "ARTIFACT=${zipTarget}.zip" >> "${GITHUB_ENV}"
+
+      - name: Upload GitHub Actions artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: macos-${{ matrix.target }}-artifact
+          path: ${{ env.ARTIFACT }}
+          retention-days: 1
+
   release:
     needs:
-      - build-macos-arm
-      - build-macos-intel
+     # - build-macos-arm
+     # - build-macos-intel
+      - build-windows
 
     runs-on: ubuntu-latest
 
@@ -160,7 +238,6 @@ jobs:
             --title "${GITHUB_REF_NAME}" \
             --notes "" \
             release/*
-
 
       - name: Install sshpass
         shell: bash
