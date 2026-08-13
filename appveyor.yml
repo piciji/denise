@@ -8,8 +8,8 @@ skip_commits:
 
 image:
   - Visual Studio 2022
-  - macos-sonoma
-  - macos-monterey
+#  - macos-sonoma
+#  - macos-monterey
 #  - Ubuntu2004
 
 stack: python 3.10
