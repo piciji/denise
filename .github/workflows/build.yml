@@ -154,7 +154,7 @@ jobs:
 
       - name: Cache MinGW archive
         id: cache-mingw
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ${{ env.mingw_archive }}
           key: mingw-${{ env.mingw_archive }}
@@ -174,7 +174,12 @@ jobs:
         shell: cmd
         run: |
           echo %CD%\%mingw_dir%\bin>>"%GITHUB_PATH%"
-          g++ -v          
+
+      - name: Check MinGW
+        shell: cmd
+        run: |
+          where g++
+          g++ -v
 
       - name: Build
         shell: cmd
@@ -184,23 +189,23 @@ jobs:
           cmake --install builds/release
 
       - name: Prepare artifact
-        shell: bash
+        shell: pwsh
         run: |
-          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
-            zipTarget="denise_${{ matrix.target }}_${GITHUB_REF_NAME}"
-          else
-            zipTarget="denise_${{ matrix.target }}_build_${GITHUB_SHA::7}"
-          fi
-
-          mv builds/release/out "${zipTarget}"
-          zip -r "${zipTarget}.zip" "${zipTarget}"
-
-          echo "ARTIFACT=${zipTarget}.zip" >> "${GITHUB_ENV}"
+          if ($env:GITHUB_REF_TYPE -eq "tag") {
+            $zipTarget = "denise_${{ matrix.target }}_$env:GITHUB_REF_NAME"
+          } else {
+            $zipTarget = "denise_${{ matrix.target }}_build_$($env:GITHUB_SHA.Substring(0, 7))"
+          }
+          
+          Move-Item "builds/release/out" $zipTarget
+          Compress-Archive -Path $zipTarget -DestinationPath "$zipTarget.zip"
+          
+          "ARTIFACT=$zipTarget.zip" >> $env:GITHUB_ENV
 
       - name: Upload GitHub Actions artifact
         uses: actions/upload-artifact@v6
         with:
-          name: macos-${{ matrix.target }}-artifact
+          name: ${{ matrix.target }}-artifact
           path: ${{ env.ARTIFACT }}
           retention-days: 1
 
@@ -216,16 +221,10 @@ jobs:
       contents: write
 
     steps:
-      - name: Download macOS arm artifact
+      - name: Download artifacts
         uses: actions/download-artifact@v7
         with:
-          name: macos-arm-artifact
-          path: release
-
-      - name: Download macOS intel artifact
-        uses: actions/download-artifact@v7
-        with:
-          name: macos-intel-artifact
+          pattern: '*-artifact'
           path: release
 
       - name: Create GitHub release
