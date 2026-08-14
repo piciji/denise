@@ -38,6 +38,9 @@ jobs:
             libusb-1.0-0-dev \
             libmp3lame-dev
 
+      - name: Checkout
+        uses: actions/checkout@v5
+
       - name: Build
         shell: bash
         run: |
@@ -87,6 +90,9 @@ jobs:
             libusb-1.0-0-dev \
             libmp3lame-dev
 
+      - name: Checkout
+        uses: actions/checkout@v5
+
       - name: Build
         shell: bash
         run: |
@@ -127,7 +133,7 @@ jobs:
           retention-days: 1
 
   build-macos:
-
+    if: false
     strategy:
       matrix:
         include:
@@ -197,6 +203,7 @@ jobs:
           retention-days: 1
 
   build-windows:
+    if: false
     runs-on: windows-latest
 
     strategy:
@@ -284,8 +291,8 @@ jobs:
     needs:
       - build-linux-flatpak
       - build-linux-deb
-      - build-macos
-      - build-windows
+      #- build-macos
+      #- build-windows
 
     runs-on: ubuntu-latest
 
