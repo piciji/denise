@@ -10,13 +10,29 @@
 
 ## changelog
 
+## 2.9
+* Shader: [koko-aio](https://github.com/kokoko3k/koko-aio-slang) is the preferred shader in Denise for C64/Amiga
+    * Quick access: Presentation -> Shader -> Star Icon
+    * displays a floppy drive with a dynamic loading LED next to the monitor, when Image geometry -> Scaling -> Window is selected 
+    * thanks to Antonio for the shader integration of dynamic lighting for loading and power LEDs
+* Shader: parameters are now clearly displayed in a scrollable list and are modified in an overlay
+* C64: add [libresidfp](https://github.com/libsidplayfp/libresidfp) (thanks to Leandro)
+* C64: add binary monitor (compatible with VICE) for debugger integration in C64 Studio
+* C64: support for Trilogic Expert Cartridge was added by ClausS
+* C64: add options to disable Sprite collisions
+* C64: add Disk Demon speeder for 1541
+* C64: update USBSID-PICO library ... should fix macOS crash
+* macOS: fix input problems when switching between apps
+* macOS: improve widget positioning
+* Warp: add Fast Forward with adjustable speed, Shaders are no longer suppressed during warp (can be deactivated)
+
 ## 2.8
-* Amiga Debugger/Disassembler for:
+* Amiga: Debugger/Disassembler for:
     * CPU, Memory, Logic Viewer, Denise, Agnus, Copper, Blitter, Paula, Serial, CIA
     * break/watch/exception points for CPU/Copper
     * stepping: CPU/Copper instructions, Blitter cycles, single cycles
     * debug borders with display of DMA usage
-* C64 Debugger/Disassembler for: 
+* C64: Debugger/Disassembler for: 
     * CPU, SCPU, Memory, Memory-SCPU, Logic Viewer, VIC-II, SIDs, CIA
     * Drive 8,9,10,11: CPU, Memory, VIA
     * break/watch/exception points for CPU, SCPU, drive CPUs

@@ -24,7 +24,7 @@
 #endif
 #define SETTINGS_FILE "settings.ini"
 #define DEFAULT_TRANS_FILE "english.txt"
-#define VERSION "2.8"
+#define VERSION "2.9"
 #define LICENSE "GPLv3"
 #define AUTHOR "PiCiJi"
 
@@ -235,4 +235,3 @@ extern GUIKIT::Settings* globalSettings;
 extern Emulator::Interface* activeEmulator;
 extern InputManager* activeInputManager;
 extern VideoManager* activeVideoManager;
-
