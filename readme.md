@@ -10,7 +10,7 @@
 
 ## changelog
 
-## 2.9
+## 2.9 (not yet released)
 * Shader: [koko-aio](https://github.com/kokoko3k/koko-aio-slang) is the preferred shader in Denise for C64/Amiga
     * Quick access: Presentation -> Shader -> Star Icon
     * displays a floppy drive with a dynamic loading LED next to the monitor, when Image geometry -> Scaling -> Window is selected 
