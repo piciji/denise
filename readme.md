@@ -6,7 +6,7 @@
 
 ## cycle-accurate Amiga and C64 emulator
 
-[Downloads](https://sourceforge.net/projects/deniseemu/files/) - [IssueTracker](https://sourceforge.net/p/deniseemu/tickets) - [Nightlies Windows | macOS](https://ci.appveyor.com/project/piciji/denise/history) - [Nightlies Linux](https://sourceforge.net/projects/deniseemu/files/nightlies/) - [Build info](https://github.com/piciji/denise/blob/master/data/buildinfo)
+[Downloads](https://sourceforge.net/projects/deniseemu/files/) - [IssueTracker](https://sourceforge.net/p/deniseemu/tickets) - [Nightlies Windows](https://ci.appveyor.com/project/piciji/denise/history) - [Nightlies Linux | macOS](https://sourceforge.net/projects/deniseemu/files/nightlies/) - [Build info](https://github.com/piciji/denise/blob/master/data/buildinfo)
 
 ## changelog
 
