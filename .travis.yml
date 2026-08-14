@@ -50,7 +50,7 @@ jobs:
           export deployFile=denise_linux_$TRAVIS_BRANCH.flatpak
           export deployTarget=${FTP_FOLDER}$TRAVIS_BRANCH
         else
-          export deployFile=denise_$(echo ${TRAVIS_COMMIT} | cut -c 1-7).flatpak
+          export deployFile=denise_linux_build_$(echo ${TRAVIS_COMMIT} | cut -c 1-7).flatpak
           export deployTarget=${FTP_NIGHTLIES}
         fi
       - mv denise.flatpak "${deployFile}"
@@ -70,7 +70,7 @@ jobs:
           export deployFile=denise_ubuntu2204_$TRAVIS_BRANCH.deb
           export deployTarget=${FTP_FOLDER}$TRAVIS_BRANCH
         else
-          export deployFile=denise_ubuntu2204_$(echo ${TRAVIS_COMMIT} | cut -c 1-7).deb
+          export deployFile=denise_ubuntu2204_build_$(echo ${TRAVIS_COMMIT} | cut -c 1-7).deb
           export deployTarget=${FTP_NIGHTLIES}
         fi
       - mv denisepackage.deb "${deployFile}"
