@@ -9,73 +9,140 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-macos-arm:
-    if: false
-    runs-on: macos-latest
-
-    env:
-      MACOSX_DEPLOYMENT_TARGET: "11"
+  build-linux-flatpak:
+    runs-on: ubuntu-22.04
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v5
-
-      - name: Set up Python
-        uses: actions/setup-python@v6
-        with:
-          python-version: "3.10"
-
-      - name: Install build tools
+      - name: Install dependencies
         shell: bash
         run: |
-          python3 -m pip install --upgrade pip
-          python3 -m pip install dmgbuild==1.6.7
+          # Jammy ships an older flatpak-builder (1.2.x).
+          # We need a newer version to avoid bwrap: execvp appstream-compose: No such file
+      
+          sudo add-apt-repository -y ppa:flatpak/stable
+          sudo apt-get -q update
+          sudo apt-get -f install -y flatpak-builder
+      
+          flatpak-builder --version
+              
+          sudo apt-get install -y \
+            g++-12 \
+            cmake \
+            mesa-common-dev \
+            libgtk-3-dev \
+            libpulse-dev \
+            libudev-dev \
+            libxcb-xinput-dev \
+            libxcb-xfixes0 \
+            sshpass \
+            libusb-1.0-0-dev \
+            libmp3lame-dev
 
       - name: Build
         shell: bash
-        run: |          
-          cmake \
-            -B builds/release \
-            -DCMAKE_OSX_ARCHITECTURES=arm64 \
-            -DCMAKE_INSTALL_PREFIX=builds/release \
-            -DENABLE_LTO=ON
-          
-          cmake --build builds/release
-          cmake --install builds/release
-          
-          dmgbuild \
-            -s data/dmgSettings.py \
-            "Denise" \
-            builds/release/denise.dmg
+        run: |
+          flatpak remote-add --if-not-exists --user flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+          flatpak-builder --jobs "$(nproc)" --force-clean --verbose=0 --user --install-deps-from=flathub --repo=repo .flatpak-builder/out data/org.bitbucket.Denise.yml
+          flatpak build-bundle repo denise.flatpak org.bitbucket.Denise --runtime-repo=https://flathub.org/repo/flathub.flatpakrepo
 
       - name: Prepare artifact
         shell: bash
         run: |
+          cd data
           if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
-            gzTarget="denise_osx_arm64_${GITHUB_REF_NAME}.dmg"
+            deployFile="denise_linux_${GITHUB_REF_NAME}.flatpak"
           else
-            gzTarget="denise_osx_arm64_build_${GITHUB_SHA::7}.dmg"
+            deployFile="denise_linux_build_${GITHUB_SHA::7}.flatpak"
           fi
-          
-          mv builds/release/denise.dmg "${gzTarget}"
-          bzip2 -z "${gzTarget}"
-          
-          echo "ARTIFACT=${gzTarget}.bz2" >> "${GITHUB_ENV}"
+
+          mv denise.flatpak "${deployFile}"
+
+          echo "ARTIFACT=${deployFile}" >> "${GITHUB_ENV}"
 
       - name: Upload GitHub Actions artifact
         uses: actions/upload-artifact@v6
         with:
-          name: macos-arm-artifact
+          name: linux-flatpak-artifact
           path: ${{ env.ARTIFACT }}
           retention-days: 1
 
+  build-linux-deb:
+    runs-on: ubuntu-22.04
 
-  build-macos-intel:
-    if: false
-    runs-on: macos-15-intel
+    steps:
+      - name: Install dependencies
+        shell: bash
+        run: |
+          sudo apt-get -q update
+          sudo apt-get install -y \
+            g++-12 \
+            cmake \
+            mesa-common-dev \
+            libgtk-3-dev \
+            libpulse-dev \
+            libudev-dev \
+            libxcb-xinput-dev \
+            libxcb-xfixes0 \
+            sshpass \
+            libusb-1.0-0-dev \
+            libmp3lame-dev
+
+      - name: Build
+        shell: bash
+        run: |
+          cmake \
+            -B builds/release \
+            -DCMAKE_CXX_COMPILER=g++-12 \
+            -DENABLE_LTO=ON
+          
+          cmake --build builds/release --parallel "$(nproc)"
+          
+      - name: Create DEB package
+        shell: bash
+        run: |
+          cd data
+          chmod +x build_deb.sh
+          ./build_deb.sh
+          dpkg-deb --build ./denisepackage
+
+      - name: Prepare artifact
+        shell: bash
+        run: |
+          cd data
+          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+            deployFile="denise_ubuntu2204_${GITHUB_REF_NAME}.deb"
+          else
+            deployFile="denise_ubuntu2204_build_${GITHUB_SHA::7}.deb"
+          fi
+          
+          mv denisepackage.deb "${deployFile}"
+          
+          echo "ARTIFACT=${deployFile}" >> "${GITHUB_ENV}"
+
+      - name: Upload GitHub Actions artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: linux-deb-artifact
+          path: ${{ env.ARTIFACT }}
+          retention-days: 1
+
+  build-macos:
+
+    strategy:
+      matrix:
+        include:
+          - target: macos_arm64
+            runner: macos-latest
+            deployment_target: "11"
+
+          - target: macos_x64
+            runner: macos-15-intel
+            deployment_target: "10.13"
+
+    runs-on: ${{ matrix.runner }}
 
     env:
-      MACOSX_DEPLOYMENT_TARGET: "10.13"
+      MACOSX_DEPLOYMENT_TARGET: ${{ matrix.deployment_target }}
 
     steps:
       - name: Checkout
@@ -100,7 +167,7 @@ jobs:
             -DCMAKE_INSTALL_PREFIX=builds/release \
             -DENABLE_LTO=ON
           
-          cmake --build builds/release
+          cmake --build builds/release --parallel "$(sysctl -n hw.ncpu)"
           cmake --install builds/release
           
           dmgbuild \
@@ -112,20 +179,20 @@ jobs:
         shell: bash
         run: |
           if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
-            gzTarget="denise_osx_intel_${GITHUB_REF_NAME}.dmg"
+            bzTarget="denise_${{ matrix.target }}_${GITHUB_REF_NAME}.dmg"
           else
-            gzTarget="denise_osx_intel_build_${GITHUB_SHA::7}.dmg"
+            bzTarget="denise_${{ matrix.target }}_build_${GITHUB_SHA::7}.dmg"
           fi
           
-          mv builds/release/denise.dmg "${gzTarget}"
-          bzip2 -z "${gzTarget}"
+          mv builds/release/denise.dmg "${bzTarget}"
+          bzip2 -z "${bzTarget}"
           
-          echo "ARTIFACT=${gzTarget}.bz2" >> "${GITHUB_ENV}"
+          echo "ARTIFACT=${bzTarget}.bz2" >> "${GITHUB_ENV}"
 
       - name: Upload GitHub Actions artifact
         uses: actions/upload-artifact@v6
         with:
-          name: macos-intel-artifact
+          name: ${{ matrix.target }}-artifact
           path: ${{ env.ARTIFACT }}
           retention-days: 1
 
@@ -182,11 +249,15 @@ jobs:
           g++ -v
 
       - name: Build
-        shell: cmd
+        shell: pwsh
         run: |
           cmake -G "MinGW Makefiles" -B builds/release -DENABLE_LTO=ON
-          cmake --build builds/release
-          cmake --install builds/release
+      
+          $cpus = (Get-CimInstance Win32_ComputerSystem).NumberOfLogicalProcessors
+          Write-Host "Building with $cpus parallel jobs"
+      
+          cmake --build builds/release --parallel $cpus
+          cmake --install builds/release          
 
       - name: Prepare artifact
         shell: pwsh
@@ -211,8 +282,9 @@ jobs:
 
   release:
     needs:
-     # - build-macos-arm
-     # - build-macos-intel
+      - build-linux-flatpak
+      - build-linux-deb
+      - build-macos
       - build-windows
 
     runs-on: ubuntu-latest
