@@ -131,7 +131,6 @@ jobs:
           retention-days: 1
 
   build-macos:
-    if: false
     strategy:
       matrix:
         include:
@@ -201,7 +200,6 @@ jobs:
           retention-days: 1
 
   build-windows:
-    if: false
     runs-on: windows-latest
 
     strategy:
@@ -289,8 +287,8 @@ jobs:
     needs:
       - build-linux-flatpak
       - build-linux-deb
-      #- build-macos
-      #- build-windows
+      - build-macos
+      - build-windows
 
     runs-on: ubuntu-latest
 
