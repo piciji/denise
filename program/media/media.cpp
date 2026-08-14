@@ -1043,7 +1043,7 @@ auto MediaLayout::translate(NavElement& nav) -> void {
 
         if ( isC64 && (block->media->group->id == LIBC64::Interface::MediaGroupIdExpansionFinalChessCard)) {
             if (block->media->id > 3)
-                block->header.deviceName.setTooltip( trans->getA( "Final Chesscard Battery tooltip" ) );
+                block->header.deviceName.setTooltip( trans->getA( "SRAM Battery tooltip" ) );
             else if (block->media->id < 4)
                 block->selector.open.setTooltip( trans->getA( "Final Chesscard ROMS tooltip" ) );
         }
