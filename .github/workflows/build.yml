@@ -51,7 +51,6 @@ jobs:
       - name: Prepare artifact
         shell: bash
         run: |
-          cd data
           if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
             deployFile="denise_linux_${GITHUB_REF_NAME}.flatpak"
           else
@@ -114,14 +113,13 @@ jobs:
       - name: Prepare artifact
         shell: bash
         run: |
-          cd data
           if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
             deployFile="denise_ubuntu2204_${GITHUB_REF_NAME}.deb"
           else
             deployFile="denise_ubuntu2204_build_${GITHUB_SHA::7}.deb"
           fi
           
-          mv denisepackage.deb "${deployFile}"
+          mv data/denisepackage.deb "${deployFile}"
           
           echo "ARTIFACT=${deployFile}" >> "${GITHUB_ENV}"
 
