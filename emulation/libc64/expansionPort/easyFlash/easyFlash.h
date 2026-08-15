@@ -31,10 +31,6 @@ struct EasyFlash : Cart {
 
     auto peekIo2( uint16_t addr ) -> uint8_t;
     
-    auto create( Interface::CartridgeId cartridgeId, unsigned _size ) -> Cart*;
-    
-    auto assign( Cart* cart ) -> void;
-    
     auto init() -> void;
     
     auto setRom(Emulator::Interface::Media* media, uint8_t* rom, unsigned romSize) -> void;

@@ -51,8 +51,6 @@ struct Fastloader : Cart {
     auto peekRomH( uint16_t addr ) -> uint8_t;
     auto clock() -> void;
     auto serialize(Emulator::Serializer& s) -> void;
-    auto create( Interface::CartridgeId cartridgeId, unsigned _size ) -> Cart*;
-    auto assign(Cart* cart) -> void {}
 
     auto setJumper( unsigned jumperId, bool state ) -> void;
     auto getJumper( unsigned jumperId ) -> bool;

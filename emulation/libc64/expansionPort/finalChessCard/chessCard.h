@@ -41,8 +41,6 @@ struct FinalChessCard : Cart, WDCFAMILY::W65C02 {
     auto writeIo1( uint16_t addr, uint8_t data ) -> void;
 
     auto assumeChips( ) -> void;
-    auto create( Interface::CartridgeId cartridgeId, unsigned _size ) -> Cart*;
-    auto assign(Cart* cart) -> void {}
 
     auto setJumper(unsigned jumperId, bool state) -> void;
     auto getJumper(unsigned jumperId) -> bool;

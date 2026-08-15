@@ -162,11 +162,6 @@ auto FinalChessCard::assumeChips( ) -> void {
     Cart::assumeChips( {16384} );
 }
 
-auto FinalChessCard::create( Interface::CartridgeId cartridgeId, unsigned _size ) -> Cart* {
-    // don't rebuild
-    return this;
-}
-
 auto FinalChessCard::setJumper(unsigned jumperId, bool state) -> void {
     if (state)
         jumpers |= (1 << jumperId);

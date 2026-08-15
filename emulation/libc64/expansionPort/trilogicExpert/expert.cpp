@@ -3,15 +3,6 @@
 
 namespace LIBC64 {
 
-auto Expert::assign( Cart* cart ) -> void {
-    // don't rebuild
-}
-
-auto Expert::create( Interface::CartridgeId cartridgeId, unsigned _size ) -> Cart* {
-    // don't rebuild
-    return this;
-}
-
 auto Expert::setRom(Emulator::Interface::Media* media, uint8_t* rom, unsigned romSize) -> void {
     if ( (this->rom == nullptr) && (rom == nullptr) )
         return;

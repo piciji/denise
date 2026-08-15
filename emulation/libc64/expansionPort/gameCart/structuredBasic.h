@@ -92,7 +92,7 @@ namespace LIBC64 {
         }
 
         auto serializeStep2(Emulator::Serializer& s) -> void {
-
+            Cart::serializeStep2( s );
             s.integer( ramVisible );
             s.integer( bank );
             s.array( ram, 8 * 1024 );

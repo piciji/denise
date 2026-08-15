@@ -39,10 +39,6 @@ struct Expert : FreezeButton {
     bool switchOn = false;
     bool switchPrg = false;
 
-    auto create(Interface::CartridgeId cartridgeId, unsigned size) -> Cart* override;
-
-    auto assign(Cart* cart) -> void override;
-
     auto setRom(Emulator::Interface::Media* media, uint8_t* rom, unsigned romSize) -> void override;
 
     auto readChips() -> bool override;

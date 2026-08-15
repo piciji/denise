@@ -27,7 +27,7 @@ struct Prophet64 : GameCart {
     }
 
     auto serializeStep2(Emulator::Serializer& s) -> void {
-
+        Cart::serializeStep2( s );
         s.integer( reg );
     }
 

@@ -270,15 +270,6 @@ auto EasyFlash3::write( Slot* slot, bool splitted ) -> void {
     }
 }
 
-auto EasyFlash3::assign( Cart* cart ) -> void {
-    // don't rebuild
-}
-
-auto EasyFlash3::create( Interface::CartridgeId cartridgeId, unsigned _size ) -> Cart* {
-    // don't rebuild
-    return this;
-}
-
 auto EasyFlash3::reset(bool softReset) -> void {
     
     if (!softReset) {

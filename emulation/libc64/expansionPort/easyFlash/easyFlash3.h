@@ -56,10 +56,6 @@ struct EasyFlash3 : FreezeButton {
     auto readIo2( uint16_t addr ) -> uint8_t;
     auto peekIo2( uint16_t addr ) -> uint8_t;
     
-    auto create( Interface::CartridgeId cartridgeId, unsigned _size ) -> Cart*;
-    
-    auto assign( Cart* cart ) -> void;
-    
     auto setRom(Emulator::Interface::Media* media, uint8_t* rom, unsigned romSize) -> void;
     auto unsetRom(Emulator::Interface::Media* media) -> void;
     auto assumeChips( ) -> void;
