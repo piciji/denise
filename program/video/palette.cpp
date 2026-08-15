@@ -25,8 +25,7 @@ PaletteManager::PaletteManager(Emulator::Interface* emulator) {
 
 PaletteManager::~PaletteManager() {
     
-    if( !cmd->debug)            
-        save();
+
 }
 
 auto PaletteManager::getCurrentPalette() -> Emulator::Interface::Palette* {
