@@ -18,12 +18,13 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
 # copyright holders
 
 * reSID from Dag Lem resid@nimrod.no
+* libresidfp by Leandro Nini (https://github.com/libsidplayfp/libresidfp)
 * "VIC-II" cycle emulation code is based on VICE implementation http://vice-emu.sourceforge.net
+* koko-aio shader (https://github.com/kokoko3k/koko-aio-slang)
 * cosine resampler by RetroArch https://github.com/libretro/RetroArch
 * sinc resampler by RetroArch https://github.com/libretro/RetroArch
 * C64 TrueType v1.2.1/Style font by https://style64.org/c64-truetype
 * freetype is a library for opengl to render text fonts https://www.freetype.org
-* bundled Shader were created by following people: Timothy Lottes, guest(r) - guest.r@gmail.com
 * application logo and icon were created by Retrofan
 * French translation by Ben
 * Japanese translation by Ulgon

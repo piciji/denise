@@ -1,4 +1,4 @@
-id: org.bitbucket.Denise
+id: org.piciji.Denise
 runtime: org.freedesktop.Platform
 runtime-version: '24.08'
 sdk: org.freedesktop.Sdk
@@ -25,10 +25,10 @@ finish-args:
   - --filesystem=host:rw
 
 
-# flatpak-builder --force-clean --user --install-deps-from=flathub --install .flatpak-builder/out data/org.bitbucket.Denise.yml
-# flatpak run org.bitbucket.Denise
-# flatpak uninstall org.bitbucket.Denise
+# flatpak-builder --force-clean --user --install-deps-from=flathub --install .flatpak-builder/out data/org.piciji.Denise.yml
+# flatpak run org.piciji.Denise
+# flatpak uninstall org.piciji.Denise
 
 # share it
-# flatpak build-bundle repo denise.flatpak org.bitbucket.Denise --runtime-repo=https://flathub.org/repo/flathub.flatpakrepo
+# flatpak build-bundle repo denise.flatpak org.piciji.Denise --runtime-repo=https://flathub.org/repo/flathub.flatpakrepo
 # flatpak install --user denise.flatpak

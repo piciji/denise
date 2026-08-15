@@ -9,7 +9,7 @@ download and install mingw32 or 64: https://github.com/niXman/mingw-builds-binar
 
 open a CMD:
 set Path=<mingw_path>\bin;%Path%
-git clone https://piciji@bitbucket.org/piciji/denise.git denise
+git clone https://github.com/piciji/denise.git denise
 cd denise
 
 cmake -G "MinGW Makefiles" -B builds/release
@@ -34,7 +34,7 @@ pacman -S --noconfirm --needed wget git make mingw-w64-i686-toolchain mingw-w64-
 pacman -S make
 pacman -S gcc
 
-git clone https://piciji@bitbucket.org/piciji/denise.git denise
+git clone https://github.com/piciji/denise.git denise
 cd denise
 cmake -G "MSYS Makefiles" -B builds/release
 cmake --build builds/release -j 8
@@ -53,7 +53,7 @@ OSX
 Console
 -----------
 
-git clone https://piciji@bitbucket.org/piciji/denise.git denise
+git clone https://github.com/piciji/denise.git denise
 cd denise
 cmake -B builds/release
 cmake --build builds/release -j 8
@@ -123,7 +123,7 @@ doas pkg_add gtk+3
 ----------------------------------------------
 ALL: GET, CONFIGURE, BUILD AND INSTALL DENISE
 ----------------------------------------------
-git clone https://piciji@bitbucket.org/piciji/denise.git denise
+git clone https://github.com/piciji/denise.git denise
 cd denise
 cmake -B builds/release
 cmake --build builds/release -j 8

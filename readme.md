@@ -178,7 +178,7 @@
 
 ## looking for Shader authors
 * interested in shaders for
-    * [Luma/Chroma crosstalk, probably last unsupported C64 effect](https://bitbucket.org/piciji/denise/issues/1/video-old-vic2-chroma-effect-on-odd-chars)
+    * Luma/Chroma crosstalk
     * wrap image with 1702/1084S/... monitor and C64/Amiga floppy drive
 * new option for SLANGP files: luma_chroma
     * Luma Chroma input to prevent lossy conversion from RGB
@@ -495,7 +495,7 @@
     * added REU support with additional 8k rom
     * added Action Replay MK2, MK3, MK4, V4.1 and higher
     * support Cartridge bin format
-* GIT repo is public now: [Bitbucket](https://bitbucket.org/piciji/denise/src/master/)
+* GIT repo is public now
 * simplified build process
 
 ## 1.0.5

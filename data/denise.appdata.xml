@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component type="desktop-application">
-  <id>org.bitbucket.Denise</id>
+  <id>org.piciji.Denise</id>
   <launchable type="desktop-id">denise.desktop</launchable>
   <name>Denise</name>
   <summary>Commodore 64 and Amiga Emulator</summary>

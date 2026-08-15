@@ -45,8 +45,8 @@ jobs:
         shell: bash
         run: |
           flatpak remote-add --if-not-exists --user flathub https://dl.flathub.org/repo/flathub.flatpakrepo
-          flatpak-builder --jobs "$(nproc)" --force-clean --verbose=0 --user --install-deps-from=flathub --repo=repo .flatpak-builder/out data/org.bitbucket.Denise.yml
-          flatpak build-bundle repo denise.flatpak org.bitbucket.Denise --runtime-repo=https://flathub.org/repo/flathub.flatpakrepo
+          flatpak-builder --jobs "$(nproc)" --force-clean --verbose=0 --user --install-deps-from=flathub --repo=repo .flatpak-builder/out data/org.piciji.Denise.yml
+          flatpak build-bundle repo denise.flatpak org.piciji.Denise --runtime-repo=https://flathub.org/repo/flathub.flatpakrepo
 
       - name: Prepare artifact
         shell: bash
