@@ -346,8 +346,6 @@ Disk Speed = Geschwindigkeit
 Drive Wobble = Schwankung
 Version = Version
 Port = Port
-REU = REU
-EasyFlash = EasyFlash
 unknown_device = unbekanntes Gerät
 Diagonal Up-Right = Oben Rechts (optional)
 Diagonal Down-Right = Unten Rechts (optional)
@@ -963,7 +961,7 @@ Disable Sprite Character Collisions = Sprite-Character Kollisionen deaktivieren
 no shader when warp = kein Shader bei Warp
 until = bis
 address range tooltip = eine End-Adresse (optional) hält die Ausführung wiederholt innerhalb eines Adressraumes an. Dies ist sinnvoll in Verbindung mit einer Bedingung.
-
 cart_insert = %cart% einstecken
 cart_image = %cart% Abbild
 select_cart_image = %cart% Abbild auswählen ...
+blank_cart_image = neues %cart% Abbild auswählen ...
