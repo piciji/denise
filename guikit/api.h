@@ -1749,6 +1749,7 @@ private:
 
 struct Translation {
     auto getA(std::string ident, bool addColon = false) -> std::string;
+    auto getOrEmpty(std::string ident) -> std::string;
     auto get(std::string ident, const std::vector<std::vector<std::string>>& replaces = {}, bool addColon = false) -> std::string;
     auto read( std::string path, unsigned maxFileSize = 1 * 1024 * 1024 ) -> bool;
     auto clear() -> void;

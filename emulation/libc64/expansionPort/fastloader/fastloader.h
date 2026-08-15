@@ -53,7 +53,6 @@ struct Fastloader : Cart {
     auto serialize(Emulator::Serializer& s) -> void;
     auto create( Interface::CartridgeId cartridgeId, unsigned _size ) -> Cart*;
     auto assign(Cart* cart) -> void {}
-    auto protectFromDeletion() -> bool { return true; }
 
     auto setJumper( unsigned jumperId, bool state ) -> void;
     auto getJumper( unsigned jumperId ) -> bool;

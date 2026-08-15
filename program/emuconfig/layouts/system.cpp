@@ -12,7 +12,7 @@
 namespace EmuConfigView {
 
 auto ExpansionLayout::build( Emulator::Interface* emulator ) -> void {
-    unsigned blocksPerLine = 5;
+    unsigned blocksPerLine = 6;
     auto& expansions = emulator->expansions;
 
     if (expansions.size() <= 1)

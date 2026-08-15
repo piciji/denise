@@ -15,8 +15,6 @@ struct GameCart : Cart {
 
     virtual auto setWriteProtect(bool state) -> void {}
     virtual auto isWriteProtected() -> bool { return false; }
-	
-	static auto createImage(unsigned& imageSize, uint8_t id) -> uint8_t*;
 
     virtual auto isBootable( ) -> bool {
         return rom ? true : false;

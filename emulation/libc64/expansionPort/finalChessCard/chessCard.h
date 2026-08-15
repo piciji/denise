@@ -47,7 +47,7 @@ struct FinalChessCard : Cart, WDCFAMILY::W65C02 {
     auto setJumper(unsigned jumperId, bool state) -> void;
     auto getJumper(unsigned jumperId) -> bool;
 
-    auto serializeStep2(Emulator::Serializer& s) -> void;
+    auto serialize(Emulator::Serializer& s) -> void;
     auto createImage(unsigned& imageSize) -> uint8_t*;
     auto hasSecondaryRom() -> bool { return true; }
     auto isBootable( ) -> bool { return true; }

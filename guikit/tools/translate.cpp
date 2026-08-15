@@ -18,6 +18,17 @@ auto Translation::getA(std::string ident, bool addColon) -> std::string {
     return out + (addColon ? ":" : "");
 }
 
+auto Translation::getOrEmpty(std::string ident) -> std::string {
+    String::toLowerCase( ident );
+
+    for(auto& data : list) {
+        if(data.ident == ident)
+            return data.text;
+    }
+
+    return "";
+}
+
 auto Translation::get(std::string ident, const std::vector<std::vector<std::string>>& replaces, bool addColon) -> std::string {
     std::string out = String::trim( ident );
     std::string _ident = out;

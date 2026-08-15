@@ -52,6 +52,14 @@ auto Fileloader::load(Emulator::Interface* emulator, Emulator::Interface::Media*
     auto emuView = EmuConfigView::TabWindow::getView( emulator );
     auto prevMode = settings->get<unsigned>("dialog_preview_mode", dynamic_cast<LIBC64::Interface*>(emulator) ? PREV_DIALOG : PREV_OFF, {0,2});
 
+    auto transImage = trans->getOrEmpty(group->name + "_image");
+    if (transImage.empty())
+        transImage = trans->get("cart_image", {{"%cart%", group->name}});
+
+    auto transSelect = trans->getOrEmpty("select_" + group->name + "_image");
+    if (transSelect.empty())
+        transSelect = trans->get("select_cart_image", {{"%cart%", group->name}});
+
     if ((prevMode == PREV_SOFTWARE) && emuView && emuView->visible()) {
         emuView->setFocused();
     }
@@ -78,11 +86,11 @@ auto Fileloader::load(Emulator::Interface* emulator, Emulator::Interface::Media*
 
     fileDialogPtr->resizeTemplate( true, -6 );
 
-    fileDialogPtr->setTitle(trans->get("select_" + group->name + "_image"));
+    fileDialogPtr->setTitle( transSelect );
 
     fileDialogPtr->setPath( preselectPath( settings, group->name, group->isDrive() && (media->id > 0) ) );
 
-    fileDialogPtr->setFilters({ GUIKIT::BrowserWindow::transformFilter(trans->get(group->name + "_image"), suffix ),
+    fileDialogPtr->setFilters({ GUIKIT::BrowserWindow::transformFilter(transImage, suffix ),
                                 trans->get("all_files")});
 
     fileDialogPtr->setOnChangeCallback( [this, emulator, media](std::string file, bool multi) {

@@ -112,7 +112,19 @@ auto Fastloader::setRom(Emulator::Interface::Media* media, uint8_t* rom, unsigne
         rom += 2;
     }
 
-    Cart::setRom(media, rom, romSize);
+    if ((this->rom == nullptr) && (rom == nullptr))
+        return;
+
+    this->media = media;
+    this->rom = rom;
+    this->romSize = romSize;
+
+    readHeader();
+
+    this->cartridgeId = static_cast<Interface::CartridgeId>(media->pcbLayout->id);
+
+    if (!readChips())
+        assumeChips();
 
     exRom = game = true;
 }

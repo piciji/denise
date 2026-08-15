@@ -59,10 +59,7 @@ struct Cart : ExpansionPort {
     auto build(Interface::CartridgeId cartridgeId, uint8_t* _rom, unsigned _romSize) -> Cart*;
     virtual auto create( Interface::CartridgeId cartridgeId, unsigned _size ) -> Cart* { return nullptr; }
     virtual auto assign(Cart* cart) -> void {}
-	virtual auto write() -> void {}
-	virtual auto prepare() -> void {}
-	virtual auto protectFromDeletion() -> bool { return false; }
-    
+
     auto getChip( unsigned index ) -> Chip* {
         return chips.size() > index ? &chips[index] : nullptr;
     }

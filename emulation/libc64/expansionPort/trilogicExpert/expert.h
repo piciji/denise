@@ -49,7 +49,7 @@ struct Expert : FreezeButton {
 
     auto assumeChips() -> void override;
 
-    auto prepare() -> void override;
+    auto prepare() -> void;
 
     auto isBootable() -> bool override {
         return false;

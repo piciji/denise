@@ -9,7 +9,6 @@
 #include "cart16k.h"
 #include "magicDesk.h"
 #include "magicDesk2.h"
-#include "../gmod/gmod2.h"
 #include "simonsBasic.h"
 #include "warpSpeed.h"
 #include "mach5.h"
@@ -38,8 +37,7 @@ auto GameCart::assign( Cart* cart ) -> void {
 
     System* ptrSystem = system;
 
-	if (!protectFromDeletion())
-		delete this;
+    delete this;
 
     ptrSystem->gameCart = (GameCart*)cart;
 
@@ -82,11 +80,6 @@ auto GameCart::create( Interface::CartridgeId cartridgeId, unsigned _size ) -> C
             
         case Interface::CartridgeIdUltimax:
             cart = new GameCart(system, false, true);
-            break;
-
-        case Interface::CartridgeIdGmod2:
-			// we don't recreate the card because of additional complexity
-            cart = system->gmod2;
             break;
 
         case Interface::CartridgeIdMagicDesk:
@@ -173,15 +166,5 @@ auto GameCart::create( Interface::CartridgeId cartridgeId, unsigned _size ) -> C
     
     return cart;
 }
-
-auto GameCart::createImage(unsigned& imageSize, uint8_t id) -> uint8_t* {
-	
-    if (id < 2)
-        return Gmod2::createImage( imageSize, id );
-    
-    return nullptr;
-}
-
     
 }
-

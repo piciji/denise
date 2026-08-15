@@ -1,13 +1,13 @@
 
 #pragma once
 
-#include "../gameCart/gameCart.h"
+#include "../cart/cart.h"
 #include "../../../tools/flash040.h"
 #include "../../../tools/m93c86.h"
 
 namespace LIBC64 {
 
-struct Gmod2 : GameCart {
+struct Gmod2 : Cart {
 
     Gmod2(System* system);
     ~Gmod2();
@@ -41,13 +41,14 @@ struct Gmod2 : GameCart {
 
     auto reset(bool softReset = false) -> void;
     auto prepare() -> void;
-    auto setSecondaryRom(Emulator::Interface::Media* media, uint8_t* rom, unsigned romSize) -> void;
+    auto setRom(Emulator::Interface::Media* media, uint8_t* rom, unsigned romSize) -> void;
+    auto setEeprom(Emulator::Interface::Media* media, uint8_t* rom, unsigned romSize) -> void;
     auto write() -> void;
     auto writeEeprom() -> void;
 
     static auto createImage(unsigned& imageSize, uint8_t id) -> uint8_t*;
 
-    auto serializeStep2(Emulator::Serializer& s) -> void;
+    auto serialize(Emulator::Serializer& s) -> void;
 
     auto setWriteProtect(bool state) -> void;
     auto isWriteProtected() -> bool;
@@ -56,9 +57,10 @@ struct Gmod2 : GameCart {
     auto isSecondaryWriteProtected() -> bool;
 	
 	auto hasSecondaryRom() -> bool { return true; }
-	
-	auto protectFromDeletion() -> bool { return true; }
+
     auto getSizeNotConsideredForMemorySerialization() -> unsigned;
+
+    auto isBootable( ) -> bool { return true; }
 };
 
 }

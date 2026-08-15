@@ -40,7 +40,7 @@ struct Interface : Emulator::Interface {
         MediaGroupIdExpansionFreezer = 6, MediaGroupIdExpansionRetroReplay = 7,        
         MediaGroupIdExpansionGeoRam = 8, MediaGroupIdExpansionReu = 9, MediaGroupIdExpansionRS232 = 10, MediaGroupIdExpansionFastloader = 11,
     	MediaGroupIdExpansionFinalChessCard = 12, MediaGroupIdExpansionSuperCpu = 13,
-        MediaGroupIdExpansionExpert = 14,
+        MediaGroupIdExpansionExpert = 14, MediaGroupIdExpansionGmod2 = 15,
     };
     
     enum ExpansionId {
@@ -48,7 +48,7 @@ struct Interface : Emulator::Interface {
         ExpansionIdFreezer = 4, ExpansionIdRetroReplay = 5, ExpansionIdGeoRam = 6, ExpansionIdReu = 7,
         ExpansionIdReuRetroReplay = 8, ExpansionIdRS232 = 9, ExpansionIdFastloader = 10,
         ExpansionIdFinalChessCard = 11, ExpansionIdSuperCpu = 12, ExpansionIdSuperCpuReu = 13,
-        ExpansionIdExpert = 14,
+        ExpansionIdExpert = 14, ExpansionIdGmod2 = 15,
     };
     
     enum CartridgeId {

@@ -4,7 +4,8 @@
 
 namespace LIBC64 {
 
-Gmod2::Gmod2(System* system) : GameCart(system, true, false), flash(Emulator::Flash040::TypeNormal) {
+Gmod2::Gmod2(System* system) : Cart(system, true, false), flash(Emulator::Flash040::TypeNormal) {
+    setId( Interface::ExpansionIdGmod2 );
     init();
 }
 
@@ -109,23 +110,60 @@ auto Gmod2::write() -> void {
     }   
 }
 
+auto Gmod2::setRom(Emulator::Interface::Media* media, uint8_t* rom, unsigned romSize) -> void {
+    if (media->secondary) {
+        setEeprom( media, rom, romSize );
+        return;
+    }
+
+    if ( (this->rom == nullptr) && (rom == nullptr) )
+        return;
+
+    if (this->rom && (rom == nullptr)) {
+        if (media != this->media)
+            return;
+
+        write(); // unset
+    }
+
+    this->media = media;
+    this->rom = rom;
+    this->romSize = romSize;
+
+    readHeader();
+
+    cartridgeId = Interface::CartridgeIdGmod2;
+
+    if ( !readChips() )
+        assumeChips();
+
+    prepare();
+}
+
 // eeprom
-auto Gmod2::setSecondaryRom(Emulator::Interface::Media* media, uint8_t* rom, unsigned romSize) -> void {
+auto Gmod2::setEeprom(Emulator::Interface::Media* media, uint8_t* rom, unsigned romSize) -> void {
+    int _referencedId;
 
-    if (this->romSecondary && (rom == nullptr))
-        // unset
-        writeEeprom();
+    if (this->media == nullptr) {
+        _referencedId = media->id;
+    } else
+        _referencedId = this->media->id + 3;
 
-    this->romSecondary = rom;
-    mediaSecondary = media;
-    
-	if (!this->rom) // check for primary rom
-		return;
-	
-	std::memset( eepromData, 0xff, 2 * 1024 );
+    if (media->id == _referencedId) {
+        if (this->romSecondary && (rom == nullptr)) {
+            if (media != mediaSecondary)
+                return;
+            writeEeprom(); // unset
+        }
 
-	if (rom)
-		std::memcpy( eepromData, rom, std::min( (unsigned)(2 * 1024), romSize ) );
+        this->romSecondary = rom;
+        mediaSecondary = media;
+
+        std::memset( eepromData, 0xff, 2 * 1024 );
+
+        if (rom)
+            std::memcpy( eepromData, rom, std::min( (unsigned)(2 * 1024), romSize ) );
+    }
 }
 
 auto Gmod2::writeEeprom() -> void {
@@ -203,7 +241,7 @@ auto Gmod2::writeUltimaxRomH( uint16_t addr, uint8_t data ) -> void {
     flash.write( (addr & 0x1fff) | (bank << 13), data );
 }
 
-auto Gmod2::serializeStep2(Emulator::Serializer& s) -> void {
+auto Gmod2::serialize(Emulator::Serializer& s) -> void {
 
     s.integer( bank );
 

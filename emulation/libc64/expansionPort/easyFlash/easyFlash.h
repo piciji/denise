@@ -70,8 +70,6 @@ struct EasyFlash : Cart {
     auto getJumper( unsigned jumperId ) -> bool;
     
     auto updateDeviceState() -> void;
-	
-	auto protectFromDeletion() -> bool { return true; }
 
     auto getSizeNotConsideredForMemorySerialization() -> unsigned;
 };

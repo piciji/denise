@@ -101,6 +101,9 @@ auto System::setExpansion( Interface::ExpansionId id ) -> void {
         case Interface::ExpansionIdExpert:
             expansionPort = expert;
             break;
+        case Interface::ExpansionIdGmod2:
+            expansionPort = gmod2;
+            break;
     }
 
     cpu.expansionPort = expansionPort;
@@ -200,6 +203,9 @@ auto System::analyzeExpansion(uint8_t* data, unsigned size, std::string suffix) 
             break;
         case Interface::CartridgeIdExpert:
             useExpansion = interface->getExpansionById( Interface::ExpansionIdExpert );
+            break;
+        case Interface::CartridgeIdGmod2:
+            useExpansion = interface->getExpansionById( Interface::ExpansionIdGmod2 );
             break;
         default:
             break;

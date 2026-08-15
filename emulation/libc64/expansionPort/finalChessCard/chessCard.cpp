@@ -59,8 +59,19 @@ auto FinalChessCard::setRom(Emulator::Interface::Media* media, uint8_t* rom, uns
                 }
             }
         }
-    } else
-        Cart::setRom(media, rom, romSize);
+    } else {
+        if ( (this->rom == nullptr) && (rom == nullptr) )
+            return;
+
+        this->media = media;
+        this->rom = rom;
+        this->romSize = romSize;
+
+        readHeader();
+
+        if ( !readChips() )
+            assumeChips();
+    }
 }
 
 auto FinalChessCard::reset(bool softReset) -> void {
@@ -188,7 +199,7 @@ auto FinalChessCard::isWriteProtected() -> bool {
     return writeProtectRAM;
 }
 
-auto FinalChessCard::serializeStep2(Emulator::Serializer& s) -> void {
+auto FinalChessCard::serialize(Emulator::Serializer& s) -> void {
     s.integer( cycles );
     s.integer( latch );
     s.integer( latch2 );

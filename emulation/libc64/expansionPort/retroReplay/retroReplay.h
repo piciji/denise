@@ -74,8 +74,7 @@ struct RetroReplay : FreezeButton {
     //auto isBootable( ) -> bool;
     auto serialize(Emulator::Serializer& s) -> void;
     auto createImage(unsigned& imageSize, uint8_t id) -> uint8_t*;
-	
-	auto protectFromDeletion() -> bool { return true; }
+
     auto getSizeNotConsideredForMemorySerialization() -> unsigned;
 };
 

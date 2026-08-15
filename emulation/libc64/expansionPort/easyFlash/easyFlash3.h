@@ -93,8 +93,6 @@ struct EasyFlash3 : FreezeButton {
     auto isBootable( ) -> bool;
     
     auto updateDeviceState() -> void;
-	
-	auto protectFromDeletion() -> bool { return true; }
 
     auto hasCustomButton() -> bool { return true; } // menu button of EF3
 

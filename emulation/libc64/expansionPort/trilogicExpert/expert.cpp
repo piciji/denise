@@ -16,9 +16,17 @@ auto Expert::setRom(Emulator::Interface::Media* media, uint8_t* rom, unsigned ro
     if ( (this->rom == nullptr) && (rom == nullptr) )
         return;
 
-    build( Interface::CartridgeIdExpert, rom, romSize );
-
     this->media = media;
+    this->rom = rom;
+    this->romSize = romSize;
+
+    readHeader();
+
+    cartridgeId = Interface::CartridgeIdExpert;
+
+    if ( !readChips() )
+        assumeChips();
+
     prepare();
 }
 

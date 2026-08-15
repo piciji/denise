@@ -1028,8 +1028,13 @@ auto MediaLayout::translate(NavElement& nav) -> void {
     bool isC64 = dynamic_cast<LIBC64::Interface*>(emulator);
     auto mediaGroup = nav.mediaGroup;
     auto mediaGroupLayout = dynamic_cast<MediaGroupLayout*>(nav.layout);
-    
-    mediaGroupLayout->setText( trans->get( mediaGroup->name + "_insert") );
+
+    auto transInsert = trans->getOrEmpty(mediaGroup->name + "_insert");
+    if (transInsert.empty())
+        transInsert = trans->get("cart_insert", {{"%cart%", mediaGroup->name}});
+
+    mediaGroupLayout->setText( transInsert );
+
     if (mediaGroup->isProgram())
         mediaGroupLayout->inject.setText( trans->get("program_inject") );
     else if (mediaGroup->isTape())

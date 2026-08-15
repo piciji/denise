@@ -390,6 +390,10 @@ auto MediaGroupLayout::build(unsigned previewFontSize) -> void {
                 && (media->id & 1))
                 spacing += 20;
 
+            if (isC64 && (media->group->id == LIBC64::Interface::MediaGroupIdExpansionGmod2)
+                && (media->id == 2))
+                spacing += 20;
+
             blockContainer.append(*block, {~0u, 0u}, spacing);
         }
             

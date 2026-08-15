@@ -29,16 +29,12 @@ auto Cart::setRom(Emulator::Interface::Media* media, uint8_t* rom, unsigned romS
         
     if ( (this->rom == nullptr) && (rom == nullptr) )
         return;
-    
-	if (this->rom && (rom == nullptr))
-        write(); // unset
-	
+
     auto _cartridgeId = (media && media->pcbLayout) ? media->pcbLayout->id : 0;
     
     auto newCart = build( (Interface::CartridgeId)_cartridgeId, rom, romSize );
 	
 	newCart->media = media;
-	newCart->prepare();
   
     assign( newCart );
 }
@@ -58,9 +54,7 @@ auto Cart::build( Interface::CartridgeId cartridgeId, uint8_t* _rom, unsigned _r
         if (cart->cartridgeId != cartridgeId) {
             cartridgeId = cart->cartridgeId;
             // if user doesn't request a specific cart and analyzing header detects a specific cart
-			
-			if (!cart->protectFromDeletion())
-				delete cart;                        
+            delete cart;
             // lets recreate by detected type
             return build( cartridgeId, _rom, _romSize );
         }        
@@ -294,8 +288,7 @@ auto Cart::serialize(Emulator::Serializer& s) -> void {
             cart->cartridgeId = (Interface::CartridgeId)_cartridgeId;
             if (!cart->readChips())
                 cart->assumeChips();            
-            			
-			cart->prepare();
+
             assign( cart );            
             cart->serializeStep2( s );
             
