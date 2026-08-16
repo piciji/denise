@@ -38,7 +38,6 @@ struct Fileloader {
 
     auto anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore ) -> void;
     auto load(Emulator::Interface* emulator, Emulator::Interface::Media* media) -> void;
-    auto eject(Emulator::Interface* emulator, Emulator::Interface::MediaGroup* mediaGroup, bool secondaryOnly) -> void;
     auto eject(Emulator::Interface* emulator, Emulator::Interface::Media* media) -> void;
     auto applyPreviewFont(Emulator::Interface* emulator, unsigned fontSize) -> void;
     auto previewFile( std::string filePath, Emulator::Interface* emulator, Emulator::Interface::Media* media = nullptr ) -> std::vector<GUIKIT::BrowserWindow::Listing>;

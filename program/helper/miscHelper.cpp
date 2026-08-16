@@ -178,7 +178,7 @@ auto MiscHelper::setExpansionSelection( Emulator::Interface* emulator ) -> void 
 
             auto media = emulator->getMedia( mediaGroup, mediaId );
 
-            if (media && !media->secondary)
+            if (media && !media->parent)
                 mediaGroup.selected = media;
         }
 
@@ -200,7 +200,7 @@ auto MiscHelper::setExpansionSelection( Emulator::Interface* emulator ) -> void 
 
         for(auto& media : expansion.mediaGroup->media) {
 
-            if (!media.pcbLayout || media.secondary) {
+            if (!media.pcbLayout || media.parent) {
                 continue;
             }
 

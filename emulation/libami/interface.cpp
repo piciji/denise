@@ -80,7 +80,7 @@ auto Interface::prepareMedia() -> void {
 
         for(auto& media : group.media) {
             media.pcbLayout = nullptr;
-            media.secondary = false;
+            media.parent = nullptr;
         }
     }
 }
@@ -99,7 +99,7 @@ auto Interface::prepareExpansions() -> void {
 
     for (auto& group : mediaGroups) {
         for (auto& media : group.media) {   
-            media.pcbLayout = (!media.secondary && group.expansion && group.expansion->pcbs.size())
+            media.pcbLayout = (!media.parent && group.expansion && group.expansion->pcbs.size())
             ? &group.expansion->pcbs[0] : nullptr;
         }
     }

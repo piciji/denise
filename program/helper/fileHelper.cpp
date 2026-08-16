@@ -171,7 +171,7 @@ auto FileHelper::updateSaveIdent(Emulator::Interface::Media* media, FileSetting*
         return;
     }
 
-    if ( (media->group->isExpansion() && !media->group->expansion->isFastloader() && !media->group->expansion->isTurboCart() && !media->group->expansion->isRam() && !media->secondary)
+    if ( (media->group->isExpansion() && !media->group->expansion->isFastloader() && !media->group->expansion->isTurboCart() && !media->group->expansion->isRam() && !media->parent)
     || (!_media && !media->group->isProgram())
     || (media->group->isDisk() && !_media->group->isDisk() && !_media->group->isExpansion())
     || (media->group->isTape() && !_media->group->isDisk() && !_media->group->isExpansion())) {

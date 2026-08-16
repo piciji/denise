@@ -104,9 +104,7 @@ struct Reu : ExpansionPort {
     auto writeUltimaxA0( uint16_t addr, uint8_t data ) -> void;
 
     auto hasRom() -> bool { return rom ? true : false; }
-	
-	auto hasSecondaryRom() -> bool { return true; }
-	
+
 	auto setExpander( ExpansionPort* expander ) -> void;
     auto getSizeNotConsideredForMemorySerialization() -> unsigned;
 

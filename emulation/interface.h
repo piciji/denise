@@ -189,7 +189,7 @@ struct Interface {
         uintptr_t guid; //free to use
         MediaGroup* group;        
         PCBLayout* pcbLayout;
-        bool secondary; // secondary memory on cartridges, like Eeprom besides Flash on Gmod2 or REU ROM besides RAM dump
+        Media* parent; // secondary/tertiary memory on cartridges
     };   
 
     struct MediaGroup {
@@ -566,7 +566,6 @@ struct Interface {
     virtual auto isWriteProtectedExpansion(Media* media) -> bool { return false; }
     virtual auto createExpansionImage(MediaGroup* group, unsigned& imageSize, uint8_t id = 0) -> uint8_t* { return nullptr; }
     virtual auto isExpansionBootable() -> bool { return false; }
-	virtual auto hasExpansionSecondaryRom() -> bool { return false; }
     virtual auto isExpansionUnsupported() -> bool { return false; }
     
 	// program 

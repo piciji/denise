@@ -173,22 +173,6 @@ auto States::loadFirmwarePaths( GUIKIT::Settings* loadSettings ) -> void {
     }
 }
 
-auto States::oneMediumOnly(Emulator::Interface::MediaGroup* group, Emulator::Interface::Media* mediaInUse) -> void {
-    
-    for( auto& media : group->media ) {
-        
-        if ((&media == mediaInUse) || media.secondary)
-            continue;
-
-        media.guid = (uintptr_t)(nullptr);
-        filePool->assign( _ident(emulator, media.name), nullptr);
-        updateImage(nullptr, &media);
-    }
-    
-    if (!mediaInUse)
-        emulator->ejectMedium( group->selected ); 
-}
-
 auto States::loadImagePaths( GUIKIT::Settings* loadSettings ) -> std::vector<Emulator::Interface::Media*> {
     std::vector<Emulator::Interface::Media*> loadedMedia;
     
@@ -202,7 +186,6 @@ auto States::loadImagePaths( GUIKIT::Settings* loadSettings ) -> std::vector<Emu
         bool IPMode = mediaGroup.isExpansion() && mediaGroup.expansion->isRS232();
 
         auto mediaSelected = mediaGroup.selected;
-        Emulator::Interface::Media* mediaInUse = nullptr;
         
         for( auto& media : mediaGroup.media ) {
 
@@ -210,25 +193,31 @@ auto States::loadImagePaths( GUIKIT::Settings* loadSettings ) -> std::vector<Emu
             setting->update();
 
             if (setting->path.empty()) {
-                if (!mediaSelected || media.secondary) {
+                if (!mediaSelected || (mediaSelected == &media || mediaSelected == media.parent))
                     emulator->ejectMedium( &media );
-                    media.guid = (uintptr_t)(nullptr);
-                    filePool->assign( _ident(emulator, media.name), nullptr);  
-                    updateImage( nullptr, &media );
-                }
+
+                media.guid = (uintptr_t)(nullptr);
+                filePool->assign( _ident(emulator, media.name), nullptr);
+                updateImage( nullptr, &media );
+                continue;
+            }
+
+            auto mediaInUse = (!mediaSelected || media.parent == mediaSelected)
+                ? &media
+                : mediaSelected;
+
+            if (mediaInUse != &media) { // non selected CRT images
+                media.guid = (uintptr_t)(nullptr);
+                filePool->assign( _ident(emulator, media.name), nullptr);
+                updateImage( nullptr, &media );
                 continue;
             }
             
-            if (mediaSelected && !media.secondary)
-                mediaInUse = mediaSelected;
-            else
-                mediaInUse = &media;
-            
-            InsertImage* inserted = findImage( mediaInUse );
+            InsertImage* _inserted = findImage( mediaInUse );
 
-            if (inserted) {
-                if ((inserted->setting->path == setting->path)
-                    && (inserted->setting->id == setting->id)) {
+            if (_inserted) {
+                if ((_inserted->setting->path == setting->path)
+                    && (_inserted->setting->id == setting->id)) {
 					
                     if (!GUIKIT::Vector::find( loadedMedia, mediaInUse ))
                         loadedMedia.push_back( mediaInUse );
@@ -237,7 +226,7 @@ auto States::loadImagePaths( GUIKIT::Settings* loadSettings ) -> std::vector<Emu
             }
 
             if (IPMode) {
-                MiscHelper::prepareSocket( &media, emulator, setting->path );
+                MiscHelper::prepareSocket( mediaInUse, emulator, setting->path );
                 updateImage( setting, mediaInUse );
                 continue;
             }
@@ -277,9 +266,6 @@ auto States::loadImagePaths( GUIKIT::Settings* loadSettings ) -> std::vector<Emu
             if (!GUIKIT::Vector::find(loadedMedia, mediaInUse))
                 loadedMedia.push_back(mediaInUse);
         }
-                        
-        if (mediaSelected)
-            oneMediumOnly( &mediaGroup, mediaInUse ? mediaSelected : nullptr );            
     }
 
     filePool->unloadOrphaned();
@@ -434,7 +420,7 @@ auto States::updateSaveable() -> void {
                 auto expansionMediaGroup = emuExpansion->mediaGroup;
                 auto expansionMediaGroupExpanded = emuExpansion->mediaGroupExpanded;
 
-                if ( ((expansionMediaGroup == &mediaGroup) || (expansionMediaGroupExpanded == &mediaGroup)) && (!media.secondary || emulator->hasExpansionSecondaryRom()) )
+                if ( ((expansionMediaGroup == &mediaGroup) || (expansionMediaGroupExpanded == &mediaGroup)) )
 					insert->setting->setSaveable( !insert->setting->path.empty() );
 				else
 					insert->setting->setSaveable( false );

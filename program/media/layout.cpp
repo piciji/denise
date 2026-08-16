@@ -80,7 +80,7 @@ MediaGroupLayout::Block::Header::Header(Emulator::Interface::Media* media, Emula
 
     deviceName.setFont(GUIKIT::Font::system("bold"));
     inUse.setFont(GUIKIT::Font::system("bold"));
-    if (!media->secondary && group->selected)
+    if (!media->parent && group->selected)
         append(inUse, {0u, 0u}, 5);
     else
         append(deviceName, {0u, 0u}, 10);
@@ -119,7 +119,7 @@ MediaGroupLayout::Block::Selector::Selector(Emulator::Interface::Media* media, E
         append(*pathCombo, { ~0u, 0u }, 10);
     }    
 
-    if (media->pcbLayout && group->expansion && !media->secondary && (group->expansion->pcbs.size() > 0)) {
+    if (media->pcbLayout && group->expansion && !media->parent && (group->expansion->pcbs.size() > 0)) {
         for (auto& pcb : group->expansion->pcbs) {
             if (!group->isHardDisk() || (media->id == 0) || (pcb.id < 2))
                 combo.append( pcb.name, pcb.id );
@@ -131,7 +131,7 @@ MediaGroupLayout::Block::Selector::Selector(Emulator::Interface::Media* media, E
         append(combo, {0u, 0u}, 10);
     }
                   
-    if (group->expansion && !media->secondary && (group->expansion->jumpers.size() > 0) ) {
+    if (group->expansion && !media->parent && (group->expansion->jumpers.size() > 0) ) {
       //  append(jumperLabel, {0u, 0u}, 5 );
         
         for(auto& jumper : group->expansion->jumpers) {
@@ -411,7 +411,7 @@ auto MediaGroupLayout::build(unsigned previewFontSize) -> void {
 
         auto& header = block->header;
         
-        if (!media.secondary && mediaGroup->selected)
+        if (!media.parent && mediaGroup->selected)
             radioGroup.push_back( &header.inUse );           
                 
         if (mediaGroup->expansion)            
@@ -446,7 +446,7 @@ auto MediaGroupLayout::build(unsigned previewFontSize) -> void {
 }
 
 auto MediaGroupLayout::setJumperSettings(Emulator::Interface::Media* media) -> void {
-    if (media->secondary)
+    if (media->parent)
         return;
 
     auto block = getBlock( media );

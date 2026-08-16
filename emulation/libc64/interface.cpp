@@ -102,7 +102,8 @@ auto Interface::prepareMedia() -> void {
         group.media.push_back({1, "REU Memory 2", 0, &group});
         group.media.push_back({2, "REU Memory 3", 0, &group});
         group.media.push_back({3, "REU Memory 4", 0, &group});
-        group.media.push_back({4, "REU Rom", 0, &group});
+        group.media.push_back({4, "REU Rom 1", 0, &group});
+	    group.media.push_back({5, "REU Rom 2", 0, &group});
 
         group.selected = &group.media[0];  
 	}
@@ -210,20 +211,21 @@ auto Interface::prepareMedia() -> void {
         
         for(auto& media : group.media) {
             media.pcbLayout = nullptr;
-            media.secondary = false;
+            media.parent = nullptr;
         }
     }
        
-    mediaGroups[MediaGroupIdExpansionReu].media[4].secondary = true;
+    mediaGroups[MediaGroupIdExpansionReu].media[4].parent = &mediaGroups[MediaGroupIdExpansionReu].media[0];
+    mediaGroups[MediaGroupIdExpansionReu].media[5].parent = &mediaGroups[MediaGroupIdExpansionReu].media[1];
 
-    mediaGroups[MediaGroupIdExpansionFinalChessCard].media[2].secondary = true;
-    mediaGroups[MediaGroupIdExpansionFinalChessCard].media[3].secondary = true;
-    mediaGroups[MediaGroupIdExpansionFinalChessCard].media[4].secondary = true;
-    mediaGroups[MediaGroupIdExpansionFinalChessCard].media[5].secondary = true;
+    mediaGroups[MediaGroupIdExpansionFinalChessCard].media[2].parent = &mediaGroups[MediaGroupIdExpansionFinalChessCard].media[0];
+    mediaGroups[MediaGroupIdExpansionFinalChessCard].media[3].parent = &mediaGroups[MediaGroupIdExpansionFinalChessCard].media[1];
+    mediaGroups[MediaGroupIdExpansionFinalChessCard].media[4].parent = &mediaGroups[MediaGroupIdExpansionFinalChessCard].media[0];
+    mediaGroups[MediaGroupIdExpansionFinalChessCard].media[5].parent = &mediaGroups[MediaGroupIdExpansionFinalChessCard].media[1];
 
-    mediaGroups[MediaGroupIdExpansionGmod2].media[3].secondary = true;
-    mediaGroups[MediaGroupIdExpansionGmod2].media[4].secondary = true;
-    mediaGroups[MediaGroupIdExpansionGmod2].media[5].secondary = true;
+    mediaGroups[MediaGroupIdExpansionGmod2].media[3].parent = &mediaGroups[MediaGroupIdExpansionGmod2].media[0];
+    mediaGroups[MediaGroupIdExpansionGmod2].media[4].parent = &mediaGroups[MediaGroupIdExpansionGmod2].media[1];
+    mediaGroups[MediaGroupIdExpansionGmod2].media[5].parent = &mediaGroups[MediaGroupIdExpansionGmod2].media[2];
 }
 
 auto Interface::prepareExpansions() -> void {
@@ -401,7 +403,7 @@ auto Interface::prepareExpansions() -> void {
             if (ef3)
                 media.pcbLayout = (media.id == 0) ? &group.expansion->pcbs[0] : nullptr;
             else
-                media.pcbLayout = (!media.secondary && group.expansion && group.expansion->pcbs.size())
+                media.pcbLayout = (!media.parent && group.expansion && group.expansion->pcbs.size())
                         ? &group.expansion->pcbs[0] : nullptr;
         }
     }
@@ -1310,7 +1312,7 @@ auto Interface::insertExpansionImage(Media* media, uint8_t* data, unsigned size)
     if (group->expansion->id == ExpansionIdGame)
         system->gameCart->setRom(media, data, size);
     else if (group->expansion->id == ExpansionIdReu)
-        !media->secondary ? system->reu->setRam(data, size) : system->reu->setRom(media, data, size);
+        !media->parent ? system->reu->setRam(data, size) : system->reu->setRom(media, data, size);
     else if (group->expansion->id == ExpansionIdFreezer)
         system->freezer->setRom(media, data, size);
     else if (group->expansion->id == ExpansionIdEasyFlash)
@@ -1407,7 +1409,7 @@ auto Interface::ejectExpansionImage(Media* media) -> void {
     if (group->expansion->id == ExpansionIdGame)
         system->gameCart->setRom(media, nullptr, 0);
     else if (group->expansion->id == ExpansionIdReu) {
-        !media->secondary ? system->reu->unsetRam() : system->reu->setRom(media, nullptr, 0);
+        !media->parent ? system->reu->unsetRam() : system->reu->setRom(media, nullptr, 0);
     } else if (group->expansion->id == ExpansionIdFreezer)
         system->freezer->setRom(media, nullptr, 0);
     else if (group->expansion->id == ExpansionIdEasyFlash)
@@ -1456,11 +1458,6 @@ auto Interface::createExpansionImage(MediaGroup* group, unsigned& imageSize, uin
 
 auto Interface::isExpansionBootable() -> bool {
     return system->expansionPort->isBootable();
-}
-
-auto Interface::hasExpansionSecondaryRom() -> bool {
-	
-	return system->expansionPort->hasSecondaryRom();
 }
 
 auto Interface::insertProgram(Media* media, uint8_t* data, unsigned size) -> void {

@@ -216,14 +216,6 @@ auto Autoloader::postProcessing() -> void {
 				
 				settings->set<unsigned>("expansion", useExpansion->id);
 
-                if (useExpansion->isRam()) {
-                    fileloader->eject( ddControl.emulator, useExpansion->mediaGroup, true );
-
-                    if (useExpansion->mediaGroupExpanded) {
-                        fileloader->eject( ddControl.emulator, useExpansion->mediaGroupExpanded, true );
-                    }
-                }
-
                 if (emuView && emuView->systemLayout)
                     emuView->systemLayout->setExpansion( useExpansion );
 			}
@@ -407,7 +399,7 @@ auto Autoloader::needSlotsForDragnDrop(std::vector<std::string> files) -> unsign
                 }
 
                 for(auto& media : prefered->media) {
-                    if (!media.secondary)
+                    if (!media.parent)
                         count++;
                 }
                 return count;
@@ -466,7 +458,7 @@ auto Autoloader::loadFile( GUIKIT::File* file, GUIKIT::File::Item* item ) -> voi
 					if (!media)
 						media = &mediaGroup.media[ _pos ];
 
-                    if (media->secondary)
+                    if (media->parent)
                         return loadFiles();
 
                     ddControl.emulator = emulator;

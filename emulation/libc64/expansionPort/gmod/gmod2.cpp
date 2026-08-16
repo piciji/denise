@@ -111,16 +111,13 @@ auto Gmod2::write() -> void {
 }
 
 auto Gmod2::setRom(Emulator::Interface::Media* media, uint8_t* rom, unsigned romSize) -> void {
-    if (media->secondary) {
+    if (media->parent) {
         setEeprom( media, rom, romSize );
         return;
     }
 
     if (this->rom && (rom == nullptr)) {
-        if (media != this->media)
-            return;
-
-        write(); // unset
+        write();
     }
 
     Cart::setRom(media, rom, romSize);
@@ -132,29 +129,18 @@ auto Gmod2::setRom(Emulator::Interface::Media* media, uint8_t* rom, unsigned rom
 
 // eeprom
 auto Gmod2::setEeprom(Emulator::Interface::Media* media, uint8_t* rom, unsigned romSize) -> void {
-    int _referencedId;
-
-    if (this->media == nullptr) {
-        _referencedId = media->id;
-    } else
-        _referencedId = this->media->id + 3;
-
-    if (media->id == _referencedId) {
-        if (this->romSecondary && (rom == nullptr)) {
-            if (media != mediaSecondary)
-                return;
-            writeEeprom(); // unset
-        }
-
-        this->romSecondary = rom;
-        mediaSecondary = media;
-
-        std::memset( eepromData, 0xff, 2 * 1024 );
-
-        if (rom)
-            std::memcpy( eepromData, rom, std::min( (unsigned)(2 * 1024), romSize ) );
+    if (this->romSecondary && (rom == nullptr)) {
+        writeEeprom();
     }
-}
+
+    this->romSecondary = rom;
+    mediaSecondary = media;
+
+    std::memset( eepromData, 0xff, 2 * 1024 );
+
+    if (rom)
+        std::memcpy( eepromData, rom, std::min( (unsigned)(2 * 1024), romSize ) );
+ }
 
 auto Gmod2::writeEeprom() -> void {
 	bool _dirty = eeprom.dirty;

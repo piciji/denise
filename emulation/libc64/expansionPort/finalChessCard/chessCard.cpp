@@ -19,21 +19,15 @@ FinalChessCard::~FinalChessCard() {
 }
 
 auto FinalChessCard::setRom(Emulator::Interface::Media* media, uint8_t* rom, unsigned romSize) -> void {
-    if (media->secondary) {
-        int _referencedId;
+    if (media->parent) {
 
-        if (this->media == nullptr) {
-            _referencedId = media->id;
-        } else
-            _referencedId = this->media->id + 2;
-
-        if (media->id == _referencedId) {
+        if (media->id == 2 || media->id == 3) { // second ROM
             if (!rom || (romSize != (32 * 1024)))
                 romFCC = nullptr;
             else
                 romFCC = rom;
 
-        } else if (media->id == (_referencedId + 2) ) {
+        } else if (media->id == 4 || media->id == 5) { // battery backed-up SRAM
             if (rom) {
                 if (romSize >= (8 * 1024))
                     romSize = 8 * 1024;

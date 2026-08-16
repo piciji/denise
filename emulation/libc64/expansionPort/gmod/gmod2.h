@@ -55,8 +55,6 @@ struct Gmod2 : Cart {
 
     auto setSecondaryWriteProtect(bool state) -> void;
     auto isSecondaryWriteProtected() -> bool;
-	
-	auto hasSecondaryRom() -> bool { return true; }
 
     auto getSizeNotConsideredForMemorySerialization() -> unsigned;
 

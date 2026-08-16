@@ -368,7 +368,7 @@ auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {
                 
                 layout->selectedBlock = block;
                 
-                if (layout->mediaGroup->selected && !block->media->secondary) {
+                if (layout->mediaGroup->selected && !block->media->parent) {
                     layout->mediaGroup->selected = block->media;
                     settings->set<unsigned>( _underscore(layout->mediaGroup->name) + "_selected", block->media->id);
                     block->header.inUse.setChecked();
@@ -467,9 +467,9 @@ auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {
         };
 
         block->selector.open.setImage(&openImg);
-        block->header.eject.setImage(&ejectImg);		
+        block->header.eject.setImage(&ejectImg);
 
-        if (mediaGroup->expansion && !block->media->secondary) {
+        if (mediaGroup->expansion && !block->media->parent) {
             for (auto& jumper : mediaGroup->expansion->jumpers) {
 
                 unsigned jumperId = jumper.id;
@@ -968,7 +968,7 @@ auto MediaLayout::updateMediaBlock(MediaGroupLayout::Block* block, FileSetting* 
 
     if (pathCombo) {
         auto recentFile = fileloader->getRecentFile(emulator);
-        auto& files = recentFile->list(block->media->group, block->media->secondary, fSetting->path);
+        auto& files = recentFile->list(block->media->group, block->media->parent != nullptr, fSetting->path);
 
         //pathCombo->reset();
         std::vector<GUIKIT::ComboButton::Entry> rows;
@@ -1053,7 +1053,7 @@ auto MediaLayout::translate(NavElement& nav) -> void {
                 block->selector.open.setTooltip( trans->getA( "Final Chesscard ROMS tooltip" ) );
         }
         
-        if (mediaGroup->isExpansion() && !block->media->secondary) {
+        if (mediaGroup->isExpansion() && !block->media->parent) {
             unsigned id = 0;
             for( auto& pcb : mediaGroup->expansion->pcbs ) {
                 block->selector.combo.setText(id++, trans->get( pcb.name ));
@@ -1253,8 +1253,11 @@ auto MediaLayout::insertImage( MediaGroupLayout::Block* block, GUIKIT::File* fil
     auto data = mediaGroup->isHardDisk() && !file->isArchived() ? nullptr
         : file->archiveData(item->id);
 
-    bool updateGenericFileList = !media->secondary;
-    if (!mediaGroup->isExpansion() || media->secondary) {
+    bool updateGenericFileList = !media->parent;
+
+    auto insertedExpansion = emulator == activeEmulator && emulator->getExpansion()->mediaGroup == mediaGroup;
+
+    if (!mediaGroup->isExpansion() || (insertedExpansion && (media->parent && (mediaGroup->selected == media->parent)))) {
         emulator->ejectMedium(media);
         fileloader->updateFileSetting(fSetting, file, item);
         media->guid = uintptr_t(file);
@@ -1282,7 +1285,7 @@ auto MediaLayout::insertImage( MediaGroupLayout::Block* block, GUIKIT::File* fil
     }
 
     auto recentFile = fileloader->getRecentFile(emulator);
-    recentFile->add(mediaGroup, media->secondary, GUIKIT::File::buildRelativePath(file->getFile()), updateGenericFileList);
+    recentFile->add(mediaGroup, media->parent != nullptr, GUIKIT::File::buildRelativePath(file->getFile()), updateGenericFileList);
     if (view)
         view->updateRecentList(emulator);
 
@@ -1296,7 +1299,7 @@ auto MediaLayout::insertImage( MediaGroupLayout::Block* block, GUIKIT::File* fil
     if (view && !fromState && activeEmulator && mediaGroup->isTape())
         view->updateTapeIcons();
     
-    if (!dontUpdateSelected && mediaGroup->selected && !media->secondary && !block->header.inUse.checked() ) {
+    if (!dontUpdateSelected && mediaGroup->selected && !media->parent && !block->header.inUse.checked() ) {
         block->header.inUse.setChecked();
         layout->selectedBlock = block;
         layout->mediaGroup->selected = block->media;
@@ -1504,7 +1507,7 @@ auto MediaLayout::updateWriteProtection( Emulator::Interface::Media* media, bool
 }
 
 auto MediaLayout::updateJumper(Emulator::Interface::Media* media) -> void {
-    if (media->secondary)
+    if (media->parent)
         return;
 
     auto layout = getMediaGroupLayout(media->group);

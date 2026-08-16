@@ -327,8 +327,12 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
 
         for(auto& media : mediaGroup.media) {
             
-            if (selectedMedia && !media.secondary && (selectedMedia != &media) )
+            if (selectedMedia && !media.parent && (selectedMedia != &media) )
                 // only one media element at a time can be used for this group
+                continue;
+
+            if (selectedMedia && media.parent && (selectedMedia != media.parent) )
+                // only secondary and tertiary for this media element
                 continue;
             
             auto fSetting = FileSetting::getInstance( emulator, _underscore( media.name ) );
@@ -443,6 +447,8 @@ auto Program::powerOff() -> void {
         activeEmulator->powerOff();
         
         for(auto& mediaGroup : activeEmulator->mediaGroups) {
+            auto selectedMedia = mediaGroup.selected;
+
             for(auto& media : mediaGroup.media) {
                 
                 if (media.guid) {
@@ -456,7 +462,12 @@ auto Program::powerOff() -> void {
                 }                        
                 
                 filePool->assign( _ident(activeEmulator, media.name), nullptr);
-                activeEmulator->ejectMedium( &media );
+
+                if (!selectedMedia
+                    || (!media.parent && (selectedMedia == &media))
+                    || (media.parent && (selectedMedia == media.parent))
+                )
+                    activeEmulator->ejectMedium( &media );
 				
 				if (!cmd->noGui)
 					States::getInstance( activeEmulator )->updateImage( nullptr, &media );

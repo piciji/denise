@@ -71,9 +71,7 @@ struct States {
     auto updateExpansionJumper() -> void;
     
     auto updateWriteProtection(std::vector<Emulator::Interface::Media*> loadedMedia) -> void;
-    
-    auto oneMediumOnly(Emulator::Interface::MediaGroup* group, Emulator::Interface::Media* mediaInUse) -> void;
-    
+
     static auto getInstance( Emulator::Interface* emulator ) -> States*;
 };
 

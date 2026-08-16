@@ -689,14 +689,6 @@ auto Fileloader::previewFile( std::string filePath, Emulator::Interface* emulato
     return {};
 }
 
-auto Fileloader::eject(Emulator::Interface* emulator, Emulator::Interface::MediaGroup* mediaGroup, bool secondaryOnly) -> void {
-
-    for( auto& media : mediaGroup->media ) {
-        if (!secondaryOnly || media.secondary)
-            eject( emulator, &media);
-    }
-}
-
 auto Fileloader::eject(Emulator::Interface* emulator, Emulator::Interface::Media* media) -> void {
 
     if ( !media->group->isExpansion() ) {
@@ -878,8 +870,11 @@ auto Fileloader::insertImage(Emulator::Interface* emulator, Emulator::Interface:
 
     auto data = mediaGroup->isHardDisk() && !file->isArchived() ? nullptr : file->archiveData(item->id);
 
-    bool updateGenericFileList = !media->secondary;
-    if (!mediaGroup->isExpansion() || media->secondary) {
+    bool updateGenericFileList = !media->parent;
+
+    auto insertedExpansion = emulator == activeEmulator && emulator->getExpansion()->mediaGroup == mediaGroup;
+
+    if (!mediaGroup->isExpansion() || (insertedExpansion && (media->parent && (mediaGroup->selected == media->parent)))) {
         emulator->ejectMedium(media);
         updateFileSetting(fSetting, file, item);
         media->guid = uintptr_t(file);
@@ -904,7 +899,7 @@ auto Fileloader::insertImage(Emulator::Interface* emulator, Emulator::Interface:
     }
 
     auto recentFile = getRecentFile(emulator);
-    recentFile->add(mediaGroup, media->secondary, GUIKIT::File::buildRelativePath(file->getFile()), updateGenericFileList);
+    recentFile->add(mediaGroup, media->parent != nullptr, GUIKIT::File::buildRelativePath(file->getFile()), updateGenericFileList);
     if (view)
         view->updateRecentList(emulator);
 
@@ -913,7 +908,7 @@ auto Fileloader::insertImage(Emulator::Interface* emulator, Emulator::Interface:
     if (!fromState && view && activeEmulator && mediaGroup->isTape())
         view->updateTapeIcons();
 
-    if (!dontUpdateSelected && mediaGroup->selected && !media->secondary ) {
+    if (!dontUpdateSelected && mediaGroup->selected && !media->parent ) {
         mediaGroup->selected = media;
         settings->set<unsigned>(_underscore(mediaGroup->name) + "_selected", media->id);
     }
