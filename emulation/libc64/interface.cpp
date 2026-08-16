@@ -1350,9 +1350,6 @@ auto Interface::writeProtectExpansion(Media* media, bool state) -> void {
     } else if (group->expansion->id == ExpansionIdRetroReplay) {
         if (system->retroReplay->media == media)
             system->retroReplay->setWriteProtect( state );
-    } else if (group->expansion->id == ExpansionIdGame) {
-        if (system->gameCart->media == media)
-            system->gameCart->setWriteProtect( state );
     } else if (group->expansion->id == ExpansionIdGeoRam) {
 		if (system->geoRam->media == media)
             system->geoRam->setWriteProtect( state );
@@ -1384,9 +1381,6 @@ auto Interface::isWriteProtectedExpansion(Media* media) -> bool {
     } else if (group->expansion->id == ExpansionIdRetroReplay) {
         if (system->retroReplay->media == media)
             return system->retroReplay->isWriteProtected(  );
-    } else if (group->expansion->id == ExpansionIdGame) {
-        if (system->gameCart->media == media)
-            return system->gameCart->isWriteProtected();
     } else if (group->expansion->id == ExpansionIdGeoRam) {
 		if (system->geoRam->media == media)
 			return system->geoRam->isWriteProtected();

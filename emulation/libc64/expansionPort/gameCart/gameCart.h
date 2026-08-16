@@ -13,9 +13,6 @@ struct GameCart : Cart {
     auto create( Interface::CartridgeId cartridgeId, unsigned _size ) -> Cart*;
     auto assign(Cart* cart) -> void;
 
-    virtual auto setWriteProtect(bool state) -> void {}
-    virtual auto isWriteProtected() -> bool { return false; }
-
     virtual auto isBootable( ) -> bool {
         return rom ? true : false;
     }
