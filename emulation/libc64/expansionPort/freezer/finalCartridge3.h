@@ -63,9 +63,9 @@ namespace LIBC64 {
             Cart::assumeChips( {16384} );
         }
 
-        auto serializeStep2(Emulator::Serializer& s) -> void {
+        auto serializeSwitchedIn(Emulator::Serializer& s) -> void {
 
-            FreezeButton::serializeStep2( s );
+            FreezeButton::serialize( s );
 
             s.integer( enable );
         }

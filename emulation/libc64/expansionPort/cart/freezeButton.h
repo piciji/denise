@@ -85,9 +85,9 @@ struct FreezeButton : Cart {
         return false;        
     }
     
-    virtual auto serializeStep2(Emulator::Serializer& s) -> void {
+    virtual auto serialize(Emulator::Serializer& s) -> void {
 
-        Cart::serializeStep2( s );
+        Cart::serialize( s );
 
         s.integer( cyclesTillFreeze );
         s.integer( freezeArmed );
@@ -96,7 +96,7 @@ struct FreezeButton : Cart {
         s.integer( randomizer.xorShift32 );
     }
 
-    auto serializeCustom(Emulator::Serializer& s) -> void {
+    auto serializeNoCart(Emulator::Serializer& s) -> void {
 
         s.integer( cyclesTillFreeze );
         s.integer( freezeArmed );

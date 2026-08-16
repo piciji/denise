@@ -26,49 +26,19 @@ Cart::Cart(System* system, bool game, bool exrom) : ExpansionPort(system) {
 }
 
 auto Cart::setRom(Emulator::Interface::Media* media, uint8_t* rom, unsigned romSize) -> void {
-        
     if ( (this->rom == nullptr) && (rom == nullptr) )
         return;
 
-    auto _cartridgeId = (media && media->pcbLayout) ? media->pcbLayout->id : 0;
-    
-    auto newCart = build( (Interface::CartridgeId)_cartridgeId, rom, romSize );
-	
-	newCart->media = media;
-  
-    assign( newCart );
+    this->media = media;
+    this->rom = rom;
+    this->romSize = romSize;
+
+    readHeader();
+
+    if ( !readChips() )
+        assumeChips();
 }
-    
-auto Cart::build( Interface::CartridgeId cartridgeId, uint8_t* _rom, unsigned _romSize ) -> Cart* {
-    
-    if (!_rom || (_romSize == 0) )
-        cartridgeId = Interface::CartridgeIdNoRom;
-    
-    Cart* cart = create( cartridgeId, _romSize );
-    
-    cart->rom = _rom;
-    cart->romSize = _romSize;
-    
-    if( cart->readHeader( ) ) {
-        
-        if (cart->cartridgeId != cartridgeId) {
-            cartridgeId = cart->cartridgeId;
-            // if user doesn't request a specific cart and analyzing header detects a specific cart
-            delete cart;
-            // lets recreate by detected type
-            return build( cartridgeId, _rom, _romSize );
-        }        
-    } else
-        cart->cartridgeId = cartridgeId;
-    
-    if ( !cart->readChips() ) {
-        // no chip headers found, we assume it by user requested type
-        cart->assumeChips();
-    }    
-    
-    return cart;
-}
-        
+
 auto Cart::readHeader( ) -> bool {
     
     data = rom;
@@ -124,7 +94,7 @@ auto Cart::readChips() -> bool {
     
     uint8_t cheader[16]; //chip header
     
-    while(1) {
+    while(true) {
                         
         offset += sizeof cheader;
         
@@ -259,50 +229,8 @@ auto Cart::reset(bool softReset) -> void {
 
 auto Cart::serialize(Emulator::Serializer& s) -> void {
     
-    unsigned _cartridgeId = cartridgeId;
-    s.integer(_cartridgeId);
-    
-    if (s.mode() == Emulator::Serializer::Mode::Load) {
-        
-        if ( (_cartridgeId == Interface::CartridgeIdDefault) && 
-                (cartridgeId == Interface::CartridgeIdDefault8k || cartridgeId == Interface::CartridgeIdDefault16k || cartridgeId == Interface::CartridgeIdUltimax ));
-        // state file of a standard cartridge was created from a CRT and reloaded from a BIN.
-        // don't recreate because standard CRT cart id is same for 8k, 16k and ultimax.
-        // serialization frame is identical for these cartridges, so no problem
-        else if (cartridgeId != _cartridgeId) {
-            // cartridge id of state file mismatches with loaded one.
-            // it seems the cart which was loaded while creating this save state isn't present anymore.
-            // we need to recreate the expected cartridge in order to unserialize the right data.
-            // probably the loaded state file is unusable but we don't want to crash the emulation
-            // on top of that when data is unserialized in wrong order.
-            
-            auto cart = create( (Interface::CartridgeId)_cartridgeId, 0 );
-            
-            if (_cartridgeId != Interface::CartridgeIdNoRom) {
-                cart->rom = rom;
-                cart->romSize = romSize;
-                cart->readHeader();
-            }
-            
-            // force cart id from state.
-            cart->cartridgeId = (Interface::CartridgeId)_cartridgeId;
-            if (!cart->readChips())
-                cart->assumeChips();            
-
-            assign( cart );            
-            cart->serializeStep2( s );
-            
-            return;
-        }
-    }
-    
-    serializeStep2( s );
-}
-
-auto Cart::serializeStep2(Emulator::Serializer& s) -> void {
-    
-    int romLId = cRomL ? cRomL->id : -1;
-    int romHId = cRomH ? cRomH->id : -1;
+    int romLId = cRomL ? (int)cRomL->id : -1;
+    int romHId = cRomH ? (int)cRomH->id : -1;
 
     s.integer(romLId);
     s.integer(romHId);

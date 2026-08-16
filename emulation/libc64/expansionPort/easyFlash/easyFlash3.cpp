@@ -896,7 +896,7 @@ auto EasyFlash3::serialize(Emulator::Serializer& s) -> void {
     if (!s.memUsage() && s.mode() == (Emulator::Serializer::Mode::Load) )
         updateDeviceState();
 
-    FreezeButton::serializeCustom(s);        
+    FreezeButton::serializeNoCart(s);
 }
 
 auto EasyFlash3::getSizeNotConsideredForMemorySerialization() -> unsigned {

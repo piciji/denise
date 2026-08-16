@@ -112,19 +112,9 @@ auto Fastloader::setRom(Emulator::Interface::Media* media, uint8_t* rom, unsigne
         rom += 2;
     }
 
-    if ((this->rom == nullptr) && (rom == nullptr))
-        return;
-
-    this->media = media;
-    this->rom = rom;
-    this->romSize = romSize;
-
-    readHeader();
+    Cart::setRom(media, rom, romSize);
 
     this->cartridgeId = static_cast<Interface::CartridgeId>(media->pcbLayout->id);
-
-    if (!readChips())
-        assumeChips();
 
     exRom = game = true;
 }
@@ -262,7 +252,7 @@ auto Fastloader::getJumper(unsigned jumperId) -> bool {
 auto Fastloader::serialize(Emulator::Serializer& s) -> void {
     unsigned _cartridgeId = cartridgeId;
     s.integer(_cartridgeId);
-    Cart::serializeStep2( s );
+    Cart::serialize( s );
 
     s.integer(kernalJumper);
     s.integer( mode );

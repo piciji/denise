@@ -116,9 +116,6 @@ auto Gmod2::setRom(Emulator::Interface::Media* media, uint8_t* rom, unsigned rom
         return;
     }
 
-    if ( (this->rom == nullptr) && (rom == nullptr) )
-        return;
-
     if (this->rom && (rom == nullptr)) {
         if (media != this->media)
             return;
@@ -126,16 +123,9 @@ auto Gmod2::setRom(Emulator::Interface::Media* media, uint8_t* rom, unsigned rom
         write(); // unset
     }
 
-    this->media = media;
-    this->rom = rom;
-    this->romSize = romSize;
-
-    readHeader();
+    Cart::setRom(media, rom, romSize);
 
     cartridgeId = Interface::CartridgeIdGmod2;
-
-    if ( !readChips() )
-        assumeChips();
 
     prepare();
 }
@@ -242,6 +232,8 @@ auto Gmod2::writeUltimaxRomH( uint16_t addr, uint8_t data ) -> void {
 }
 
 auto Gmod2::serialize(Emulator::Serializer& s) -> void {
+
+    s.integer( (unsigned&)cartridgeId );
 
     s.integer( bank );
 

@@ -450,7 +450,7 @@ auto Program::powerOff() -> void {
                     // medium was written by emulation, lets update the listing
                     if (!cmd->noGui && file->wasDataChanged() && filePool->has( _ident(activeEmulator, media.name + "store"), file)) {
                         auto emuView = EmuConfigView::TabWindow::getView( activeEmulator );
-                        if (emuView && emuView->mediaLayout)
+                        if (!quitInProgress && emuView && emuView->mediaLayout)
                             emuView->mediaLayout->updateListing( &media );
                     }
                 }                        

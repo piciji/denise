@@ -26,8 +26,8 @@ struct Prophet64 : GameCart {
         updateMemoryMap();
     }
 
-    auto serializeStep2(Emulator::Serializer& s) -> void {
-        Cart::serializeStep2( s );
+    auto serializeSwitchedIn(Emulator::Serializer& s) -> void {
+        Cart::serialize( s );
         s.integer( reg );
     }
 

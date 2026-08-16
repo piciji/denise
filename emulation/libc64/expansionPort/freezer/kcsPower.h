@@ -157,9 +157,9 @@ struct KCSPower : Freezer {
         nmiCall(false);
     }
 
-    auto serializeStep2(Emulator::Serializer& s) -> void override
+    auto serializeSwitchedIn(Emulator::Serializer& s) -> void override
     {
-        FreezeButton::serializeStep2(s);
+        FreezeButton::serialize(s);
         s.integer(config);
         s.array(ram, 128);
     }

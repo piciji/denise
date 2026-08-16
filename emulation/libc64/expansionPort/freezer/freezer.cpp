@@ -20,13 +20,91 @@ Freezer::Freezer(System* system, bool game, bool exrom) : FreezeButton( system, 
     setId( Interface::ExpansionIdFreezer );
 }
 
-auto Freezer::assign( Cart* cart ) -> void {
+auto Freezer::setRom(Emulator::Interface::Media* media, uint8_t* rom, unsigned romSize) -> void {
+
+    if ( (this->rom == nullptr) && (rom == nullptr) )
+        return;
+
+    auto _cartridgeId = (media && media->pcbLayout) ? media->pcbLayout->id : 0;
+
+    auto newCart = build( (Interface::CartridgeId)_cartridgeId, rom, romSize );
+
+    newCart->media = media;
+
+    assign( newCart );
+}
+
+auto Freezer::build( Interface::CartridgeId cartridgeId, uint8_t* _rom, unsigned _romSize ) -> Freezer* {
+
+    if (!_rom || (_romSize == 0) )
+        cartridgeId = Interface::CartridgeIdNoRom;
+
+    Freezer* cart = create( cartridgeId, _romSize );
+
+    cart->rom = _rom;
+    cart->romSize = _romSize;
+
+    if( cart->readHeader( ) ) {
+
+        if (cart->cartridgeId != cartridgeId) {
+            cartridgeId = cart->cartridgeId;
+            // if user doesn't request a specific cart and analyzing header detects a specific cart
+            delete cart;
+            // lets recreate by detected type
+            return build( cartridgeId, _rom, _romSize );
+        }
+    } else
+        cart->cartridgeId = cartridgeId;
+
+    if ( !cart->readChips() ) {
+        // no chip headers found, we assume it by user requested type
+        cart->assumeChips();
+    }
+
+    return cart;
+}
+
+auto Freezer::serialize(Emulator::Serializer& s) -> void {
+
+    unsigned _cartridgeId = cartridgeId;
+    s.integer(_cartridgeId);
+
+    if (s.mode() == Emulator::Serializer::Mode::Load) {
+
+        if (cartridgeId != _cartridgeId) {
+            auto cart = create( (Interface::CartridgeId)_cartridgeId, 0 );
+
+            if (_cartridgeId != Interface::CartridgeIdNoRom) {
+                cart->rom = rom;
+                cart->romSize = romSize;
+                cart->readHeader();
+            }
+
+            cart->cartridgeId = (Interface::CartridgeId)_cartridgeId;
+            if (!cart->readChips())
+                cart->assumeChips();
+
+            assign( cart );
+            cart->serializeSwitchedIn( s );
+
+            return;
+        }
+    }
+
+    serializeSwitchedIn( s );
+}
+
+auto Freezer::serializeSwitchedIn(Emulator::Serializer& s) -> void {
+    FreezeButton::serialize( s );
+}
+
+auto Freezer::assign( Freezer* cart ) -> void {
     bool inUse = this == system->expansionPort;
     System* ptrSystem = system;
 
     delete this;
 
-    ptrSystem->freezer = (Freezer*)cart;
+    ptrSystem->freezer = cart;
 
     ptrSystem->setExpansionCallbacks( ptrSystem->freezer );
 
@@ -34,8 +112,8 @@ auto Freezer::assign( Cart* cart ) -> void {
         ptrSystem->setExpansion( Interface::ExpansionIdFreezer );
 }
 
-auto Freezer::create( Interface::CartridgeId cartridgeId, unsigned _size ) -> Cart* {
-    Cart* cart = nullptr;
+auto Freezer::create( Interface::CartridgeId cartridgeId, unsigned _size ) -> Freezer* {
+    Freezer* cart = nullptr;
     
     switch(cartridgeId) {
 

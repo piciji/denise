@@ -96,9 +96,9 @@ namespace LIBC64 {
             std::memset(ram, 0, 32 * 1024);
         }
 
-        auto serializeStep2(Emulator::Serializer& s) -> void {
+        auto serializeSwitchedIn(Emulator::Serializer& s) -> void {
 
-            Cart::serializeStep2( s );
+            Cart::serialize( s );
 
             s.integer( bank );
             s.integer( useRam );

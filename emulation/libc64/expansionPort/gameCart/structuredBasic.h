@@ -91,8 +91,8 @@ namespace LIBC64 {
             Cart::assumeChips({ 8192, 8192 });
         }
 
-        auto serializeStep2(Emulator::Serializer& s) -> void {
-            Cart::serializeStep2( s );
+        auto serializeSwitchedIn(Emulator::Serializer& s) -> void {
+            Cart::serialize( s );
             s.integer( ramVisible );
             s.integer( bank );
             s.array( ram, 8 * 1024 );

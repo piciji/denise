@@ -11,6 +11,7 @@ FinalChessCard::FinalChessCard(System* system) : Cart(system, false, false) {
     jumpers = 0;
     writeProtectRAM = false;
     mediaWrite = nullptr;
+    cartridgeId = Interface::CartridgeIdDefault;
 }
 
 FinalChessCard::~FinalChessCard() {
@@ -60,17 +61,7 @@ auto FinalChessCard::setRom(Emulator::Interface::Media* media, uint8_t* rom, uns
             }
         }
     } else {
-        if ( (this->rom == nullptr) && (rom == nullptr) )
-            return;
-
-        this->media = media;
-        this->rom = rom;
-        this->romSize = romSize;
-
-        readHeader();
-
-        if ( !readChips() )
-            assumeChips();
+        Cart::setRom(media, rom, romSize);
     }
 }
 
@@ -86,7 +77,7 @@ auto FinalChessCard::reset(bool softReset) -> void {
     frequency = vicII->frequency();
     if (!mediaWrite)
         std::memset(ram, 0, 8 * 1024);
-    power();
+    W65C02::power();
 }
 
 inline auto FinalChessCard::readByte(uint16_t addr) -> uint8_t {
@@ -216,12 +207,12 @@ auto FinalChessCard::serialize(Emulator::Serializer& s) -> void {
     s.integer(control);
     s.integer(lines);
 
-    Cart::serializeStep2(s);
+    Cart::serialize(s);
 }
 
 auto FinalChessCard::createImage(unsigned& imageSize) -> uint8_t* {
     imageSize = 8 * 1024;
-    uint8_t* buffer = new uint8_t[ imageSize ];
+    auto* buffer = new uint8_t[ imageSize ];
     std::memset(buffer, 0x0, imageSize);
     return buffer;
 }

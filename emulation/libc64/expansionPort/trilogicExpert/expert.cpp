@@ -4,19 +4,9 @@
 namespace LIBC64 {
 
 auto Expert::setRom(Emulator::Interface::Media* media, uint8_t* rom, unsigned romSize) -> void {
-    if ( (this->rom == nullptr) && (rom == nullptr) )
-        return;
-
-    this->media = media;
-    this->rom = rom;
-    this->romSize = romSize;
-
-    readHeader();
+    Cart::setRom(media, rom, romSize);
 
     cartridgeId = Interface::CartridgeIdExpert;
-
-    if ( !readChips() )
-        assumeChips();
 
     prepare();
 }
@@ -163,7 +153,7 @@ auto Expert::observeNmi(bool state) -> void {
 }
 
 auto Expert::serialize(Emulator::Serializer& s) -> void {
-    FreezeButton::serializeStep2(s);
+    FreezeButton::serialize(s);
 
     s.integer((uint8_t&)switchMode);
     s.integer(ramEnabled);

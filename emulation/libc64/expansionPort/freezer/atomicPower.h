@@ -166,9 +166,9 @@ namespace LIBC64 {
             resetFreeze();
         }
 
-        auto serializeStep2(Emulator::Serializer& s) -> void {
+        auto serializeSwitchedIn(Emulator::Serializer& s) -> void {
 
-            FreezeButton::serializeStep2( s );
+            FreezeButton::serialize( s );
 
             s.integer( enable );
             s.integer( useRam );

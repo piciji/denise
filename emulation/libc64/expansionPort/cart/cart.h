@@ -54,11 +54,6 @@ struct Cart : ExpansionPort {
     virtual auto readRomH(uint16_t addr) -> uint8_t;
     virtual auto peekRomH(uint16_t addr) -> uint8_t;
     virtual auto serialize(Emulator::Serializer& s) -> void;
-    virtual auto serializeStep2(Emulator::Serializer& s) -> void;	
-        
-    auto build(Interface::CartridgeId cartridgeId, uint8_t* _rom, unsigned _romSize) -> Cart*;
-    virtual auto create( Interface::CartridgeId cartridgeId, unsigned _size ) -> Cart* { return this; }
-    virtual auto assign(Cart* cart) -> void {}
 
     auto getChip( unsigned index ) -> Chip* {
         return chips.size() > index ? &chips[index] : nullptr;
@@ -68,7 +63,7 @@ struct Cart : ExpansionPort {
     
     static auto buildHeader(uint8_t* header, uint16_t _type, bool _game, bool _exrom, std::string _name, uint16_t _version = 0x100 ) -> void;
     static auto buildChipHeader(uint8_t* header, Chip& chip) -> void;
-    auto checkForEmptyFlashBank(uint8_t* ptr) -> bool;
+    static auto checkForEmptyFlashBank(uint8_t* ptr) -> bool;
     auto isSupported() -> bool;
 };    
    

@@ -427,7 +427,7 @@ auto RetroReplay::serialize(Emulator::Serializer& s) -> void {
     s.integer( requestedExRom );
     s.integer( writeProtect );
     
-    FreezeButton::serializeCustom( s );
+    FreezeButton::serializeNoCart( s );
 }
 
 auto RetroReplay::getSizeNotConsideredForMemorySerialization() -> unsigned {

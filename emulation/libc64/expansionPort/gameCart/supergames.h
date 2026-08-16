@@ -57,9 +57,9 @@ struct SuperGames : GameCart {
         Cart::assumeChips( {16384} );
     }    
     
-    auto serializeStep2(Emulator::Serializer& s) -> void {
+    auto serializeSwitchedIn(Emulator::Serializer& s) -> void {
     
-        Cart::serializeStep2( s );
+        Cart::serialize( s );
 
         s.integer(writeProtect);
 		
