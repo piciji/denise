@@ -13,9 +13,14 @@ namespace LIBC64 {
 USBSIDPico::USBSIDPico(System& system) : system(system), sysTimer(system.sysTimer) {
 #ifdef LIBUSB
     flush = [this]() {
-        usbsid->USBSID_SetFlush();
-        lastClock = sysTimer.clock;
-        this->sysTimer.add( &flush, rasterRate, Emulator::SystemTimer::UpdateExisting );
+        unsigned cycles = sysTimer.clock - lastClock;
+        if (cycles < rasterRate) {
+            this->sysTimer.add( &flush, rasterRate, Emulator::SystemTimer::UpdateExisting );
+        } else {
+            lastClock += cycles;
+            usbsid->USBSID_Flush();
+            this->sysTimer.add( &flush, rasterRate, Emulator::SystemTimer::UpdateExisting );
+        }
     };
 
 #else
@@ -41,6 +46,8 @@ auto USBSIDPico::open() -> int {
         }
         result = 1;
     } else {
+        usbsid->USBSID_ResetRingBuffer();
+        usbsid->USBSID_ResetAllRegisters();
         usbsid->USBSID_Reset();
         result = 2;
     }
@@ -56,58 +63,61 @@ auto USBSIDPico::open() -> int {
 }
 
 auto USBSIDPico::close() -> void {
-#ifdef LIBUSB    
+#ifdef LIBUSB
     if (usbsid) {
         sysTimer.remove(&flush);
         usbsid->USBSID_Mute();
         delete usbsid;  /* Executes usbsid->USBSID_Close(); */
     }
-#endif    
+#endif
 }
 
 auto USBSIDPico::setBuffSize(unsigned value) -> void {
-#ifdef LIBUSB    
+#ifdef LIBUSB
     if (!usbsid || (value == buffSize))
         return;
 
     buffSize = value;
     usbsid->USBSID_SetBufferSize(buffSize);
     usbsid->USBSID_RestartRingBuffer();
-#endif    
+#endif
 }
 
 auto USBSIDPico::setDiffSize(unsigned value) -> void {
-#ifdef LIBUSB    
+#ifdef LIBUSB
     if (!usbsid || (value == diffSize))
         return;
 
     diffSize = value;
     usbsid->USBSID_SetDiffSize(diffSize);
-#endif    
+#endif
 }
 
 auto USBSIDPico::store(uint8_t addr, uint8_t val, int chipNr) -> void {
-#ifdef LIBUSB    
-    unsigned cycles = sysTimer.fallBackCycles(lastClock);
-    cycles = (cycles > 0) ? (cycles - 1) : cycles;
+#ifdef LIBUSB
+    unsigned cycles = (sysTimer.clock - lastClock);
+    cycles = ((cycles > 0) ? (cycles - 1) : cycles);
     if (usbsid)
         usbsid->USBSID_WriteRingCycled(addr + (chipNr * 0x20), val, cycles);
     lastClock = sysTimer.clock;
-#endif    
+#endif
 }
 
 auto USBSIDPico::reset() -> void {
-#ifdef LIBUSB    
+#ifdef LIBUSB
     if (usbsid)
+        usbsid->USBSID_ResetRingBuffer();
+        usbsid->USBSID_ResetAllRegisters();
         usbsid->USBSID_Reset();
-#endif        
+        usbsid->USBSID_UnMute();
+#endif
 }
 
 auto USBSIDPico::updateStereo() -> void {
-#ifdef LIBUSB    
+#ifdef LIBUSB
     if (usbsid)
         usbsid->USBSID_SetStereo(system.interface->stats.stereoSound);
-#endif        
+#endif
 }
 
 auto USBSIDPico::serialize(Emulator::Serializer& s) -> void {
@@ -127,7 +137,7 @@ auto USBSIDPico::serialize(Emulator::Serializer& s) -> void {
             }
         }
     }
-#endif    
+#endif
 }
 
 }
