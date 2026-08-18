@@ -342,16 +342,16 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
 
         case Hotkey::PowerWithUnplugCart:
             emuThread->lock(true);
+            MiscHelper::removeExpansion(emulator);
             program->power(emulator);
-            MiscHelper::removeExpansion(false);
             break;
 
         case Hotkey::PowerWithEjectDisks:
             emuThread->lock(true);
             for (auto& media : emulator->getDiskMediaGroup()->media)
                 fileloader->eject(emulator, &media);
+            MiscHelper::removeExpansion(emulator);
             program->power(emulator);
-            MiscHelper::removeExpansion(false);
             break;
 			
 		case Hotkey::SoftReset:

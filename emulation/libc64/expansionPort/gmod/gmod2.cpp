@@ -262,11 +262,10 @@ auto Gmod2::reset(bool softReset) -> void {
     eeprom.reset();
 }
 
-auto Gmod2::createImage(unsigned& imageSize, uint8_t id) -> uint8_t* {
+auto Gmod2::createImage(Emulator::Interface::Media* media, unsigned& imageSize) -> uint8_t* {
     uint8_t* buffer;
     
-    if (id == 1) {
-        // eeprom
+    if (media->type == Emulator::Interface::Media::MemoryType::EEPROM) {
         imageSize = 2 * 1024;
         buffer = new uint8_t[ imageSize ];
         std::memset(buffer, 0xff, imageSize);

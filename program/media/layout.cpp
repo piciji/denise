@@ -145,6 +145,9 @@ MediaGroupLayout::Block::Selector::Selector(Emulator::Interface::Media* media, E
     }
 
     if (!IPMode) {
+        if (!group->isProgram() && (!group->isExpansion() || media->isWritable()))
+            append(add, {0u, 0u}, 10);
+
         append(open, {0u, 0u});
         if (staticField)
             open.setEnabled(false);
@@ -161,13 +164,26 @@ MediaGroupLayout::Block::Selector::Selector(Emulator::Interface::Media* media, E
         pathCombo->setDroppable();
 }
 
-MediaGroupLayout::Block::Block(Emulator::Interface::Media* media, Emulator::Interface* emulator) : media(media), header(media, emulator), selector(media, emulator) {
+MediaGroupLayout::Block::Block(Emulator::Interface::Media* media, Emulator::Interface* emulator) :
+media(media),
+header(media, emulator),
+selector(media, emulator) {
     append(header, {~0u, 0u}, 2);
     append(selector, {~0u, 0u});
     dirty = true;
 }
 
-MediaGroupLayout::MediaGroupLayout( Emulator::Interface::MediaGroup* mediaGroup, MediaLayout* mediaLayout ) {
+MediaGroupLayout::Control::Control(Emulator::Interface::MediaGroup* group) {
+    append(inject, {0u, 0u});
+
+    if (group->isProgram()) {
+        append(spacer, {~0u, 0u});
+        append(save, {0u, 0u});
+    }
+}
+
+MediaGroupLayout::MediaGroupLayout( Emulator::Interface::MediaGroup* mediaGroup, MediaLayout* mediaLayout ) :
+control( mediaGroup ) {
     this->mediaGroup = mediaGroup;
     this->mediaLayout = mediaLayout;
     
@@ -175,78 +191,57 @@ MediaGroupLayout::MediaGroupLayout( Emulator::Interface::MediaGroup* mediaGroup,
     setFont(GUIKIT::Font::system("bold"));
 }
 
-DiskCreatorLayout::Options::Options() {
+CreatorWindow::DiskCreatorLayout::Options::Options() {
     append(fastFileSystem, {0u, 0u}, 2);
     append(highDensity, {0u, 0u}, 2);
     append(bootable, {0u, 0u});
 }
 
-DiskCreatorLayout::DiskCreatorLayout( Emulator::Interface* emulator, Emulator::Interface::MediaGroup* mediaGroup ) {
-
+CreatorWindow::DiskCreatorLayout::DiskCreatorLayout( Emulator::Interface* emulator ) {
     unsigned formatId = 0;
-    for ( auto& creatable : mediaGroup->creatable )
-        format.append( creatable, formatId++ );    
-        
-    append(formatName, {0u, 0u}, 10);        
-    
+    auto group = emulator->getDiskMediaGroup();
+    if (!group)
+        return;
+
+    if (dynamic_cast<LIBC64::Interface*>(emulator)) {
+        for ( auto& creatable : group->suffix )
+            format.append( creatable, formatId++ );
+    } else {
+        for ( auto& creatable : GUIKIT::Vector::getElements(group->suffix, 2) )
+            format.append( creatable, formatId++ );
+    }
+
+    append(formatName, {0u, 0u}, 10);
+
     if (format.rowCount() == 1)
         format.setEnabled(false);
-    
+
     append(format, {0u, 0u}, 10);
-    
+
     if (dynamic_cast<LIBAMI::Interface*>(emulator)) {
         append(options, {0u, 0u}, 10);
     }
-    
+
     append(diskLabelName, {0u, 0u}, 5);
-    append(diskLabel, {~0u, 0u}, 10);
+    append(diskLabel, {~0u, 0u});
 
-    append(insertLabel, {0u, 0u}, 5);
-    for( auto& media : mediaGroup->media ) {
-        insertDevice.append( media.name, media.id );
-    }
-    insertDevice.append( "-", -1 );
+    append(spacer, {10u, ~0u});
 
-    append(insertDevice, {0u, 0u}, 10);
-
-    append(button, {0u, 0u});
+    append(close, {0u, 0u}, 10);
+    append(create, {0u, 0u});
     setFont(GUIKIT::Font::system("bold"));
-    setPadding(10);
-    setAlignment(0.5);       
-}
-
-TapeCreatorLayout::TapeCreatorLayout(Emulator::Interface::MediaGroup* mediaGroup) {
-
-    append(insertLabel, {0u, 0u}, 5);
-    for( auto& media : mediaGroup->media ) {
-        insertDevice.append( media.name, media.id );
-    }
-    insertDevice.append( "-", -1 );
-    append(insertDevice, {0u, 0u}, 10);
-    append(button, {0u, 0u});
-    setFont(GUIKIT::Font::system("bold"));
-    setPadding(10);
+    setPadding( 10 );
+    setMargin( 10 );
     setAlignment(0.5);
 }
 
-MemoryCreatorLayout::MemoryCreatorLayout() {
-	append(button, {0u, 0u});
-	setFont(GUIKIT::Font::system("bold"));
-    setPadding(10);
-    setAlignment(0.5);
-}
-
-FlashCreatorLayout::FlashCreatorLayout() {
-    append(format, {0u, 0u}, 10);
-	append(button, {0u, 0u});
-	setFont(GUIKIT::Font::system("bold"));
-    setPadding(10);
-    setAlignment(0.5);
-}
-
-HdCreatorLayout::Creator::Creator(Emulator::Interface::MediaGroup* mediaGroup) {
+CreatorWindow::HdCreatorLayout::Creator::Creator(Emulator::Interface* emulator) {
     unsigned formatId = 0;
-    for (auto& creatable : mediaGroup->creatable)
+    auto group = emulator->getHardDiskMediaGroup();
+    if (!group)
+        return;
+
+    for ( auto& creatable : GUIKIT::Vector::getElements(group->suffix, 2) )
         format.append(creatable, formatId++);
 
     append(formatName, { 0u, 0u }, 10);
@@ -258,12 +253,13 @@ HdCreatorLayout::Creator::Creator(Emulator::Interface::MediaGroup* mediaGroup) {
 
     append(diskSizeLabel, {0u, 0u}, 10);
     append(diskSize, {60u, 0u}, 10);
-    append(button, {0u, 0u});
+    append(close, {0u, 0u}, 10);
+    append(create, {0u, 0u});
 
     setAlignment(0.5);
 }
 
-HdCreatorLayout::Progress::Progress() {
+CreatorWindow::HdCreatorLayout::Progress::Progress() {
     label.setFont(GUIKIT::Font::system("bold"));
     setAlignment(0.5);
 
@@ -271,13 +267,47 @@ HdCreatorLayout::Progress::Progress() {
     append(label, {40u, 0u} );
 }
 
-HdCreatorLayout::HdCreatorLayout(Emulator::Interface::MediaGroup* mediaGroup)
-: creator(mediaGroup) {
-    setPadding(10);
+CreatorWindow::HdCreatorLayout::HdCreatorLayout(Emulator::Interface* emulator) :
+creator(emulator) {
+    setPadding( 10 );
+    setMargin( 10 );
     setFont(GUIKIT::Font::system("bold"));
 
     append(creator, {~0u, 0u}, 10);
     append(progress, {~0u, 0u});
+}
+
+CreatorWindow::TapeCreatorLayout::TapeCreatorLayout( Emulator::Interface* emulator ) {
+    setPadding( 10 );
+    setMargin( 10 );
+    setFont(GUIKIT::Font::system("bold"));
+
+    append(close, {0u, 0u});
+    append(spacer, {~0u, ~0u});
+    append(create, {0u, 0u});
+
+    setAlignment( 0.5 );
+}
+
+CreatorWindow::CartCreatorLayout::CartCreatorLayout( Emulator::Interface* emulator ) {
+    setPadding( 10 );
+    setMargin( 10 );
+    setFont(GUIKIT::Font::system("bold"));
+
+    append(close, {0u, 0u});
+    append(spacer, {~0u, ~0u});
+    append(create, {0u, 0u});
+
+    setAlignment( 0.5 );
+}
+
+CreatorWindow::CreatorWindow(Emulator::Interface* emulator) :
+GUIKIT::Window(Hints::No_Title),
+diskCreatorLayout( emulator ),
+hdCreatorLayout( emulator ),
+tapeCreatorLayout( emulator ),
+cartCreatorLayout( emulator ) {
+
 }
 
 auto MediaGroupLayout::updateVisibility( unsigned count, bool init ) -> void {
@@ -438,8 +468,9 @@ auto MediaGroupLayout::build(unsigned previewFontSize) -> void {
     listings.colorRowTooltips( true );
     applyFont(previewFontSize);
 
-    if ( mediaGroup->isProgram( ) || mediaGroup->isTape() )
-        append( inject, {0u, 0u}, 3 );
+    if ( mediaGroup->isProgram( ) || mediaGroup->isTape() ) {
+        append( control, {~0u, 0u}, 5 );
+    }
 
     if ( mediaGroup->isProgram( ) || mediaGroup->isDrive() )
         append( listings, {~0u, ~0u} );

@@ -165,7 +165,6 @@ struct Interface {
 		MediaGroup* mediaGroupExpanded; // expanded expansion
         std::vector<PCBLayout> pcbs;
         std::vector<Jumper> jumpers;
-		std::vector<std::string> creationIdents; 
         enum Type : unsigned { Empty = 0, Standard = 1, Ram = 2, Eprom = 4, Flash = 8, TurboCart = 16,
             Freezer = 32, Battery = 64, RS232 = 128, Fastloader = 256, HDController = 512 };
         
@@ -184,20 +183,27 @@ struct Interface {
     std::vector<Expansion> expansions;
     
     struct Media {
+        enum class MemoryType { Magnetic, RAM, ROM, SRAM, FLASH, EEPROM, IP };
+
         unsigned id;
         std::string name;
         uintptr_t guid; //free to use
-        MediaGroup* group;        
+        MediaGroup* group;
+        MemoryType type;
         PCBLayout* pcbLayout;
         Media* parent; // secondary/tertiary memory on cartridges
+
+        auto isWritable() const -> bool { return type == MemoryType::Magnetic
+            || type == MemoryType::SRAM
+            || type == MemoryType::FLASH
+            || type == MemoryType::EEPROM; }
     };   
 
     struct MediaGroup {
         unsigned id;
-        std::string name;        
+        std::string name;
 		enum class Type : unsigned { Disk, HardDisk, Tape, Expansion, Program } type;
         std::vector<std::string> suffix;
-        std::vector<std::string> creatable;
         Media* selected;
         Expansion* expansion;
         std::vector<Media> media;
@@ -564,7 +570,7 @@ struct Interface {
     virtual auto ejectExpansionImage(Media* media) -> void {}
     virtual auto writeProtectExpansion(Media* media, bool state) -> void {}
     virtual auto isWriteProtectedExpansion(Media* media) -> bool { return false; }
-    virtual auto createExpansionImage(MediaGroup* group, unsigned& imageSize, uint8_t id = 0) -> uint8_t* { return nullptr; }
+    virtual auto createExpansionImage(Media* media, unsigned& imageSize) -> uint8_t* { return nullptr; }
     virtual auto isExpansionBootable() -> bool { return false; }
     virtual auto isExpansionUnsupported() -> bool { return false; }
     

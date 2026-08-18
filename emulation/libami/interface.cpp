@@ -56,22 +56,24 @@ auto Interface::prepareModels() -> void {
 }
 
 auto Interface::prepareMedia() -> void {
-    mediaGroups.push_back({MediaGroupIdDisk, "disk", MediaGroup::Type::Disk, {"adf", "dms", "ipf", "scp", "ctr", "adz", "exe"}, {"adf", "ext.adf"} });
-    mediaGroups.push_back({MediaGroupIdHardDisk, "harddisk", MediaGroup::Type::HardDisk, {"hdf", "hdz", "vhd"}, {"hdf", "vhd"} });
+    mediaGroups.push_back({MediaGroupIdDisk, "disk", MediaGroup::Type::Disk, {"adf", "ext.adf", "dms", "ipf", "scp", "ctr", "adz", "exe"} });
+    mediaGroups.push_back({MediaGroupIdHardDisk, "harddisk", MediaGroup::Type::HardDisk, {"hdf", "vhd", "hdz"} });
+
+    typedef Media::MemoryType MemType;
 
     {   auto& group = mediaGroups[MediaGroupIdDisk];
-        group.media.push_back({0, "DF0", 0, &group});
-        group.media.push_back({1, "DF1", 0, &group});
-        group.media.push_back({2, "DF2", 0, &group});
-        group.media.push_back({3, "DF3", 0, &group});
+        group.media.push_back({0, "DF0", 0, &group, MemType::Magnetic});
+        group.media.push_back({1, "DF1", 0, &group, MemType::Magnetic});
+        group.media.push_back({2, "DF2", 0, &group, MemType::Magnetic});
+        group.media.push_back({3, "DF3", 0, &group, MemType::Magnetic});
         group.selected = nullptr;
     }
 
     {   auto& group = mediaGroups[MediaGroupIdHardDisk];
-        group.media.push_back({0, "DH0", 0, &group});
-        group.media.push_back({1, "DH1", 0, &group});
-        group.media.push_back({2, "DH2", 0, &group});
-        group.media.push_back({3, "DH3", 0, &group});
+        group.media.push_back({0, "DH0", 0, &group, MemType::Magnetic});
+        group.media.push_back({1, "DH1", 0, &group, MemType::Magnetic});
+        group.media.push_back({2, "DH2", 0, &group, MemType::Magnetic});
+        group.media.push_back({3, "DH3", 0, &group, MemType::Magnetic});
         group.selected = nullptr;
     }
 
@@ -681,7 +683,7 @@ auto Interface::ejectDisk(Media* media) -> void {
 }
 
 auto Interface::createDiskImage(unsigned typeId, std::string name, bool hd, bool ffs, bool bootable) -> Data {
-    return DiskStructure::create( system, (DiskStructure::Type) typeId, name, hd, ffs, bootable );
+    return DiskStructure::create( system, typeId > 0 ? DiskStructure::Type::EXT2 : DiskStructure::Type::ADF, name, hd, ffs, bootable );
 }
 
 auto Interface::getDiskListing(Media* media) -> std::vector<Emulator::Interface::Listing> {

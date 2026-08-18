@@ -18,7 +18,8 @@ struct EmuThread {
 
     enum {  EVT_AUTO_LOAD_NO_TRAPS = 4, EVT_DISMISS_PLACEHOLDER = 8,
             EVT_UPDATE_FPS = 0x10, EVT_SHADER_ERROR = 0x20, EVT_UPDATE_PALETTE_SOFTWARE = 0x40,
-            EVT_POLL_HOTKEYS = 0x80, EVT_FINISH_AUDIO_RECORD = 0x100, EVT_DEBUGGER = 0x200 };
+            EVT_POLL_HOTKEYS = 0x80, EVT_FINISH_AUDIO_RECORD = 0x100, EVT_DEBUGGER = 0x200,
+            EVT_INSERT_MEDIA = 0x400 };
 
     std::atomic<unsigned> events;
 
@@ -30,6 +31,22 @@ struct EmuThread {
     std::mutex hotkeyMutex;
     std::mutex videoMutex;
     std::mutex paletteForSoftwareView;
+
+    struct StatusUpdates {
+        unsigned id;
+        int visible;
+        GUIKIT::Image* image;
+        std::string text;
+        bool alignRight;
+        int overrideForegroundColor;
+    };
+    std::vector<StatusUpdates> statusUpdates;
+
+    struct InsertMedia {
+        GUIKIT::File* file = nullptr;
+        Emulator::Interface* emulator = nullptr;
+        Emulator::Interface::Media* media;
+    } insertMedia;
 
     auto lock(bool unlockDebugging = false) -> bool;
     auto unlock() -> void;
@@ -50,16 +67,6 @@ struct EmuThread {
     auto enable(bool state) -> void;
 
     auto initWorker() -> void;
-
-    struct StatusUpdates {
-        unsigned id;
-        int visible;
-        GUIKIT::Image* image;
-        std::string text;
-        bool alignRight;
-        int overrideForegroundColor;
-    };
-    std::vector<StatusUpdates> statusUpdates;
 
     auto addStatusUpdate(unsigned id, int visible = -1, GUIKIT::Image* image = nullptr, std::string text = "", bool alignRight = false, int overrideForegroundColor = -1 ) -> void;
     auto handleStatusUpdate( ) -> void;

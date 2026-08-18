@@ -1018,6 +1018,13 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
         if ( !GUIKIT::String::foundSubStr( path, ".slangp" ))
             path += ".slangp";
 
+        {   GUIKIT::File file(path);
+            if (!GUIKIT::Application::isCocoa() && file.exists()) {
+                if (!this->tabWindow->message->question(trans->get("file_exist_error", { {"%path%", path} })))
+                    return;
+            }
+        }
+
         if (vManager()->savePreset(path)) {
             layShader.main.info.loaded.setText( vManager()->getPresetPathDetailed() );
             _settings->set<std::string>("slang_folder_save", GUIKIT::File::buildRelativePath(GUIKIT::File::getPath(path)));

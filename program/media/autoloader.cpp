@@ -222,17 +222,18 @@ auto Autoloader::postProcessing() -> void {
 		}
 
         videoDriver->hideSplashScreen();
+
+        if (!useExpansion)
+            MiscHelper::removeExpansion(ddControl.emulator, true);
+
         if ( dynamic_cast<LIBC64::Interface*>(ddControl.emulator) || (ddControl.emulator != activeEmulator)
             || (activeEmulator->getModelValue( LIBAMI::Interface::ModelIdSystem ) > 0 ) )
             program->power( ddControl.emulator, emuView != nullptr );
         else
             program->reset(ddControl.emulator); // because of A1000 WOM
 
-        if (!useExpansion)
-            MiscHelper::removeExpansion();
-        else if (statusHandler && activeEmulator->isExpansionUnsupported())
+        if (statusHandler && useExpansion && activeEmulator->isExpansionUnsupported())
             statusHandler->setMessage(trans->getA("unsupported cartridge"), true);
-
 
         bool trapsWithSpeeder = trapped && mediaGroup->isDisk() && settings->get<bool>("autostart_speeder_traps", false);
 

@@ -132,7 +132,7 @@ struct Interface : Emulator::Interface {
     auto writeProtectExpansion(Media* media, bool state) -> void;
     auto isWriteProtectedExpansion(Media* media) -> bool;
     auto ejectExpansionImage(Media* media) -> void;
-    auto createExpansionImage(MediaGroup* group, unsigned& imageSize, uint8_t id = 0) -> uint8_t*;    
+    auto createExpansionImage(Media* media, unsigned& imageSize) -> uint8_t*;
     auto isExpansionBootable() -> bool;
     auto isExpansionUnsupported() -> bool;
 	

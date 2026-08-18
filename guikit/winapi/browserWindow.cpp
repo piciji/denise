@@ -322,7 +322,12 @@ auto pBrowserWindow::fileVista(bool save, bool multi) -> std::vector<std::string
     pDlg->SetTitle ( wtitle );
     pDlg->SetFolder( location );
 
-    if (multi) {
+    if (save) {
+        DWORD dwFlags;
+        pDlg->GetOptions(&dwFlags);
+        // no darkmode support for system overwrite dialog
+        pDlg->SetOptions(dwFlags & ~FOS_OVERWRITEPROMPT);
+    } else if (multi) {
         DWORD dwFlags;
         pDlg->GetOptions(&dwFlags);
         pDlg->SetOptions(dwFlags | FOS_ALLOWMULTISELECT);

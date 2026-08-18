@@ -790,11 +790,12 @@ auto Fileloader::autoload(Emulator::Interface* emulator, Emulator::Interface::Me
             emuView->systemLayout->setExpansion( mediaGroup->expansion );
     }
 
+    if (!mediaGroup->isExpansion())
+        MiscHelper::removeExpansion(emulator, true);
+
     program->power( emulator );
 
-    if (!mediaGroup->isExpansion())
-        MiscHelper::removeExpansion();
-    else if (statusHandler && activeEmulator->isExpansionUnsupported())
+    if (statusHandler && mediaGroup->isExpansion() && activeEmulator->isExpansionUnsupported())
         statusHandler->setMessage(trans->getA("unsupported cartridge"), true);
 
     bool forceStandardKernal = false;
@@ -872,7 +873,9 @@ auto Fileloader::insertImage(Emulator::Interface* emulator, Emulator::Interface:
 
     bool updateGenericFileList = !media->parent;
 
-    auto insertedExpansion = emulator == activeEmulator && emulator->getExpansion()->mediaGroup == mediaGroup;
+    auto useExpansion = emulator->getExpansion();
+
+    auto insertedExpansion = emulator == activeEmulator && useExpansion && useExpansion->mediaGroup == mediaGroup;
 
     if (!mediaGroup->isExpansion() || (insertedExpansion && (media->parent && (mediaGroup->selected == media->parent)))) {
         emulator->ejectMedium(media);

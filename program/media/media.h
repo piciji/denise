@@ -5,7 +5,7 @@ struct Message;
 struct FileSetting;
 
 #include <thread>
-#include <mutex>
+#include <atomic>
 #include "../../guikit/api.h"
 #include "../program.h"
 #include "../emuconfig/config.h"
@@ -136,11 +136,12 @@ struct MediaGroupLayout : GUIKIT::FramedVerticalLayout {
             Header(Emulator::Interface::Media* media, Emulator::Interface* emulator);
         } header;
 
-        struct Selector : GUIKIT::HorizontalLayout {            
+        struct Selector : GUIKIT::HorizontalLayout {
             GUIKIT::LineEdit* edit = nullptr;
             GUIKIT::ComboButton* pathCombo = nullptr;
             GUIKIT::ComboButton combo;
             std::vector<GUIKIT::CheckBox*> jumpers;
+            GUIKIT::Button add;
             GUIKIT::Button open;
             GUIKIT::Widget spacer;
 
@@ -153,11 +154,19 @@ struct MediaGroupLayout : GUIKIT::FramedVerticalLayout {
         bool dirty = true;
         Block(Emulator::Interface::Media* media, Emulator::Interface* emulator);
     };
+
+    struct Control : GUIKIT::HorizontalLayout {
+        GUIKIT::Button inject;
+        GUIKIT::Widget spacer;
+        GUIKIT::Button save;
+
+        Control(Emulator::Interface::MediaGroup* group);
+    } control;
+
     std::vector<Block*> blocks;
     Emulator::Interface::MediaGroup* mediaGroup;
     GUIKIT::VerticalLayout blockContainer;
     GUIKIT::MultilineEdit* hint = nullptr;
-	GUIKIT::Button inject;
 	GUIKIT::ListView listings; // for c64 disk and prg container formats
     Block* selectedBlock = nullptr;
     MediaLayout* mediaLayout;
@@ -176,68 +185,77 @@ struct MediaGroupLayout : GUIKIT::FramedVerticalLayout {
     MediaGroupLayout( Emulator::Interface::MediaGroup* mediaGroup, MediaLayout* mediaLayout );
 };
 
-struct TapeCreatorLayout : GUIKIT::FramedHorizontalLayout {
-    GUIKIT::Label insertLabel;
-    GUIKIT::ComboButton insertDevice;
-    GUIKIT::Button button;
+struct CreatorWindow : GUIKIT::Window {
+    Emulator::Interface::Media* media;
+    MediaLayout* mediaLayout;
 
-    TapeCreatorLayout(Emulator::Interface::MediaGroup* mediaGroup);
-};
-
-struct DiskCreatorLayout : GUIKIT::FramedHorizontalLayout {
-    GUIKIT::Label formatName;
-    GUIKIT::ComboButton format;
-
-    struct Options : GUIKIT::VerticalLayout {
-        GUIKIT::CheckBox fastFileSystem;
-        GUIKIT::CheckBox highDensity;
-        GUIKIT::CheckBox bootable;
-
-        Options();
-    } options;
-
-    GUIKIT::Label diskLabelName;
-    GUIKIT::LineEdit diskLabel;
-    GUIKIT::Label insertLabel;
-    GUIKIT::ComboButton insertDevice;
-    GUIKIT::Button button;
-
-    DiskCreatorLayout(Emulator::Interface* emulator, Emulator::Interface::MediaGroup* mediaGroup);
-};
-
-struct MemoryCreatorLayout : GUIKIT::FramedHorizontalLayout {
-	GUIKIT::Button button;
-	
-	MemoryCreatorLayout();
-};
-
-struct FlashCreatorLayout : GUIKIT::FramedHorizontalLayout {	
-    GUIKIT::ComboButton format;
-    GUIKIT::Button button;
-	
-	FlashCreatorLayout();
-};
-
-struct HdCreatorLayout : GUIKIT::FramedVerticalLayout {
-
-    struct Creator : GUIKIT::HorizontalLayout {
+    struct DiskCreatorLayout : GUIKIT::FramedHorizontalLayout {
         GUIKIT::Label formatName;
         GUIKIT::ComboButton format;
-        GUIKIT::Label diskSizeLabel;
-        GUIKIT::LineEdit diskSize;
-        GUIKIT::Button button;
 
-        Creator(Emulator::Interface::MediaGroup* mediaGroup);
-    } creator;
+        struct Options : GUIKIT::VerticalLayout {
+            GUIKIT::CheckBox fastFileSystem;
+            GUIKIT::CheckBox highDensity;
+            GUIKIT::CheckBox bootable;
 
-    struct Progress : GUIKIT::HorizontalLayout {
-        GUIKIT::ProgressBar bar;
-        GUIKIT::Label label;
+            Options();
+        } options;
 
-        Progress();
-    } progress;
+        GUIKIT::Label diskLabelName;
+        GUIKIT::LineEdit diskLabel;
+        GUIKIT::Widget spacer;
+        GUIKIT::Button close;
+        GUIKIT::Button create;
 
-    HdCreatorLayout(Emulator::Interface::MediaGroup* mediaGroup);
+        DiskCreatorLayout(Emulator::Interface* emulator);
+    } diskCreatorLayout;
+
+    struct HdCreatorLayout : GUIKIT::FramedVerticalLayout {
+
+        struct Creator : GUIKIT::HorizontalLayout {
+            GUIKIT::Label formatName;
+            GUIKIT::ComboButton format;
+            GUIKIT::Label diskSizeLabel;
+            GUIKIT::LineEdit diskSize;
+            GUIKIT::Button close;
+            GUIKIT::Button create;
+
+            Creator(Emulator::Interface* emulator);
+        } creator;
+
+        struct Progress : GUIKIT::HorizontalLayout {
+            GUIKIT::ProgressBar bar;
+            GUIKIT::Label label;
+
+            Progress();
+        } progress;
+
+        auto reset() -> void;
+
+        std::atomic<bool> cancel = false;
+
+        HdCreatorLayout(Emulator::Interface* emulator);
+    } hdCreatorLayout;
+
+    struct TapeCreatorLayout : GUIKIT::FramedHorizontalLayout {
+        GUIKIT::Button close;
+        GUIKIT::Widget spacer;
+        GUIKIT::Button create;
+        TapeCreatorLayout(Emulator::Interface* emulator);
+    } tapeCreatorLayout;
+
+    struct CartCreatorLayout : GUIKIT::FramedHorizontalLayout {
+        GUIKIT::Button close;
+        GUIKIT::Widget spacer;
+        GUIKIT::Button create;
+        CartCreatorLayout(Emulator::Interface* emulator);
+    } cartCreatorLayout;
+
+    auto open(Emulator::Interface::Media* media) -> void;
+    auto build(MediaLayout* mediaLayout) -> void;
+    auto translate() -> void;
+
+    CreatorWindow(Emulator::Interface* emulator);
 };
 
 struct MediaLayout : GUIKIT::HorizontalLayout {
@@ -254,7 +272,8 @@ struct MediaLayout : GUIKIT::HorizontalLayout {
     GUIKIT::Image tapeImage;
     GUIKIT::Image expansionImage;
 	GUIKIT::Image memoryImage;
-	GUIKIT::Image addImage;    
+	GUIKIT::Image addImage;
+    GUIKIT::Image closeImage;
     GUIKIT::Image pathImage;
     GUIKIT::Image swapperImage;
     GUIKIT::Image imgFolderOpen;
@@ -263,19 +282,13 @@ struct MediaLayout : GUIKIT::HorizontalLayout {
     GUIKIT::Image settingsImage;
     GUIKIT::Image searchImage;
     GUIKIT::Image binaryImage;
-
-    GUIKIT::Image openImg;
+    GUIKIT::Image openImage;
     GUIKIT::Image ejectImg;
     
     std::vector<NavElement> navElements;
-    
-	GUIKIT::VerticalLayout creatorLayout;    
-    TapeCreatorLayout* tapeCreatorLayout = nullptr;
-    HdCreatorLayout* hdCreatorLayout = nullptr;
-    DiskCreatorLayout* diskCreatorLayout = nullptr;
-	MemoryCreatorLayout* memoryCreatorLayout = nullptr;
-    FlashCreatorLayout* flashCreatorLayout = nullptr;
-                   
+
+    CreatorWindow* creatorWindow = nullptr;
+
     GUIKIT::FramedVerticalLayout moduleFrame;
     GUIKIT::SwitchLayout moduleSwitch;
     GUIKIT::TreeView mediaTree;
@@ -305,13 +318,13 @@ struct MediaLayout : GUIKIT::HorizontalLayout {
     auto updateVisibility( Emulator::Interface::MediaGroup* mediaGroup, unsigned count ) -> void;
     auto updateOptionsVisibility() -> void;
     auto bindSelectorAction( MediaGroupLayout* layout ) -> void;
-    auto prepareCreator() -> void;
     auto preparePaths() -> void;
     auto preparePath(Emulator::Interface::MediaGroup& mediaGroup) -> void;
     auto updateListing( Emulator::Interface::Media* media ) -> void;
 	auto savePath( std::string& groupName, std::string path ) -> void;
     auto showListing( MediaGroupLayout* layout ) -> bool;
-    auto createImage( Emulator::Interface::MediaGroup* mediaGroup ) -> void;
+    auto createImage( Emulator::Interface::Media* media ) -> GUIKIT::File*;
+    auto insertCreatedImage(Emulator::Interface::Media* media) -> bool;
     auto showMediaGroupLayout( Emulator::Interface::MediaGroup* mediaGroup ) -> void;
     auto getMediaGroupLayout( Emulator::Interface::MediaGroup* mediaGroup ) -> MediaGroupLayout*;   
     auto insertImage( MediaGroupLayout::Block* block, GUIKIT::File* file, GUIKIT::File::Item* item, int options = 0 ) -> void;

@@ -245,6 +245,18 @@ auto EmuThread::handleUIEvents() -> void {
             if (program->hasActiveDebugger())
                 Debugger::Callback();
         }
+
+        if (_events & EVT_INSERT_MEDIA) {
+            if (insertMedia.file && insertMedia.emulator) {
+                auto emuView = EmuConfigView::TabWindow::getView(insertMedia.emulator);
+                if (emuView && emuView->mediaLayout) {
+                    auto items = insertMedia.file->scanArchive();
+                    lock();
+                    emuView->mediaLayout->insertImage(insertMedia.media, insertMedia.file, &items[0]);
+                    unlock();
+                }
+            }
+        }
     }
 }
 

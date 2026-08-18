@@ -804,6 +804,7 @@ struct pFrame : pWidget {
     auto setGeometry(Geometry geometry) -> void;
     auto rebuild() -> void;
     auto create() -> void;
+    auto destroy() -> void;
     auto setVisible(bool visible) -> void;
 	auto getBorderColor() -> COLORREF;
     auto setEnabled(bool enabled) -> void;

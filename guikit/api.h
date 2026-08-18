@@ -265,9 +265,11 @@ struct Window : Base {
     auto append(Layout& layout) -> void;
     auto append(Widget& widget) -> void;
     auto hasAppended(Widget& widget) -> bool;
+    auto hasAppended(Layout& layout) -> bool;
     auto append(StatusBar& statusBar) -> void;
     auto remove(Menu& menu) -> void;
     auto remove(Layout& layout) -> void;
+    auto removeActiveLayout() -> void;
     auto remove(Widget& widget) -> void;
     auto remove(StatusBar& statusBar) -> void;
     auto isApended(Menu& menu) -> bool;
@@ -1848,6 +1850,11 @@ struct Vector {
         auto itPos = v.begin() + ( (pos >= v.size()) ? v.size() : pos);
         v.insert( itPos, value );
     }
+    template <typename T>
+    static auto getElements(const std::vector<T>& v, unsigned count) -> std::vector<T> {
+	    std::vector<T> crop(v.begin(), v.begin() + std::min<size_t>(count, v.size()));
+	    return crop;
+	}
     Vector() = delete;
 };
 

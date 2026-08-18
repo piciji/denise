@@ -149,9 +149,9 @@ auto GeoRam::write() -> void {
 	system->interface->writeMedia(media, data, size, 0);		
 }
 
-auto GeoRam::createImage(unsigned& imageSize, uint8_t id) -> uint8_t* {
+auto GeoRam::createImage(unsigned& imageSize) -> uint8_t* {
 	imageSize = 64 * 1024;
-	uint8_t* buffer = new uint8_t[ imageSize ];
+	auto* buffer = new uint8_t[ imageSize ];
 	std::memset(buffer, 0xff, imageSize);
 	return buffer;
 }

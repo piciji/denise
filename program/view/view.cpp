@@ -1106,8 +1106,8 @@ auto View::buildMenu() -> void {
             sM.poweronAndRemoveExpansions->setIcon(powerImage);
             sM.poweronAndRemoveExpansions->onActivate = [emulator]() {
                 emuThread->lock(true);
+                MiscHelper::removeExpansion(emulator);
                 program->power(emulator);
-                MiscHelper::removeExpansion(false);
                 view->updateCartButtons( emulator );
                 emuThread->unlock();
             };

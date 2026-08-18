@@ -671,7 +671,7 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow)
 
         GUIKIT::File file(filePath);
 
-        if (file.exists()) {
+        if (!GUIKIT::Application::isCocoa() && file.exists()) {
             if (!mes->question(trans->get("file_exist_error", { {"%path%", filePath} })))
                 return;
         }
@@ -942,6 +942,13 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow)
         auto fn = GUIKIT::String::getFileName(filePath);
         if (GUIKIT::String::getExtension(fn, "") == "")
             filePath += ".sav";
+
+        {   GUIKIT::File file(filePath);
+            if (!GUIKIT::Application::isCocoa() && file.exists()) {
+                if (!mes->question(trans->get("file_exist_error", { {"%path%", filePath} })))
+                    return;
+            }
+        }
 
         path = GUIKIT::File::buildRelativePath(GUIKIT::File::getPath(filePath));
         _settings->set<std::string>("save_direct_folder", path);

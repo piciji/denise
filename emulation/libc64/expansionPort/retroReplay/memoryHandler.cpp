@@ -103,14 +103,15 @@ auto RetroReplay::write() -> void {
     }        
 }
 
-auto RetroReplay::createImage(unsigned& imageSize, uint8_t id) -> uint8_t* {
+auto RetroReplay::createImage(Emulator::Interface::Media* media, unsigned& imageSize) -> uint8_t* {
     imageSize = 64 + 16 + 8 * 1024;
     
     uint8_t* buffer = new uint8_t[ imageSize ];
     std::memset(buffer, 0xff, imageSize);
     
     uint8_t header[64];
-    buildHeader(&header[0], 0x24, true, false, (id > 0) ? "NordicReplay Cartridge" : "RetroReplay Cartridge", 0x100 + id );
+    unsigned id = media->pcbLayout->id == Interface::CartridgeIdNordicReplay ? 1 : 0;
+    buildHeader(&header[0], 0x24, true, false, (id == 1) ? "NordicReplay Cartridge" : "RetroReplay Cartridge", 0x100 + id );
     
     std::memcpy(buffer, &header, 64);
     

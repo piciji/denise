@@ -184,6 +184,10 @@ auto Window::hasAppended(Widget& widget) -> bool {
     return widget.Sizable::state.window == this;
 }
 
+auto Window::hasAppended(Layout& layout) -> bool {
+    return state.layout == &layout;
+}
+
 auto Window::append(Widget& widget) -> void {
     widget.Sizable::state.window = this;
     p.append(widget);
@@ -220,6 +224,13 @@ auto Window::remove(Layout& layout) -> void {
     p.remove(layout);
     layout.reset();
     layout.Sizable::state.window = nullptr;
+}
+
+auto Window::removeActiveLayout() -> void {
+    if (!state.layout)
+        return;
+    auto& layout = *state.layout;
+    remove(layout);
 }
 
 auto Window::addCustomFont( CustomFont& customFont ) -> bool {

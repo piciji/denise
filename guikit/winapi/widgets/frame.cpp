@@ -65,12 +65,15 @@ auto pFrame::setVisible(bool visible) -> void {
     }
 }
 
-auto pFrame::create() -> void {
-    destroy(hwnd);
+auto pFrame::destroy() -> void {
+    pWidget::destroy(hwnd);
+    pWidget::destroy(leftBorder);
+    pWidget::destroy(rightBorder);
+    pWidget::destroy(bottomBorder);
+}
 
-    destroy(leftBorder);
-    destroy(rightBorder);
-    destroy(bottomBorder);
+auto pFrame::create() -> void {
+    destroy();
 	
 	if (pen)
 		DeleteObject(pen);

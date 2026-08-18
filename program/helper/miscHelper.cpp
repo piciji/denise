@@ -213,42 +213,20 @@ auto MiscHelper::setExpansionSelection( Emulator::Interface* emulator ) -> void 
     }
 }
 
-auto MiscHelper::removeExpansion( bool bootableOnly ) -> void {
-    if (!activeEmulator)
+auto MiscHelper::removeExpansion( Emulator::Interface* emulator, bool bootableOnly ) -> void {
+    if (bootableOnly && !emulator->isExpansionBootable())
         return;
 
-    if (bootableOnly && !activeEmulator->isExpansionBootable())
-        return;
-
-    auto expansion = activeEmulator->getExpansion();
+    auto expansion = emulator->getExpansion();
 
     if (!expansion || expansion->isEmpty())
         return;
 
-    auto medias = expansion->mediaGroup->media;
-    if (expansion->mediaGroupExpanded)
-        medias = GUIKIT::Vector::concat( medias, expansion->mediaGroupExpanded->media );
+    Program::getSettings( emulator )->set<unsigned>("expansion", 0);
 
-    for( auto& media : medias) {
-        filePool->assign( _ident(activeEmulator, media.name), nullptr);
-        activeEmulator->ejectMedium( &media );
-        auto state = States::getInstance( activeEmulator );
-        if (state)
-            state->updateImage( nullptr, &media );
-    }
-
-    activeEmulator->unsetExpansion();
-
-    Program::getSettings( activeEmulator )->set<unsigned>("expansion", 0);
-
-    auto emuView = EmuConfigView::TabWindow::getView(activeEmulator);
-    if (emuView && emuView->systemLayout)
-        emuView->systemLayout->setExpansion( nullptr );
-
-    if (activeEmulator) {
-        activeEmulator->powerOff();
-        activeEmulator->power();
-    }
+     auto emuView = EmuConfigView::TabWindow::getView(emulator);
+     if (emuView && emuView->systemLayout)
+         emuView->systemLayout->setExpansion( nullptr );
 }
 
 auto MiscHelper::prepareSocket(Emulator::Interface::Media* media, Emulator::Interface* emulator, std::string address) -> void {

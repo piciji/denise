@@ -42,7 +42,7 @@ struct GeoRam : ExpansionPort {
 	
 	auto write() -> void;
 
-	static auto createImage(unsigned& imageSize, uint8_t id) -> uint8_t*;
+	static auto createImage(unsigned& imageSize) -> uint8_t*;
 
 	auto serialize(Emulator::Serializer& s) -> void;
 
