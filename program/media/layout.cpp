@@ -252,7 +252,7 @@ CreatorWindow::HdCreatorLayout::Creator::Creator(Emulator::Interface* emulator) 
     append(format, { 0u, 0u }, 10);
 
     append(diskSizeLabel, {0u, 0u}, 10);
-    append(diskSize, {60u, 0u}, 10);
+    append(diskSize, {70u, 0u}, 10);
     append(close, {0u, 0u}, 10);
     append(create, {0u, 0u});
 

@@ -667,7 +667,7 @@ auto CreatorWindow::HdCreatorLayout::reset() -> void {
 auto CreatorWindow::open(Emulator::Interface::Media* media) -> void {
     this->media = media;
     auto mediaGroup = media->group;
-    unsigned _width = 500;
+    unsigned _width = 550;
     unsigned _height = 120;
 
     if (mediaGroup->isDisk()) {
@@ -687,13 +687,13 @@ auto CreatorWindow::open(Emulator::Interface::Media* media) -> void {
             removeActiveLayout();
             append( tapeCreatorLayout );
         }
-        _width = 250;
+        _width = 270;
     } else if (mediaGroup->isExpansion()) {
         if (!hasAppended(cartCreatorLayout)) {
             removeActiveLayout();
             append( cartCreatorLayout );
         }
-        _width = 250;
+        _width = 270;
     }
 
     auto geo = mediaLayout->tabWindow->geometry();
