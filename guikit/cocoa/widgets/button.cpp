@@ -40,8 +40,8 @@ namespace GUIKIT {
 auto pButton::minimumSize() -> Size {
     Size size = getMinimumSize();
     
-    if (button.image() && button.text().empty())
-        return {size.width + 10, size.height};
+    // if (button.image() && button.text().empty())
+      // return {size.width + 10, size.height};
     
     return {size.width, size.height};
 }

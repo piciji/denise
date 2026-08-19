@@ -191,13 +191,7 @@ control( mediaGroup ) {
     setFont(GUIKIT::Font::system("bold"));
 }
 
-CreatorWindow::DiskCreatorLayout::Options::Options() {
-    append(fastFileSystem, {0u, 0u}, 2);
-    append(highDensity, {0u, 0u}, 2);
-    append(bootable, {0u, 0u});
-}
-
-CreatorWindow::DiskCreatorLayout::DiskCreatorLayout( Emulator::Interface* emulator ) {
+CreatorWindow::DiskCreatorLayout::Block::Format::Format(Emulator::Interface* emulator) {
     unsigned formatId = 0;
     auto group = emulator->getDiskMediaGroup();
     if (!group)
@@ -205,28 +199,44 @@ CreatorWindow::DiskCreatorLayout::DiskCreatorLayout( Emulator::Interface* emulat
 
     if (dynamic_cast<LIBC64::Interface*>(emulator)) {
         for ( auto& creatable : group->suffix )
-            format.append( creatable, formatId++ );
+            combo.append( creatable, formatId++ );
     } else {
         for ( auto& creatable : GUIKIT::Vector::getElements(group->suffix, 2) )
-            format.append( creatable, formatId++ );
+            combo.append( creatable, formatId++ );
     }
 
-    append(formatName, {0u, 0u}, 10);
+    if (combo.rowCount() == 1)
+        combo.setEnabled(false);
 
-    if (format.rowCount() == 1)
-        format.setEnabled(false);
+    append(label, {0u, 0u}, 10);
+    append(combo, {120u, 0u});
+    setAlignment(0.5);
+}
 
+CreatorWindow::DiskCreatorLayout::Block::DiskLabel::DiskLabel() {
+    append(label, {0u, 0u}, 10);
+    append(edit, {120u, 0u});
+    setAlignment(0.5);
+}
+
+CreatorWindow::DiskCreatorLayout::Block::Block(Emulator::Interface* emulator) : format(emulator) {
     append(format, {0u, 0u}, 10);
+    append(diskLabel, {0u, 0u});
+}
 
-    if (dynamic_cast<LIBAMI::Interface*>(emulator)) {
+CreatorWindow::DiskCreatorLayout::Options::Options() {
+    append(fastFileSystem, {0u, 0u}, 2);
+    append(highDensity, {0u, 0u}, 2);
+    append(bootable, {0u, 0u});
+}
+
+CreatorWindow::DiskCreatorLayout::DiskCreatorLayout( Emulator::Interface* emulator ) : block(emulator) {
+    append(block, {0u, 0u}, 10);
+
+    if (dynamic_cast<LIBAMI::Interface*>(emulator))
         append(options, {0u, 0u}, 10);
-    }
 
-    append(diskLabelName, {0u, 0u}, 5);
-    append(diskLabel, {~0u, 0u});
-
-    append(spacer, {10u, ~0u});
-
+    append(spacer, {~0u, ~0u});
     append(close, {0u, 0u}, 10);
     append(create, {0u, 0u});
     setFont(GUIKIT::Font::system("bold"));
@@ -252,7 +262,8 @@ CreatorWindow::HdCreatorLayout::Creator::Creator(Emulator::Interface* emulator) 
     append(format, { 0u, 0u }, 10);
 
     append(diskSizeLabel, {0u, 0u}, 10);
-    append(diskSize, {70u, 0u}, 10);
+    append(diskSize, {70u, 0u});
+    append(spacer, {~0u, ~0u});
     append(close, {0u, 0u}, 10);
     append(create, {0u, 0u});
 

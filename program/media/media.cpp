@@ -667,7 +667,7 @@ auto CreatorWindow::HdCreatorLayout::reset() -> void {
 auto CreatorWindow::open(Emulator::Interface::Media* media) -> void {
     this->media = media;
     auto mediaGroup = media->group;
-    unsigned _width = 550;
+    unsigned _width = 500;
     unsigned _height = 120;
 
     if (mediaGroup->isDisk()) {
@@ -779,11 +779,11 @@ auto CreatorWindow::build( MediaLayout* mediaLayout ) -> void {
 auto CreatorWindow::translate() -> void {
     diskCreatorLayout.setText( trans->get("disk_creator") );
 
-    diskCreatorLayout.formatName.setText(trans->get("format",{}, true));
+    diskCreatorLayout.block.format.label.setText(trans->get("format",{}, true));
+    diskCreatorLayout.block.diskLabel.label.setText(trans->get("disk label",{}, true));
     diskCreatorLayout.options.fastFileSystem.setText(trans->get("ffs"));
     diskCreatorLayout.options.highDensity.setText(trans->get("high_density"));
     diskCreatorLayout.options.bootable.setText(trans->get("bootable"));
-    diskCreatorLayout.diskLabelName.setText(trans->get("disk label",{}, true));
 
     hdCreatorLayout.setText( trans->get("harddisk_creator") );
 
@@ -797,6 +797,8 @@ auto CreatorWindow::translate() -> void {
     cartCreatorLayout.setText( trans->get("memory_creator") );
     cartCreatorLayout.create.setText(trans->get("create"));
     cartCreatorLayout.close.setText(trans->get("close"));
+
+    GUIKIT::Layout::alignChildWidth({&diskCreatorLayout.block.format, &diskCreatorLayout.block.diskLabel});
 }
 
 auto MediaLayout::insertCreatedImage(Emulator::Interface::Media* media) -> bool {
@@ -873,12 +875,12 @@ auto MediaLayout::createImage( Emulator::Interface::Media* media ) -> GUIKIT::Fi
 
         auto& diskCreator = creatorWindow->diskCreatorLayout;
 
-        suffix = diskCreator.format.text();
-        unsigned typeId = diskCreator.format.userData();
+        suffix = diskCreator.block.format.combo.text();
+        unsigned typeId = diskCreator.block.format.combo.userData();
         bool hd = diskCreator.options.highDensity.checked();
         bool bootable = diskCreator.options.bootable.checked();
         bool useFFS = diskCreator.options.fastFileSystem.checked();
-        std::string diskName = diskCreator.diskLabel.text();
+        std::string diskName = diskCreator.block.diskLabel.edit.text();
         
         Emulator::Interface::Data _data = emulator->createDiskImage( typeId, diskName, hd, useFFS, bootable );
         data = _data.ptr;
@@ -1237,8 +1239,11 @@ auto MediaLayout::translate() -> void {
             translate(nav);
     }
 
-    if (creatorWindow)
+    if (creatorWindow) {
         creatorWindow->translate();
+        if (creatorWindow->visible())
+            creatorWindow->synchronizeLayout();
+    }
 
 	unsigned neededWidth = 90;
 	

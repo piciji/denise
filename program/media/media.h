@@ -190,8 +190,25 @@ struct CreatorWindow : GUIKIT::Window {
     MediaLayout* mediaLayout;
 
     struct DiskCreatorLayout : GUIKIT::FramedHorizontalLayout {
-        GUIKIT::Label formatName;
-        GUIKIT::ComboButton format;
+
+        struct Block : GUIKIT::VerticalLayout {
+
+            struct Format : GUIKIT::HorizontalLayout {
+                GUIKIT::Label label;
+                GUIKIT::ComboButton combo;
+
+                Format(Emulator::Interface* emulator);
+            } format;
+
+            struct DiskLabel : GUIKIT::HorizontalLayout {
+                GUIKIT::Label label;
+                GUIKIT::LineEdit edit;
+
+                DiskLabel();
+            } diskLabel;
+
+            Block(Emulator::Interface* emulator);
+        } block;
 
         struct Options : GUIKIT::VerticalLayout {
             GUIKIT::CheckBox fastFileSystem;
@@ -201,8 +218,6 @@ struct CreatorWindow : GUIKIT::Window {
             Options();
         } options;
 
-        GUIKIT::Label diskLabelName;
-        GUIKIT::LineEdit diskLabel;
         GUIKIT::Widget spacer;
         GUIKIT::Button close;
         GUIKIT::Button create;
@@ -217,6 +232,7 @@ struct CreatorWindow : GUIKIT::Window {
             GUIKIT::ComboButton format;
             GUIKIT::Label diskSizeLabel;
             GUIKIT::LineEdit diskSize;
+            GUIKIT::Widget spacer;
             GUIKIT::Button close;
             GUIKIT::Button create;
 
