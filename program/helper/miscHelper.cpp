@@ -271,3 +271,51 @@ auto MiscHelper::hasSuperCpuActive() -> bool {
     }
     return false;
 }
+
+auto MiscHelper::centerGeometry(GUIKIT::Window* window, GUIKIT::Size _size, GUIKIT::Geometry _containerGeo) -> void {
+    _size.width = GUIKIT::Font::scale( _size.width );
+    _size.height = GUIKIT::Font::scale( _size.height );
+
+    if (_size.width >= _containerGeo.width)
+        _size.width = _containerGeo.width;
+
+    if (_size.height >= _containerGeo.height)
+        _size.height = _containerGeo.height;
+
+    GUIKIT::Position pos;
+    pos.x = _containerGeo.x + static_cast<int>(_containerGeo.width - _size.width) / 2;
+    pos.y = _containerGeo.y + static_cast<int>(_containerGeo.height - _size.height) / 2;
+
+    GUIKIT::Geometry geo(pos, _size);
+
+    window->setGeometry( geo );
+}
+
+auto MiscHelper::applyGeometry(GUIKIT::Window* window, GUIKIT::Settings* settings, const std::string& ident, GUIKIT::Geometry defGeo) -> void {
+    defGeo.width = GUIKIT::Font::scale( defGeo.width );
+    defGeo.height = GUIKIT::Font::scale( defGeo.height );
+
+    if (defGeo.x < 0)
+        defGeo.x = -(int)GUIKIT::Font::scale( defGeo.x * -1 );
+    else
+        defGeo.x = (int)GUIKIT::Font::scale( defGeo.x );
+
+    if (defGeo.y < 0)
+        defGeo.y = -(int)GUIKIT::Font::scale( defGeo.y * -1 );
+    else
+        defGeo.y = (int)GUIKIT::Font::scale( defGeo.y );
+
+    if (settings) {
+        GUIKIT::Geometry geometry = {
+            settings->get<int>( ident + "_x", defGeo.x)
+            ,settings->get<int>(ident + "_y", defGeo.y)
+            ,settings->get<unsigned>(ident + "_width", defGeo.width)
+            ,settings->get<unsigned>(ident + "_height", defGeo.height)
+        };
+
+        window->setGeometry(geometry);
+    }
+
+    if (!settings || window->isOffscreen())
+        window->setGeometry(defGeo);
+}

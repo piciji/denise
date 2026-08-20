@@ -56,7 +56,13 @@ auto ConditionViewDebugger::create(DbgWatcher* watcher, GUIKIT::Position positio
         };
     };
 
-    setGeometry( {position.x + 20, position.y + 20, 500, 200} );
+    setGeometry( {
+        position.x + (int)GUIKIT::Font::scale(20),
+        position.y + (int)GUIKIT::Font::scale(20),
+        GUIKIT::Font::scale(500),
+        GUIKIT::Font::scale(200)
+    } );
+
     auto* ex = &conditionLayout.expression;
     auto* hc = &conditionLayout.hitCount;
 

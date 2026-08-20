@@ -17,6 +17,7 @@
 #include "recentFiles.h"
 #include "../emuconfig/layouts/system.h"
 #include "../helper/fileHelper.h"
+#include "../helper/miscHelper.h"
 
 #include <thread>
 #include <vector>
@@ -696,18 +697,7 @@ auto CreatorWindow::open(Emulator::Interface::Media* media) -> void {
         _width = 270;
     }
 
-    auto geo = mediaLayout->tabWindow->geometry();
-
-    if (_width >= geo.width)
-        _width = geo.width;
-
-    if (_height >= geo.height)
-        _height = geo.height;
-
-    int _x = geo.x + (geo.width - _width) / 2;
-    int _y = geo.y + (geo.height - _height) / 2;
-
-    setGeometry( { _x, _y, _width, _height} );
+    MiscHelper::centerGeometry( this, {_width, _height}, mediaLayout->tabWindow->geometry() );
 
     setVisible();
     setFocused();

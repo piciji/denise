@@ -14,6 +14,7 @@
 #include "../../data/icons.h"
 #include "../thread/emuThread.h"
 #include "../tools/httpClient.h"
+#include "../helper/miscHelper.h"
 
 #include "layouts/presentation.h"
 #include "layouts/audio.h"
@@ -47,23 +48,9 @@ auto TabWindow::getTabPos(Layout layout) -> int {
 auto TabWindow::build() -> void {
     setDroppable();
 
-    GUIKIT::Geometry defaultGeometry = {50, 50, GUIKIT::Font::scale(1000), GUIKIT::Font::scale(570)};
-
-    if (GUIKIT::Application::isGtk()) {
-        defaultGeometry.width = 1200;
-        defaultGeometry.height = 700;
-    }
-    
-    GUIKIT::Geometry geometry = {settings->get<int>("screen_settings_x", defaultGeometry.x)
-        ,settings->get<int>("screen_settings_y", defaultGeometry.y)
-        ,settings->get<unsigned>("screen_settings_width", defaultGeometry.width)
-        ,settings->get<unsigned>("screen_settings_height", defaultGeometry.height)
-    };
-    
-    setGeometry( geometry );
-    
-    if (isOffscreen())        
-        setGeometry( defaultGeometry ); 
+    MiscHelper::applyGeometry( this, settings, "screen_settings",
+{50, 50, GUIKIT::Application::isGtk() ? 1200u : 1000u, GUIKIT::Application::isGtk() ? 700u : 570u}
+    );
 
     joystickImage.loadPng((uint8_t*)Icons::joystick, sizeof(Icons::joystick));
     systemImage.loadPng((uint8_t*)Icons::system, sizeof(Icons::system));

@@ -32,5 +32,8 @@ struct MiscHelper {
     static auto getFont(uint16_t ident) -> DisplayFont*;
     static auto getFont(const std::string& file, int fontIndex) -> DisplayFont*;
     static auto removeFont(const std::string& file, uint8_t mode) -> bool;
+
+    static auto applyGeometry(GUIKIT::Window* window, GUIKIT::Settings* settings, const std::string& ident, GUIKIT::Geometry defGeo) -> void;
+    static auto centerGeometry(GUIKIT::Window* window, GUIKIT::Size _size, GUIKIT::Geometry _containerGeo) -> void;
 };
 

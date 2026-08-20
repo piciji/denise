@@ -10,6 +10,7 @@
 #include "../audio/manager.h"
 #include "../../data/icons.h"
 #include "../thread/emuThread.h"
+#include "../helper/miscHelper.h"
 
 #include "layouts/drivers.h"
 #include "layouts/settings.h"
@@ -23,23 +24,8 @@ TabWindow::TabWindow() {
 }
 
 auto TabWindow::build() -> void {
-    GUIKIT::Geometry defaultGeometry = {100, 100, GUIKIT::Font::scale(700), GUIKIT::Font::scale(500)};
-
-    if (GUIKIT::Application::isGtk()) {
-        defaultGeometry.width = 810;
-        defaultGeometry.height = 540;
-    }
-    
-    GUIKIT::Geometry geometry = {globalSettings->get<int>("screen_settings_x", defaultGeometry.x)
-        ,globalSettings->get<int>("screen_settings_y", defaultGeometry.y)
-        ,globalSettings->get<unsigned>("screen_settings_width", defaultGeometry.width)
-        ,globalSettings->get<unsigned>("screen_settings_height", defaultGeometry.height)
-    };
-    
-    setGeometry( geometry );
-    
-    if (isOffscreen())        
-        setGeometry( defaultGeometry ); 
+    MiscHelper::applyGeometry(this, globalSettings, "screen_settings",
+        {100, 100, 700u, 400u});
 
     gearsImage.loadPng((uint8_t*)Icons::gears, sizeof(Icons::gears));
     toolsImage.loadPng((uint8_t*)Icons::tools, sizeof(Icons::tools));

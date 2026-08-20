@@ -1112,7 +1112,8 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
         layShader.favourite.control.remove.setEnabled();
     };
 
-    codeWindow.setGeometry({ 100, 100, 600, 350 });
+    MiscHelper::applyGeometry( &codeWindow, nullptr, "", {100, 100, 600, 350} );
+
     codeLayout.append(codeViewer, {~0u, ~0u} );
     codeLayout.setMargin(10);
     codeWindow.append(codeLayout);
@@ -2909,7 +2910,12 @@ auto ParamEditor::create(ShaderPreset::Param& param, unsigned row, unsigned offs
         append( sliderLay );
     }
 
-    setGeometry( {clickPosition.x + 30, clickPosition.y - 10, 350, 40} );
+    setGeometry( {
+        clickPosition.x + (int)GUIKIT::Font::scale(30),
+        clickPosition.y - (int)GUIKIT::Font::scale(10),
+        GUIKIT::Font::scale(350),
+        GUIKIT::Font::scale(40)
+    } );
     setTitle( param.desc );
     synchronizeLayout();
 }

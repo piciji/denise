@@ -2693,18 +2693,7 @@ auto View::updateEmuUsage() -> void {
 }
 
 auto View::updateGeometry(bool withViewport) -> void {
-    GUIKIT::Geometry defaultGeometry = {100, 100, 800, 600};
-
-    GUIKIT::Geometry geometry = {globalSettings->get<int>("screen_x", defaultGeometry.x)
-            ,globalSettings->get<int>("screen_y", defaultGeometry.y)
-            ,globalSettings->get<unsigned>("screen_width", defaultGeometry.width)
-            ,globalSettings->get<unsigned>("screen_height", defaultGeometry.height)
-    };
-
-    setGeometry( geometry );
-
-    if (isOffscreen())
-        setGeometry( defaultGeometry );
+    MiscHelper::applyGeometry( this, globalSettings, "screen", {100, 100, 800, 600} );
 
     if (withViewport)
         updateViewport();
@@ -2882,8 +2871,6 @@ View::FpsWindow::Bottom::Bottom() {
 }
 
 auto View::FpsWindow::show() -> void {
-    auto geo = view->geometry();
-
     unsigned _width = 230;
     unsigned _height = 100;
 
@@ -2892,16 +2879,7 @@ auto View::FpsWindow::show() -> void {
         _height = 130;
     }
 
-    if (_width >= geo.width)
-        _width = geo.width;
-
-    if (_height >= geo.height)
-        _height = geo.height;
-
-    int _x = geo.x + (geo.width - _width) / 2;
-    int _y = geo.y + (geo.height - _height) / 2;
-
-    setGeometry( { _x, _y, _width, _height} );
+    MiscHelper::centerGeometry( this, {_width, _height}, view->geometry() );
 
     auto settings = Program::getSettings( activeEmulator );
     auto speed = settings->get<float>(getIdent(), mode == Mode::CUSTOM ? 59.95 : 500.0);

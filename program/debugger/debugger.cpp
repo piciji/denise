@@ -14,6 +14,7 @@
 #include "../helper/settingsHelper.h"
 #include "../view/view.h"
 #include "../monitor/binaryMonitor.h"
+#include "../helper/miscHelper.h"
 #include <bitset>
 
 GUIKIT::Timer* Debugger::timerVisibility = nullptr;
@@ -69,22 +70,7 @@ Debugger::Control::Control(Debugger* debugger) {
 }
 
 auto Debugger::build() -> void {
-    GUIKIT::Geometry defaultGeometry = {50, 50, GUIKIT::Font::scale(1050), GUIKIT::Font::scale(550)};
-
-    if (GUIKIT::Application::isGtk()) {
-        defaultGeometry.height += 40;
-    }
-
-    GUIKIT::Geometry geometry = {settings->get<int>(saveIdent() + "_x", defaultGeometry.x)
-        ,settings->get<int>(saveIdent() + "_y", defaultGeometry.y)
-        ,settings->get<unsigned>(saveIdent() + "_width", defaultGeometry.width)
-        ,settings->get<unsigned>(saveIdent() + "_height", defaultGeometry.height)
-    };
-
-    setGeometry( geometry );
-
-    if (isOffscreen())
-        setGeometry( defaultGeometry );
+    MiscHelper::applyGeometry(this, settings, saveIdent(), {50, 50, 1050, GUIKIT::Application::isGtk() ? 590u : 550u});
 
     addImg.loadPng((uint8_t*)Icons::add, sizeof(Icons::add));
     breakEnableImg.loadPng((uint8_t*)Icons::recordHi, sizeof(Icons::recordHi));

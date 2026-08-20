@@ -5,6 +5,7 @@
 #include "../../data/icons.h"
 #include "../view/view.h"
 #include "../helper/fileHelper.h"
+#include "../helper/miscHelper.h"
 
 ArchiveViewer* archiveViewer = nullptr;
 
@@ -126,16 +127,7 @@ auto ArchiveViewer::setView(GUIKIT::File* file, std::vector<GUIKIT::File::Item>&
     }
 
     if (!geometryInitialized) {
-        GUIKIT::Geometry defaultGeometry = {100, 100, 400, 350};
-        GUIKIT::Geometry geometry = {
-                globalSettings->get<int>("screen_archiveviewer_x", defaultGeometry.x)
-                ,globalSettings->get<int>("screen_archiveviewer_y", defaultGeometry.y)
-                ,globalSettings->get<unsigned>("screen_archiveviewer_width", defaultGeometry.width)
-                ,globalSettings->get<unsigned>("screen_archiveviewer_height", defaultGeometry.height)
-        };
-        setGeometry(geometry);
-        if (isOffscreen())
-            setGeometry(defaultGeometry);
+        MiscHelper::applyGeometry(this, globalSettings,"screen_archiveviewer", {100, 100, 400, 350});
         geometryInitialized = true;
     }
 
