@@ -155,6 +155,15 @@ void residfp::enableOld6581caps(bool enable)
     sid.enableOld6581caps(enable);
 }
 
+void residfp::setOffset6581(double offset)
+{
+    sid.setOffset6581(offset);
+}
+
+void residfp::setPaddle(unsigned char x, unsigned char y)
+{
+    sid.setPaddle(x, y);
+}
 
 int residfp::stateSize() const
 {
@@ -171,8 +180,12 @@ void residfp::restoreState(char* buffer, int size)
     State::restoreState(sid, buffer, size);
 }
 
-void residfp::setPaddle(unsigned char x, unsigned char y)
+void residfp::setDacLeakage(double level)
 {
-    sid.setPaddle(x, y);
+    sid.setDacLeakage(level);
 }
 
+void residfp::setDCBRes(double res)
+{
+    sid.setDCBRes(res);
+}

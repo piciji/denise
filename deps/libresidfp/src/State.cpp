@@ -84,9 +84,13 @@ int State::saveState(SID &s, char* buffer, int size)
         state.env3[i] = envelope->env3;
     }
 
+    state.dacLeakage = s.dacLeakage;
     state.bus_value = s.busValue;
     state.bus_value_ttl = s.busValueTtl;
     state.nextVoiceSync = s.nextVoiceSync;
+    state.offset_6581 = s.offset_6581;
+    state.paddle_x = s.paddleX;
+    state.paddle_y = s.paddleY;
     state.model = s.model;
     state.cws = s.cws;
 
@@ -96,7 +100,7 @@ int State::saveState(SID &s, char* buffer, int size)
         state.Vhp[i] = f->Vhp;
         state.Vbp[i] = f->Vbp;
         state.Vlp[i] = f->Vlp;
-        state.Ve[i] = f->Ve;
+        state.extin[i] = f->extin;
         state.fc[i] = f->fc;
         state.filt1[i] = f->filt1;
         state.filt2[i] = f->filt2;
@@ -132,9 +136,10 @@ int State::saveState(SID &s, char* buffer, int size)
 
     state.exVlp = s.externalFilter.Vlp;
     state.exVhp = s.externalFilter.Vhp;
+    state.ext_res = s.externalFilter.m_ext_res;
+    state.clockFrequency = s.externalFilter.m_frequency;
 
     state.method = s.p->method;
-    state.clockFrequency = s.p->clockFrequency;
     state.samplingFrequency = s.p->samplingFrequency;
 
     switch (s.p->method)
@@ -192,9 +197,13 @@ void State::restoreState(SID &s, char* buffer, int size)
     State state;
     std::memcpy(&state, buffer, cnt);
 
+    s.dacLeakage = state.dacLeakage;
     s.busValue = state.bus_value;
     s.busValueTtl = state.bus_value_ttl;
     s.nextVoiceSync = state.nextVoiceSync;
+    s.offset_6581 = state.offset_6581;
+    s.paddleX = state.paddle_x;
+    s.paddleY = state.paddle_y;
     s.model = state.model;
     s.setChipModel(s.model);
     s.cws = state.cws;
@@ -206,7 +215,7 @@ void State::restoreState(SID &s, char* buffer, int size)
         f->Vhp = state.Vhp[i];
         f->Vbp = state.Vbp[i];
         f->Vlp = state.Vlp[i];
-        f->Ve = state.Ve[i];
+        f->extin = state.extin[i];
         f->fc = state.fc[i];
         f->filt1 = state.filt1[i];
         f->filt2 = state.filt2[i];
@@ -242,8 +251,10 @@ void State::restoreState(SID &s, char* buffer, int size)
 
     s.externalFilter.Vlp = state.exVlp;
     s.externalFilter.Vhp = state.exVhp;
+    s.externalFilter.m_ext_res = state.ext_res;
 
     s.setSamplingParameters(state.clockFrequency, state.method, state.samplingFrequency);
+    s.externalFilter.recalcParams();
 
     for (int i = 0; i < 3; i++)
     {

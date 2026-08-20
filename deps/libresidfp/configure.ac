@@ -1,6 +1,6 @@
 m4_define([lib_major], [1])
-m4_define([lib_minor], [1])
-m4_define([lib_level], [0a])
+m4_define([lib_minor], [2])
+m4_define([lib_level], [1])
 m4_define([lib_version], [lib_major.lib_minor.lib_level])
 
 AC_PREREQ([2.62])
@@ -15,7 +15,7 @@ AM_SILENT_RULES([yes])
 LIB_MAJOR=lib_major
 LIB_MINOR=lib_minor
 LIB_LEVEL=lib_level
-AC_SUBST([LIB_MAJOR])NEWS.md
+AC_SUBST([LIB_MAJOR])
 AC_SUBST([LIB_MINOR])
 AC_SUBST([LIB_LEVEL])
 
@@ -81,17 +81,21 @@ AC_CHECK_TYPES([int8_t, uint8_t, int16_t, uint16_t, int32_t, uint32_t],
 
 dnl libtool-style version-info number
 #
-# https://autotools.io/libtool/version.html
+# https://www.gnu.org/software/libtool/manual/html_node/Updating-version-info.html
 #
-# Always increase the revision value.
+# Update the version information only immediately before a public release of your software.
 #
-# Increase the current value whenever an interface has been added, removed or changed.
+# If the library source code has changed at all since the last update, then increment revision.
 #
-# Increase the age value only if the changes made to the ABI are backward compatible.
+# If any interfaces have been added, removed, or changed since the last update, increment current, and set revision to 0.
+#
+# If any interfaces have been added since the last public release, then increment age.
+#
+# If any interfaces have been removed or changed since the last public release, then set age to 0.
 
-LIBRESIDFPCUR=0
-LIBRESIDFPREV=3
-LIBRESIDFPAGE=0
+LIBRESIDFPCUR=2
+LIBRESIDFPREV=1
+LIBRESIDFPAGE=2
 LIBRESIDFPVERSION=$LIBRESIDFPCUR:$LIBRESIDFPREV:$LIBRESIDFPAGE
 
 AC_MSG_CHECKING([for debugging])

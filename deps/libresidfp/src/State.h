@@ -35,7 +35,6 @@ class SID;
 struct Params
 {
     SamplingMethod method;
-    double clockFrequency;
     double samplingFrequency;
     double filterCurve6581;
     double filterRange6581;
@@ -63,9 +62,13 @@ struct State
     // SID
     int bus_value_ttl;
     unsigned int nextVoiceSync;
+    unsigned int offset_6581;
     ChipModel model;
     CombinedWaveforms cws;
+    double dacLeakage;
     uint8_t bus_value;
+    uint8_t paddle_x;
+    uint8_t paddle_y;
 
     // Waveform
     uint32_t pw[3];
@@ -116,7 +119,7 @@ struct State
     int32_t Vhp[2];
     int32_t Vbp[2];
     int32_t Vlp[2];
-    int32_t Ve[2];
+    float extin[2];
     uint8_t fc[2];
     uint8_t vol[2];
     uint8_t filt[2];
@@ -145,6 +148,7 @@ struct State
     /// External filter
     int32_t exVlp;
     int32_t exVhp;
+    double ext_res;
 
     // Resampler
     double clockFrequency;
