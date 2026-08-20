@@ -1,76 +1,91 @@
-###########################
-WINDOWS (7 and higher)
-###########################
------------
-MINGW
------------
-download and install CMAKE, GIT
-download and install mingw32 or 64: https://github.com/niXman/mingw-builds-binaries/releases
+# Windows (7 and higher)
 
-open a CMD:
+---
+
+## MinGW
+
+---
+
+- download and install CMAKE, GIT
+- download and install [mingw32 or 64](https://github.com/niXman/mingw-builds-binaries/releases)
+- open a CMD
+```
 set Path=<mingw_path>\bin;%Path%
+replace <mingw_path> with MinGW install folder, e.g. set Path=c:\mingw64\bin;%Path%
+
 git clone https://github.com/piciji/denise.git denise
 cd denise
-
 cmake -G "MinGW Makefiles" -B builds/release
-cmake --build builds/release -j 8
+cmake --build builds/release --parallel
 cmake --build builds/release --target install
 .\builds\release\out\denise.exe
+```
 
------------
-MSYS2 to fake a Unix environment
------------
-install MSYS2 and open shell
+## MSYS2 to fake a Unix environment
+
+---
+
+- install MSYS2 and open MSYS2 shell
+```
 pacman --noconfirm -Sy
 pacman --needed --noconfirm -S bash pacman pacman-mirrors msys2-runtime
-[restart shell]
+restart shell
 pacman --noconfirm -Su
-[64 bit]
-pacman -S --noconfirm --needed wget git make mingw-w64-x86_64-toolchain mingw-w64-x86_64-ntldd mingw-w64-x86_64-zlib mingw-w64-x86_64-pkgconf mingw-w64-x86_64-libxml2 mingw-w64-x86_64-freetype mingw-w64-x86_64-libusb mingw-w64-x86_64-python3 mingw-w64-x86_64-drmingw mingw-w64-x86_64-harfbuzz mingw-w64-x86_64-lame mingw-w64-x86_64-cmake
-[32 bit]
-pacman -S --noconfirm --needed wget git make mingw-w64-i686-toolchain mingw-w64-i686-ntldd mingw-w64-i686-zlib mingw-w64-i686-pkgconf mingw-w64-i686-libxml2 mingw-w64-i686-freetype mingw-w64-i686-python3 mingw-w64-i686-drmingw mingw-w64-i686-harfbuzz mingw-w64-i686-lame mingw-w64-i686-cmake
 
-[open shell MinGW 32 or 64 ]
+64 bit
+pacman -S --noconfirm --needed wget git make mingw-w64-x86_64-toolchain mingw-w64-x86_64-ntldd mingw-w64-x86_64-zlib mingw-w64-x86_64-pkgconf mingw-w64-x86_64-libxml2 mingw-w64-x86_64-freetype mingw-w64-x86_64-libusb mingw-w64-x86_64-python3 mingw-w64-x86_64-drmingw mingw-w64-x86_64-harfbuzz mingw-w64-x86_64-lame mingw-w64-x86_64-cmake
+32 bit
+pacman -S --noconfirm --needed wget git make mingw-w64-i686-toolchain mingw-w64-i686-ntldd mingw-w64-i686-zlib mingw-w64-i686-pkgconf mingw-w64-i686-libxml2 mingw-w64-i686-freetype mingw-w64-i686-python3 mingw-w64-i686-drmingw mingw-w64-i686-harfbuzz mingw-w64-i686-lame mingw-w64-i686-cmake
+```
+- open shell MinGW 32 or 64
+```
 pacman -S make
 pacman -S gcc
 
 git clone https://github.com/piciji/denise.git denise
 cd denise
 cmake -G "MSYS Makefiles" -B builds/release
-cmake --build builds/release -j 8
+cmake --build builds/release --parallel
 cmake --build builds/release --target install
 ./builds/release/out/denise.exe
+```
 
----------------
-Visual Studio
----------------
-there is a solution file in folder msvc with two targets (x86, x64)
+## Visual Studio
 
-###########################
-OSX
-###########################
------------
-Console
------------
+---
+### there is a solution file in folder msvc with two targets (x86, x64)
 
+
+# macOS
+
+---
+
+## Terminal
+
+---
+```
 git clone https://github.com/piciji/denise.git denise
 cd denise
 cmake -B builds/release
-cmake --build builds/release -j 8
+cmake --build builds/release --parallel
 cmake --build builds/release --target install
-
------------
-Xcode
------------
-there is a solution file in folder denise.xcodeproj with two targets (x86_64, arm64)
+```
 
 
-###########################
-Linux/BSD
-###########################
----------------------------------------------
-Debian (Ubuntu, Mint, ...)
----------------------------------------------
+## Xcode
+
+---
+
+### there is a solution file in folder denise.xcodeproj with two targets (x86_64, arm64)
+
+
+# Linux/BSD
+
+---
+
+## Debian (Ubuntu, Mint, ...)
+
+```
 sudo apt install libgtk-3-dev
 sudo apt install mesa-common-dev
 sudo apt install libpulse-dev
@@ -79,73 +94,102 @@ sudo apt install libxcb-xinput-dev && apt install libxcb-xfixes0
 sudo apt install libusb-1.0-0-dev
 sudo apt install libmp3lame-dev
 sudo apt install libfreetype-dev
----------------------------------------------
-ARCH (Manjaro, Endeavour, ...)
----------------------------------------------
+```
+
+
+## ARCH (Manjaro, Endeavour, ...)
+
+---
+```
 sudo pacman -Sy gcc
 sudo pacman -Sy make
 sudo pacman -Sy gtk3
 sudo pacman -Sy pkgconf
----------------------------------------------
-RPM (Fedora, SUSE, ...)
----------------------------------------------
+```
+
+## RPM (Fedora, SUSE, ...)
+
+---
+```
 sudo dnf install gcc
 sudo dnf install freetype-devel
 sudo dnf install pulseaudio-libs-devel
 sudo dnf install gtk3-devel
 sudo dnf install libgudev-devel
----------------------------------------------
-Gentoo
----------------------------------------------
+```
+
+## Gentoo
+
+---
+```
 sudo emerge --ask dev-vcs/git
 sudo emerge --ask cmake
 sudo emerge --ask media-sound/pulseaudio
----------------------------------------------
-FreeBSD (GhostBSD)
----------------------------------------------
+```
+
+## FreeBSD
+
+---
+```
 sudo pkg install cmake
 sudo pkg install os-generic-userland-devtools    (GhostBSD)
 sudo pkg install pkgconf
 sudo pkg install pulseaudio
----------------------------------------------
-NetBSD
----------------------------------------------
+```
+
+## NetBSD
+
+---
+```
 sudo pkgin in cmake
 sudo pkgin in pkg-config
 sudo pkgin in pulseaudio
 sudo pkgin in libusb1
----------------------------------------------
-OpenBSD
----------------------------------------------
+```
+
+## OpenBSD
+
+---
+```
 doas pkg_add pulseaudio
 doas pkg_add gtk+3
+```
 
-----------------------------------------------
-ALL: GET, CONFIGURE, BUILD AND INSTALL DENISE
-----------------------------------------------
+
+## for all Linux/BSD
+
+---
+```
 git clone https://github.com/piciji/denise.git denise
 cd denise
 cmake -B builds/release
-cmake --build builds/release -j 8
+cmake --build builds/release --parallel
 sudo cmake --build builds/release --target install
+```
 
-----------------------------------------------
-UPDATES: repeat it from time to time
-----------------------------------------------
+## Updates
+
+---
+```
 cd denise
 git pull
-cmake --build builds/release -j 8
+cmake --build builds/release --parallel
 sudo cmake --build builds/release --target install
+```
 
-----------------------------------------------
-UNINSTALL
-----------------------------------------------
+## Uninstall
+
+---
+```
 sudo cmake --build builds/release --target uninstall
+```
 
-----------------------------------------------
-OPTIONAL: build and install denise locally without sudo privileges
-----------------------------------------------
+## Optional: build and install denise locally without sudo
+
+---
+```
 cmake --build builds/release --target clean
 cmake -B builds/release -DCMAKE_INSTALL_PREFIX=~/.local
-cmake --build builds/release -j 8
+cmake --build builds/release --parallel
 cmake --build builds/release --target install
+```
