@@ -168,12 +168,6 @@ auto pBrowserWindow::fileGeneric(bool save, bool multi) -> std::vector<std::stri
         
         NSUInteger filtersLength = [filters count];
 
-    //    NSString* urlString = [NSString stringWithUTF8String:state.path.c_str()];
-        
-      //  NSString* urlTextEscaped = [urlString stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLQueryAllowedCharacterSet]];
-
-       // NSURL* url = [NSURL URLWithString:urlTextEscaped];
-
         NSString* _path = [NSString stringWithUTF8String:state.path.c_str()];
         NSURL* url = [NSURL fileURLWithPath:_path isDirectory:YES];
         
