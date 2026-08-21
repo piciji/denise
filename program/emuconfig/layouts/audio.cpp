@@ -371,7 +371,7 @@ AudioLayout::AudioLayout(TabWindow* tabWindow) {
                 picoWindow->append( picoWindow->layout );
             }
 
-            MiscHelper::centerGeometry( picoWindow, {300, 170}, this->tabWindow->geometry() );
+            MiscHelper::centerGeometry( picoWindow, {500, 170}, this->tabWindow->geometry() );
             picoWindow->setVisible(  );
             picoWindow->setFocused(  );
         };
