@@ -168,11 +168,14 @@ auto pBrowserWindow::fileGeneric(bool save, bool multi) -> std::vector<std::stri
         
         NSUInteger filtersLength = [filters count];
 
-        NSString* urlString = [NSString stringWithUTF8String:state.path.c_str()];
+    //    NSString* urlString = [NSString stringWithUTF8String:state.path.c_str()];
         
-        NSString* urlTextEscaped = [urlString stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLQueryAllowedCharacterSet]];
+      //  NSString* urlTextEscaped = [urlString stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLQueryAllowedCharacterSet]];
 
-        NSURL* url = [NSURL URLWithString:urlTextEscaped];
+       // NSURL* url = [NSURL URLWithString:urlTextEscaped];
+
+        NSString* _path = [NSString stringWithUTF8String:state.path.c_str()];
+        NSURL* url = [NSURL fileURLWithPath:_path isDirectory:YES];
         
         if (save) {
             panel = [NSSavePanel savePanel];
@@ -491,13 +494,9 @@ auto pBrowserWindow::directory() -> std::string {
         [panel setCanChooseDirectories:YES];
         [panel setCanChooseFiles:NO];
         [panel setTreatsFilePackagesAsDirectories:YES];
-        NSString* urlString = [NSString stringWithUTF8String:state.path.c_str()];
         
-        NSString* urlTextEscaped = [urlString stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLQueryAllowedCharacterSet]];
-        
-        NSURL* url = [NSURL URLWithString:urlTextEscaped];
-        
-//        NSURL* url = [NSURL URLWithString:[urlString stringByRemovingPercentEncoding]];
+        NSString* _path = [NSString stringWithUTF8String:state.path.c_str()];
+        NSURL* url = [NSURL fileURLWithPath:_path isDirectory:YES];
         [panel setDirectoryURL:url];
 
         if([panel runModal] == NSModalResponseOK) {
