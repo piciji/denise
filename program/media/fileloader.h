@@ -46,7 +46,7 @@ struct Fileloader {
     auto insertFile( Emulator::Interface* emulator, Emulator::Interface::Media* media, std::string filePath, uint8_t autoLoad = 0, unsigned selection = 0 ) -> bool;
     auto insertImage( Emulator::Interface* emulator, Emulator::Interface::Media* media, GUIKIT::File* file, GUIKIT::File::Item* item, int options = 0) -> void;
     auto insertCurrentPreview(Emulator::Interface::MediaGroup* mediaGroup) -> void;
-    auto preselectPath( GUIKIT::Settings* settings, std::string& groupName, bool lastPathFirst = false ) -> std::string;
+    auto preselectPath( GUIKIT::Settings* settings, std::string& groupName ) -> std::string;
     auto autoload(Emulator::Interface* emulator, Emulator::Interface::Media* media, unsigned selection, bool trapped, bool forceOverrideSpeeder = false) -> void;
     auto loadSettings(Emulator::Interface* emulator) -> void;
     auto insertSwapDisk(Emulator::Interface* emulator, unsigned swapPos) -> Emulator::Interface::Media*;

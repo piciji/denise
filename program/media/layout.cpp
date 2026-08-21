@@ -56,23 +56,6 @@ dialogHeight("px")
     setAlignment(0.5);
 }
 
-PathsLayout::Block::Block(Emulator::Interface::MediaGroup* mediaGroup) {
-    this->mediaGroup = mediaGroup;
-        
-    edit.setEditable(false);
-    append(label, {90, 0u}, 10);
-    append(edit, {~0u, 0u}, 10);
-    append(empty, {0u, 0u}, 10);
-    append(select, {0u, 0u});
-    setAlignment(0.5);
-    label.setFont(GUIKIT::Font::system("bold"));    
-}
-
-PathsLayout::PathsLayout() {            
-    setPadding(10);
-    setFont(GUIKIT::Font::system("bold"));
-}
-
 MediaGroupLayout::Block::Header::Header(Emulator::Interface::Media* media, Emulator::Interface* emulator) {
     auto group = media->group;
     bool IPMode = group->isExpansion() && group->expansion->isRS232();

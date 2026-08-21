@@ -390,6 +390,7 @@ struct ParamEditor : GUIKIT::Window {
     struct RadioLayout : GUIKIT::HorizontalLayout {
         GUIKIT::RadioBox boxes[MAX_RADIO_BOXES];
         GUIKIT::Button defaultButton;
+        GUIKIT::Widget spacer;
     } radioLay;
 
     GUIKIT::Image backImg;

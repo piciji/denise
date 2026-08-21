@@ -291,15 +291,6 @@ auto MediaLayout::build() -> void {
     moduleSwitch.setLayout( navElements.size(), *swapperLayout, {~0u, ~0u} );
     tvi->setUserData( (uintptr_t)(navElements.size() ) );
     navElements.push_back( { tvi, nullptr, (GUIKIT::Layout*)swapperLayout } );
-    
-    tvi = new GUIKIT::TreeViewItem;
-    tvi->setText( "paths" );
-    tvi->setImage( imgDocument );    
-    mediaTree.append(*tvi);    
-    preparePaths();
-    moduleSwitch.setLayout( navElements.size(), pathsLayout, {~0u, ~0u} );    
-    tvi->setUserData( (uintptr_t)(navElements.size() ) );
-    navElements.push_back( { tvi, nullptr, (GUIKIT::Layout*)&pathsLayout } );
 
     tvi = new GUIKIT::TreeViewItem;
     tvi->setText( "file dialog preview" );
@@ -925,7 +916,7 @@ auto MediaLayout::createImage( Emulator::Interface::Media* media ) -> GUIKIT::Fi
         goto Done;
     }
 
-    savePath( mediaGroup->name, file.getPath() );
+    settings->set<std::string>(_underscoreEx(mediaGroup->name) + "_folder_auto", GUIKIT::File::buildRelativePath(file.getPath()));
 
     if (data) {
         if (!file.write( data, size )) {
@@ -1011,65 +1002,6 @@ auto MediaLayout::createImage( Emulator::Interface::Media* media ) -> GUIKIT::Fi
     return filePtr;
 }
 
-auto MediaLayout::preparePath(Emulator::Interface::MediaGroup& mediaGroup) -> void {
-    if (mediaGroup.isExpansion() && mediaGroup.expansion->isRS232())
-        return;
-
-    auto settingFolderIdent = _underscoreEx(mediaGroup.name) + "_folder";
-
-    auto block = new PathsLayout::Block( &mediaGroup );
-
-    pathsLayout.blocks.push_back( block );
-    pathsLayout.append( *block,{~0u, 0u}, 5 );
-
-    std::string title = "select_" + mediaGroup.name + "_folder";
-
-    if (mediaGroup.isExpansion())
-        title = "select_cartridge_folder";
-
-    block->select.onActivate = [this, block, title, settingFolderIdent]() {
-        auto curPath = settings->get<std::string>(settingFolderIdent, "");
-        if (!curPath.empty())
-            curPath = GUIKIT::File::resolveRelativePath(curPath);
-
-        auto path = GUIKIT::BrowserWindow()
-            .setTitle(trans->get(title))
-            .setPath(curPath)
-            .setWindow(*this->tabWindow)
-            .directory();
-
-        if (!path.empty()) {
-            path = GUIKIT::File::buildRelativePath(path);
-            settings->set<std::string>(settingFolderIdent, path);
-            block->edit.setText(path);
-        }
-    };
-
-    block->empty.onActivate = [this, block, settingFolderIdent]() {
-        settings->set<std::string>(settingFolderIdent, "");
-        block->edit.setText("");
-    };
-
-    block->edit.setText( settings->get<std::string>(settingFolderIdent, "") );
-
-    block->select.setImage(&openImage);
-    block->empty.setImage(&ejectImg);
-}
-
-auto MediaLayout::preparePaths() -> void {
-    for (auto& mediaGroup : emulator->mediaGroups)
-        preparePath(mediaGroup);
-
-    if (dynamic_cast<LIBAMI::Interface*>(emulator)) {
-        auto saveImage = new Emulator::Interface::MediaGroup;
-        saveImage->id = emulator->mediaGroups.size();
-        saveImage->name = "disksave";
-        saveImage->suffix.push_back("sav");
-        saveImage->type = Emulator::Interface::MediaGroup::Type::Disk;
-        preparePath(*saveImage);
-    }
-}
-
 auto MediaLayout::updateMediaBlock(MediaGroupLayout::Block* block, FileSetting* fSetting) -> void {
 
     bool IPMode = block->media->group->isExpansion() && block->media->group->expansion->isRS232();
@@ -1128,15 +1060,6 @@ auto MediaLayout::updateListing( Emulator::Interface::Media* media ) -> void {
     }
 }
 
-auto MediaLayout::savePath( std::string& groupName, std::string path ) -> void {
-	
-	auto baseFolderIdent = _underscoreEx(groupName) + "_folder";
-
-    path = GUIKIT::File::buildRelativePath(path);
-	
-	settings->set<std::string>(baseFolderIdent + "_auto", path);
-}
-
 auto MediaLayout::translate(NavElement& nav) -> void {   
     bool isC64 = dynamic_cast<LIBC64::Interface*>(emulator);
     auto mediaGroup = nav.mediaGroup;
@@ -1192,7 +1115,6 @@ auto MediaLayout::translate(NavElement& nav) -> void {
 
 auto MediaLayout::translate() -> void {
 
-    pathsLayout.setText( trans->get("paths") );
     moduleFrame.setText( trans->get("selection") );   
     bootCart.setText( trans->get("boot cartridge") );
     useTraps.setText( trans->get("VDT Autostart") );
@@ -1220,8 +1142,6 @@ auto MediaLayout::translate() -> void {
             nav.tvi->setText( trans->get( getMediaGroupTransIdent( nav.mediaGroup ) ) );
         else if (nav.layout && dynamic_cast<SwapperLayout*>(nav.layout))
             nav.tvi->setText( trans->get( emulator->getTapeMediaGroup() ? "swapper" : "disk swapper" ) );
-        else if (nav.layout && dynamic_cast<PathsLayout*>(nav.layout))
-            nav.tvi->setText( trans->get( "paths" ) );
         else if ( nav.layout == &dialogPreviewLayout )
             nav.tvi->setText( trans->get( "File Dialog Preview" ) );
 
@@ -1234,16 +1154,6 @@ auto MediaLayout::translate() -> void {
         if (creatorWindow->visible())
             creatorWindow->synchronizeLayout();
     }
-
-	unsigned neededWidth = 90;
-	
-    for(auto block : pathsLayout.blocks) {        				
-        block->label.setText( trans->get( getMediaGroupTransIdent(block->mediaGroup) ) );
-		neededWidth = std::max(neededWidth, block->label.minimumSize().width );
-    }
-	
-	for(auto block : pathsLayout.blocks)	
-		block->update( block->label, { neededWidth, 0u }, 10 );	
         
     swapperLayout->translate();
 }
@@ -1703,10 +1613,6 @@ auto MediaLayout::loadSettings() -> void {
     else if (selectedLayout && selectedLayout->mediaGroup->isTape())
         useTraps.setChecked( settings->get<bool>("use_tape_traps", false) );
 
-    auto pathBlock = pathsLayout.getBlockByName("disksave");
-    if (pathBlock)
-        pathBlock->edit.setText(settings->get<std::string>("disksave_folder", ""));
-
     for(auto& nav : navElements) {
         if (!nav.mediaGroup)
             continue;
@@ -1724,14 +1630,7 @@ auto MediaLayout::loadSettings() -> void {
         layout->loadSettings();
         
         auto mediaGroup = layout->mediaGroup;
-        
-        auto pathBlock = pathsLayout.getBlock( mediaGroup );
-        
-        auto settingFolderIdent = _underscoreEx(mediaGroup->name) + "_folder";
 
-        if (pathBlock)
-            pathBlock->edit.setText( settings->get<std::string>(settingFolderIdent, "") );
-                
         if (mediaGroup->isDrive())
             layout->updateVisibility(emulator->getModelValue( emulator->getModelIdOfEnabledDrives(mediaGroup) ), true );
         
@@ -1791,26 +1690,6 @@ auto MediaLayout::getBlock(Emulator::Interface::Media* media) -> MediaGroupLayou
                 return block;
         }
     }
-    return nullptr;
-}
-
-auto PathsLayout::getBlock(Emulator::Interface::MediaGroup* mediaGroup) -> PathsLayout::Block* {
-    
-    for(auto block : blocks) {
-        if (block->mediaGroup == mediaGroup)
-            return block;
-    }
-    
-    return nullptr;
-}
-
-auto PathsLayout::getBlockByName(const std::string& name) -> PathsLayout::Block* {
-
-    for (auto block : blocks) {
-        if (block->mediaGroup->name == name)
-            return block;
-    }
-
     return nullptr;
 }
 

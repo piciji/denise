@@ -2796,7 +2796,7 @@ auto PresentationLayout::openParameterEditor(unsigned row, unsigned offset, GUIK
 ParamEditor::ParamEditor(PresentationLayout* presentation) :
 GUIKIT::Window(GUIKIT::Window::Hints::No_Title),
 presentation(presentation),
-sliderLay( "", false, true ) {
+sliderLay( "", false, true, true ) {
     unfocusTimer.setInterval(100);
 
     unfocusTimer.onFinished = [this]() {
@@ -2833,7 +2833,7 @@ auto ParamEditor::create(ShaderPreset::Param& param, unsigned row, unsigned offs
     remove( radioLay );
 
     if (steps <= MAX_RADIO_BOXES) {
-        auto& defaultButton = sliderLay.defaultButton;
+        auto& defaultButton = radioLay.defaultButton;
         std::vector<GUIKIT::RadioBox*> groupBoxes;
         std::vector<float> distances;
         float _minimum = param.minimum;
@@ -2870,6 +2870,7 @@ auto ParamEditor::create(ShaderPreset::Param& param, unsigned row, unsigned offs
         };
 
         radioLay.append(defaultButton, {0u, 0u});
+        radioLay.append( radioLay.spacer, {0u, ~0u} );
         GUIKIT::RadioBox::setGroup(groupBoxes);
         setMinimum( distances );
         radioLay.setAlignment( 0.5 );

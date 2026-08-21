@@ -88,7 +88,7 @@ auto Fileloader::load(Emulator::Interface* emulator, Emulator::Interface::Media*
 
     fileDialogPtr->setTitle( transSelect );
 
-    fileDialogPtr->setPath( preselectPath( settings, group->name, group->isDrive() && (media->id > 0) ) );
+    fileDialogPtr->setPath( preselectPath( settings, group->name ) );
 
     fileDialogPtr->setFilters({ GUIKIT::BrowserWindow::transformFilter(transImage, suffix ),
                                 trans->get("all_files")});
@@ -1002,25 +1002,10 @@ auto Fileloader::insertCurrentPreview(Emulator::Interface::MediaGroup* mediaGrou
     }
 }
 
-auto Fileloader::preselectPath( GUIKIT::Settings* settings, std::string& groupName, bool lastPathFirst ) -> std::string {
-    std::string baseFolderIdent = _underscoreEx(groupName) + "_folder";
-    std::string path;
-
-    for(int i = 0; i < 2; i++) {
-        std::string useIdent = baseFolderIdent;
-        if (lastPathFirst)
-            useIdent += "_auto";
-
-        lastPathFirst ^= 1;
-
-        path = settings->get<std::string>( useIdent, "" );
-        path = GUIKIT::File::resolveRelativePath(path);
-
-        if ( !path.empty() )
-            break;
-    }
-
-    return path;
+auto Fileloader::preselectPath( GUIKIT::Settings* settings, std::string& groupName ) -> std::string {
+    std::string baseFolderIdent = _underscoreEx(groupName) + "_folder_auto";
+    auto path = settings->get<std::string>( baseFolderIdent, "" );
+    return GUIKIT::File::resolveRelativePath(path);
 }
 
 auto Fileloader::loadSettings(Emulator::Interface* emulator) -> void {

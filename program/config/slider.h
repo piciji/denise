@@ -7,12 +7,14 @@ struct SliderLayout : GUIKIT::HorizontalLayout {
     GUIKIT::Label value;
     GUIKIT::HorizontalSlider slider;
     GUIKIT::Button defaultButton;
+    GUIKIT::Widget spacer;
     
     std::string unit = "";
     bool withActivator = false;
     bool withButton = false;   
-    
-    SliderLayout( std::string unit = "%", bool withActivator = false, bool withButton = false) {
+
+    // todo: refactor this
+    SliderLayout( std::string unit = "%", bool withActivator = false, bool withButton = false, bool withSpacer = false) {
         this->withActivator = withActivator;
         this->withButton = withButton;
         this->unit = unit;
@@ -24,6 +26,9 @@ struct SliderLayout : GUIKIT::HorizontalLayout {
             
         append(value, {0u, 0u}, 8);
         append(slider, {~0u, 0u}, withButton ? 8 : 0 );
+
+        if (withSpacer)
+            append(spacer, {0u, ~0u});
         
         if (withButton)
             append(defaultButton, {0u, 0u});

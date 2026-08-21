@@ -64,25 +64,6 @@ struct SwapperLayout : GUIKIT::VerticalLayout {
     SwapperLayout(MediaLayout* mediaLayout);
 };
 
-struct PathsLayout : GUIKIT::FramedVerticalLayout {
-
-    struct Block : GUIKIT::HorizontalLayout {
-        GUIKIT::Label label;
-        GUIKIT::LineEdit edit;
-        GUIKIT::Button empty;
-        GUIKIT::Button select;
-        
-        Emulator::Interface::MediaGroup* mediaGroup;
-
-        Block( Emulator::Interface::MediaGroup* mediaGroup );
-    };
-    std::vector<Block*> blocks;
-    auto getBlock(Emulator::Interface::MediaGroup* mediaGroup) -> Block*;
-    auto getBlockByName(const std::string& name) -> PathsLayout::Block*;
-    
-    PathsLayout();
-};
-
 struct DialogPreviewLayout : GUIKIT::FramedVerticalLayout {
     struct Mode : GUIKIT::HorizontalLayout {
         GUIKIT::Label label;
@@ -318,8 +299,7 @@ struct MediaLayout : GUIKIT::HorizontalLayout {
 
     GUIKIT::Button bootCart;
     GUIKIT::Button deactivateCart;
-    
-    PathsLayout pathsLayout;
+
     DialogPreviewLayout dialogPreviewLayout;
     SwapperLayout* swapperLayout = nullptr;
 
@@ -334,10 +314,7 @@ struct MediaLayout : GUIKIT::HorizontalLayout {
     auto updateVisibility( Emulator::Interface::MediaGroup* mediaGroup, unsigned count ) -> void;
     auto updateOptionsVisibility() -> void;
     auto bindSelectorAction( MediaGroupLayout* layout ) -> void;
-    auto preparePaths() -> void;
-    auto preparePath(Emulator::Interface::MediaGroup& mediaGroup) -> void;
     auto updateListing( Emulator::Interface::Media* media ) -> void;
-	auto savePath( std::string& groupName, std::string path ) -> void;
     auto showListing( MediaGroupLayout* layout ) -> bool;
     auto createImage( Emulator::Interface::Media* media ) -> GUIKIT::File*;
     auto insertCreatedImage(Emulator::Interface::Media* media) -> bool;

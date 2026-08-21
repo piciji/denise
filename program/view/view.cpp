@@ -2077,6 +2077,28 @@ auto View::buildMenu() -> void {
 
         diskControlMenu.menu.append( diskControlMenu.clearSave );
 
+        diskControlMenu.savePath.setIcon( openImage );
+
+        diskControlMenu.savePath.onActivate = [this]() {
+            auto settings = Program::getSettings( activeEmulator );
+            auto curPath = settings->get<std::string>("disksave_folder", "");
+            if (!curPath.empty())
+                curPath = GUIKIT::File::resolveRelativePath(curPath);
+
+            auto path = GUIKIT::BrowserWindow()
+                .setTitle(trans->get("select_disksave_folder"))
+                .setPath(curPath)
+                .setWindow(*this)
+                .directory();
+
+            if (!path.empty()) {
+                path = GUIKIT::File::buildRelativePath(path);
+                settings->set<std::string>("disksave_folder", path);
+            }
+        };
+
+        diskControlMenu.menu.append( diskControlMenu.savePath );
+
         diskControlMenu.reset.setIcon( powerImage );
 
         diskControlMenu.reset.onActivate = [i]() {
@@ -2221,7 +2243,10 @@ auto View::updateDiskMenu() -> void {
     bool showResetAndHide = dynamic_cast<LIBC64::Interface*>(activeEmulator);
 
     for(auto& d : diskControlMenus) {
-        d.clearSave.setEnabled(!showResetAndHide);
+        if (d.clearSave.enabled() != !showResetAndHide) {
+            d.clearSave.setEnabled(!showResetAndHide);
+            d.savePath.setEnabled(!showResetAndHide);
+        }
 
         if (d.reset.enabled() != showResetAndHide) {
             d.reset.setEnabled(showResetAndHide);
@@ -2418,6 +2443,7 @@ auto View::translate() -> void {
         diskControlMenu.reset.setText( trans->get("Reset Floppy") );
         diskControlMenu.inactive.setText( trans->get("inactive until reset") );
         diskControlMenu.clearSave.setText( trans->get("clear save file") );
+        diskControlMenu.savePath.setText( trans->get("disksaves") );
     }
 
     power.power.setText( trans->get("Hard Reset") );

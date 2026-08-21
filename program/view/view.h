@@ -237,6 +237,7 @@ struct View : GUIKIT::Window {
         GUIKIT::MenuItem reset;
         GUIKIT::MenuItem inactive;
     	GUIKIT::MenuItem clearSave;
+        GUIKIT::MenuItem savePath;
     } diskControlMenus[4];
 
     struct {
