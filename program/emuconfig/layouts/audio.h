@@ -176,6 +176,11 @@ struct VolumeControlLayout : GUIKIT::HorizontalLayout {
     VolumeControlLayout();
 };
 
+struct PicoWindow : GUIKIT::Window {
+    GUIKIT::Widget spacer;
+    GUIKIT::HorizontalLayout layout;
+};
+
 struct AudioLayout : GUIKIT::HorizontalLayout {
     
     TabWindow* tabWindow;
@@ -194,6 +199,7 @@ struct AudioLayout : GUIKIT::HorizontalLayout {
     
     ModelLayout settingsLayout;
     ModelLayout* usbSidPicoLayout = nullptr;
+    PicoWindow* picoWindow = nullptr;
     
     GUIKIT::VerticalLayout dspFrame;
     BassControlLayout bass;

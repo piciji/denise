@@ -7,6 +7,7 @@
 #include "../../view/status.h"
 #include "../../audio/manager.h"
 #include "../../helper/fileHelper.h"
+#include "../../helper/miscHelper.h"
 
 #define mes this->tabWindow->message
 #define _settings this->tabWindow->settings
@@ -312,11 +313,6 @@ AudioLayout::AudioLayout(TabWindow* tabWindow) {
     moduleList.append( {"SID"} );
     moduleList.setImage(0, 0, processorImage);
 
-    if (dynamic_cast<LIBC64::Interface*>(emulator)) {
-        moduleList.append( {"USBSID-Pico"} );
-        moduleList.setImage(moduleList.rowCount() - 1, 0, processorImage);
-    }
-
     moduleList.append( {"Drive"} );
     moduleList.setImage(moduleList.rowCount() - 1, 0, driveImage);
     moduleList.append( {"DSP"} );
@@ -364,6 +360,22 @@ AudioLayout::AudioLayout(TabWindow* tabWindow) {
         usbSidPicoLayout->build(tabWindow, emulator,
             {Emulator::Interface::Model::Purpose::AudioExtern}, {1,1,1}, 8);
 
+        usbSidPicoLayout->setMargin( 10 );
+
+        settingsLayout.controlLayout.button.onActivate = [this]() {
+            if (!picoWindow) {
+                picoWindow = new PicoWindow;
+                picoWindow->layout.append( *usbSidPicoLayout, {~0u, 0u} );
+                picoWindow->layout.append( picoWindow->spacer, {0u, ~0u} );
+                picoWindow->layout.setAlignment( 0.5 );
+                picoWindow->append( picoWindow->layout );
+            }
+
+            MiscHelper::centerGeometry( picoWindow, {300, 170}, this->tabWindow->geometry() );
+            picoWindow->setVisible(  );
+            picoWindow->setFocused(  );
+        };
+
         usbSidPicoLayout->setEvents();
     } else
         usbSidPicoLayout = nullptr;
@@ -377,9 +389,6 @@ AudioLayout::AudioLayout(TabWindow* tabWindow) {
 
     int layPos = 0;
     moduleSwitch.setLayout( layPos++, settingsLayout, {~0u, ~0u} );
-    if (usbSidPicoLayout)
-        moduleSwitch.setLayout( layPos++, *usbSidPicoLayout, {~0u, ~0u} );
-
     moduleSwitch.setLayout( layPos++, *driveLayout, {~0u, ~0u} );
     moduleSwitch.setLayout( layPos++, dspFrame, {~0u, ~0u} );
     moduleSwitch.setLayout( layPos++, audioRecord, {~0u, ~0u} );
@@ -1023,8 +1032,6 @@ auto AudioLayout::translate() -> void {
 
     int layPos = 0;
     moduleList.setText(layPos++, 0, trans->get("Chip"));
-    if (usbSidPicoLayout)
-        moduleList.setText(layPos++, 0, trans->get("USBSID-Pico"));
     moduleList.setText(layPos++, 0, trans->get("Drives"));
     moduleList.setText(layPos, 0, trans->get("DSP"));
     moduleList.setRowTooltip(layPos++, trans->get("Digital Signal Processing"));

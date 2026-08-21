@@ -35,6 +35,8 @@ struct ModelLayout : GUIKIT::FramedVerticalLayout {
         GUIKIT::Label label;
         GUIKIT::CheckBox firstAll;
         GUIKIT::CheckBox secondAll;
+        GUIKIT::Widget spacer;
+        GUIKIT::Button button;
     } controlLayout;
     
     std::vector<Line*> lines;

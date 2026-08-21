@@ -158,13 +158,13 @@ auto ModelLayout::build( TabWindow* tabWindow, Emulator::Interface* emulator, st
             line->append(*block->imageView, {curveImg->width, curveImg->height}, 3 );
         }
 
-        if (model.isSlider())
-            line->append(*block,{~0u, 0u}, 15);
-        else
-            line->append(*block,{0u, 0u}, 15);
-
         blockPos++;
-    }    
+
+        if (model.isSlider())
+            line->append(*block,{~0u, 0u}, blockCount != blockPos ? 15 : 0);
+        else
+            line->append(*block,{0u, 0u}, blockCount != blockPos ? 15 : 0);
+    }
 
     if (line)
 	    update( *line, 0 );
@@ -591,6 +591,7 @@ auto ModelLayout::translate( std::string theme ) -> void {
         controlLayout.label.setText(trans->getA("all"));
         controlLayout.firstAll.setText("8580");
         controlLayout.secondAll.setText("6581");
+        controlLayout.button.setText("USBSID-Pico");
     }
     
     for (auto line : lines) {
@@ -948,7 +949,10 @@ auto ModelLayout::updateExtraAudioChipsVisibillity() -> void {
     }
     
     if (activeSids == 0) {
-        controlLayout.setEnabled( false );
+        controlLayout.label.setEnabled( false );
+        controlLayout.firstAll.setEnabled( false );
+        controlLayout.secondAll.setEnabled( false );
+
         lines[5]->blocks[1]->setEnabled(false);
         lines[5]->blocks[2]->setEnabled(false);
         lines[5]->blocks[3]->setEnabled(false);
@@ -986,9 +990,12 @@ auto ModelLayout::appendAudioSelectorLayout() -> void {
 
     controlLayout.append(controlLayout.label, {getAlignedWidth(), 0u}, 5);
     controlLayout.append(controlLayout.firstAll, {0u, 0u}, GUIKIT::Application::isCocoa() ? 7 : 5);
-    controlLayout.append(controlLayout.secondAll, {0u, 0u}, 20);
+    controlLayout.append(controlLayout.secondAll, {0u, 0u});
+    controlLayout.append(controlLayout.spacer, {~0u, 0u} );
+    controlLayout.append(controlLayout.button, {0u, 0u} );
     controlLayout.setAlignment(0.5);
-    append(controlLayout, {0u, 0u}, 5);
+
+    append(controlLayout, {~0u, 0u});
     
     controlLayout.firstAll.onToggle = [this](bool checked) {
         
