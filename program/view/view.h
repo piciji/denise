@@ -366,6 +366,19 @@ struct View : GUIKIT::Window {
         }
     };
 
+    struct SavePathWindow : GUIKIT::Window {
+
+        struct MainLayout : GUIKIT::HorizontalLayout {
+            GUIKIT::LineEdit edit;
+            GUIKIT::Widget spacer;
+            GUIKIT::Button defaultPath;
+            GUIKIT::Button savePath;
+
+            MainLayout();
+        } mainLayout;
+
+    } *savePathWindow;
+
     FpsWindow* fpsCustomWindow = nullptr;
     FpsWindow* fpsFastforwardWindow = nullptr;
             	

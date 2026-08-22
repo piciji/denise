@@ -382,7 +382,7 @@ auto States::generateAutoPath(bool createFolder) -> std::string {
         ident = "savestate";
     auto pos = settings->get<unsigned>( "save_slot", 0);
 
-    return FileHelper::generatedFolder(emulator, "states_folder", "states", createFolder) + ident + "_" + std::to_string(pos) + ".sav";
+    return FileHelper::generatedFolder(emulator, "states_folder", "states", createFolder ? FileHelper::FLAG_CREATE : 0) + ident + "_" + std::to_string(pos) + ".sav";
 }
 
 auto States::updateTapeMenu() -> void {

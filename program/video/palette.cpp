@@ -248,5 +248,5 @@ auto PaletteManager::getIdent(unsigned i) -> std::string {
 }
 
 auto PaletteManager::path(bool createFolder) -> std::string {
-    return FileHelper::generatedFolder("", createFolder) + emulator->ident + ".pal";
+    return FileHelper::generatedFolder("", createFolder ? FileHelper::FLAG_CREATE : 0) + emulator->ident + ".pal";
 }

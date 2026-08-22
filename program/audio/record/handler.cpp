@@ -28,7 +28,7 @@ auto Handler::start( Emulator::Interface* emulator, std::string& errorText ) -> 
     
     GUIKIT::Settings* settings = Program::getSettings( activeEmulator );
 
-    std::string path = FileHelper::generatedFolder(emulator, "audio_record_path", "recordings/audio", true);
+    std::string path = FileHelper::generatedFolder(emulator, "audio_record_path", "recordings/audio", FileHelper::FLAG_CREATE);
     
     std::string fileName = settings->get<std::string>( "audio_record_ident", "sample");
 

@@ -11,6 +11,8 @@ struct Message;
 struct FileSetting;
 
 struct FileHelper {
+    enum Flags { FLAG_CREATE = 1, FLAG_VIEW = 2 };
+
     static auto errorOpen(GUIKIT::File* file, GUIKIT::File::Item* item, Message* message ) -> void;
     static auto errorOpen( const std::vector<std::string>& paths, bool warning = false ) -> void;
     static auto errorFileSize(uint64_t maxSize, std::string filePath, Message* message) -> void;
@@ -28,7 +30,7 @@ struct FileHelper {
     static auto updateSaveIdent( Emulator::Interface* emulator, FileSetting* fSetting ) -> void;
 
     static auto getAssignedSaveFile(Emulator::Interface::Media* media, bool createFolder = false) -> std::string;
-    static auto generatedFolder(const std::string& subPath, bool createFolder = false) -> std::string;
-    static auto generatedFolder(Emulator::Interface* emulator, const std::string& settingIdent, const std::string& subPath, bool createFolder = false) -> std::string;
-    static auto getSettingsFolder( Emulator::Interface* emulator, bool createFolder = false ) -> std::string;
+    static auto generatedFolder(const std::string& subPath, unsigned flags = 0) -> std::string;
+    static auto generatedFolder(Emulator::Interface* emulator, const std::string& settingIdent, const std::string& subPath, unsigned flags = 0) -> std::string;
+    static auto getSettingsFolder( Emulator::Interface* emulator, unsigned flags = 0 ) -> std::string;
 };

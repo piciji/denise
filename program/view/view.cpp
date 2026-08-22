@@ -2080,21 +2080,45 @@ auto View::buildMenu() -> void {
         diskControlMenu.savePath.setIcon( openImage );
 
         diskControlMenu.savePath.onActivate = [this]() {
-            auto settings = Program::getSettings( activeEmulator );
-            auto curPath = settings->get<std::string>("disksave_folder", "");
-            if (!curPath.empty())
-                curPath = GUIKIT::File::resolveRelativePath(curPath);
 
-            auto path = GUIKIT::BrowserWindow()
-                .setTitle(trans->get("select_disksave_folder"))
-                .setPath(curPath)
-                .setWindow(*this)
-                .directory();
+            if (!savePathWindow) {
+                savePathWindow = new SavePathWindow;
+                savePathWindow->mainLayout.savePath.setImage( &openImage );
+                savePathWindow->mainLayout.defaultPath.setImage( &delImage );
+                savePathWindow->append( savePathWindow->mainLayout );
 
-            if (!path.empty()) {
-                path = GUIKIT::File::buildRelativePath(path);
-                settings->set<std::string>("disksave_folder", path);
+                MiscHelper::centerGeometry( savePathWindow, {500u, 100u}, this->geometry() );
+
+                savePathWindow->mainLayout.defaultPath.onActivate = [this]() {
+                    auto settings = Program::getSettings( activeEmulator );
+                    settings->set<std::string>("disksave_folder", "");
+                    savePathWindow->mainLayout.edit.setText( FileHelper::generatedFolder(activeEmulator, "disksave_folder", "disksave", FileHelper::FLAG_VIEW) );
+                };
+
+                savePathWindow->mainLayout.savePath.onActivate = [this]() {
+                    auto settings = Program::getSettings( activeEmulator );
+                    auto curPath = settings->get<std::string>("disksave_folder", "");
+                    if (!curPath.empty())
+                        curPath = GUIKIT::File::resolveRelativePath(curPath);
+
+                    auto path = GUIKIT::BrowserWindow()
+                        .setTitle(trans->get("select_disksave_folder"))
+                        .setPath(curPath)
+                        .setWindow(*this)
+                        .directory();
+
+                    if (!path.empty()) {
+                        path = GUIKIT::File::buildRelativePath(path);
+                        settings->set<std::string>("disksave_folder", path);
+                        savePathWindow->mainLayout.edit.setText( path );
+                    }
+                    savePathWindow->setVisible( false );
+                };
             }
+
+            savePathWindow->mainLayout.edit.setText( FileHelper::generatedFolder(activeEmulator, "disksave_folder", "disksave", FileHelper::FLAG_VIEW) );
+            savePathWindow->setVisible();
+            savePathWindow->setFocused();
         };
 
         diskControlMenu.menu.append( diskControlMenu.savePath );
@@ -2768,7 +2792,7 @@ auto View::clearRecentList(Emulator::Interface* emulator) -> void {
 auto View::takeScreenshot() -> void {
     videoDriver->waitRenderThread();
     auto settings = Program::getSettings(activeEmulator);
-    auto _path = FileHelper::generatedFolder(activeEmulator, "screen_record_path", "recordings/screenshots", true);
+    auto _path = FileHelper::generatedFolder(activeEmulator, "screen_record_path", "recordings/screenshots", FileHelper::FLAG_CREATE);
     auto _file = settings->get<std::string>("save_ident", "screenshot");
     auto screenshotFormat = settings->get<std::string>("screen_record_format", "png");
     bool withEffects = globalSettings->get<bool>("screenshot_with_effects", true);
@@ -2893,6 +2917,17 @@ View::FpsWindow::Bottom::Bottom() {
     append( spacer, {~0u, 0u} );
     append( apply, {0u, 0u} );
 
+    setAlignment( 0.5 );
+}
+
+View::SavePathWindow::MainLayout::MainLayout() {
+    edit.setEditable( false );
+    append( edit, {~0u, 0u}, 10 );
+    append( spacer, {0u, ~0u} );
+    append( defaultPath, {0u, 0u}, 10 );
+    append( savePath, {0u, 0u} );
+
+    setMargin(10);
     setAlignment( 0.5 );
 }
 

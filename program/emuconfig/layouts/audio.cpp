@@ -632,7 +632,7 @@ AudioLayout::AudioLayout(TabWindow* tabWindow) {
 
     audioRecord.location.standard.onActivate = [this]() {
         _settings->set<std::string>("audio_record_path", "");
-        audioRecord.location.pathEdit.setText( FileHelper::generatedFolder(emulator, "audio_record_path", "recordings/audio") );
+        audioRecord.location.pathEdit.setText( FileHelper::generatedFolder(emulator, "audio_record_path", "recordings/audio", FileHelper::FLAG_VIEW) );
         audioRecord.location.pathEdit.setEnabled(false);
     };
 
@@ -1180,7 +1180,7 @@ auto AudioLayout::loadSettings() -> void {
 
 auto AudioLayout::updateRecordingPath() -> void {
     std::string _recordPath = _settings->get<std::string>("audio_record_path", "");
-    audioRecord.location.pathEdit.setText(FileHelper::generatedFolder(emulator, "audio_record_path", "recordings/audio"));
+    audioRecord.location.pathEdit.setText(FileHelper::generatedFolder(emulator, "audio_record_path", "recordings/audio", FileHelper::FLAG_VIEW));
     audioRecord.location.pathEdit.setEnabled(!_recordPath.empty());
 }
 

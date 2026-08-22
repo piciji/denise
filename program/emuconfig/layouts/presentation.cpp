@@ -1441,7 +1441,7 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
         if (MiscHelper::getFont(_fn, -1))
             return;
 
-        std::string _path = FileHelper::generatedFolder("fonts", true);
+        std::string _path = FileHelper::generatedFolder("fonts", FileHelper::FLAG_CREATE);
 
         if (GUIKIT::File::xcopy(filePath, _path + _fn)) {
             for (auto view : emuConfigViews) {
@@ -1545,7 +1545,7 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
 
     layScreenShot.location.standard.onActivate = [this]() {
         _settings->set<std::string>("screen_record_path", "");
-        layScreenShot.location.pathEdit.setText(FileHelper::generatedFolder(emulator, "screen_record_path", "recordings/screenshots"));
+        layScreenShot.location.pathEdit.setText(FileHelper::generatedFolder(emulator, "screen_record_path", "recordings/screenshots", FileHelper::FLAG_VIEW));
         layScreenShot.location.pathEdit.setEnabled(false);
     };
 
@@ -1733,7 +1733,7 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
 
 auto PresentationLayout::updateRecordingPath() -> void {
     std::string _recordPath = _settings->get<std::string>("screen_record_path", "");
-    layScreenShot.location.pathEdit.setText(FileHelper::generatedFolder(emulator, "screen_record_path", "recordings/screenshots"));
+    layScreenShot.location.pathEdit.setText(FileHelper::generatedFolder(emulator, "screen_record_path", "recordings/screenshots", FileHelper::FLAG_VIEW));
     layScreenShot.location.pathEdit.setEnabled(!_recordPath.empty());
 }
 

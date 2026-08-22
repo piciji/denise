@@ -98,13 +98,13 @@ auto Program::initVideo(bool driverChange) -> void {
         std::string cacheFile = GUIKIT::String::getFileName(diskFile.path);
 
         if (diskFile.data && diskFile.size) {
-            std::string absPath = FileHelper::generatedFolder(subPath, true) + cacheFile;
+            std::string absPath = FileHelper::generatedFolder(subPath, FileHelper::FLAG_CREATE) + cacheFile;
             GUIKIT::File f(absPath, true);
 
             if (f.open(GUIKIT::File::Mode::Write))
                 f.write(diskFile.data, diskFile.size);
         } else {
-            std::string absPath = FileHelper::generatedFolder(subPath, false) + cacheFile;
+            std::string absPath = FileHelper::generatedFolder(subPath, 0) + cacheFile;
             GUIKIT::File f(absPath, true);
 
             if (f.open()) {

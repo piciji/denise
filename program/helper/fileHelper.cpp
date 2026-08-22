@@ -127,7 +127,7 @@ auto FileHelper::getAssignedSaveFile(Emulator::Interface::Media* media, bool cre
     auto fSetting = FileSetting::getInstance( activeEmulator, _underscore(media->name ) );
     if (!fSetting || fSetting->file.empty())
         return "";
-    auto path = generatedFolder(activeEmulator, "disksave_folder", "disksave", createFolder);
+    auto path = generatedFolder(activeEmulator, "disksave_folder", "disksave", createFolder ? FileHelper::FLAG_CREATE : 0);
     return path + fSetting->file + ".sav";
 }
 
@@ -254,19 +254,20 @@ auto FileHelper::updateSaveIdentFromSav( Emulator::Interface* emulator, GUIKIT::
         emuView->configurationsLayout->updateSaveIdent( fileName );
 }
 
-auto FileHelper::generatedFolder(const std::string& subPath, bool createFolder) -> std::string {
+auto FileHelper::generatedFolder(const std::string& subPath, unsigned flags) -> std::string {
     std::string _path;
     std::string _basePath;
 
     if (program->portable) {
         _path = "portable/" + subPath;
-        _basePath = program->installFolder();
+        if ((flags & FLAG_VIEW) == 0)
+            _basePath = program->installFolder();
     } else {
         _path = program->appFolder() + "/" + subPath; // may not be created and therefore should not be part of base path
         _basePath = program->userFolder();
     }
 
-    if (createFolder)
+    if ((flags & (FLAG_CREATE | FLAG_VIEW)) == FLAG_CREATE)
         GUIKIT::File::createDir(_path, _basePath); // creations starts at base path
 
     _path = _basePath + _path;
@@ -275,35 +276,37 @@ auto FileHelper::generatedFolder(const std::string& subPath, bool createFolder) 
     return GUIKIT::File::beautifyPath(_path);
 }
 
-auto FileHelper::generatedFolder(Emulator::Interface* emulator, const std::string& settingIdent, const std::string& subPath, bool createFolder) -> std::string {
+auto FileHelper::generatedFolder(Emulator::Interface* emulator, const std::string& settingIdent, const std::string& subPath, unsigned flags) -> std::string {
     std::string _path;
 
     if (!settingIdent.empty()) {
         auto settings = Program::getSettings(emulator);
         _path = settings->get<std::string>(settingIdent, "");
-        _path = GUIKIT::File::resolveRelativePath(_path);
+        if ((flags & FLAG_VIEW) == 0)
+            _path = GUIKIT::File::resolveRelativePath(_path);
     }
 
     if (_path.empty()) {
-        std::string _sub = "";
+        std::string _sub;
         if (!subPath.empty()) {
             std::string _emuIdent = emulator->ident;
             _sub = subPath + "/" + GUIKIT::String::toLowerCase(_emuIdent);
         }
-        return generatedFolder(_sub, createFolder);
+        return generatedFolder(_sub, flags);
     }
 
     return GUIKIT::File::beautifyPath(_path);
 }
 
-auto FileHelper::getSettingsFolder( Emulator::Interface* emulator, bool createFolder ) -> std::string {
+auto FileHelper::getSettingsFolder( Emulator::Interface* emulator, unsigned flags ) -> std::string {
     std::string _emuIdent = emulator->ident;
     auto path = globalSettings->get<std::string>( _emuIdent + "_settings_path", "");
 
     if (path.empty())
-        return generatedFolder("settings/" + GUIKIT::String::toLowerCase(_emuIdent), createFolder);
+        return generatedFolder("settings/" + GUIKIT::String::toLowerCase(_emuIdent), flags);
 
-    path = GUIKIT::File::resolveRelativePath(path);
+    if ((flags & FLAG_VIEW) == 0)
+        path = GUIKIT::File::resolveRelativePath(path);
 
     return GUIKIT::File::beautifyPath(path);
 }

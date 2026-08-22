@@ -176,7 +176,7 @@ auto ArchiveViewer::buildMedia(GUIKIT::File* file, std::vector<GUIKIT::File::Ite
         result = dynamic_cast<LIBAMI::Interface*>(activeEmulator)->buildDisk(fileName, _items);
 
     if (result.ptr) {
-        std::string _path = FileHelper::generatedFolder(activeEmulator, "disksave_folder", "disksave", true);
+        std::string _path = FileHelper::generatedFolder(activeEmulator, "disksave_folder", "disksave", FileHelper::FLAG_CREATE);
         if (nativeGroup->isHardDisk())
             _path += fileName + ".hdf";
         else
