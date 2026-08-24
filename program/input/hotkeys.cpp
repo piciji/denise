@@ -716,7 +716,7 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
             unsigned val = 1;
 
             if (emuView && emuView->systemLayout) {
-                val = emuView->systemLayout->modelLayout.nextOption( C64Interface::ModelIdSid );
+                val = emuView->systemLayout->systemModelLayout.nextOption( C64Interface::ModelIdSid );
                 emuThread->lock();
             } else {
                 emuThread->lock();

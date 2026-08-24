@@ -8,8 +8,6 @@ namespace EmuConfigView {
 struct TabWindow;
     
 struct ModelLayout : GUIKIT::FramedVerticalLayout {
-
-    static GUIKIT::Image* curveImg;
     static GUIKIT::Image* backImg;
 
     struct Line : GUIKIT::HorizontalLayout {
@@ -31,14 +29,6 @@ struct ModelLayout : GUIKIT::FramedVerticalLayout {
         Line();
     };
     
-    struct ControlLayout : GUIKIT::HorizontalLayout {
-        GUIKIT::Label label;
-        GUIKIT::CheckBox firstAll;
-        GUIKIT::CheckBox secondAll;
-        GUIKIT::Widget spacer;
-        GUIKIT::Button button;
-    } controlLayout;
-    
     std::vector<Line*> lines;
        
     Emulator::Interface* emulator;
@@ -46,6 +36,20 @@ struct ModelLayout : GUIKIT::FramedVerticalLayout {
     TabWindow* tabWindow;
 
     std::vector<Emulator::Interface::Model::Purpose> purposes;
+
+    virtual auto blockWillAppend( Line* line, Line::Block* block ) -> void {}
+
+    virtual auto lineWillAppend( unsigned pos ) -> void {}
+
+    virtual auto updateVisibillity( ) -> void {}
+
+    virtual auto widgetUpdated( Line::Block* block, Emulator::Interface::Model* model ) -> void {}
+
+    virtual auto updated( Line::Block* block, Emulator::Interface::Model* model ) -> void {}
+
+    virtual auto getIdent( Emulator::Interface::Model* model, std::string& tooltip ) -> std::string;
+
+    virtual auto getUnit(Emulator::Interface::Model* model) -> std::string { return ""; }
         
     auto build( TabWindow* tabWindow, Emulator::Interface* emulator, std::vector<Emulator::Interface::Model::Purpose> purposes, std::vector<unsigned> dim, unsigned lineSpace = 5 ) -> void;
     
@@ -66,36 +70,10 @@ struct ModelLayout : GUIKIT::FramedVerticalLayout {
     auto nextOption(unsigned id) -> unsigned;
     
     auto translate( std::string theme = "model" ) -> void;
-    
-    auto getIdent( Emulator::Interface::Model* model, std::string& tooltip ) -> std::string;
-    
-    auto appendAudioSelectorLayout() -> void;
-    
-    auto applyCustomStuff( Line::Block* block, Emulator::Interface::Model* model) -> void;
-    
+
     auto getBlock( unsigned modelId ) -> Line::Block*;
 
     auto alignSlider( std::string maxText ) -> void;
-
-    auto hintDriveSettings() -> void;
-
-    auto updateExtraAudioChipsVisibillity() -> void;
-
-    auto updateBiasVisibillity() -> void;
-
-    auto updateBurstVisibillity() -> void;
-
-    auto updatePicoVisibillity() -> void;
-
-    auto updateMechanicsVisibillity() -> void;
-
-    auto getAlignedWidth(Emulator::Interface::Model* model = nullptr) -> unsigned;
-
-    auto getUnit(unsigned id) -> std::string;
-
-    auto setVisibility(Emulator::Interface::Model* model, Emulator::Interface::Model* model2 = nullptr) -> void;
-
-    auto setImageUri(Line::Block* block, float val) -> void;
 
     auto decimalPlaces(float scaler) -> unsigned;
     

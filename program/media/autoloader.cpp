@@ -524,7 +524,7 @@ auto Autoloader::activateDrive( Emulator::Interface* emulator, Emulator::Interfa
 
     if (emuView) {
         if(emuView->systemLayout) emuView->systemLayout->driveModelLayout.updateWidget( modelId );
-        if(emuView->mediaLayout) emuView->mediaLayout->updateVisibility( mediaGroup, requestedCount );
+        else if(emuView->mediaLayout) emuView->mediaLayout->updateVisibility( mediaGroup, requestedCount );
     }
 
     bool halfTrackMode = dynamic_cast<LIBC64::Interface*>(emulator);

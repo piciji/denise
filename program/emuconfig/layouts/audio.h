@@ -181,6 +181,33 @@ struct PicoWindow : GUIKIT::Window {
     GUIKIT::HorizontalLayout layout;
 };
 
+struct AudioModelLayout : ModelLayout {
+
+    struct ControlLayout : GUIKIT::HorizontalLayout {
+        GUIKIT::Label label;
+        GUIKIT::CheckBox firstAll;
+        GUIKIT::CheckBox secondAll;
+        GUIKIT::Widget spacer;
+        GUIKIT::Button button;
+
+        ControlLayout();
+    } controlLayout;
+
+    auto lineWillAppend( unsigned pos ) -> void override;
+    auto updateVisibillity( ) -> void override;
+    auto updated( Line::Block* block, Emulator::Interface::Model* model ) -> void override;
+
+    auto updateBiasVisibillity() -> void;
+    auto updateExtraSidVisibillity() -> void;
+
+    auto getIdent( Emulator::Interface::Model* model, std::string& tooltip ) -> std::string;
+};
+
+struct PicoModelLayout : ModelLayout {
+    auto updated( Line::Block* block, Emulator::Interface::Model* model ) -> void override;
+    auto updateVisibillity( ) -> void override;
+};
+
 struct AudioLayout : GUIKIT::HorizontalLayout {
     
     TabWindow* tabWindow;
@@ -197,8 +224,8 @@ struct AudioLayout : GUIKIT::HorizontalLayout {
 
     GUIKIT::SwitchLayout moduleSwitch;
     
-    ModelLayout settingsLayout;
-    ModelLayout* usbSidPicoLayout = nullptr;
+    AudioModelLayout settingsLayout;
+    PicoModelLayout* usbSidPicoLayout = nullptr;
     PicoWindow* picoWindow = nullptr;
     
     GUIKIT::VerticalLayout dspFrame;

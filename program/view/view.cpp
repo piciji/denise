@@ -2083,6 +2083,7 @@ auto View::buildMenu() -> void {
 
             if (!savePathWindow) {
                 savePathWindow = new SavePathWindow;
+                savePathWindow->setTitle( trans->getA("disksaves") );
                 savePathWindow->mainLayout.savePath.setImage( &openImage );
                 savePathWindow->mainLayout.defaultPath.setImage( &delImage );
                 savePathWindow->append( savePathWindow->mainLayout );
@@ -2299,6 +2300,8 @@ auto View::showTapeMenu( bool show, Emulator::Interface::TapeMode mode ) -> void
 
 auto View::updateTapeIcons( Emulator::Interface::TapeMode mode ) -> void {
     typedef Emulator::Interface::TapeMode TapeMode;
+    if (!dynamic_cast<LIBC64::Interface*>(activeEmulator))
+        return;
     
     tapeStopItem.setIcon( mode == TapeMode::Stop ? stophiImage : stopImage );
     tapePlayItem.setIcon( mode == TapeMode::Play ? playhiImage : playImage );    
@@ -2520,6 +2523,9 @@ auto View::translate() -> void {
 
     maximumSpeedItem.setText( trans->get("maximum speed") );
     customizeSpeedItem.setText( trans->get("customize speed") );
+
+    if (savePathWindow)
+        savePathWindow->setTitle( trans->getA("disksaves") );
 
     setAudioRecordText();
 }

@@ -1,17 +1,9 @@
 
-// todo handle custom stuff better
-
 #include "../../program.h"
 #include "../config.h"
 #include "../../audio/manager.h"
-#include "../../../emulation/libc64/interface.h"
-#include "../../media/media.h"
 #include "../../thread/emuThread.h"
-#include "../../view/view.h"
 #include "model.h"
-#include "presentation.h"
-#include "audio.h"
-#include "system.h"
 #include "../../config/slider.h"
 #include "../../../data/icons.h"
 
@@ -19,9 +11,8 @@ namespace EmuConfigView {
     
 #define mes this->tabWindow->message
 
-GUIKIT::Image* ModelLayout::curveImg = nullptr;
 GUIKIT::Image* ModelLayout::backImg = nullptr;
-    
+
 ModelLayout::Line::Block::Block(Emulator::Interface::Model* model, ModelLayout* layout) {
     
 	this->model = model;
@@ -32,7 +23,7 @@ ModelLayout::Line::Block::Block(Emulator::Interface::Model* model, ModelLayout* 
 		
 	} else if (model->isRadio()) {
         label = new GUIKIT::Label;
-		append(*label, {layout->getAlignedWidth(model), 0u}, 5 );
+		append(*label, {0u, 0u}, 7 );
 		
 		for(auto& option : model->options) {
 			auto radio = new GUIKIT::RadioBox;
@@ -67,10 +58,10 @@ ModelLayout::Line::Block::Block(Emulator::Interface::Model* model, ModelLayout* 
         sliderLayout->defaultButton.setImage(backImg);
         append(*sliderLayout, {~0u, 0u});
 
-        if (sOptions.size()) {
+        if (!sOptions.empty()) {
             GUIKIT::Label tester;
             int w = 0;
-            std::string longest = "";
+            std::string longest;
             for(auto& sOption : sOptions) {
                 tester.setText(sOption);
                 if (tester.minimumSize().width > w) {
@@ -84,7 +75,7 @@ ModelLayout::Line::Block::Block(Emulator::Interface::Model* model, ModelLayout* 
             std::string longest = std::to_string( model->range[0] < 0 ? model->range[0] : model->range[1] );
             if (model->scaler != 1.0)
                 longest += ".0";
-            longest += layout->getUnit(model->id);
+            longest += layout->getUnit(model);
 
             sliderLayout->updateValueWidth( longest );
             sliderLayout->slider.setLength( model->steps + 1 );
@@ -123,9 +114,6 @@ auto ModelLayout::build( TabWindow* tabWindow, Emulator::Interface* emulator, st
 	unsigned blockCount = 0;
     unsigned blockPos = 0;
 
-    bool useMultiAudioChipSelector = dynamic_cast<LIBC64::Interface*>(this->emulator) && GUIKIT::Vector::find(purposes, Emulator::Interface::Model::AudioSettings);
-    bool useWolframAlpha = dynamic_cast<LIBC64::Interface*>(this->emulator) && GUIKIT::Vector::find(purposes, Emulator::Interface::Model::DriveMechanics);
-  
     for( auto& model : models ) {
         
         if (!GUIKIT::Vector::find(purposes, model.purpose))
@@ -136,27 +124,20 @@ auto ModelLayout::build( TabWindow* tabWindow, Emulator::Interface* emulator, st
             if (dim.size() > linePos) {
                 blockCount = dim[ linePos++ ];
                 blockPos = 0;
+                lineWillAppend( lines.size() );
                 line = new Line();
                 lines.push_back( line );
                 append(*line, {~0u, 0u}, lineSpace);
-                
-                if ( useMultiAudioChipSelector && (lines.size() == 4) )
-                    appendAudioSelectorLayout();
             }
         }
-        
+
+        if (!line)
+            return;
+
         auto block = new Line::Block(&model, this);
         line->blocks.push_back(block);
 
-        if (useWolframAlpha && (model.id == LIBC64::Interface::ModelIdDriveAcceleration || model.id == LIBC64::Interface::ModelIdDriveDeceleration)) {
-            if (!curveImg) {
-                curveImg = new GUIKIT::Image;
-                curveImg->loadPng((uint8_t*)Icons::sine, sizeof(Icons::sine));
-            }
-            block->imageView = new GUIKIT::ImageView;
-            block->imageView->setImage( curveImg );
-            line->append(*block->imageView, {curveImg->width, curveImg->height}, 3 );
-        }
+        blockWillAppend(line, block);
 
         blockPos++;
 
@@ -188,7 +169,7 @@ auto ModelLayout::setEvents( ) -> void {
 
                     bool locked = emuThread->lock(true);
                     emulator->setModelValue( model->id, checked );
-                    applyCustomStuff( block, model );
+                    updated( block, model );
                     if (locked) // nested (e.g. changing speeder)
                         emuThread->unlock();
                 };
@@ -203,7 +184,7 @@ auto ModelLayout::setEvents( ) -> void {
 
                         bool locked = emuThread->lock(true);
 						emulator->setModelValue( model->id, val );
-                        applyCustomStuff( block, model );
+					    updated( block, model );
                         if (locked)
                             emuThread->unlock();
 					};
@@ -220,12 +201,12 @@ auto ModelLayout::setEvents( ) -> void {
 
                     bool locked = emuThread->lock(true);
 					emulator->setModelValue( model->id, val );
-                    applyCustomStuff( block, model );
+				    updated( block, model );
                     if (locked)
                         emuThread->unlock();
 				};
 					
-            } else if (model->isSlider() ) {	
+            } else if (model->isSlider() ) {
                 
                 block->sliderLayout->slider.onChange = [this, block, model](unsigned position) {
                     int _min = model->range[0];
@@ -235,8 +216,8 @@ auto ModelLayout::setEvents( ) -> void {
 
                     int stepSize = 1;
                     int val = position;
-                    std::string displayText = "";
-                    std::string unit = "";
+                    std::string displayText;
+                    std::string unit = getUnit(model);
 
                     if (!options.size()) {
                         stepSize = range / model->steps;
@@ -251,14 +232,11 @@ auto ModelLayout::setEvents( ) -> void {
 
                     tabWindow->settings->set<int>( _underscore(model->name), val );
 
-                    if (model->isDriveSettings() || model->isDriveMechanics())
-                        unit = getUnit(model->id);
-
                     block->sliderLayout->value.setText( displayText + unit );
 
                     bool locked = emuThread->lock(true);
                     emulator->setModelValue( model->id, val );
-                    applyCustomStuff( block, model );
+                    updated( block, model );
                     if (locked)
                         emuThread->unlock();
                 };
@@ -270,7 +248,7 @@ auto ModelLayout::setEvents( ) -> void {
 
                     bool locked = emuThread->lock(true);
                     emulator->setModelValue( model->id, defaultVal );
-                    applyCustomStuff( block, model );
+                    updated( block, model );
                     if (locked)
                         emuThread->unlock();
                 };
@@ -299,7 +277,7 @@ auto ModelLayout::setEvents( ) -> void {
 
                     bool locked = emuThread->lock(true);
                     emulator->setModelValue( model->id, val );
-                    applyCustomStuff( block, model );
+                    updated( block, model );
                     if (locked)
                         emuThread->unlock();
                 };			
@@ -323,37 +301,16 @@ auto ModelLayout::alignSlider( std::string maxText ) -> void {
 }
 
 auto ModelLayout::updateWidgets( ) -> void {
-
-    auto diskMediaGroup = emulator->getDiskMediaGroup();
-    auto hardDiskMediaGroup = emulator->getHardDiskMediaGroup();
-
     for (auto line : lines) {
         for (auto block : line->blocks) {
             updateWidget(block);
-
-            if (tabWindow->mediaLayout && block->model->isDriveSettings()) {
-                if (emulator->getModelIdOfEnabledDrives(diskMediaGroup) == block->model->id)
-                    tabWindow->mediaLayout->updateVisibility(diskMediaGroup, block->combo->selection());
-                else if (emulator->getModelIdOfEnabledDrives(hardDiskMediaGroup) == block->model->id)
-                    tabWindow->mediaLayout->updateVisibility(hardDiskMediaGroup, block->combo->selection());
-            }
         }
     }
-    
-    if (dynamic_cast<LIBC64::Interface*>(this->emulator) && GUIKIT::Vector::find( purposes, Emulator::Interface::Model::AudioSettings )) {
-        updateExtraAudioChipsVisibillity();
-        updateBiasVisibillity();
-    } else if (dynamic_cast<LIBC64::Interface*>(this->emulator) && GUIKIT::Vector::find( purposes, Emulator::Interface::Model::DriveSettings )) {
-        updateBurstVisibillity();
-    } else if (dynamic_cast<LIBC64::Interface*>(this->emulator) && GUIKIT::Vector::find( purposes, Emulator::Interface::Model::DriveMechanics )) {
-        updateMechanicsVisibillity();
-    } else if (dynamic_cast<LIBC64::Interface*>(this->emulator) && GUIKIT::Vector::find( purposes, Emulator::Interface::Model::AudioExtern )) {
-        updatePicoVisibillity();
-    }
+
+    updateVisibillity();
 }
 
 auto ModelLayout::updateWidget( unsigned id ) -> void {
-    
     for(auto line : lines) {
         for( auto block : line->blocks ) {            
             if (block->model->id == id) {
@@ -369,14 +326,11 @@ auto ModelLayout::updateWidget( Line::Block* block ) -> void {
     
     if (!GUIKIT::Vector::find(purposes, model->purpose))
         return;
-	
+
 	if (model->isSwitch() ) {
 		block->checkBox->setChecked( tabWindow->settings->get<bool>( _underscore(model->name), model->defaultValue ) );
-		return;
-	}
-    
-    if (model->isSlider() ) {	
-        
+
+	} else if (model->isSlider() ) {
         auto val = tabWindow->settings->get<int>( _underscore(model->name), model->defaultValue, model->range );
 
         int _min = model->range[0];
@@ -386,10 +340,10 @@ auto ModelLayout::updateWidget( Line::Block* block ) -> void {
 
         int stepSize = 1;
         unsigned pos = val;
-        std::string displayText = "";
-        std::string unit = "";
+        std::string displayText;
+        std::string unit = getUnit(model);
 
-        if (!options.size()) {
+        if (options.empty()) {
             stepSize = range / model->steps;
             if (stepSize == 0)
                 pos = 0;
@@ -406,18 +360,9 @@ auto ModelLayout::updateWidget( Line::Block* block ) -> void {
 
         block->sliderLayout->slider.setPosition( pos );
 
-        if (model->isDriveSettings() || model->isDriveMechanics())
-            unit = getUnit(model->id);
-
         block->sliderLayout->value.setText( displayText + unit );
 
-        if (block->imageView)
-            setImageUri(block, (float)val / model->scaler);
-        
-        return;
-    }
-		
-	if (model->isRadio() ) {
+    } else if (model->isRadio() ) {
 		auto usedVal = tabWindow->settings->get<int>( _underscore(model->name), model->defaultValue, model->range );
 		
 		unsigned val = 0;
@@ -427,22 +372,20 @@ auto ModelLayout::updateWidget( Line::Block* block ) -> void {
 				break;
 			}
 		}
-		
-		return;
-	}
-	
-	if (model->isCombo() ) {
+	} else if (model->isCombo() ) {
 		auto usedVal = tabWindow->settings->get<int>( _underscore(model->name), model->defaultValue, model->range );
 		block->combo->setSelection( usedVal );
-		return;
+
+	} else {
+	    auto _val = tabWindow->settings->get<int>( _underscore(model->name), model->defaultValue, model->range );
+
+	    if ( model->isHex() )
+	        block->lineEdit->setText( GUIKIT::String::convertIntToHex( _val ) );
+	    else
+	        block->lineEdit->setValue( _val );
 	}
 
-	auto _val = tabWindow->settings->get<int>( _underscore(model->name), model->defaultValue, model->range );
-
-	if ( model->isHex() )
-		block->lineEdit->setText( GUIKIT::String::convertIntToHex( _val ) );
-	else
-		block->lineEdit->setValue( _val );
+    widgetUpdated(block, model);
 }
 
 inline auto ModelLayout::decimalPlaces(float scaler) -> unsigned {
@@ -453,26 +396,6 @@ inline auto ModelLayout::decimalPlaces(float scaler) -> unsigned {
         places++;
     }
     return places;
-}
-
-auto ModelLayout::setImageUri(Line::Block* block, float val) -> void {
-    if (block->imageView) {
-        std::string uri = "";
-
-        if (dynamic_cast<LIBC64::Interface*> (this->emulator)) {
-            if (block->model->id == LIBC64::Interface::ModelIdDriveDeceleration) {
-                uri = "https://www.wolframalpha.com/input?i=plot+%5B%2F%2Fmath%3A300.0+*+%280.4+%5E%28%28";
-                uri += std::to_string( val );
-                uri += "%2F65536.0%29*%28x%2F256.0%29+%29%29%2F%2F%5D+from+%5B%2F%2Fnumber%3A0%2F%2F%5D+to+%5B%2F%2Fnumber%3A500000%2F%2F%5D";
-            } else if (block->model->id == LIBC64::Interface::ModelIdDriveAcceleration) {
-                uri = "https://www.wolframalpha.com/input?i=plot+%5B%2F%2Fmath%3A300.0+*+%28-0.4+%5E%28%28";
-                uri += std::to_string( val );
-                uri += "%2F65536.0%29*%28x%2F256.0%29+%29%29+%2B+300.0%2F%2F%5D+from+%5B%2F%2Fnumber%3A0%2F%2F%5D+to+%5B%2F%2Fnumber%3A500000%2F%2F%5D";
-            }
-        }
-
-        block->imageView->setUri( uri );
-    }
 }
 
 auto ModelLayout::toggleCheckbox(unsigned id) -> bool {
@@ -576,23 +499,9 @@ auto ModelLayout::stepRange(unsigned id, int step) -> int {
 	return 0;
 }
 
-auto ModelLayout::setVisibility(Emulator::Interface::Model* model, Emulator::Interface::Model* model2) -> void {
-    for (auto line : lines) {
-        for (auto block : line->blocks)
-            block->setEnabled((model && (block->model->id == model->id)) || (model2 && (block->model->id == model2->id)));
-    }
-}
-
 auto ModelLayout::translate( std::string theme ) -> void {
     
     setText( trans->getA( theme ) );
-
-    if (GUIKIT::Vector::find(purposes, Emulator::Interface::Model::AudioSettings)) {
-        controlLayout.label.setText(trans->getA("all"));
-        controlLayout.firstAll.setText("8580");
-        controlLayout.secondAll.setText("6581");
-        controlLayout.button.setText("USBSID-Pico");
-    }
     
     for (auto line : lines) {
         for (auto block : line->blocks) {
@@ -621,7 +530,6 @@ auto ModelLayout::translate( std::string theme ) -> void {
                 block->sliderLayout->name.setText(trans->getA( name, true ));
                 block->sliderLayout->name.setTooltip(trans->getA(tooltip));
                 if (block->sliderLayout->withButton) {
-                    //block->sliderLayout->defaultButton.setText(trans->getA("Back"));
                     block->sliderLayout->defaultButton.setTooltip( trans->getA(trans->getA("default") ) );
                 }
             }
@@ -632,422 +540,6 @@ auto ModelLayout::translate( std::string theme ) -> void {
             }
         }
     }
-}
-
-auto ModelLayout::applyCustomStuff( Line::Block* block, Emulator::Interface::Model* model ) -> void {
-    
-    if (dynamic_cast<LIBC64::Interface*> (this->emulator)) {
-        
-        switch(model->id) {
-            case LIBC64::Interface::ModelIdSidEngine:
-                updateBiasVisibillity();
-                break;
-            case LIBC64::Interface::ModelIdSidMulti:
-                updateExtraAudioChipsVisibillity();
-            case LIBC64::Interface::ModelIdSid1Left:
-            case LIBC64::Interface::ModelIdSid1Right:
-            case LIBC64::Interface::ModelIdSid2Left:
-            case LIBC64::Interface::ModelIdSid2Right:
-            case LIBC64::Interface::ModelIdSid3Left:
-            case LIBC64::Interface::ModelIdSid3Right:
-            case LIBC64::Interface::ModelIdSid4Left:
-            case LIBC64::Interface::ModelIdSid4Right:
-            case LIBC64::Interface::ModelIdSid5Left:
-            case LIBC64::Interface::ModelIdSid5Right:
-            case LIBC64::Interface::ModelIdSid6Left:
-            case LIBC64::Interface::ModelIdSid6Right:
-            case LIBC64::Interface::ModelIdSid7Left:
-            case LIBC64::Interface::ModelIdSid7Right:
-            case LIBC64::Interface::ModelIdSid8Left:
-            case LIBC64::Interface::ModelIdSid8Right:
-                if (activeEmulator)
-                    audioManager->power();
-                break;
-                
-            case LIBC64::Interface::ModelIdVicIIModel:
-                if (tabWindow->presentationLayout)
-                    tabWindow->presentationLayout->updatePresets(true, false);
-                else if (videoDriver)
-                    VideoManager::getInstance( emulator )->reloadSettings(false);
-
-                if (this->emulator == activeEmulator)
-                    program->power(activeEmulator);
-                break;
-                
-            case LIBC64::Interface::ModelIdSid: {
-                auto emuView = EmuConfigView::TabWindow::getView(this->emulator);
-
-                if (!emuView->systemLayout)
-                    break;
-
-                if (this == &emuView->systemLayout->modelLayout) {
-                    if (emuView->audioLayout)
-                        emuView->audioLayout->settingsLayout.updateWidget(LIBC64::Interface::ModelIdSid);
-                } else {
-                    emuView->systemLayout->modelLayout.updateWidget(LIBC64::Interface::ModelIdSid);
-                }
-                
-                } break;
-                
-            case LIBC64::Interface::ModelIdSidSampleFetch:
-                audioManager->setResampler();
-                break;
-
-            case LIBC64::Interface::ModelIdDiskDrivesConnected:
-                if(tabWindow->mediaLayout)
-                    tabWindow->mediaLayout->updateVisibility( emulator->getDiskMediaGroup(), block->combo->selection() );
-                // fall through
-            case LIBC64::Interface::ModelIdTapeDrivesConnected:
-            case LIBC64::Interface::ModelIdDriveRam20To3F:
-            case LIBC64::Interface::ModelIdDriveRam40To5F:
-            case LIBC64::Interface::ModelIdDriveRam60To7F:
-            case LIBC64::Interface::ModelIdDriveRam80To9F:
-            case LIBC64::Interface::ModelIdDriveRamA0ToBF:
-            case LIBC64::Interface::ModelIdReuRam:
-            case LIBC64::Interface::ModelIdGeoRam:
-            case LIBC64::Interface::ModelIdSuperCpuRam:
-                if (this->emulator == activeEmulator)
-                    program->power(activeEmulator);
-
-                break;
-
-            case LIBC64::Interface::ModelIdDiskDriveModel:
-                updateBurstVisibillity();
-                if (this->emulator == activeEmulator)
-                    program->power(activeEmulator);
-                break;
-
-            case  LIBC64::Interface::ModelIdDriveFastLoader:
-                hintDriveSettings();
-                break;
-
-            case LIBC64::Interface::ModelIdCycleAccurateVideo:
-                program->setWarp(Program::Warp::Off);
-
-                if (this->emulator == activeEmulator)
-                    program->power(activeEmulator);
-                break;
-
-            case LIBC64::Interface::ModelIdDiskThread:
-            case LIBC64::Interface::ModelIdDiskOnDemand:
-                program->setWarp(Program::Warp::Off);
-                break;
-
-            case LIBC64::Interface::ModelIdEmulateDriveMechanics:
-                updateMechanicsVisibillity();
-                break;
-
-            case LIBC64::Interface::ModelIdDriveAcceleration:
-            case LIBC64::Interface::ModelIdDriveDeceleration:
-                if (block->imageView)
-                    setImageUri(block, (float)emulator->getModelValue( model->id ) / model->scaler);
-                break;
-
-            case LIBC64::Interface::ModelIdSidUsbPico:
-                updatePicoVisibillity();
-                break;
-        }
-    } else {
-        switch(model->id) {
-            case LIBAMI::Interface::ModelIdAudioFilter:
-                view->updatePowerMenu();
-                break;
-            case LIBAMI::Interface::ModelIdDiskDrivesConnected:
-                if (tabWindow->mediaLayout)
-                    tabWindow->mediaLayout->updateVisibility(emulator->getDiskMediaGroup(), block->combo->selection());
-
-                if (this->emulator == activeEmulator)
-                    program->power(activeEmulator);
-                break;
-
-            case LIBAMI::Interface::ModelIdHardDrivesConnected:
-                if (tabWindow->mediaLayout)
-                    tabWindow->mediaLayout->updateVisibility(emulator->getHardDiskMediaGroup(), block->combo->selection());
-
-                if (this->emulator == activeEmulator)
-                    program->power(activeEmulator);
-                break;
-            case LIBAMI::Interface::ModelIdRegion:
-                if (tabWindow->presentationLayout)
-                    tabWindow->presentationLayout->updatePresets(true, false);
-                else if (videoDriver)
-                    VideoManager::getInstance( emulator )->reloadSettings(false);
-                // fallthrough
-            case LIBAMI::Interface::ModelIdChipMem:
-            case LIBAMI::Interface::ModelIdSlowMem:
-            case LIBAMI::Interface::ModelIdFastMem:
-            case LIBAMI::Interface::ModelIdSystem:
-                if (this->emulator == activeEmulator)
-                    program->power(activeEmulator);
-                break;
-            case LIBAMI::Interface::ModelIdSampleFetch:
-                audioManager->setResampler();
-                break;
-        }
-    }
-}
-
-auto ModelLayout::updatePicoVisibillity() -> void {
-    auto pico = getBlock( LIBC64::Interface::ModelIdSidUsbPico );
-    auto bufSize = getBlock( LIBC64::Interface::ModelIdSidUsbPicoBufferSize );
-    auto diffSize = getBlock( LIBC64::Interface::ModelIdSidUsbPicoDiffSize );
-
-    bufSize->setEnabled( pico->checkBox->checked() );
-    diffSize->setEnabled( pico->checkBox->checked() );
-}
-
-auto ModelLayout::updateBurstVisibillity() -> void {
-    auto blockBurstMode = getBlock( LIBC64::Interface::ModelIdCiaBurstMode );
-    auto blockDriveModel = getBlock( LIBC64::Interface::ModelIdDiskDriveModel );
-    auto selection = blockDriveModel->combo->selection();
-
-    blockBurstMode->checkBox->setEnabled( selection == 3 || selection == 4 || selection == 5 );
-}
-
-auto ModelLayout::updateMechanicsVisibillity() -> void {
-    auto blockEnable = getBlock( LIBC64::Interface::ModelIdEmulateDriveMechanics );
-    auto blockStepper = getBlock( LIBC64::Interface::ModelIdDriveStepperDelay );
-    auto blockAcc = getBlock( LIBC64::Interface::ModelIdDriveAcceleration );
-    auto blockDec = getBlock( LIBC64::Interface::ModelIdDriveDeceleration );
-    bool enabled = blockEnable->checkBox->checked();
-
-    blockStepper->sliderLayout->setEnabled( enabled );
-    blockAcc->sliderLayout->setEnabled( enabled );
-    blockDec->sliderLayout->setEnabled( enabled );
-}
-
-auto ModelLayout::hintDriveSettings() -> void {
-    program->powerOff();
-
-    auto blockFastloader = getBlock( LIBC64::Interface::ModelIdDriveFastLoader );
-    auto blockParallel = getBlock( LIBC64::Interface::ModelIdDriveParallelCable );
-    auto blockBurst = getBlock( LIBC64::Interface::ModelIdCiaBurstMode );
-    auto blockDriveModel = getBlock( LIBC64::Interface::ModelIdDiskDriveModel );
-    auto blockRam20 = getBlock( LIBC64::Interface::ModelIdDriveRam20To3F );
-    auto blockRam40 = getBlock( LIBC64::Interface::ModelIdDriveRam40To5F );
-    auto blockRam60 = getBlock( LIBC64::Interface::ModelIdDriveRam60To7F );
-    auto blockRam80 = getBlock( LIBC64::Interface::ModelIdDriveRam80To9F );
-    auto blockRamA0 = getBlock( LIBC64::Interface::ModelIdDriveRamA0ToBF );
-    auto selection = blockFastloader->combo->selection();
-
-    if (blockBurst->checkBox->checked())
-        blockBurst->checkBox->toggle();
-    if (!blockParallel->checkBox->checked())
-        blockParallel->checkBox->toggle();
-    if (blockRam20->checkBox->checked())
-        blockRam20->checkBox->toggle();
-    if (blockRam40->checkBox->checked())
-        blockRam40->checkBox->toggle();
-    if (blockRam60->checkBox->checked())
-        blockRam60->checkBox->toggle();
-    if (blockRam80->checkBox->checked())
-        blockRam80->checkBox->toggle();
-    if (blockRamA0->checkBox->checked())
-        blockRamA0->checkBox->toggle();
-
-    if (selection == 0) {
-        blockParallel->checkBox->toggle();
-    } else if (selection == 1) { // SpeedDOS
-        blockDriveModel->combo->setSelection(1);
-    } else if (selection == 2) { // DolphinDOS v2
-        blockRam80->checkBox->toggle();
-        blockDriveModel->combo->setSelection(1);
-    } else if (selection == 3) { // DolphinDOS v2 Ultimate
-        blockRam40->checkBox->toggle();
-        blockRam60->checkBox->toggle();
-        blockDriveModel->combo->setSelection(1);
-    } else if (selection == 4) { // DolphinDOS v3 1541
-        blockRam60->checkBox->toggle();
-        blockDriveModel->combo->setSelection(1);
-    } else if (selection == 5) { // DolphinDOS v3 157x
-        blockRam60->checkBox->toggle();
-        blockDriveModel->combo->setSelection(4);
-    } else if (selection == 6) { // ProfDOS v1 1541
-        blockRamA0->checkBox->toggle();
-        blockDriveModel->combo->setSelection(0);
-    } else if (selection == 7) { // ProfDOS R4 1541
-        blockRam40->checkBox->toggle();
-        blockDriveModel->combo->setSelection(0);
-    } else if (selection == 8) { // ProfDOS R5 1570
-        blockRam40->checkBox->toggle();
-        blockDriveModel->combo->setSelection(3);
-    } else if (selection == 9) { // ProfDOS R6 1571
-        blockRam40->checkBox->toggle();
-        blockDriveModel->combo->setSelection(4);
-    } else if (selection == 10) { // PrologicDOS Classic 1541
-        blockRam80->checkBox->toggle();
-        blockDriveModel->combo->setSelection(0);
-    } else if (selection == 11) { // PrologicDOS 1541
-        blockRam80->checkBox->toggle();
-        blockDriveModel->combo->setSelection(0);
-    } else if (selection == 12) { // Turbo Trans
-        blockRamA0->checkBox->toggle();
-        blockDriveModel->combo->setSelection(0);
-    } else if (selection == 13) { // Pro Speed 1571
-        blockRam80->checkBox->toggle();
-        blockDriveModel->combo->setSelection(4);
-    } else if (selection == 14) { // StarDOS
-        blockParallel->checkBox->toggle();
-        blockDriveModel->combo->setSelection(1);
-    } else if (selection == 15) { // Supercard
-        blockParallel->checkBox->toggle();
-        blockRam60->checkBox->toggle();
-        blockDriveModel->combo->setSelection(1);
-    } else if (selection == 16) { // Disk Demon 1541
-        blockRam40->checkBox->toggle();
-        blockDriveModel->combo->setSelection(0);
-    }
-
-    blockDriveModel->combo->onChange();
-
-    program->power(emulator);
-}
-
-auto ModelLayout::updateBiasVisibillity() -> void {
-    
-    int filter = emulator->getModelValue( LIBC64::Interface::ModelIdSidEngine );
-
-    bool showBias = filter == 0 || filter == 1;
-    bool showRange = filter == 1;
-    bool showStrength = filter == 1;
-
-    lines[0]->blocks[3]->setEnabled(showStrength);
-    
-    if (lines[1]->enabled() != showBias )
-        lines[1]->setEnabled( showBias );
-
-    if (lines[2]->enabled() != showRange )
-        lines[2]->setEnabled( showRange );
-
-    if (lines[3]->enabled() != showBias )
-        lines[3]->setEnabled( showBias );
-}
-
-auto ModelLayout::updateExtraAudioChipsVisibillity() -> void {
-    
-    static int activeSidsNow = -1;
-    
-    int activeSids = emulator->getModelValue( LIBC64::Interface::ModelIdSidMulti );
-    
-    if (controlLayout.firstAll.checked())
-        controlLayout.firstAll.setChecked(false);
-    if (controlLayout.secondAll.checked())
-        controlLayout.secondAll.setChecked(false);
-    
-    
-    if (activeSidsNow == activeSids)
-        return;
-    
-    activeSidsNow = activeSids;
-    
-    for (unsigned i = 0; i < 8; i++) {
-        
-        if (i <= activeSids)
-            lines[i + 5]->setEnabled(true);
-        else
-            lines[i + 5]->setEnabled(false);
-    }
-    
-    if (activeSids == 0) {
-        controlLayout.label.setEnabled( false );
-        controlLayout.firstAll.setEnabled( false );
-        controlLayout.secondAll.setEnabled( false );
-
-        lines[5]->blocks[1]->setEnabled(false);
-        lines[5]->blocks[2]->setEnabled(false);
-        lines[5]->blocks[3]->setEnabled(false);
-    } else
-        controlLayout.setEnabled( true );
-}
-
-auto ModelLayout::getAlignedWidth(Emulator::Interface::Model* model) -> unsigned {
-    static unsigned sidWidth = 0u;
-    unsigned result = 0u; // minimum size
-
-    if (!dynamic_cast<LIBC64::Interface*>( emulator ))
-        return result;
-
-    if (!model || ( ((model->id == LIBC64::Interface::ModelIdSid) && GUIKIT::Vector::find(purposes, Emulator::Interface::Model::AudioSettings) )
-                || model->id == LIBC64::Interface::ModelIdSid2
-                || model->id == LIBC64::Interface::ModelIdSid3 || model->id == LIBC64::Interface::ModelIdSid4
-                || model->id == LIBC64::Interface::ModelIdSid5 || model->id == LIBC64::Interface::ModelIdSid6
-                || model->id == LIBC64::Interface::ModelIdSid7 || model->id == LIBC64::Interface::ModelIdSid8)) {
-
-        if (sidWidth == 0) {
-            GUIKIT::Label test;
-            test.setText("SID 10:");
-            sidWidth = test.minimumSize().width + (model ? 1 : 2);
-        }
-        result = sidWidth;
-    }
-
-    return result;
-}
-
-auto ModelLayout::appendAudioSelectorLayout() -> void {
-    
-    update( *lines[lines.size() - 1], 10 );    
-
-    controlLayout.append(controlLayout.label, {getAlignedWidth(), 0u}, 5);
-    controlLayout.append(controlLayout.firstAll, {0u, 0u}, GUIKIT::Application::isCocoa() ? 7 : 5);
-    controlLayout.append(controlLayout.secondAll, {0u, 0u});
-    controlLayout.append(controlLayout.spacer, {~0u, 0u} );
-    controlLayout.append(controlLayout.button, {0u, 0u} );
-    controlLayout.setAlignment(0.5);
-
-    append(controlLayout, {~0u, 0u});
-    
-    controlLayout.firstAll.onToggle = [this](bool checked) {
-        
-        if (!checked)
-            return;
-        
-        Line::Block* block;
-        block = getBlock( LIBC64::Interface::ModelIdSid );
-        if (block) block->options[0]->activate();
-        block = getBlock(LIBC64::Interface::ModelIdSid2);
-        if (block) block->options[0]->activate();
-        block = getBlock(LIBC64::Interface::ModelIdSid3);
-        if (block) block->options[0]->activate();
-        block = getBlock(LIBC64::Interface::ModelIdSid4);
-        if (block) block->options[0]->activate();
-        block = getBlock(LIBC64::Interface::ModelIdSid5);
-        if (block) block->options[0]->activate();
-        block = getBlock(LIBC64::Interface::ModelIdSid6);
-        if (block) block->options[0]->activate();
-        block = getBlock(LIBC64::Interface::ModelIdSid7);
-        if (block) block->options[0]->activate();
-        block = getBlock(LIBC64::Interface::ModelIdSid8);
-        if (block) block->options[0]->activate();
-        
-        controlLayout.secondAll.setChecked( false );
-    };
-
-    controlLayout.secondAll.onToggle = [this](bool checked) {
-
-        if (!checked)
-            return;
-        
-        Line::Block* block;
-        block = getBlock(LIBC64::Interface::ModelIdSid);
-        if (block) block->options[1]->activate();
-        block = getBlock(LIBC64::Interface::ModelIdSid2);
-        if (block) block->options[1]->activate();
-        block = getBlock(LIBC64::Interface::ModelIdSid3);
-        if (block) block->options[1]->activate();
-        block = getBlock(LIBC64::Interface::ModelIdSid4);
-        if (block) block->options[1]->activate();
-        block = getBlock(LIBC64::Interface::ModelIdSid5);
-        if (block) block->options[1]->activate();
-        block = getBlock(LIBC64::Interface::ModelIdSid6);
-        if (block) block->options[1]->activate();
-        block = getBlock(LIBC64::Interface::ModelIdSid7);
-        if (block) block->options[1]->activate();
-        block = getBlock(LIBC64::Interface::ModelIdSid8);
-        if (block) block->options[1]->activate();
-        
-        controlLayout.firstAll.setChecked( false );
-    };
 }
 
 auto ModelLayout::getBlock( unsigned modelId ) -> Line::Block* {
@@ -1063,95 +555,8 @@ auto ModelLayout::getBlock( unsigned modelId ) -> Line::Block* {
 }
 
 auto ModelLayout::getIdent( Emulator::Interface::Model* model, std::string& tooltip ) -> std::string {
-    
-    std::string name = model->name;
-
-    if (dynamic_cast<LIBC64::Interface*>(emulator)) {
-        switch (model->id) {
-            case LIBC64::Interface::ModelIdSid:
-                if (!GUIKIT::Vector::find(purposes, Emulator::Interface::Model::AudioSettings))
-                    name = "SID";
-            case LIBC64::Interface::ModelIdSid2:
-            case LIBC64::Interface::ModelIdSid3:
-            case LIBC64::Interface::ModelIdSid4:
-            case LIBC64::Interface::ModelIdSid5:
-            case LIBC64::Interface::ModelIdSid6:
-            case LIBC64::Interface::ModelIdSid7:
-            case LIBC64::Interface::ModelIdSid8:
-                tooltip = "SID tooltip";
-                break;
-
-            case LIBC64::Interface::ModelIdSid1Adr:
-            case LIBC64::Interface::ModelIdSid2Adr:
-            case LIBC64::Interface::ModelIdSid3Adr:
-            case LIBC64::Interface::ModelIdSid4Adr:
-            case LIBC64::Interface::ModelIdSid5Adr:
-            case LIBC64::Interface::ModelIdSid6Adr:
-            case LIBC64::Interface::ModelIdSid7Adr:
-            case LIBC64::Interface::ModelIdSid8Adr:
-                name = "Address";
-                tooltip = name + " tooltip";
-                break;
-
-            case LIBC64::Interface::ModelIdSid1Left:
-            case LIBC64::Interface::ModelIdSid2Left:
-            case LIBC64::Interface::ModelIdSid3Left:
-            case LIBC64::Interface::ModelIdSid4Left:
-            case LIBC64::Interface::ModelIdSid5Left:
-            case LIBC64::Interface::ModelIdSid6Left:
-            case LIBC64::Interface::ModelIdSid7Left:
-            case LIBC64::Interface::ModelIdSid8Left:
-                name = "Left Channel";
-                tooltip = name + " tooltip";
-                break;
-
-            case LIBC64::Interface::ModelIdSid1Right:
-            case LIBC64::Interface::ModelIdSid2Right:
-            case LIBC64::Interface::ModelIdSid3Right:
-            case LIBC64::Interface::ModelIdSid4Right:
-            case LIBC64::Interface::ModelIdSid5Right:
-            case LIBC64::Interface::ModelIdSid6Right:
-            case LIBC64::Interface::ModelIdSid7Right:
-            case LIBC64::Interface::ModelIdSid8Right:
-                name = "Right Channel";
-                tooltip = name + " tooltip";
-                break;
-
-            case LIBC64::Interface::ModelIdDriveRam20To3F:
-            case LIBC64::Interface::ModelIdDriveRam40To5F:
-            case LIBC64::Interface::ModelIdDriveRam60To7F:
-            case LIBC64::Interface::ModelIdDriveRam80To9F:
-            case LIBC64::Interface::ModelIdDriveRamA0ToBF:
-            case LIBC64::Interface::ModelIdDriveFastLoader:
-                tooltip = "";
-                break;
-
-            default:
-                tooltip = name + " tooltip";
-                break;
-        }
-    } else if (dynamic_cast<LIBAMI::Interface*>(emulator)) {
-        tooltip = name + " tooltip";
-    }
-    
-    return name;
-}
-
-auto ModelLayout::getUnit(unsigned id) -> std::string {
-    if (dynamic_cast<LIBC64::Interface*>(this->emulator)) {
-        if (id == LIBC64::Interface::ModelIdDriveStepperDelay)
-            return " ms";
-        if (id == LIBC64::Interface::ModelIdDiskDriveSpeed || id == LIBC64::Interface::ModelIdDiskDriveWobble)
-            return " RPM";
-    } else {
-        if (id == LIBAMI::Interface::ModelIdDriveStepperDelay || id == LIBAMI::Interface::ModelIdDriveStepperAccess)
-            return " ms";
-
-        if (id == LIBAMI::Interface::ModelIdDiskDriveSpeed || id == LIBAMI::Interface::ModelIdDiskDriveWobble)
-            return " RPM";
-    }
-
-    return "";
+    tooltip = model->name + " tooltip";
+    return model->name;
 }
 
 }

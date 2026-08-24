@@ -8,6 +8,7 @@
 #include "../../audio/manager.h"
 #include "../../helper/fileHelper.h"
 #include "../../helper/miscHelper.h"
+#include "system.h"
 
 #define mes this->tabWindow->message
 #define _settings this->tabWindow->settings
@@ -293,6 +294,14 @@ VolumeControlLayout::VolumeControlLayout() {
     volumeSlider.setLength(101);
 }
 
+AudioModelLayout::ControlLayout::ControlLayout() {
+    append(label, {0u, 0u}, 7);
+    append(firstAll, {0u, 0u}, 5);
+    append(secondAll, {0u, 0u});
+    append(spacer, {~0u, 0u} );
+    append(button, {0u, 0u} );
+}
+
 AudioLayout::AudioLayout(TabWindow* tabWindow) {
     
     this->tabWindow = tabWindow;
@@ -355,26 +364,12 @@ AudioLayout::AudioLayout(TabWindow* tabWindow) {
     settingsLayout.setEvents();
     
     if (dynamic_cast<LIBC64::Interface*>(emulator)) {
-        usbSidPicoLayout = new ModelLayout;
+        usbSidPicoLayout = new PicoModelLayout;
 
         usbSidPicoLayout->build(tabWindow, emulator,
             {Emulator::Interface::Model::Purpose::AudioExtern}, {1,1,1}, 8);
 
         usbSidPicoLayout->setMargin( 10 );
-
-        settingsLayout.controlLayout.button.onActivate = [this]() {
-            if (!picoWindow) {
-                picoWindow = new PicoWindow;
-                picoWindow->layout.append( *usbSidPicoLayout, {~0u, 0u} );
-                picoWindow->layout.append( picoWindow->spacer, {0u, ~0u} );
-                picoWindow->layout.setAlignment( 0.5 );
-                picoWindow->append( picoWindow->layout );
-            }
-
-            MiscHelper::centerGeometry( picoWindow, {500, 170}, this->tabWindow->geometry() );
-            picoWindow->setVisible(  );
-            picoWindow->setFocused(  );
-        };
 
         usbSidPicoLayout->setEvents();
     } else
@@ -970,6 +965,20 @@ auto AudioLayout::translate() -> void {
     if (usbSidPicoLayout)
         usbSidPicoLayout->translate();
     moduleFrame.setText(trans->get("selection"));
+
+    if (dynamic_cast<LIBC64::Interface*>(this->emulator)) {
+        settingsLayout.controlLayout.label.setText(trans->getA("all"));
+        settingsLayout.controlLayout.firstAll.setText("8580");
+        settingsLayout.controlLayout.secondAll.setText("6581");
+        settingsLayout.controlLayout.button.setText("USBSID-Pico");
+
+        auto& lines = settingsLayout.lines;
+        std::vector<GUIKIT::Layout*> layouts = {&settingsLayout.controlLayout,
+            lines[5]->blocks[0], lines[6]->blocks[0], lines[7]->blocks[0], lines[8]->blocks[0],
+            lines[9]->blocks[0], lines[10]->blocks[0], lines[11]->blocks[0], lines[12]->blocks[0]};
+
+        alignChildWidth( layouts );
+    }
     
     bass.setText(trans->get("Bass Boost"));
     bass.top.active.setText(trans->get("enable"));
@@ -1217,6 +1226,269 @@ auto AudioLayout::stopRecord() -> void {
 auto AudioLayout::selectViewAudioRecord() -> void {
     moduleList.setSelection(moduleList.rowCount() - 1);
     moduleSwitch.setSelection(moduleList.selection());
+}
+
+auto AudioModelLayout::lineWillAppend( unsigned pos ) -> void {
+    if ((lines.size() != 5) || !dynamic_cast<LIBC64::Interface*>(this->emulator))
+        return;
+
+    update( *lines[lines.size() - 1], 10 );
+
+    append(controlLayout, {~0u, 0u});
+
+    controlLayout.firstAll.onToggle = [this](bool checked) {
+        if (!checked)
+            return;
+
+        std::vector blocks = {
+            getBlock(LIBC64::Interface::ModelIdSid ), getBlock(LIBC64::Interface::ModelIdSid2),
+            getBlock(LIBC64::Interface::ModelIdSid3), getBlock(LIBC64::Interface::ModelIdSid4),
+            getBlock(LIBC64::Interface::ModelIdSid5), getBlock(LIBC64::Interface::ModelIdSid6),
+            getBlock(LIBC64::Interface::ModelIdSid7), getBlock(LIBC64::Interface::ModelIdSid8),
+        };
+
+        for (auto block : blocks) {
+            if (block)
+                block->options[0]->activate();
+        }
+
+        controlLayout.secondAll.setChecked( false );
+    };
+
+    controlLayout.secondAll.onToggle = [this](bool checked) {
+        if (!checked)
+            return;
+
+        std::vector blocks = {
+            getBlock(LIBC64::Interface::ModelIdSid ), getBlock(LIBC64::Interface::ModelIdSid2),
+            getBlock(LIBC64::Interface::ModelIdSid3), getBlock(LIBC64::Interface::ModelIdSid4),
+            getBlock(LIBC64::Interface::ModelIdSid5), getBlock(LIBC64::Interface::ModelIdSid6),
+            getBlock(LIBC64::Interface::ModelIdSid7), getBlock(LIBC64::Interface::ModelIdSid8),
+        };
+
+        for (auto block : blocks) {
+            if (block)
+                block->options[1]->activate();
+        }
+
+        controlLayout.firstAll.setChecked( false );
+    };
+
+    controlLayout.button.onActivate = [this]() {
+        auto* audioLayout = tabWindow->audioLayout;
+        auto* window = audioLayout->picoWindow;
+
+        if (!window) {
+            window = new PicoWindow;
+            window->layout.append( *audioLayout->usbSidPicoLayout, {~0u, 0u} );
+            window->layout.append( window->spacer, {0u, ~0u} );
+            window->layout.setAlignment( 0.5 );
+            window->append( window->layout );
+        }
+
+        MiscHelper::centerGeometry( window, {500, 170}, audioLayout->tabWindow->geometry() );
+        window->setVisible(  );
+        window->setFocused(  );
+    };
+}
+
+auto AudioModelLayout::updated( Line::Block* block, Emulator::Interface::Model* model ) -> void {
+    if (dynamic_cast<LIBC64::Interface*> (this->emulator)) {
+        switch(model->id) {
+            case LIBC64::Interface::ModelIdSidEngine:
+                updateBiasVisibillity();
+                break;
+            case LIBC64::Interface::ModelIdSidMulti:
+                updateExtraSidVisibillity( );
+            case LIBC64::Interface::ModelIdSid1Left:
+            case LIBC64::Interface::ModelIdSid1Right:
+            case LIBC64::Interface::ModelIdSid2Left:
+            case LIBC64::Interface::ModelIdSid2Right:
+            case LIBC64::Interface::ModelIdSid3Left:
+            case LIBC64::Interface::ModelIdSid3Right:
+            case LIBC64::Interface::ModelIdSid4Left:
+            case LIBC64::Interface::ModelIdSid4Right:
+            case LIBC64::Interface::ModelIdSid5Left:
+            case LIBC64::Interface::ModelIdSid5Right:
+            case LIBC64::Interface::ModelIdSid6Left:
+            case LIBC64::Interface::ModelIdSid6Right:
+            case LIBC64::Interface::ModelIdSid7Left:
+            case LIBC64::Interface::ModelIdSid7Right:
+            case LIBC64::Interface::ModelIdSid8Left:
+            case LIBC64::Interface::ModelIdSid8Right:
+                if (activeEmulator)
+                    audioManager->power();
+                break;
+
+            case LIBC64::Interface::ModelIdSid: {
+                if (tabWindow->systemLayout)
+                    tabWindow->systemLayout->systemModelLayout.updateWidget(LIBC64::Interface::ModelIdSid);
+            } break;
+
+            case LIBC64::Interface::ModelIdSidSampleFetch:
+                audioManager->setResampler();
+                break;
+        }
+    } else {
+        switch(model->id) {
+            case LIBAMI::Interface::ModelIdAudioFilter:
+                view->updatePowerMenu();
+                break;
+            case LIBAMI::Interface::ModelIdSampleFetch:
+                audioManager->setResampler();
+                break;
+        }
+    }
+}
+
+auto AudioModelLayout::updateVisibillity( ) -> void {
+    updateExtraSidVisibillity();
+    updateBiasVisibillity();
+}
+
+auto AudioModelLayout::updateBiasVisibillity() -> void {
+    if (!dynamic_cast<LIBC64::Interface*>(this->emulator))
+        return;
+
+    int filter = emulator->getModelValue( LIBC64::Interface::ModelIdSidEngine );
+
+    bool showBias = filter == 0 || filter == 1;
+    bool showRange = filter == 1;
+    bool showStrength = filter == 1;
+
+    lines[0]->blocks[3]->setEnabled(showStrength);
+
+    if (lines[1]->enabled() != showBias )
+        lines[1]->setEnabled( showBias );
+
+    if (lines[2]->enabled() != showRange )
+        lines[2]->setEnabled( showRange );
+
+    if (lines[3]->enabled() != showBias )
+        lines[3]->setEnabled( showBias );
+}
+
+auto AudioModelLayout::updateExtraSidVisibillity( ) -> void {
+    if (!dynamic_cast<LIBC64::Interface*>(this->emulator))
+        return;
+
+    static int activeSidsNow = -1;
+
+    int activeSids = emulator->getModelValue( LIBC64::Interface::ModelIdSidMulti );
+
+    if (controlLayout.firstAll.checked())
+        controlLayout.firstAll.setChecked(false);
+
+    if (controlLayout.secondAll.checked())
+        controlLayout.secondAll.setChecked(false);
+
+    if (activeSidsNow == activeSids)
+        return;
+
+    activeSidsNow = activeSids;
+
+    for (unsigned i = 0; i < 8; i++) {
+
+        if (i <= activeSids)
+            lines[i + 5]->setEnabled(true);
+        else
+            lines[i + 5]->setEnabled(false);
+    }
+
+    if (activeSids == 0) {
+        controlLayout.label.setEnabled( false );
+        controlLayout.firstAll.setEnabled( false );
+        controlLayout.secondAll.setEnabled( false );
+
+        lines[5]->blocks[1]->setEnabled(false);
+        lines[5]->blocks[2]->setEnabled(false);
+        lines[5]->blocks[3]->setEnabled(false);
+    } else
+        controlLayout.setEnabled( true );
+}
+
+auto AudioModelLayout::getIdent( Emulator::Interface::Model* model, std::string& tooltip ) -> std::string {
+    std::string name = model->name;
+
+    if (dynamic_cast<LIBC64::Interface*>(emulator)) {
+        switch (model->id) {
+            case LIBC64::Interface::ModelIdSid:
+            case LIBC64::Interface::ModelIdSid2:
+            case LIBC64::Interface::ModelIdSid3:
+            case LIBC64::Interface::ModelIdSid4:
+            case LIBC64::Interface::ModelIdSid5:
+            case LIBC64::Interface::ModelIdSid6:
+            case LIBC64::Interface::ModelIdSid7:
+            case LIBC64::Interface::ModelIdSid8:
+                tooltip = "SID tooltip";
+                break;
+
+            case LIBC64::Interface::ModelIdSid1Adr:
+            case LIBC64::Interface::ModelIdSid2Adr:
+            case LIBC64::Interface::ModelIdSid3Adr:
+            case LIBC64::Interface::ModelIdSid4Adr:
+            case LIBC64::Interface::ModelIdSid5Adr:
+            case LIBC64::Interface::ModelIdSid6Adr:
+            case LIBC64::Interface::ModelIdSid7Adr:
+            case LIBC64::Interface::ModelIdSid8Adr:
+                name = "Address";
+                tooltip = name + " tooltip";
+                break;
+
+            case LIBC64::Interface::ModelIdSid1Left:
+            case LIBC64::Interface::ModelIdSid2Left:
+            case LIBC64::Interface::ModelIdSid3Left:
+            case LIBC64::Interface::ModelIdSid4Left:
+            case LIBC64::Interface::ModelIdSid5Left:
+            case LIBC64::Interface::ModelIdSid6Left:
+            case LIBC64::Interface::ModelIdSid7Left:
+            case LIBC64::Interface::ModelIdSid8Left:
+                name = "Left Channel";
+                tooltip = name + " tooltip";
+                break;
+
+            case LIBC64::Interface::ModelIdSid1Right:
+            case LIBC64::Interface::ModelIdSid2Right:
+            case LIBC64::Interface::ModelIdSid3Right:
+            case LIBC64::Interface::ModelIdSid4Right:
+            case LIBC64::Interface::ModelIdSid5Right:
+            case LIBC64::Interface::ModelIdSid6Right:
+            case LIBC64::Interface::ModelIdSid7Right:
+            case LIBC64::Interface::ModelIdSid8Right:
+                name = "Right Channel";
+                tooltip = name + " tooltip";
+                break;
+
+            default:
+                tooltip = name + " tooltip";
+                break;
+        }
+    } else
+        return ModelLayout::getIdent(model, tooltip);
+
+    return name;
+}
+
+auto PicoModelLayout::updated( Line::Block* block, Emulator::Interface::Model* model ) -> void {
+    if (dynamic_cast<LIBC64::Interface*> (this->emulator)) {
+        switch(model->id) {
+            case LIBC64::Interface::ModelIdSidUsbPico:
+                updateVisibillity();
+                break;
+        }
+    }
+}
+
+auto PicoModelLayout::updateVisibillity( ) -> void {
+    if (!dynamic_cast<LIBC64::Interface*>(this->emulator))
+        return;
+
+    auto pico = getBlock( LIBC64::Interface::ModelIdSidUsbPico );
+    auto bufSize = getBlock( LIBC64::Interface::ModelIdSidUsbPicoBufferSize );
+    auto diffSize = getBlock( LIBC64::Interface::ModelIdSidUsbPicoDiffSize );
+
+    bufSize->setEnabled( pico->checkBox->checked() );
+    diffSize->setEnabled( pico->checkBox->checked() );
 }
 
 }

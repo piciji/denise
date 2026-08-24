@@ -502,7 +502,7 @@ auto States::updateModels() -> void {
 
     if (emuView) {
         if (emuView->systemLayout) {
-            emuView->systemLayout->modelLayout.updateWidgets();
+            emuView->systemLayout->systemModelLayout.updateWidgets();
             emuView->systemLayout->driveModelLayout.updateWidgets();
             emuView->systemLayout->driveMechanicsLayout.updateWidgets();
             emuView->systemLayout->memoryModelLayout.updateWidgets();

@@ -377,7 +377,7 @@ struct View : GUIKIT::Window {
             MainLayout();
         } mainLayout;
 
-    } *savePathWindow;
+    } *savePathWindow = nullptr;
 
     FpsWindow* fpsCustomWindow = nullptr;
     FpsWindow* fpsFastforwardWindow = nullptr;
