@@ -9,7 +9,7 @@ namespace LIBC64 {
 
         }
 
-        auto writeIo1(uint16_t addr, uint8_t data) -> void {
+        auto writeIo1(uint16_t addr, uint8_t data) -> void override {
 
             uint8_t bank;
 
@@ -53,7 +53,7 @@ namespace LIBC64 {
             cRomH = getChip(bank);
         }
 
-        auto reset(bool softReset = false) -> void {
+        auto reset(bool softReset = false) -> void override {
 
             cRomL = getChip(0);
             cRomH = getChip(0);
@@ -63,7 +63,7 @@ namespace LIBC64 {
             }
         }
 
-        auto assumeChips( ) -> void {
+        auto assumeChips( ) -> void override {
 
             Cart::assumeChips( {16384} );
         }

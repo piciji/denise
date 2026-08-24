@@ -9,7 +9,7 @@ struct MagicDesk2 : GameCart {
 
     }
 
-    auto writeIo1( uint16_t addr, uint8_t value ) -> void {
+    auto writeIo1( uint16_t addr, uint8_t value ) -> void override {
         exRom = (value >> 7) & 1;
         game = exRom;
 
@@ -27,7 +27,7 @@ struct MagicDesk2 : GameCart {
         system->changeExpansionPortMemoryMode( exRom, game );
     }
 
-    auto reset(bool softReset = false) -> void {
+    auto reset(bool softReset = false) -> void override {
 
         cRomL = getChip(0);
         cRomH = getChip(0);

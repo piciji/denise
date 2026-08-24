@@ -14,7 +14,7 @@ namespace LIBC64 {
 
         auto bootSpeed() -> float override { return 0.9; }
 
-        ~AtomicPower() {
+        ~AtomicPower() override {
             delete[] ram;
         }
 
@@ -23,7 +23,7 @@ namespace LIBC64 {
         bool useRamAtA0 = false;
         uint8_t* ram = nullptr;
 
-        auto writeIo1( uint16_t addr, uint8_t value ) -> void {
+        auto writeIo1( uint16_t addr, uint8_t value ) -> void override {
 
             if (!enable)
                 return;
@@ -52,14 +52,14 @@ namespace LIBC64 {
                 enable = false;
         }
 
-        auto peekIo1( uint16_t addr ) -> uint8_t {
+        auto peekIo1( uint16_t addr ) -> uint8_t override {
             if (!enable)
                 return 0;
 
             return ExpansionPort::readIo1(addr);
         }
 
-        auto readIo1( uint16_t addr ) -> uint8_t {
+        auto readIo1( uint16_t addr ) -> uint8_t override {
             if (!enable)
                 return 0;
 
@@ -69,11 +69,11 @@ namespace LIBC64 {
             return value;
         }
 
-        auto peekIo2( uint16_t addr ) -> uint8_t {
+        auto peekIo2( uint16_t addr ) -> uint8_t override {
             return readIo2( addr );
         }
 
-        auto readIo2( uint16_t addr ) -> uint8_t {
+        auto readIo2( uint16_t addr ) -> uint8_t override {
 
             addr = (0x1f << 8) | (addr & 0xff); // last page of selected rom bank
             Chip* chip = cRomL;
@@ -89,7 +89,7 @@ namespace LIBC64 {
             return *(chip->ptr + addr);
         }
 
-        auto writeIo2( uint16_t addr, uint8_t value ) -> void {
+        auto writeIo2( uint16_t addr, uint8_t value ) -> void override {
             if (!enable)
                 return;
 
@@ -97,11 +97,11 @@ namespace LIBC64 {
                 ram[ (0x1f << 8) | (addr & 0xff) ] = value;
         }
 
-        auto peekRomL( uint16_t addr ) -> uint8_t {
+        auto peekRomL( uint16_t addr ) -> uint8_t override {
             return readRomL(addr);
         }
 
-        auto readRomL( uint16_t addr ) -> uint8_t {
+        auto readRomL( uint16_t addr ) -> uint8_t override {
 
             if (useRam && !useRamAtA0)
                 return ram[ addr & 0x1fff ];
@@ -109,7 +109,7 @@ namespace LIBC64 {
             return Cart::readRomL( addr );
         }
 
-        auto writeRomL( uint16_t addr, uint8_t data ) -> void {
+        auto writeRomL( uint16_t addr, uint8_t data ) -> void override {
 
             if (useRam && !useRamAtA0)
                 ram[ addr & 0x1fff ] = data;
@@ -117,7 +117,7 @@ namespace LIBC64 {
             ExpansionPort::writeRomL( addr, data );
         }
 
-        auto writeUltimaxRomL( uint16_t addr, uint8_t data ) -> void {
+        auto writeUltimaxRomL( uint16_t addr, uint8_t data ) -> void override {
 
             if (useRam && !useRamAtA0)
                 ram[ addr & 0x1fff ] = data;
@@ -125,16 +125,16 @@ namespace LIBC64 {
             ExpansionPort::writeUltimaxRomL( addr, data );
         }
 
-        auto listenToWritesAt80To9F(uint16_t addr, uint8_t data ) -> void {
+        auto listenToWritesAt80To9F(uint16_t addr, uint8_t data ) -> void override {
             if (useRam && !useRamAtA0)
                 ram[ addr & 0x1fff ] = data;
         }
 
-        auto peekRomH( uint16_t addr ) -> uint8_t {
+        auto peekRomH( uint16_t addr ) -> uint8_t override {
             return readRomH(addr);
         }
 
-        auto readRomH( uint16_t addr ) -> uint8_t {
+        auto readRomH( uint16_t addr ) -> uint8_t override {
 
             if (useRamAtA0)
                 return ram[ addr & 0x1fff ];
@@ -142,7 +142,7 @@ namespace LIBC64 {
             return Cart::readRomH( addr );
         }
 
-        auto writeRomH( uint16_t addr, uint8_t data ) -> void {
+        auto writeRomH( uint16_t addr, uint8_t data ) -> void override {
 
             if (useRamAtA0)
                 ram[ addr & 0x1fff ] = data;
@@ -150,12 +150,12 @@ namespace LIBC64 {
                 ExpansionPort::writeRomH( addr, data );
         }
 
-        auto didFreeze() -> void {
+        auto didFreeze() -> void override {
             cRomH = cRomL = getChip(0);
             enable = true;
         }
 
-        auto reset(bool softReset = false) -> void {
+        auto reset(bool softReset = false) -> void override {
             cRomH = cRomL = getChip(0);
             enable = true;
             useRam = false;
@@ -166,7 +166,7 @@ namespace LIBC64 {
             resetFreeze();
         }
 
-        auto serializeSwitchedIn(Emulator::Serializer& s) -> void {
+        auto serializeSwitchedIn(Emulator::Serializer& s) -> void override {
 
             FreezeButton::serialize( s );
 

@@ -9,16 +9,16 @@ namespace LIBC64 {
 
         }
 
-        auto writeIo1( uint16_t addr, uint8_t value ) -> void {
+        auto writeIo1( uint16_t addr, uint8_t value ) -> void override {
 
             system->changeExpansionPortMemoryMode( exRom = false, game = false );
         }
 
-        auto peekIo1( uint16_t addr ) -> uint8_t {
+        auto peekIo1( uint16_t addr ) -> uint8_t override {
             return ExpansionPort::readIo1( addr );
         }
 
-        auto readIo1( uint16_t addr ) -> uint8_t {
+        auto readIo1( uint16_t addr ) -> uint8_t override {
 
             system->changeExpansionPortMemoryMode( exRom = false, game = true );
 

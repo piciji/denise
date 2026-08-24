@@ -9,7 +9,7 @@ struct System3 : GameCart {
         
     }
 
-    auto writeIo1( uint16_t addr, uint8_t value ) -> void {
+    auto writeIo1( uint16_t addr, uint8_t value ) -> void override {
         if (!getChip(0))
             return;
 
@@ -24,11 +24,11 @@ struct System3 : GameCart {
         }            
     }
 
-    auto peekIo1( uint16_t addr ) -> uint8_t {
+    auto peekIo1( uint16_t addr ) -> uint8_t override {
         return ExpansionPort::readIo1( addr );
     }
 
-    auto readIo1( uint16_t addr ) -> uint8_t {
+    auto readIo1( uint16_t addr ) -> uint8_t override {
    
         cRomL = getChip(0);
 
@@ -36,7 +36,7 @@ struct System3 : GameCart {
     }
 
 
-    auto reset(bool softReset = false) -> void {
+    auto reset(bool softReset = false) -> void override {
         cRomL = getChip(0);
         cRomH = nullptr;
     }

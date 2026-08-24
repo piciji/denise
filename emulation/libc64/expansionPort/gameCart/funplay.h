@@ -9,7 +9,7 @@ struct Funplay : GameCart {
         
     }
     
-    auto writeIo1( uint16_t addr, uint8_t value ) -> void {
+    auto writeIo1( uint16_t addr, uint8_t value ) -> void override {
         
 		if ((value & 0xc6) == 0x86) {
 			system->changeExpansionPortMemoryMode( exRom = true, game = true );
@@ -29,7 +29,7 @@ struct Funplay : GameCart {
         }
     }
     
-    auto assumeChips( ) -> void {
+    auto assumeChips( ) -> void override {
     
         Cart::assumeChips( );
         
@@ -42,7 +42,7 @@ struct Funplay : GameCart {
         }
     }
     
-    auto reset(bool softReset = false) -> void {
+    auto reset(bool softReset = false) -> void override {
         
         cRomL = getChip(0);
         

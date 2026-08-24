@@ -34,7 +34,7 @@ struct KCSPower : Freezer {
        // applyConfig();
     }
 
-    ~KCSPower() {
+    ~KCSPower() override {
         delete[] ram;
     }
 

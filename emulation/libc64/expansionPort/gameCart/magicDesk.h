@@ -9,7 +9,7 @@ namespace LIBC64 {
 
         }
 
-        auto writeIo1( uint16_t addr, uint8_t value ) -> void {
+        auto writeIo1( uint16_t addr, uint8_t value ) -> void override {
             exRom = (value >> 7) & 1;
 
             value &= 0x7f;
@@ -25,7 +25,7 @@ namespace LIBC64 {
             system->changeExpansionPortMemoryMode( exRom, game = true );
         }
 
-        auto reset(bool softReset = false) -> void {
+        auto reset(bool softReset = false) -> void override {
 
             cRomL = getChip(0);
             cRomH = nullptr;

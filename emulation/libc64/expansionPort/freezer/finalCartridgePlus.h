@@ -18,9 +18,9 @@ struct FinalCartridgePlus : Freezer {
 
     auto bootSpeed() -> float override { return 4.0; }
 
-    auto arm() -> bool { return true; }
+    auto arm() -> bool override { return true; }
 
-    auto writeIo2( uint16_t addr, uint8_t value ) -> void {
+    auto writeIo2( uint16_t addr, uint8_t value ) -> void override {
 
         bitCell = (value >> 7) & 1;
         enableRomL = ((value >> 6) & 1) ^ 1;
@@ -38,16 +38,16 @@ struct FinalCartridgePlus : Freezer {
         //system->interface->log( value, true, true );
     }
 
-    auto peekIo2( uint16_t addr ) -> uint8_t {
+    auto peekIo2( uint16_t addr ) -> uint8_t override {
         return readIo2( addr );
     }
 
-    auto readIo2( uint16_t addr ) -> uint8_t {
+    auto readIo2( uint16_t addr ) -> uint8_t override {
 
         return (bitCell << 7) | (enableRomL << 6) | (enableRomH << 5) | (enable << 4);
     }
 
-    auto clock() -> void {
+    auto clock() -> void override {
         // freezer is activated with restore key, but we will allow the typical way also (no freezer button on real cart)
         FreezeButton::clock();
 
@@ -79,12 +79,12 @@ struct FinalCartridgePlus : Freezer {
         system->changeExpansionPortMemoryMode( exRom = true, game = true, true );
     }
 
-    auto peekUltimaxA0( uint16_t addr ) -> uint8_t {
+    auto peekUltimaxA0( uint16_t addr ) -> uint8_t override {
 
         return readUltimaxA0( addr );
     }
 
-    auto readUltimaxA0( uint16_t addr ) -> uint8_t {
+    auto readUltimaxA0( uint16_t addr ) -> uint8_t override {
 
         if (!cRomL)
             return ExpansionPort::readRomL( addr );
@@ -92,14 +92,14 @@ struct FinalCartridgePlus : Freezer {
         return *( cRomL->ptrHi + addr);
     }
 
-    auto didFreeze() -> void {
+    auto didFreeze() -> void override {
         enableRomL = enableRomH = true;
         enable = true;
         vicII->setUltimax( false );
         nmiCall(false);
     }
 
-    auto readChips() -> bool {
+    auto readChips() -> bool override {
         chips.clear();
 
         if (!data || (size == 0) || (size < (32 * 1024 + 16)) )
@@ -133,7 +133,7 @@ struct FinalCartridgePlus : Freezer {
         return true;
     }
 
-    auto assumeChips( ) -> void {
+    auto assumeChips( ) -> void override {
         chips.clear();
 
         if (!data || (size == 0) || (size < (32 * 1024)) )
@@ -161,7 +161,7 @@ struct FinalCartridgePlus : Freezer {
         chips.push_back( chip );
     }
 
-    auto serializeSwitchedIn(Emulator::Serializer& s) -> void {
+    auto serializeSwitchedIn(Emulator::Serializer& s) -> void override {
 
         FreezeButton::serialize( s );
 
@@ -171,7 +171,7 @@ struct FinalCartridgePlus : Freezer {
         s.integer( enable );
     }
 
-    auto reset(bool softReset = false) -> void {
+    auto reset(bool softReset = false) -> void override {
         enableRomL = true;
         enableRomH = true;
         enable = true;

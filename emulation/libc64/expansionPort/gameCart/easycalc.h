@@ -9,7 +9,7 @@ namespace LIBC64 {
 
         }
 
-        auto writeIo1( uint16_t addr, uint8_t value ) -> void {
+        auto writeIo1( uint16_t addr, uint8_t value ) -> void override {
             for( auto& chip : chips ) {
                 if (chip.addr == 0xa000) {
                     if (chip.bank == (addr & 1) ) {
@@ -20,7 +20,7 @@ namespace LIBC64 {
             }
         }
 
-        auto reset(bool softReset = false) -> void {
+        auto reset(bool softReset = false) -> void override {
             game = false;
             exRom = false;
             cRomL = getChip(0);

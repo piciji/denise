@@ -15,7 +15,7 @@ namespace LIBC64 {
 
         auto bootSpeed() -> float override { return 1.0; }
 
-        auto writeIo2( uint16_t addr, uint8_t value ) -> void {
+        auto writeIo2( uint16_t addr, uint8_t value ) -> void override {
 
             if ( enable && ((addr & 0xff) == 0xff) ) {
 
@@ -35,42 +35,42 @@ namespace LIBC64 {
             }
         }
 
-        auto peekIo1( uint16_t addr ) -> uint8_t {
+        auto peekIo1( uint16_t addr ) -> uint8_t override {
             return readIo1( addr );
         }
 
-        auto readIo1( uint16_t addr ) -> uint8_t {
+        auto readIo1( uint16_t addr ) -> uint8_t override {
 
             return *(cRomL->ptr + (0x1e00 | (addr & 0xff)) );
         }
 
-        auto peekIo2( uint16_t addr ) -> uint8_t {
+        auto peekIo2( uint16_t addr ) -> uint8_t override {
             return readIo2( addr );
         }
 
-        auto readIo2( uint16_t addr ) -> uint8_t {
+        auto readIo2( uint16_t addr ) -> uint8_t override {
 
             return *(cRomL->ptr + (0x1f00 | (addr & 0xff)) );
         }
 
-        auto didFreeze() -> void {
+        auto didFreeze() -> void override {
             enable = true;
             vicII->setUltimaxPhi1( false );
         }
 
-        auto assumeChips( ) -> void {
+        auto assumeChips( ) -> void override {
 
             Cart::assumeChips( {16384} );
         }
 
-        auto serializeSwitchedIn(Emulator::Serializer& s) -> void {
+        auto serializeSwitchedIn(Emulator::Serializer& s) -> void override {
 
             FreezeButton::serialize( s );
 
             s.integer( enable );
         }
 
-        auto reset(bool softReset = false) -> void {
+        auto reset(bool softReset = false) -> void override {
             enable = true;
             game = false;
             exRom = false;

@@ -9,11 +9,11 @@ namespace LIBC64 {
 
         }
 
-        auto peekIo1( uint16_t addr) -> uint8_t {
+        auto peekIo1( uint16_t addr) -> uint8_t override {
             return 0;
         }
 
-        auto readIo1( uint16_t addr) -> uint8_t {
+        auto readIo1( uint16_t addr) -> uint8_t override {
             for( auto& chip : chips ) {
                 if (chip.bank == (addr & 0xf) ) {
                     cRomL = &chip;
@@ -25,7 +25,7 @@ namespace LIBC64 {
             return 0;
         }
 
-        auto reset(bool softReset = false) -> void {
+        auto reset(bool softReset = false) -> void override {
 
             cRomL = getChip(0);
             cRomH = getChip(0);

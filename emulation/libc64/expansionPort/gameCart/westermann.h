@@ -9,18 +9,18 @@ namespace LIBC64 {
 
         }
 
-        auto peekIo2( uint16_t addr ) -> uint8_t {
+        auto peekIo2( uint16_t addr ) -> uint8_t override {
             return 0;
         }
 
-        auto readIo2( uint16_t addr ) -> uint8_t {
+        auto readIo2( uint16_t addr ) -> uint8_t override {
 
             system->changeExpansionPortMemoryMode( exRom = false, game = true );
 
             return 0;
         }
 
-        auto assumeChips( ) -> void {
+        auto assumeChips( ) -> void override {
 
             Cart::assumeChips( {16384} );
         }

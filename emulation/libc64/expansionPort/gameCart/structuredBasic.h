@@ -29,11 +29,11 @@ namespace LIBC64 {
             ram = new uint8_t[0x2000];
         }
 
-        ~StructuredBasic() {
+        ~StructuredBasic() override {
             delete[] ram;
         }
 
-        auto reset(bool /*softReset*/ = false) -> void {
+        auto reset(bool softReset = false) -> void override {
             bank       = 0;
             ramVisible = false;
 
@@ -46,31 +46,31 @@ namespace LIBC64 {
         }
 
         // IO1: WRITE schaltet per Adresse
-        auto writeIo1(uint16_t addr, uint8_t value) -> void {
+        auto writeIo1(uint16_t addr, uint8_t value) -> void override {
             handleIo1(addr);
         }
 
-        auto peekIo1(uint16_t addr) -> uint8_t {
+        auto peekIo1(uint16_t addr) -> uint8_t override {
             return 0;
         }
 
         // IO1: READ schaltet ebenfalls
-        auto readIo1(uint16_t addr) -> uint8_t {
+        auto readIo1(uint16_t addr) -> uint8_t override {
             handleIo1(addr);
             return 0;
         }
 
-        auto peekRomL( uint16_t addr ) -> uint8_t {
+        auto peekRomL( uint16_t addr ) -> uint8_t override {
             return readRomL(addr);
         }
 
         // ROML: im RAM-Modus aus RAM lesen/schreiben, sonst Standard-ROM
-        auto readRomL(uint16_t addr) -> uint8_t {
+        auto readRomL(uint16_t addr) -> uint8_t override {
             if (ramVisible) return ram[addr & 0x1FFF];
             return Cart::readRomL(addr);
         }
 
-        auto writeRomL(uint16_t addr, uint8_t data) -> void {
+        auto writeRomL(uint16_t addr, uint8_t data) -> void override {
             if (ramVisible) {
                 ram[addr & 0x1FFF] = data;
             }
@@ -78,20 +78,20 @@ namespace LIBC64 {
         }
 
         // Spiegel-Writes ins ROML-Fenster auch ins RAM mappen
-        auto listenToWritesAt80To9F(uint16_t addr, uint8_t data) -> void {
+        auto listenToWritesAt80To9F(uint16_t addr, uint8_t data) -> void override {
             if (ramVisible) ram[addr & 0x1FFF] = data;
         }
-        auto listenToWritesAtA0ToBF(uint16_t, uint8_t) -> void { /* ROMH unbenutzt */ }
+        auto listenToWritesAtA0ToBF(uint16_t, uint8_t) -> void override { /* ROMH unbenutzt */ }
 
         // Keine ROMH-Belegung → BASIC bleibt sichtbar
         auto isBootable() -> bool override { return false; }
 
         // Zwei 8-KB-Chips aus dem CRT (Bank 0/1 bei $8000)
-        auto assumeChips() -> void {
+        auto assumeChips() -> void override {
             Cart::assumeChips({ 8192, 8192 });
         }
 
-        auto serializeSwitchedIn(Emulator::Serializer& s) -> void {
+        auto serializeSwitchedIn(Emulator::Serializer& s) -> void override {
             Cart::serialize( s );
             s.integer( ramVisible );
             s.integer( bank );

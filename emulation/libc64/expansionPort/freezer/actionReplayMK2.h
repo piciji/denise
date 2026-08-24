@@ -15,19 +15,19 @@ struct ActionReplayMK2 : Freezer {
     uint8_t disableCounter = 0;
     bool enable = true;
 
-    auto readIo1( uint16_t addr ) -> uint8_t {
+    auto readIo1( uint16_t addr ) -> uint8_t override {
 
         _enable();
 
         return ExpansionPort::readRomL( addr );
     }
 
-    auto writeIo1( uint16_t addr, uint8_t value ) -> void {
+    auto writeIo1( uint16_t addr, uint8_t value ) -> void override {
 
         _enable();
     }
 
-    auto peekIo2( uint16_t addr ) -> uint8_t {
+    auto peekIo2( uint16_t addr ) -> uint8_t override {
         auto chip = getChip(1);
 
         if (!chip)
@@ -38,7 +38,7 @@ struct ActionReplayMK2 : Freezer {
         return *(chip->ptr + addr);
     }
 
-    auto readIo2( uint16_t addr ) -> uint8_t {
+    auto readIo2( uint16_t addr ) -> uint8_t override {
         _disable();
 
         auto chip = getChip(1);
@@ -51,7 +51,7 @@ struct ActionReplayMK2 : Freezer {
         return *(chip->ptr + addr);
     }
 
-    auto writeIo2( uint16_t addr, uint8_t value ) -> void {
+    auto writeIo2( uint16_t addr, uint8_t value ) -> void override {
         _disable();
     }
 
@@ -82,7 +82,7 @@ struct ActionReplayMK2 : Freezer {
         }
     }
 
-    auto didFreeze() -> void {
+    auto didFreeze() -> void override {
         nmiCall(false);
         cRomH = cRomL = getChip(0);
         enableCounter = 0;
@@ -90,7 +90,7 @@ struct ActionReplayMK2 : Freezer {
         enable = true;
     }
 
-    auto reset(bool softReset = false) -> void {
+    auto reset(bool softReset = false) -> void override {
         cRomH = cRomL = getChip(1);
         enableCounter = 0;
         disableCounter = 0;
@@ -98,7 +98,7 @@ struct ActionReplayMK2 : Freezer {
         resetFreeze();
     }
 
-    auto serializeSwitchedIn(Emulator::Serializer& s) -> void {
+    auto serializeSwitchedIn(Emulator::Serializer& s) -> void override {
 
         FreezeButton::serialize( s );
 

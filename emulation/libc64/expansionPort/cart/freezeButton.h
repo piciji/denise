@@ -37,7 +37,7 @@ struct FreezeButton : Cart {
         writesInARow = 0;
     }
 
-    virtual auto clock() -> void {
+    auto clock() -> void override {
 
         if (freezeArmed && conditionMet()) {
             if (switchToUltimax())

@@ -9,7 +9,7 @@ struct Cart16k : GameCart {
         
     }
 
-    auto assumeChips( ) -> void {
+    auto assumeChips( ) -> void override {
     
         Cart::assumeChips( {16384} );
     }

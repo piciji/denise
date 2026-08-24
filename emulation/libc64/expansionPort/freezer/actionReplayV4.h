@@ -13,7 +13,7 @@ struct ActionReplayV4 : Freezer {
     // mark non bootable to use delayed autostart
     //auto isBootable( ) -> bool { return true; }
     
-    ~ActionReplayV4() {
+    ~ActionReplayV4() override {
         delete[] ram;
     }
     
@@ -22,7 +22,7 @@ struct ActionReplayV4 : Freezer {
     bool bug = false;
     uint8_t* ram = nullptr;
     
-    auto writeIo1( uint16_t addr, uint8_t value ) -> void {
+    auto writeIo1( uint16_t addr, uint8_t value ) -> void override {
         
         if (!enable)
             return;
@@ -53,14 +53,14 @@ struct ActionReplayV4 : Freezer {
             enable = false;
     }
 
-    auto peekIo1( uint16_t addr ) -> uint8_t {
+    auto peekIo1( uint16_t addr ) -> uint8_t override {
         if (!enable)
             return 0;
 
         return ExpansionPort::readIo1(addr);
     }
 
-    auto readIo1( uint16_t addr ) -> uint8_t {
+    auto readIo1( uint16_t addr ) -> uint8_t override {
         if (!enable)
             return 0;
 
@@ -70,11 +70,11 @@ struct ActionReplayV4 : Freezer {
         return value;
     }
 
-    auto peekIo2( uint16_t addr ) -> uint8_t {
+    auto peekIo2( uint16_t addr ) -> uint8_t override {
         return readIo2( addr );
     }
     
-    auto readIo2( uint16_t addr ) -> uint8_t {
+    auto readIo2( uint16_t addr ) -> uint8_t override {
         
         addr = (0x1f << 8) | (addr & 0xff); // last page of selected rom bank
         Chip* chip = cRomL;
@@ -90,7 +90,7 @@ struct ActionReplayV4 : Freezer {
         return *(chip->ptr + addr);        
     }    
     
-    auto writeIo2( uint16_t addr, uint8_t value ) -> void {
+    auto writeIo2( uint16_t addr, uint8_t value ) -> void override {
         if (!enable)
             return;
         
@@ -98,11 +98,11 @@ struct ActionReplayV4 : Freezer {
             ram[ (0x1f << 8) | (addr & 0xff) ] = value;
     }
 
-    auto peekRomL( uint16_t addr ) -> uint8_t {
+    auto peekRomL( uint16_t addr ) -> uint8_t override {
         return readRomL(addr);
     }
 
-    auto readRomL( uint16_t addr ) -> uint8_t {
+    auto readRomL( uint16_t addr ) -> uint8_t override {
 
         if (bug)
             return system->readRam( 0x8000 | addr ) | ram[ addr ];
@@ -113,7 +113,7 @@ struct ActionReplayV4 : Freezer {
         return Cart::readRomL( addr );
     }
     
-    auto writeRomL( uint16_t addr, uint8_t data ) -> void {
+    auto writeRomL( uint16_t addr, uint8_t data ) -> void override {
         
         if (useRam)
             ram[ addr & 0x1fff ] = data;
@@ -121,7 +121,7 @@ struct ActionReplayV4 : Freezer {
         ExpansionPort::writeRomL( addr, data );
     }
         
-    auto writeUltimaxRomL( uint16_t addr, uint8_t data ) -> void {
+    auto writeUltimaxRomL( uint16_t addr, uint8_t data ) -> void override {
         
         if (useRam)
             ram[ addr & 0x1fff ] = data;
@@ -129,17 +129,17 @@ struct ActionReplayV4 : Freezer {
         ExpansionPort::writeUltimaxRomL( addr, data );
     }
     
-    auto listenToWritesAt80To9F(uint16_t addr, uint8_t data ) -> void {
+    auto listenToWritesAt80To9F(uint16_t addr, uint8_t data ) -> void override {
         if (useRam)
             ram[ addr & 0x1fff ] = data;
     }
     
-    auto didFreeze() -> void {
+    auto didFreeze() -> void override {
         cRomH = cRomL = getChip(0);
         enable = true;
     }
     
-    auto reset(bool softReset = false) -> void {
+    auto reset(bool softReset = false) -> void override {
         cRomH = cRomL = getChip(0);
         enable = true;
         useRam = false;
@@ -152,7 +152,7 @@ struct ActionReplayV4 : Freezer {
         resetFreeze();
     }
         
-    auto serializeSwitchedIn(Emulator::Serializer& s) -> void {
+    auto serializeSwitchedIn(Emulator::Serializer& s) -> void override {
 
         FreezeButton::serialize( s );
 

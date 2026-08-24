@@ -13,11 +13,11 @@ namespace LIBC64 {
             ram = new uint8_t[ 32 * 1024 ];
         }
 
-        ~Pagefox() {
+        ~Pagefox() override {
             delete[] ram;
         }
 
-        auto writeIo1( uint16_t addr, uint8_t value ) -> void {
+        auto writeIo1( uint16_t addr, uint8_t value ) -> void override {
 
             if ((addr & 0x80) == 0)
                 return;
@@ -36,11 +36,11 @@ namespace LIBC64 {
             system->changeExpansionPortMemoryMode( exRom, game );
         }
 
-        auto peekRomL( uint16_t addr ) -> uint8_t {
+        auto peekRomL( uint16_t addr ) -> uint8_t override {
             return readRomL(addr);
         }
 
-        auto readRomL( uint16_t addr ) -> uint8_t {
+        auto readRomL( uint16_t addr ) -> uint8_t override {
 
             if (useRam)
                 return ram[ addr + (bank << 14) ];
@@ -48,7 +48,7 @@ namespace LIBC64 {
             return Cart::readRomL( addr );
         }
 
-        auto writeRomL( uint16_t addr, uint8_t data ) -> void {
+        auto writeRomL( uint16_t addr, uint8_t data ) -> void override {
 
             if (useRam)
                 ram[ (addr & 0x1fff) + (bank << 14) ] = data;
@@ -56,11 +56,11 @@ namespace LIBC64 {
             Cart::writeRomL(addr, data);
         }
 
-        auto peekRomH( uint16_t addr ) -> uint8_t {
+        auto peekRomH( uint16_t addr ) -> uint8_t override {
             return readRomH(addr);
         }
 
-        auto readRomH( uint16_t addr ) -> uint8_t {
+        auto readRomH( uint16_t addr ) -> uint8_t override {
 
             if (useRam)
                 return ram[ 0x2000 + addr + (bank << 14) ];
@@ -68,7 +68,7 @@ namespace LIBC64 {
             return Cart::readRomH( addr );
         }
 
-        auto writeRomH( uint16_t addr, uint8_t data ) -> void {
+        auto writeRomH( uint16_t addr, uint8_t data ) -> void override {
 
             if (useRam)
                 ram[ 0x2000 + (addr & 0x1fff) + (bank << 14) ] = data;
@@ -76,19 +76,19 @@ namespace LIBC64 {
             Cart::writeRomH(addr, data);
         }
 
-        auto listenToWritesAt80To9F( uint16_t addr, uint8_t data ) -> void {
+        auto listenToWritesAt80To9F( uint16_t addr, uint8_t data ) -> void override {
 
             if (useRam)
                 ram[ (addr & 0x1fff) + (bank << 14) ] = data;
         }
 
-        auto listenToWritesAtA0ToBF( uint16_t addr, uint8_t data ) -> void {
+        auto listenToWritesAtA0ToBF( uint16_t addr, uint8_t data ) -> void override {
 
             if (useRam)
                 ram[ 0x2000 + (addr & 0x1fff) + (bank << 14) ] = data;
         }
 
-        auto reset(bool softReset = false) -> void {
+        auto reset(bool softReset = false) -> void override {
             cRomH = cRomL = getChip(0);
             bank = 0;
             useRam = false;
@@ -96,7 +96,7 @@ namespace LIBC64 {
             std::memset(ram, 0, 32 * 1024);
         }
 
-        auto serializeSwitchedIn(Emulator::Serializer& s) -> void {
+        auto serializeSwitchedIn(Emulator::Serializer& s) -> void override {
 
             Cart::serialize( s );
 
@@ -105,7 +105,7 @@ namespace LIBC64 {
             s.array( ram, 32 * 1024 );
         }
 
-        auto assumeChips( ) -> void {
+        auto assumeChips( ) -> void override {
 
             Cart::assumeChips( {16384} );
         }

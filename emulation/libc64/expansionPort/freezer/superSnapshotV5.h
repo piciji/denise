@@ -10,7 +10,7 @@ struct SuperSnapshotV5 : Freezer {
         ram = new uint8_t[ 32 * 1024 ];
     }
 
-    ~SuperSnapshotV5() {
+    ~SuperSnapshotV5() override {
         delete[] ram;
     }
 
@@ -18,11 +18,11 @@ struct SuperSnapshotV5 : Freezer {
     bool enable;
     uint8_t bank;
 
-    auto assumeChips( ) -> void {
+    auto assumeChips( ) -> void override {
         Cart::assumeChips( {16384} );
     }
 
-    auto writeIo1( uint16_t addr, uint8_t value ) -> void {
+    auto writeIo1( uint16_t addr, uint8_t value ) -> void override {
         if (!enable)
             return;
 
@@ -43,22 +43,22 @@ struct SuperSnapshotV5 : Freezer {
         }
     }
 
-    auto peekIo1( uint16_t addr ) -> uint8_t {
+    auto peekIo1( uint16_t addr ) -> uint8_t override {
         return readIo1( addr );
     }
 
-    auto readIo1( uint16_t addr ) -> uint8_t {
+    auto readIo1( uint16_t addr ) -> uint8_t override {
         if (!enable)
             return 0;
 
         return Cart::readRomL(0x1e00 | (addr & 0xff));
     }
 
-    auto peekRomL( uint16_t addr ) -> uint8_t {
+    auto peekRomL( uint16_t addr ) -> uint8_t override {
         return readRomL(addr);
     }
 
-    auto readRomL(uint16_t addr) -> uint8_t {
+    auto readRomL(uint16_t addr) -> uint8_t override {
         if (exRom)
             return ram[((bank & 3) << 13) | (addr & 0x1fff) ];
 
@@ -68,25 +68,25 @@ struct SuperSnapshotV5 : Freezer {
         return ExpansionPort::readRomL(addr);
     }
 
-    auto writeRomL( uint16_t addr, uint8_t data ) -> void {
+    auto writeRomL( uint16_t addr, uint8_t data ) -> void override {
         if (exRom)
             ram[((bank & 3) << 13) | (addr & 0x1fff) ] = data;
 
         ExpansionPort::writeRomL( addr, data );
     }
 
-    auto writeUltimaxRomL( uint16_t addr, uint8_t data ) -> void {
+    auto writeUltimaxRomL( uint16_t addr, uint8_t data ) -> void override {
         if (exRom)
             ram[((bank & 3) << 13) | (addr & 0x1fff) ] = data;
 
         ExpansionPort::writeUltimaxRomL( addr, data );
     }
 
-    auto didFreeze() -> void {
+    auto didFreeze() -> void override {
         enable = true;
     }
 
-    auto reset(bool softReset = false) -> void {
+    auto reset(bool softReset = false) -> void override {
         cRomH = cRomL = getChip(0);
         enable = true;
         bank = 0;
@@ -96,7 +96,7 @@ struct SuperSnapshotV5 : Freezer {
         resetFreeze();
     }
 
-    auto serializeSwitchedIn(Emulator::Serializer& s) -> void {
+    auto serializeSwitchedIn(Emulator::Serializer& s) -> void override {
 
         FreezeButton::serialize( s );
 

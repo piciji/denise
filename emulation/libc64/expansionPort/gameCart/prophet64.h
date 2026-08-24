@@ -12,21 +12,21 @@ struct Prophet64 : GameCart {
 
     }
 
-    auto writeIo2( uint16_t addr, uint8_t value ) -> void {
+    auto writeIo2( uint16_t addr, uint8_t value ) -> void override {
         reg = value;
         updateMemoryMap();
     }
 
-    auto peekIo2( uint16_t addr ) -> uint8_t {
+    auto peekIo2( uint16_t addr ) -> uint8_t override {
         return reg;
     }
 
-    auto reset( bool softReset = false ) -> void {
+    auto reset( bool softReset = false ) -> void override {
         reg = 0;
         updateMemoryMap();
     }
 
-    auto serializeSwitchedIn(Emulator::Serializer& s) -> void {
+    auto serializeSwitchedIn(Emulator::Serializer& s) -> void override {
         Cart::serialize( s );
         s.integer( reg );
     }

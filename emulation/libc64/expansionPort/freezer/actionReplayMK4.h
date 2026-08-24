@@ -13,7 +13,7 @@ struct ActionReplayMK4 : Freezer {
 
     auto bootSpeed() -> float override { return 0.9; }
     
-    auto writeIo1( uint16_t addr, uint8_t value ) -> void {
+    auto writeIo1( uint16_t addr, uint8_t value ) -> void override {
         
         if (!enable)
             return;
@@ -28,11 +28,11 @@ struct ActionReplayMK4 : Freezer {
             enable = false;
     }    
 
-    auto peekIo2( uint16_t addr ) -> uint8_t {
+    auto peekIo2( uint16_t addr ) -> uint8_t override {
         return readIo2( addr );
     }
 
-    auto readIo2( uint16_t addr ) -> uint8_t {
+    auto readIo2( uint16_t addr ) -> uint8_t override {
         
         addr = (0x1f << 8) | (addr & 0xff); // last page of selected rom bank
         Chip* chip = cRomL;
@@ -46,13 +46,13 @@ struct ActionReplayMK4 : Freezer {
         return *(chip->ptr + addr);
     }    
     
-    auto didFreeze() -> void {
+    auto didFreeze() -> void override {
         nmiCall(false);
         enable = true;
         cRomH = cRomL = getChip(0);
     }
     
-    auto reset(bool softReset = false) -> void {
+    auto reset(bool softReset = false) -> void override {
         enable = true;
         if (softReset) {
             game = true;
@@ -62,7 +62,7 @@ struct ActionReplayMK4 : Freezer {
         resetFreeze();
     }
         
-    auto serializeSwitchedIn(Emulator::Serializer& s) -> void {
+    auto serializeSwitchedIn(Emulator::Serializer& s) -> void override {
 
         FreezeButton::serialize( s );
 

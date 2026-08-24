@@ -7,11 +7,11 @@ namespace LIBC64 {
 
         Silverrock(System* system) : GameCart(system, true, false) {}
 
-        auto peekRomL( uint16_t addr ) -> uint8_t {
+        auto peekRomL( uint16_t addr ) -> uint8_t override {
             return readRomL(addr);
         }
 
-        auto readRomL( uint16_t addr ) -> uint8_t {
+        auto readRomL( uint16_t addr ) -> uint8_t override {
             // tested with original Hugo image in Fallborg's package from CSDb
             addr = ((addr & 1) << 10) |
                     ((addr & 2) << 10) |
@@ -32,7 +32,7 @@ namespace LIBC64 {
             return ((data & 8) >> 3) | ((data & 4) >> 1) | ((data & 2) << 1) | ((data & 1) << 3) | (data & 0xf0);
         }
 
-        auto writeIo1( uint16_t addr, uint8_t data ) -> void {
+        auto writeIo1( uint16_t addr, uint8_t data ) -> void override {
             uint8_t bank;
             addr &= 0xf;
             data >>= 4;
@@ -48,7 +48,7 @@ namespace LIBC64 {
             cRomL = getChip(bank);
         }
 
-        auto reset(bool softReset = false) -> void {
+        auto reset(bool softReset = false) -> void override {
             cRomL = getChip(0);
         }
     };

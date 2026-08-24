@@ -9,7 +9,7 @@ struct Ocean : GameCart {
         
     }
     
-    auto writeIo1( uint16_t addr, uint8_t value ) -> void {
+    auto writeIo1( uint16_t addr, uint8_t value ) -> void override {
         
         if (!getChip(0))
             return;
@@ -26,7 +26,7 @@ struct Ocean : GameCart {
         }
     }
     
-    auto reset(bool softReset = false) -> void {
+    auto reset(bool softReset = false) -> void override {
         
         cRomL = getChip(0);
         cRomH = getChip(0);
