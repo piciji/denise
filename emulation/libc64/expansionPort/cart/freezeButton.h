@@ -18,16 +18,16 @@ struct FreezeButton : Cart {
     uint8_t unbeatable = 0;
     unsigned writesInARow = 0;
     
-    auto hasFreezeButton() -> bool { return true; }            
-    
-    virtual auto isBootable( ) -> bool { return false; }
+    auto hasFreezeButton() -> bool override { return true; }
+
+    auto isBootable( ) -> bool override { return false; }
     
     virtual auto didFreeze() -> void {}
     virtual auto blockFreeze() -> bool { return false; }
     virtual auto arm() -> bool { return false; }
     virtual auto switchToUltimax() -> bool { return true; }
     
-    virtual auto freeze() -> void {
+    auto freeze() -> void override {
         if (blockFreeze())
             return;
         // UI events are processed only one time between frames.
@@ -85,7 +85,7 @@ struct FreezeButton : Cart {
         return false;        
     }
     
-    virtual auto serialize(Emulator::Serializer& s) -> void {
+    auto serialize(Emulator::Serializer& s) -> void override {
 
         Cart::serialize( s );
 

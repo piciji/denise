@@ -35,7 +35,7 @@ struct MagicDesk2 : GameCart {
         exRom = false;
     }
 
-    auto assumeChips( ) -> void {
+    auto assumeChips( ) -> void override {
 
         Cart::assumeChips( {16384} );
     }
