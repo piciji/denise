@@ -27,7 +27,7 @@ namespace LIBC64 {
             cRomL = getChip(3);
         }
 
-        auto isBootable( ) -> bool { return false; }
+        auto isBootable( ) -> bool override { return false; }
 
     };
 

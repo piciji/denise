@@ -12,7 +12,7 @@ namespace LIBC64 {
 
         // auto isBootable( ) -> bool { return true; }
 
-        auto bootSpeed() -> float { return 0.9; }
+        auto bootSpeed() -> float override { return 0.9; }
 
         ~AtomicPower() {
             delete[] ram;

@@ -11,7 +11,7 @@ namespace LIBC64 {
 
         }
 
-        auto isBootable( ) -> bool {
+        auto isBootable( ) -> bool override {
             return false;
         }
 

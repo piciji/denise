@@ -16,7 +16,7 @@ struct FinalCartridgePlus : Freezer {
 
     // auto isBootable( ) -> bool { return true; }
 
-    virtual auto bootSpeed() -> float { return 4.0; }
+    auto bootSpeed() -> float override { return 4.0; }
 
     auto arm() -> bool { return true; }
 

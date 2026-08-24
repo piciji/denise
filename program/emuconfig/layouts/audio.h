@@ -200,7 +200,7 @@ struct AudioModelLayout : ModelLayout {
     auto updateBiasVisibillity() -> void;
     auto updateExtraSidVisibillity() -> void;
 
-    auto getIdent( Emulator::Interface::Model* model, std::string& tooltip ) -> std::string;
+    auto getIdent( Emulator::Interface::Model* model, std::string& tooltip ) -> std::string override;
 };
 
 struct PicoModelLayout : ModelLayout {

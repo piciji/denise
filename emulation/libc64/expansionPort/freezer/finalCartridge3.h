@@ -13,7 +13,7 @@ namespace LIBC64 {
 
         // auto isBootable( ) -> bool { return true; }
 
-        virtual auto bootSpeed() -> float { return 1.0; }
+        auto bootSpeed() -> float override { return 1.0; }
 
         auto writeIo2( uint16_t addr, uint8_t value ) -> void {
 

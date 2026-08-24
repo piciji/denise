@@ -12,7 +12,7 @@ struct SuperGames : GameCart {
     bool writeProtect = false;
 	bool mafiosino = false; // fastloader
 	
-	auto isBootable( ) -> bool {
+	auto isBootable( ) -> bool override {
 		return !mafiosino;
 	}
 	
@@ -31,7 +31,7 @@ struct SuperGames : GameCart {
                 cRomL = &chip;
 				cRomH = &chip;
                 break;
-            }            
+            }
         }
         
 		writeProtect = !!(value & 8);

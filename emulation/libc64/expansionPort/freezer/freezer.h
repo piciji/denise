@@ -21,7 +21,7 @@ struct Freezer : FreezeButton {
 
     virtual auto serializeSwitchedIn(Emulator::Serializer& s) -> void;
 
-    virtual auto bootSpeed() -> float { return 0.5; }
+    auto bootSpeed() -> float override { return 0.5; }
             
 };
 

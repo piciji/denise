@@ -21,7 +21,7 @@ struct GameCart : Cart {
 
     virtual auto serializeSwitchedIn(Emulator::Serializer& s) -> void;
 
-    virtual auto isBootable( ) -> bool {
+    auto isBootable( ) -> bool override {
         return rom ? true : false;
     }
 };

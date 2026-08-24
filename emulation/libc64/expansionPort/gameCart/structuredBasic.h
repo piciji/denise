@@ -84,7 +84,7 @@ namespace LIBC64 {
         auto listenToWritesAtA0ToBF(uint16_t, uint8_t) -> void { /* ROMH unbenutzt */ }
 
         // Keine ROMH-Belegung → BASIC bleibt sichtbar
-        auto isBootable() -> bool { return false; }
+        auto isBootable() -> bool override { return false; }
 
         // Zwei 8-KB-Chips aus dem CRT (Bank 0/1 bei $8000)
         auto assumeChips() -> void {

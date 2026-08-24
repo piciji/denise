@@ -28,7 +28,7 @@ namespace LIBC64 {
             system->changeExpansionPortMemoryMode( exRom = false, game = false );
         }
 
-        auto isBootable( ) -> bool { return false; }
+        auto isBootable( ) -> bool override { return false; }
     };
 
 }
