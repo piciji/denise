@@ -215,17 +215,17 @@ jobs:
       matrix:
         include:
           - target: win64
-            mingw_archive: x86_64-14.2.0-release-posix-seh-msvcrt-rt_v12-rev2.7z
+            mingw_archive: x86_64-15.2.0-release-posix-seh-msvcrt-rt_v13-rev1.7z
             mingw_dir: mingw64
 
           - target: win32
-            mingw_archive: i686-14.2.0-release-posix-dwarf-msvcrt-rt_v12-rev2.7z
+            mingw_archive: i686-15.2.0-release-posix-dwarf-msvcrt-rt_v13-rev1.7z
             mingw_dir: mingw32
 
     env:
       mingw_archive: ${{ matrix.mingw_archive }}
       mingw_dir: ${{ matrix.mingw_dir }}
-      mingw_url: https://github.com/niXman/mingw-builds-binaries/releases/download/14.2.0-rt_v12-rev2/${{ matrix.mingw_archive }}
+      mingw_url: https://github.com/niXman/mingw-builds-binaries/releases/download/15.2.0-rt_v13-rev1/${{ matrix.mingw_archive }}
 
     steps:
       - name: Checkout
