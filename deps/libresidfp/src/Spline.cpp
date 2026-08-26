@@ -33,7 +33,7 @@ Spline::Spline(const std::vector<Point> &input) :
 {
     assert(input.size() > 2);
 
-    const size_t coeffLength = input.size() - 1;
+    const size_t coeffLength = !input.empty() ? input.size() - 1 : 0;
 
     std::vector<double> dxs(coeffLength);
     std::vector<double> ms(coeffLength);
