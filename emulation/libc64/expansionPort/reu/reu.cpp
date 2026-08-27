@@ -172,7 +172,8 @@ auto Reu::prepareRam(unsigned size) -> void {
 
 auto Reu::setRam( uint8_t* dump, unsigned dumpSize ) -> void {
     this->dump = dump;
-    this->dumpSize = dumpSize;       
+    this->dumpSize = dumpSize;
+    injectRam();
 }
 
 auto Reu::unsetRam() -> void {
@@ -182,7 +183,7 @@ auto Reu::unsetRam() -> void {
 
 auto Reu::injectRam( ) -> void {
 
-    if (!dump || dumpSize == 0)
+    if (!data ||!dump || dumpSize == 0)
         return;
     
     std::memcpy(data, dump, std::min(dumpSize, size) );

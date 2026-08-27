@@ -877,7 +877,9 @@ auto Fileloader::insertImage(Emulator::Interface* emulator, Emulator::Interface:
 
     auto insertedExpansion = emulator == activeEmulator && useExpansion && useExpansion->mediaGroup == mediaGroup;
 
-    if (!mediaGroup->isExpansion() || (insertedExpansion && (media->parent && (mediaGroup->selected == media->parent)))) {
+    bool mediaIsRam = media->type == Emulator::Interface::Media::MemoryType::RAM || media->type == Emulator::Interface::Media::MemoryType::SRAM;
+
+    if (!mediaGroup->isExpansion() || (insertedExpansion && (mediaIsRam || (media->parent && (mediaGroup->selected == media->parent))))) {
         emulator->ejectMedium(media);
         updateFileSetting(fSetting, file, item);
         media->guid = uintptr_t(file);

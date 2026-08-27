@@ -100,7 +100,9 @@ auto GeoRam::setRam( Emulator::Interface::Media* media, uint8_t* dump, unsigned 
 	
 	this->media = media;
     this->dump = dump;
-    this->dumpSize = dumpSize;       
+    this->dumpSize = dumpSize;
+
+    injectRam();
 }
 
 auto GeoRam::unsetRam() -> void {
@@ -110,7 +112,7 @@ auto GeoRam::unsetRam() -> void {
 
 auto GeoRam::injectRam( ) -> void {
 
-    if (!dump || dumpSize == 0)
+    if (!data || !dump || dumpSize == 0)
         return;
     
     std::memcpy(data, dump, std::min(dumpSize, size) );

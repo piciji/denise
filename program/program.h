@@ -28,7 +28,7 @@
 #define LICENSE "GPLv3"
 #define AUTHOR "PiCiJi"
 
-#define MAX_MEDIUM_SIZE (100u * 1024u * 1024u)
+#define MAX_MEDIUM_SIZE (512u * 1024u * 1024u)
 #define MAX_FIRMWARE_SIZE (512u * 1024u + 11)
 
 #define ERROR_COLOR 0xff4500
