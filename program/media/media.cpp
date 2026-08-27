@@ -1267,7 +1267,9 @@ auto MediaLayout::insertImage( MediaGroupLayout::Block* block, GUIKIT::File* fil
             block->selector.combo.setSelection(0);
             block->selector.combo.onChange();
         }
-    } else {    
+
+        States::getInstance(emulator)->updateImage(fSetting, media);
+    } else {
         auto ext = GUIKIT::String::getExtension(file->getFile(), "bin");
         GUIKIT::String::toLowerCase(ext);
         if (ext != "crt")
@@ -1278,6 +1280,8 @@ auto MediaLayout::insertImage( MediaGroupLayout::Block* block, GUIKIT::File* fil
             block->selector.combo.onChange();
         }
         fileloader->updateFileSetting(fSetting, file, item);
+
+        States::getInstance(emulator)->forcePowerNextLoad = true;
     }
 
     auto recentFile = fileloader->getRecentFile(emulator);
@@ -1306,11 +1310,6 @@ auto MediaLayout::insertImage( MediaGroupLayout::Block* block, GUIKIT::File* fil
         filePool->assign( _ident(emulator, media->name + "store"), file);
 
     filePool->unloadOrphaned();
-
-    if (!mediaGroup->isExpansion())
-        States::getInstance(emulator)->updateImage(fSetting, media);
-    else
-        States::getInstance(emulator)->forcePowerNextLoad = true;
 
     updateMediaBlock(block, fSetting);
     
