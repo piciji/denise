@@ -2535,8 +2535,8 @@ auto View::updateScreenshotUI() -> void {
         recordUnscaledNoBorder.setText("320x200");
         recordUnscaledMonitor.setText("384x272");
     } else {
-        recordUnscaledNoBorder.setText(trans->getA("320x256"));
-        recordUnscaledMonitor.setText(trans->getA("344x280"));
+        recordUnscaledNoBorder.setText("320x256");
+        recordUnscaledMonitor.setText("344x280");
     }
 }
 
