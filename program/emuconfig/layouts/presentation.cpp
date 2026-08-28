@@ -2915,7 +2915,7 @@ auto ParamEditor::create(ShaderPreset::Param& param, unsigned row, unsigned offs
         clickPosition.x + (int)GUIKIT::Font::scale(30),
         clickPosition.y - (int)GUIKIT::Font::scale(10),
         GUIKIT::Font::scale(350),
-        GUIKIT::Font::scale(GUIKIT::Application::isGtk() ? 100 : 40)
+        GUIKIT::Font::scale(GUIKIT::Application::isGtk() ? 100 : 60)
     } );
     setTitle( param.desc );
     synchronizeLayout();

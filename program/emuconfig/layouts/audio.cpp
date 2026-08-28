@@ -1276,7 +1276,7 @@ auto AudioModelLayout::lineWillAppend( unsigned pos ) -> void {
 
     controlLayout.button.onActivate = [this]() {
         auto* audioLayout = tabWindow->audioLayout;
-        auto* window = audioLayout->picoWindow;
+        auto*& window = audioLayout->picoWindow;
 
         if (!window) {
             window = new PicoWindow;
