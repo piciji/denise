@@ -13,7 +13,7 @@
 ## 2.9
 * Shader: [koko-aio](https://github.com/kokoko3k/koko-aio-slang) is the preferred shader in Denise for C64/Amiga
     * Quick access: Presentation -> Shader -> Star Icon 
-    * shader integration of dynamic lighting for loading and power LEDs by Antonio
+    * shader integration of dynamic lighting for loading and power LEDs by Antonio and providing images by Forum64 community
     * displays a floppy with dynamic LED next to the monitor, if set: Image geometry -> Scaling -> Window
 * Shader: parameters are now clearly displayed in a scrollable list and are modified in an overlay
 * C64 Studio: add binary monitor (compatible with VICE) for debugger integration, in e.g. C64 Studio
