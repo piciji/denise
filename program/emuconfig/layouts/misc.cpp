@@ -35,7 +35,7 @@ InputSamplingLayout::InputSamplingLayout() : control("ms") {
     setFont(GUIKIT::Font::system("bold"));
 }
 
-RunAheadLayout::RunAheadLayout() : control("") {
+RunAheadLayout::RunAheadLayout() {
     
     setPadding(10);
     

@@ -81,7 +81,7 @@ struct AutofireControl : GUIKIT::HorizontalLayout {
     GUIKIT::Button toggleJoy1;
     GUIKIT::Button toggleJoy2;
 
-    SliderLayout autofireSlider;
+    SimpleSliderLayout autofireSlider;
     GUIKIT::CheckBox autofireHold;
 
     AutofireControl(Emulator::Interface* emulator);

@@ -319,8 +319,8 @@ struct VideoScreenShotLayout : GUIKIT::FramedVerticalLayout {
     } format;
 
     struct Options : GUIKIT::HorizontalLayout {
-        SliderLayout gun;
-        SliderLayout interval;
+        SimpleSliderLayout gun;
+        SimpleSliderLayout interval;
         GUIKIT::CheckBox delayScreenshot;
         Options();
     } options;
@@ -371,7 +371,7 @@ struct VideoMotionLayout : GUIKIT::VerticalLayout {
 
 struct VideoRewindLayout : GUIKIT::FramedVerticalLayout {
     GUIKIT::CheckBox enableRewind;
-    SliderLayout framesPerStep;
+    SimpleSliderLayout framesPerStep;
     SliderLayout bufferSize;
     GUIKIT::Button hotkey;
 

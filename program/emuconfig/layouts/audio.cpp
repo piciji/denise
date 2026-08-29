@@ -36,10 +36,10 @@ AudioDriveLayout::FloppySelection::FloppySelection() {
 }
 
 AudioDriveLayout::AudioDriveLayout(Emulator::Interface* emulator) :
-floppyVolume("%", true),
-floppyVolumeExt("%", false),
-tapeVolume("%", true),
-tapeNoiseVolume("%", true) {
+floppyVolume("%", SliderLayout::ACTIVATOR),
+floppyVolumeExt("%"),
+tapeVolume("%", SliderLayout::ACTIVATOR),
+tapeNoiseVolume("%", SliderLayout::ACTIVATOR) {
     append( floppyVolume, {~0u, 0u}, 10 );
     append( floppyVolumeExt, {~0u, 0u}, 10 );
     append( floppySelection, {~0u, 0u}, 10 );
@@ -90,7 +90,7 @@ AudioRecordLayout::Location::Location() {
     setAlignment( 0.5 );
 }
 
-AudioRecordLayout::Duration::Duration() : minutesSlider(""), secondsSlider("") {
+AudioRecordLayout::Duration::Duration() {
     
     append(useTimeLimit, {0u, 0u}, 10 );
     append(minutesSlider, {~0u, 0u}, 10);
@@ -129,9 +129,7 @@ frequency( "Hz" ) {
     setAlignment( 0.5 );
 }
 
-BassControlLayout::BottomLayout::BottomLayout() :
-gain( "" ),
-reduceClipping( "" ) {    
+BassControlLayout::BottomLayout::BottomLayout() {
     append( gain, {~0u, 0u}, 10 );
     append( reduceClipping, {~0u, 0u} );
     
@@ -151,8 +149,7 @@ BassControlLayout::BassControlLayout() {
     setPadding( 10 );
 }
 
-EchoControlLayout::TopLayout::TopLayout() :
-amp( "" ) {
+EchoControlLayout::TopLayout::TopLayout() {
     append( active, {0u, 0u}, 10 );
     append( echoReverb, {0u, 0u}, 10 );
     append( amp, {~0u, 0u}, 10 );
@@ -165,8 +162,7 @@ amp( "" ) {
 }
 
 EchoControlLayout::BottomLayout::BottomLayout() :
-delay( "ms" ),
-feedback( "" ) {
+delay( "ms" ) {
     append( delay, {~0u, 0u}, 10 );
     append( feedback, {~0u, 0u} );
 
@@ -186,9 +182,7 @@ EchoControlLayout::EchoControlLayout() {
     setPadding( 10 );
 }
 
-ReverbControlLayout::TopLayout::TopLayout() :
-dryTime( "" ),
-wetTime( "" ) {
+ReverbControlLayout::TopLayout::TopLayout() {
     append( active, {0u, 0u}, 10 );
     append( dryTime, {~0u, 0u}, 10 );
     append( wetTime, {~0u, 0u}, 10 );
@@ -202,10 +196,7 @@ wetTime( "" ) {
     setAlignment( 0.5 );
 }
 
-ReverbControlLayout::BottomLayout::BottomLayout() :
-roomWidth( "" ),
-roomSize( "" ),
-damping( "" ) {    
+ReverbControlLayout::BottomLayout::BottomLayout() {
     append( damping, {~0u, 0u}, 10 );
     append( roomWidth, {~0u, 0u}, 10 );
     append( roomSize, {~0u, 0u} );    
@@ -239,9 +230,7 @@ separation("%") {
     setAlignment( 0.5 );
 }
 
-PanningControlLayout::MiddleLayout::MiddleLayout() :
-leftMix( "" ),
-rightMix( "" ) {
+PanningControlLayout::MiddleLayout::MiddleLayout() {
     append( leftChannel, {0u, 0u}, 10);
     append( leftMix, {~0u, 0u}, 10);
     append( rightMix, {~0u, 0u});
@@ -257,9 +246,7 @@ rightMix( "" ) {
     setAlignment( 0.5 );
 }
 
-PanningControlLayout::BottomLayout::BottomLayout() :
-leftMix( "" ),
-rightMix( "" ) {
+PanningControlLayout::BottomLayout::BottomLayout() {
     append( rightChannel, {0u, 0u}, 10);
     append( leftMix, {~0u, 0u}, 10);
     append( rightMix, {~0u, 0u});

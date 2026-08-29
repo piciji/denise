@@ -1,7 +1,11 @@
 
 #pragma once
 
-struct SliderLayout : GUIKIT::HorizontalLayout {    
+struct SliderLayout : GUIKIT::HorizontalLayout {
+    static constexpr unsigned ACTIVATOR = 1;
+    static constexpr unsigned DEFAULT_BUTTON = 2;
+    static constexpr unsigned SPACER = 4;
+
     GUIKIT::Label name;
     GUIKIT::CheckBox active;
     GUIKIT::Label value;
@@ -9,15 +13,15 @@ struct SliderLayout : GUIKIT::HorizontalLayout {
     GUIKIT::Button defaultButton;
     GUIKIT::Widget spacer;
     
-    std::string unit = "";
+    std::string unit;
     bool withActivator = false;
-    bool withButton = false;   
+    bool withButton = false;
 
-    // todo: refactor this
-    SliderLayout( std::string unit = "%", bool withActivator = false, bool withButton = false, bool withSpacer = false) {
-        this->withActivator = withActivator;
-        this->withButton = withButton;
+    SliderLayout( const std::string& unit = "%", unsigned flags = 0) {
         this->unit = unit;
+        this->withActivator = !!(flags & ACTIVATOR);
+        this->withButton = !!(flags & DEFAULT_BUTTON);
+        bool withSpacer = !!(flags & SPACER);
 
         if (withActivator)
             append(active, {0u, 0u}, 10);
@@ -82,4 +86,8 @@ struct SliderLayout : GUIKIT::HorizontalLayout {
         
         return neededWidth;
     }
+};
+
+struct SimpleSliderLayout : SliderLayout {
+    SimpleSliderLayout() : SliderLayout("") {}
 };

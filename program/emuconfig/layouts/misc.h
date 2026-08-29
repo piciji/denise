@@ -24,7 +24,7 @@ struct InputSamplingLayout : GUIKIT::FramedVerticalLayout {
 };
 
 struct RunAheadLayout : GUIKIT::FramedVerticalLayout {
-    SliderLayout control;
+    SimpleSliderLayout control;
     
     struct Options : GUIKIT::HorizontalLayout {
         GUIKIT::CheckBox performanceMode;

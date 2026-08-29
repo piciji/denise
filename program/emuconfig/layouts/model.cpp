@@ -50,7 +50,7 @@ ModelLayout::Line::Block::Block(Emulator::Interface::Model* model, ModelLayout* 
 
     } else if (model->isSlider()) {
         auto& sOptions = model->options;
-        sliderLayout = new ::SliderLayout("", false, !sOptions.size());
+        sliderLayout = new SliderLayout("", sOptions.empty() ? SliderLayout::DEFAULT_BUTTON : 0);
         if (!backImg) {
             backImg = new GUIKIT::Image;
             backImg->loadPng((uint8_t*)Icons::back, sizeof(Icons::back));

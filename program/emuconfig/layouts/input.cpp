@@ -12,7 +12,7 @@
 
 namespace EmuConfigView {
 
-AutofireControl::AutofireControl(Emulator::Interface* emulator) : autofireSlider("") {
+AutofireControl::AutofireControl(Emulator::Interface* emulator) {
     append(label, {0u, 0u}, 5);
     append(toggleJoy1, { 0u, 0u }, 10);
     append(toggleJoy2, { 0u, 0u }, 10);

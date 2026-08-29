@@ -31,8 +31,8 @@ struct AudioRecordLayout : GUIKIT::FramedVerticalLayout {
     
     struct Duration : GUIKIT::HorizontalLayout {
         GUIKIT::CheckBox useTimeLimit;
-        SliderLayout minutesSlider;
-        SliderLayout secondsSlider;
+        SimpleSliderLayout minutesSlider;
+        SimpleSliderLayout secondsSlider;
         
         GUIKIT::CheckButton record;
         
@@ -80,8 +80,8 @@ struct BassControlLayout : GUIKIT::FramedVerticalLayout {
     } top;
     
     struct BottomLayout : GUIKIT::HorizontalLayout {
-        SliderLayout gain;
-        SliderLayout reduceClipping;
+        SimpleSliderLayout gain;
+        SimpleSliderLayout reduceClipping;
         
         BottomLayout();
         
@@ -95,7 +95,7 @@ struct EchoControlLayout : GUIKIT::FramedVerticalLayout {
     struct TopLayout : GUIKIT::HorizontalLayout {
         GUIKIT::CheckBox active;
         GUIKIT::Button echoReverb;
-        SliderLayout amp;
+        SimpleSliderLayout amp;
         GUIKIT::Button reset;
 
         TopLayout();
@@ -103,7 +103,7 @@ struct EchoControlLayout : GUIKIT::FramedVerticalLayout {
 
     struct BottomLayout : GUIKIT::HorizontalLayout {
         SliderLayout delay;
-        SliderLayout feedback;
+        SimpleSliderLayout feedback;
 
         BottomLayout();
 
@@ -116,17 +116,17 @@ struct ReverbControlLayout : GUIKIT::FramedVerticalLayout {
     
     struct TopLayout : GUIKIT::HorizontalLayout {
         GUIKIT::CheckBox active;
-        SliderLayout dryTime;                
-        SliderLayout wetTime;
+        SimpleSliderLayout dryTime;
+        SimpleSliderLayout wetTime;
         GUIKIT::Button reset;
         TopLayout();
         
     } top;
     
     struct BottomLayout : GUIKIT::HorizontalLayout {
-        SliderLayout damping;
-        SliderLayout roomWidth;
-        SliderLayout roomSize;        
+        SimpleSliderLayout damping;
+        SimpleSliderLayout roomWidth;
+        SimpleSliderLayout roomSize;
         
         BottomLayout();
         
@@ -146,16 +146,16 @@ struct PanningControlLayout : GUIKIT::FramedVerticalLayout {
 
     struct MiddleLayout : GUIKIT::HorizontalLayout {
         GUIKIT::Label leftChannel;
-        SliderLayout leftMix;
-        SliderLayout rightMix;
+        SimpleSliderLayout leftMix;
+        SimpleSliderLayout rightMix;
 
         MiddleLayout();
     } middle;
     
     struct BottomLayout : GUIKIT::HorizontalLayout {
         GUIKIT::Label rightChannel;
-        SliderLayout leftMix;
-        SliderLayout rightMix;
+        SimpleSliderLayout leftMix;
+        SimpleSliderLayout rightMix;
         
         BottomLayout();
     } bottom;

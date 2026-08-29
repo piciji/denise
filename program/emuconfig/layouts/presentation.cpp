@@ -59,9 +59,9 @@ VideoBaseLayout::View::Option::Option(bool withSpectrum) {
 VideoBaseLayout::View::View(bool withSpectrum) :
 mode(withSpectrum),
 option(withSpectrum),
-phase("°", false),
-scanlines("%", true),
-interlace("%", true) {
+phase("°"),
+scanlines("%", SliderLayout::ACTIVATOR),
+interlace("%", SliderLayout::ACTIVATOR) {
 
     append(mode, {~0u, 0u}, 2);
     append(option, {~0u, 0u}, 2);
@@ -91,9 +91,9 @@ interlace("%", true) {
 }
 
 VideoBaseLayout::Encoding::Encoding() :
-phaseError("°", true),
-hanoverBars("%", true),
-blur("%", true) {
+phaseError("°", SliderLayout::ACTIVATOR),
+hanoverBars("%", SliderLayout::ACTIVATOR),
+blur("%", SliderLayout::ACTIVATOR) {
 
     append(phaseError,{~0u, 0u}, 2);
     append(hanoverBars,{~0u, 0u}, 2);
@@ -108,8 +108,8 @@ blur("%", true) {
 }
 
 VideoBaseLayout::LumaDelay::LumaDelay() :
-lumaRise("px", true),
-lumaFall("px", true) {
+lumaRise("px", SliderLayout::ACTIVATOR),
+lumaFall("px", SliderLayout::ACTIVATOR) {
     append(lumaRise,{~0u, 0u}, 2);
     append(lumaFall,{~0u, 0u});
 
@@ -382,7 +382,8 @@ VideoScreenTextLayout::Options::Position::Position() {
 }
 
 VideoScreenTextLayout::Options::TextPadding::TextPadding() :
-paddingVertical("", true) {
+paddingHorizontal("%"),
+paddingVertical("", SliderLayout::ACTIVATOR) {
     append(paddingHorizontal, {~0u, 0u}, 10);
     append(paddingVertical, {~0u, 0u});
 
@@ -393,7 +394,7 @@ paddingVertical("", true) {
 
 VideoScreenTextLayout::Options::TextMargin::TextMargin() :
 marginHorizontal("%"),
-marginVertical("%", true) {
+marginVertical("%", SliderLayout::ACTIVATOR) {
     append(marginHorizontal, {~0u, 0u}, 10);
     append(marginVertical, {~0u, 0u});
 
@@ -446,10 +447,7 @@ VideoScreenShotLayout::Format::Format(bool withPalete) {
     setAlignment(0.5);
 }
 
-VideoScreenShotLayout::Options::Options() :
-gun(""),
-interval("") {
-
+VideoScreenShotLayout::Options::Options()  {
     append(gun, { ~0u, 0u }, 10);
     append(interval, { ~0u, 0u }, 10);
     append(delayScreenshot, { 0u, 0u });
@@ -476,9 +474,9 @@ VideoMotionLayout::HDRLayout::Control::Control() {
 }
 
 VideoMotionLayout::HDRLayout::HDRLayout() :
-maxNits("", false, true),
-paperWhiteNits("", false, true),
-contrast("", false, true)
+maxNits("", SliderLayout::DEFAULT_BUTTON),
+paperWhiteNits("", SliderLayout::DEFAULT_BUTTON),
+contrast("", SliderLayout::DEFAULT_BUTTON)
 {
     append(control, { ~0u, 0u }, 10);
     append(maxNits, { ~0u, 0u }, 10);
@@ -541,7 +539,6 @@ VideoMotionLayout::VideoMotionLayout() {
 }
 
 VideoRewindLayout::VideoRewindLayout() :
-framesPerStep(""),
 bufferSize("MB") {
     append(enableRewind, {0u, 0u}, 20);
     append(framesPerStep, {~0u, 0u}, 20);
@@ -2796,7 +2793,7 @@ auto PresentationLayout::openParameterEditor(unsigned row, unsigned offset, GUIK
 ParamEditor::ParamEditor(PresentationLayout* presentation) :
 GUIKIT::Window(GUIKIT::Window::Hints::No_Title),
 presentation(presentation),
-sliderLay( "", false, true, true ) {
+sliderLay( "", SliderLayout::DEFAULT_BUTTON | SliderLayout::SPACER ) {
     unfocusTimer.setInterval(100);
 
     unfocusTimer.onFinished = [this]() {
