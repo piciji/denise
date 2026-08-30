@@ -590,7 +590,6 @@ Diagonal tooltip = Precipe taŭgas por klavaruzantoj aktivigi du apudajn adresoj
 toggle autofire = Baskuli Turbo Fire
 toggle autofire hint = supre, en la linio apud "Aŭtopafi", ĝi ankaŭ povas esti agordita rekte sur klavo (Regilo aŭ klavaro)
 Disk On Demand tooltip = Diskomulado estas nur ebligita laŭpeto.
-file_size_error = Dosiero %path% ne ekzistas aŭ estas malplena aŭ pli granda ol %size%
 undock = Desenigi
 undock settings = Malligas la agordon de ĉi tiu dosierujo de la emulilo kaj permesas agordon sendepende de la aliaj versioj. Ĉi tio povas esti malfarita nur per permane forigante ĉiujn agordajn dosierojn en la emulilo-dosierujo. Ĉu ekzekuti?
 Tape = Kasedo

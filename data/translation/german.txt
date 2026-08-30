@@ -590,7 +590,6 @@ Diagonal tooltip = eignet sich besonders für Tastatur Benutzer um mittels einer
 toggle autofire = automatisches Dauerfeuer ein/aus
 toggle autofire hint = oben, in der Zeile bei "autom. Dauerfeuer", auch direkt auf eine Taste (Joystick oder Tastatur) legbar
 Disk On Demand tooltip = Disketten Emulation wird nur bei Bedarf zugeschalten.
-file_size_error = Die Datei %path% existiert nicht oder ist leer oder ist größer als %size%
 undock = Abkoppeln
 undock settings = Koppelt die Konfiguration dieses Emulator Ordners ab und ermöglicht eine von den anderen Versionen unabhängige Konfiguaration. Dies läßt sich nur durch manuelles Löschen aller settings Dateien im Emulator Ordner rückgängig machen. Ausführen ?
 Tape = Datasette

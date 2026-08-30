@@ -19,16 +19,17 @@
 
 Autoloader* autoloader = nullptr;
 
-auto Autoloader::init( std::vector<std::string> files, Mode mode, unsigned selection, std::string fileName ) -> void {
+auto Autoloader::init( std::vector<std::string> files, Mode mode, unsigned selection ) -> void {
     ddControl.emulator = nullptr;
     ddControl.mediaGroups.clear();
     ddControl.errorLevel = 0;
     ddControl.mode = mode;
     ddControl.selection = selection;
-    ddControl.fileName = fileName;
+    ddControl.fileToLoad = "";
     ddControl.files.clear();
     ddControl.saveFile = nullptr;
     ddControl.overrideSpeeder = false;
+    ddControl.archiveId = -1;
     
     unsigned i = 0;
     for( auto& file : files ) {        
@@ -45,6 +46,14 @@ auto Autoloader::setEmulator(Emulator::Interface* emulator) -> void {
 
 auto Autoloader::overrideSpeeder() -> void {
     ddControl.overrideSpeeder = true;
+}
+
+auto Autoloader::setFileToLoad(const std::string& file) -> void {
+    ddControl.fileToLoad = file;
+}
+
+auto Autoloader::setArchiveId(int id) -> void {
+    ddControl.archiveId = id;
 }
 
 auto Autoloader::postProcessing() -> void {
@@ -263,11 +272,11 @@ auto Autoloader::postProcessing() -> void {
             fSetting = FileSetting::getInstance( ddControl.emulator, _underscore(mediaGroup->media[sel].name) );
             set(ddControl.emulator, &mediaGroup->media[0], trapped);
         } else if (mediaGroup->selected) {
-            ddControl.emulator->selectListing(mediaGroup->selected, ddControl.selection, ddControl.fileName, trapped);
+            ddControl.emulator->selectListing(mediaGroup->selected, ddControl.selection, ddControl.fileToLoad, trapped);
             fSetting = FileSetting::getInstance( ddControl.emulator, _underscore(mediaGroup->selected->name) );
             set(ddControl.emulator, mediaGroup->selected, trapped);
         } else {
-            ddControl.emulator->selectListing(&mediaGroup->media[0], ddControl.selection, ddControl.fileName, options);
+            ddControl.emulator->selectListing(&mediaGroup->media[0], ddControl.selection, ddControl.fileToLoad, options);
             fSetting = FileSetting::getInstance( ddControl.emulator, _underscore(mediaGroup->media[0].name) );
             set(ddControl.emulator, &mediaGroup->media[0], trapped, ddControl.selection);
         }
@@ -328,14 +337,14 @@ auto Autoloader::loadFiles() -> void {
 
     if (!file->exists()) {
         if (ddControl.errorLevel == 0)
-            FileHelper::errorFileSize(MAX_MEDIUM_SIZE, file->getPath(), view->message);
+            FileHelper::errorOpen(file, nullptr, view->message);
 
         return loadFiles();
     }
 
     auto& items = file->scanArchive();
 
-	if (archiveViewer) {
+	if (archiveViewer && (ddControl.archiveId == -1) ) {
         filePool->assign("autoloader", file);
         archiveViewer->onCallback = [this](GUIKIT::File* file, GUIKIT::File::Item* item) {
             bool locked = emuThread->lock(true);
@@ -347,7 +356,10 @@ auto Autoloader::loadFiles() -> void {
 
         archiveViewer->allowNativeArchive(dynamic_cast<LIBAMI::Interface*>(activeEmulator) ? activeEmulator->getDiskMediaGroup() : nullptr);
 		archiveViewer->setView( file, items );
-	} else 
+	} else if (ddControl.archiveId >= 0) {
+	    if (ddControl.archiveId < items.size())
+	        loadFile( file, &items[ddControl.archiveId] );
+	} else
 		loadFile( file, &items[0] );
 }
 
@@ -356,7 +368,7 @@ auto Autoloader::needSlotsForDragnDrop(std::vector<std::string> files) -> unsign
 
     for (auto& path : files) {
         GUIKIT::File* file = filePool->get(path);
-        if (!file || !file->exists() || !file->isSizeValid(MAX_MEDIUM_SIZE))
+        if (!file || !file->exists() || !file->getSize())
             continue;
 
         auto& items = file->scanArchive();

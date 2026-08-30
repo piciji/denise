@@ -36,21 +36,8 @@ auto FileHelper::errorOpen( const std::vector<std::string>& paths, bool warning 
         view->message->error(trans->get(transKey, { {replaceIdent, replace} }));
 }
 
-auto FileHelper::errorFileSize(uint64_t maxSize, std::string filePath, Message* message) -> void {
-
-    message->error(trans->get("file_size_error", {
-        { "%path%", filePath},
-        { "%size%", GUIKIT::File::SizeFormated(maxSize)}
-        }));
-
-    filePool->unloadOrphaned();
-}
-
 auto FileHelper::loadImageDataWhenOk( GUIKIT::File* file, unsigned fileId, Emulator::Interface::MediaGroup* group, uint8_t*& data ) -> bool {
-    if (!file || !file->exists())
-        return false;
-
-    if (!group->isHardDisk() && !file->isSizeValid(MAX_MEDIUM_SIZE))
+    if (!file || !file->exists() || !file->getSize())
         return false;
 
     // non archived hard disk images will be loaded in chunks when needed

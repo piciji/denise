@@ -450,6 +450,17 @@ auto File::connectItems() -> void {
     }
 }
 
+auto File::getFileName(Item* item) -> std::string {
+    std::string result = item->info.name;
+
+    while (item->parent) {
+        item = item->parent;
+        result = item->info.name + "/" + result;
+    }
+
+    return result;
+}
+
 auto File::getFileName(bool removeExtension, bool truncateFromEnd) -> std::string {
     std::string _fn = filePath;
     std::size_t start = _fn.find_last_of("/");

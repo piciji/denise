@@ -241,8 +241,7 @@ auto FirmwareManager::loadImage( Emulator::Interface::Firmware* firmware, unsign
     GUIKIT::File file(fullPath);
     uint8_t* data = nullptr;
 
-    if (file.exists() && file.isSizeValid(MAX_MEDIUM_SIZE) &&
-        file.isSizeValid(fSetting->id, MAX_FIRMWARE_SIZE) &&
+    if (file.exists() && file.getSize() &&
         ((data = file.archiveData(fSetting->id)) != nullptr)
     ) {    
         unsigned size = file.archiveDataSize(fSetting->id);

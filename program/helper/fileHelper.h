@@ -15,7 +15,6 @@ struct FileHelper {
 
     static auto errorOpen(GUIKIT::File* file, GUIKIT::File::Item* item, Message* message ) -> void;
     static auto errorOpen( const std::vector<std::string>& paths, bool warning = false ) -> void;
-    static auto errorFileSize(uint64_t maxSize, std::string filePath, Message* message) -> void;
     static auto loadImageDataWhenOk( GUIKIT::File* file, unsigned fileId, Emulator::Interface::MediaGroup* group, uint8_t*& data ) -> bool;
     static auto readMedia(Emulator::Interface::Media* media, uint8_t* buffer, unsigned length, uint64_t offset) -> unsigned;
     static auto readAssignedMedia(Emulator::Interface::Media* media, uint8_t*& buffer, bool preview) -> unsigned;

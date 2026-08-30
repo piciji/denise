@@ -590,7 +590,6 @@ Diagonal tooltip = est particulièrement adapté aux utilisateurs de clavier pou
 toggle autofire = Basculer sur le Tir Turbo
 toggle autofire hint = en haut, dans la ligne à côté de "Tir Auto", peut aussi être réglé directement sur une touche (joystick ou clavier)
 Disk On Demand tooltip = L'émulation de disque n'est activée que sur demande.
-file_size_error = Le fichier %path% n'existe pas ou est vide ou est plus grand que %size%.
 undock = Undock
 undock settings = Découple la configuration de ce dossier émulateur et permet une configuration indépendante des autres versions. Ceci ne peut être annulé qu'en supprimant manuellement tous les fichiers de configuration dans le dossier de l'émulateur. Exécuter ?
 Tape = K7

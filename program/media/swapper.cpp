@@ -85,10 +85,10 @@ SwapperLayout::SwapperLayout( MediaLayout* mediaLayout ) {
 
             savePath(file->getPath());
 
-            if (!file->exists() || !file->isSizeValid(MAX_MEDIUM_SIZE)) {
+            if (!file->exists() || !file->getSize()) {
                 if (!errorShown) {
                     errorShown = true;
-                    FileHelper::errorFileSize(MAX_MEDIUM_SIZE, file->getPath(), this->mediaLayout->message);
+                    FileHelper::errorOpen(file, nullptr, this->mediaLayout->message);
                 }
                 continue;
             }
@@ -98,9 +98,10 @@ SwapperLayout::SwapperLayout( MediaLayout* mediaLayout ) {
             if (filePaths.size() == 1) {
                 archiveViewer->onCallback = [this](GUIKIT::File* file, GUIKIT::File::Item* item) {
                     emuThread->lock();
-                    if (!item || (item->info.size == 0))
-                        return this->mediaLayout->message->error( trans->get(file->isArchived() ? "archive_error" : "file_open_error",
-                            {{"%path%", file->getFile()}}));
+                    if (!item || (item->info.size == 0)) {
+                        FileHelper::errorOpen(file, item, this->mediaLayout->message);
+                        return;
+                    }
 
                     if (!listView.selected()) return;
                     auto pos = listView.selection() + archiveViewer->filesSelected + 1;

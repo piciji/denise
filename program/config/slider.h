@@ -41,7 +41,7 @@ struct SliderLayout : GUIKIT::HorizontalLayout {
     }
 
     auto setValue(std::string text) -> void {
-        if (unit == "")
+        if (unit.empty())
             value.setText( text );
         else
             value.setText( text + " " + unit );

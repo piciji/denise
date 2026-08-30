@@ -17,9 +17,10 @@ struct Autoloader {
 		Mode mode = Mode::AutoStart;
 		std::vector<std::string> files;
 		unsigned selection = 0;
-		std::string fileName = "";
+		std::string fileToLoad;
         GUIKIT::File* saveFile = nullptr;
         bool overrideSpeeder = false;
+	    int archiveId = -1;
 	} ddControl;
 
     struct Used {
@@ -30,9 +31,11 @@ struct Autoloader {
     };
     std::vector<Used> used;
 
-	auto init( std::vector<std::string> files, Mode mode, unsigned selection = 0, std::string fileName = "") -> void;
+	auto init( std::vector<std::string> files, Mode mode, unsigned selection = 0) -> void;
     auto setEmulator(Emulator::Interface* emulator) -> void;
     auto overrideSpeeder() -> void;
+    auto setArchiveId(int id) -> void;
+    auto setFileToLoad(const std::string& file) -> void;
 	auto postProcessing() -> void;
 	auto loadFiles() -> void;
 	auto loadFile( GUIKIT::File* file, GUIKIT::File::Item* item ) -> void;

@@ -733,12 +733,8 @@ auto Fileloader::insertFile( Emulator::Interface* emulator, Emulator::Interface:
     auto folderPath = GUIKIT::File::buildRelativePath(file->getPath());
     settings->set<std::string>(_underscoreEx(media->group->name) + "_folder_auto", folderPath);
 
-    if (!file->exists()) {
-        FileHelper::errorFileSize(MAX_MEDIUM_SIZE, file->getPath(), emuView ? emuView->message : view->message);
-        return false;
-    }
-    if (!media->group->isHardDisk() && !file->isSizeValid(MAX_MEDIUM_SIZE)) {
-        FileHelper::errorFileSize(MAX_MEDIUM_SIZE, file->getPath(), emuView ? emuView->message : view->message);
+    if (!file->exists() || !file->getSize()) {
+        FileHelper::errorOpen(file, nullptr, emuView ? emuView->message : view->message);
         return false;
     }
 
@@ -851,9 +847,12 @@ auto Fileloader::autoload(Emulator::Interface* emulator, Emulator::Interface::Me
 
 auto Fileloader::updateFileSetting(FileSetting* fSetting, GUIKIT::File* file, GUIKIT::File::Item* item ) -> void {
     auto path = GUIKIT::File::buildRelativePath(file->getFile());
+    std::string fName = file->getFileName( item );
+    if (file->isArchived())
+        fName = file->getFileName( ) + " - " + fName;
 
     fSetting->setPath(path, !cmd->autoload);
-    fSetting->setFile(item->info.name, !cmd->autoload);
+    fSetting->setFile(fName, !cmd->autoload);
     fSetting->setId(item->id, !cmd->autoload);
 }
 
@@ -908,7 +907,11 @@ auto Fileloader::insertImage(Emulator::Interface* emulator, Emulator::Interface:
     }
 
     auto recentFile = getRecentFile(emulator);
-    recentFile->add(mediaGroup, media->parent != nullptr, GUIKIT::File::buildRelativePath(file->getFile()), updateGenericFileList);
+
+    if (!cmd->autoload) {
+        RecentFiles::FileIdent fI{GUIKIT::File::buildRelativePath(file->getFile()), fSetting->file, item->id};
+        recentFile->add(mediaGroup, media->parent != nullptr, fI, updateGenericFileList);
+    }
     if (view)
         view->updateRecentList(emulator);
 
@@ -1116,9 +1119,7 @@ auto Fileloader::insertSwapDisk(Emulator::Interface* emulator, unsigned swapPos)
     item.id = fSetting->id;
     item.info.name = fSetting->file;
 
-    if (!file || !file->exists() || !file->isSizeValid(MAX_MEDIUM_SIZE) ||
-        (file->archiveData(fSetting->id) == nullptr)
-            ) {
+    if (!file || !file->exists() || !file->getSize() || (file->archiveData(fSetting->id) == nullptr)) {
         statusHandler->setMessage(trans->get("file_open_error", {{ "%path%", fSetting->file }}), true);
         return nullptr;
     }

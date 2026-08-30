@@ -24,10 +24,10 @@ struct FilePool {
 	auto assign(std::string ident, GUIKIT::File* file) -> void {		
 		FilePtr* filePtr = find( ident );
 		
-		if ( !filePtr )			
-			filePtrs.push_back( { file, ident } );	
+		if ( !filePtr )
+			filePtrs.push_back( { file, ident } );
 		else
-			filePtr->file = file;	        
+			filePtr->file = file;
 	}
 	
 	auto find(std::string ident) -> FilePtr* {

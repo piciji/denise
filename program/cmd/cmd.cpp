@@ -570,8 +570,10 @@ auto Cmd::autoloadImages() -> void {
     } else {
         if (!diskListing.empty() && GUIKIT::String::isNumber(diskListing))
             autoloader->init( arguments, Autoloader::Mode::AutoStart, std::stoi(diskListing) );
-        else
-            autoloader->init( arguments, Autoloader::Mode::AutoStart, 0, diskListing );
+        else {
+            autoloader->init( arguments, Autoloader::Mode::AutoStart );
+            autoloader->setFileToLoad( diskListing );
+        }
     }
 
     autoloader->setErrorLevel(2);

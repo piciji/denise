@@ -646,8 +646,8 @@ auto View::updateRecentList(Emulator::Interface* emulator) -> void {
     
     bool clearFooter = false;
     unsigned i = 0;
-    for(auto& filePath : list) {
-        if (filePath.empty())
+    for(auto& fileIdent : list) {
+        if (fileIdent.path.empty())
             continue;
 
         if (i >= recentFile->getEntries())
@@ -659,6 +659,7 @@ auto View::updateRecentList(Emulator::Interface* emulator) -> void {
             item->onActivate = [this, item]() {
                 emuThread->lock();
                 autoloader->init({ GUIKIT::File::resolveRelativePath(item->filePath()) }, Autoloader::Mode::DragnDrop);
+                autoloader->setArchiveId( (int)item->state.fileId );
                 autoloader->loadFiles();
                 emuThread->unlock();
             };
@@ -671,8 +672,8 @@ auto View::updateRecentList(Emulator::Interface* emulator) -> void {
             recentSoftware->append(*item);
         }
 
-        sysMenu->recents[i]->setText(GUIKIT::String::getFileName(filePath));
-        sysMenu->recents[i]->setFilePath(filePath);
+        sysMenu->recents[i]->setText(fileIdent.file);
+        sysMenu->recents[i]->setFileIdent(fileIdent.path, fileIdent.id);
         i++;
     }
 

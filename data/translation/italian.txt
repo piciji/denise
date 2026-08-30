@@ -590,7 +590,6 @@ Diagonal tooltip = Adatto agli utenti  che usano la tastiera, consente di sposta
 toggle autofire = attiva/disattiva fuoco automatico
 toggle autofire hint = nella parte superiore, nella linea a "Autofire" successiva, può anche essere impostato direttamente su un tasto (joystick o tastiera)
 Disk On Demand tooltip = L'emulazione del disco può essere attivata solo su richiesta.
-file_size_error = Il file %path% non esiste, è vuoto oppure è più grande di %size%
 undock = Scollega
 undock settings = Questa funzione dissocia la configurazione di questa cartella dell'emulatore e consente la configurazione indipendente dalle altre versioni. Può essere ripristinato soltanto rimuovendo i file di configurazione nella cartella dell'emulatore. Eseguire?
 Tape = Nastro

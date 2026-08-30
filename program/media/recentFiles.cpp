@@ -33,8 +33,8 @@ auto RecentFiles::save() -> void {
     settings->save(path);
 }
 
-auto RecentFiles::add(Emulator::Interface::MediaGroup* group, bool alternate, const std::string& curPath, bool updateGeneric) -> void {
-    if (curPath.empty())
+auto RecentFiles::add(Emulator::Interface::MediaGroup* group, bool alternate, const FileIdent& fileIdent, bool updateGeneric) -> void {
+    if (fileIdent.path.empty())
         return;
 
     load();
@@ -43,16 +43,19 @@ auto RecentFiles::add(Emulator::Interface::MediaGroup* group, bool alternate, co
     s->files.clear();
     unsigned entries = getEntries(group);
     s->files.reserve(entries);
-
-    std::string line;
-    s->files.push_back(curPath);    
+    s->files.push_back(fileIdent);
+    FileIdent fiCur;
 
     for (int i = 0; i < entries; i++) {
-        line = settings->get<std::string>(getIdent(group, alternate, i), "");
+        fiCur.path = settings->get<std::string>(getIdentPath(group, alternate, i), "");
 
-        if (!line.empty()) {
-            if (line != curPath)
-                s->files.push_back(line);
+        if (!fiCur.path.empty()) {
+            fiCur.id = settings->get<unsigned>(getIdentId(group, alternate, i), 0);
+
+            if (fiCur.path != fileIdent.path || fiCur.id != fileIdent.id) {
+                fiCur.file = settings->get<std::string>(getIdentFile(group, alternate, i), GUIKIT::String::getFileName(fiCur.path ));
+                s->files.push_back(fiCur);
+            }
         }
 
         if (s->files.size() >= entries)
@@ -60,39 +63,56 @@ auto RecentFiles::add(Emulator::Interface::MediaGroup* group, bool alternate, co
     }
 
     for (int i = 0; i < entries; i++) {
-        if (i >= s->files.size())
-            settings->set<std::string>(getIdent(group, alternate, i), "");
-        else
-            settings->set<std::string>(getIdent(group, alternate, i), s->files[i]);
+        if (i >= s->files.size()) {
+            settings->set<std::string>(getIdentPath(group, alternate, i), "");
+            settings->set<std::string>(getIdentFile(group, alternate, i), "");
+            settings->set<unsigned>(getIdentId(group, alternate, i), 0);
+        } else {
+            settings->set<std::string>(getIdentPath(group, alternate, i), s->files[i].path);
+            settings->set<std::string>(getIdentFile(group, alternate, i), s->files[i].file);
+            settings->set<unsigned>(getIdentId(group, alternate, i), s->files[i].id);
+        }
     }
 
     if (group && updateGeneric)
-        add(nullptr, false, curPath);
+        add(nullptr, false, fileIdent);
 }
 
-auto RecentFiles::list(Emulator::Interface::MediaGroup* group, bool alternate, const std::string& curPath) -> std::vector<std::string>& {
+auto RecentFiles::list(Emulator::Interface::MediaGroup* group, bool alternate, const FileIdent& fileIdent) -> std::vector<FileIdent>& {
     load();
 
     auto s = getStorage(group, alternate);
 
-    if (curPath.empty())
+    if (fileIdent.path.empty())
         return s->files;
 
-    for(auto& file : s->files) {
-        if (file == curPath)
+    for(auto& fiCur : s->files) {
+        if (fiCur.path == fileIdent.path && fiCur.id == fileIdent.id)
             return s->files;
     }
 
-    add(group, alternate, curPath, false);
+    add(group, alternate, fileIdent, false);
 
     return s->files;
 }
 
-auto RecentFiles::getIdent(Emulator::Interface::MediaGroup* group, bool alternate, unsigned pos) -> std::string {
+inline auto RecentFiles::getIdentBase(Emulator::Interface::MediaGroup* group, bool alternate) -> std::string {
     std::string out = group ? group->name : "recent";
     if (alternate)
         out += "_alt";
-    return out + "_" + std::to_string(pos);
+    return out;
+}
+
+auto RecentFiles::getIdentId(Emulator::Interface::MediaGroup* group, bool alternate, unsigned pos) -> std::string {
+    return getIdentBase(group, alternate) + "_id_" + std::to_string(pos);
+}
+
+auto RecentFiles::getIdentFile(Emulator::Interface::MediaGroup* group, bool alternate, unsigned pos) -> std::string {
+    return getIdentBase(group, alternate) + "_file_" + std::to_string(pos);
+}
+
+auto RecentFiles::getIdentPath(Emulator::Interface::MediaGroup* group, bool alternate, unsigned pos) -> std::string {
+    return getIdentBase(group, alternate) + "_" + std::to_string(pos);
 }
 
 auto RecentFiles::getStorage(Emulator::Interface::MediaGroup* group, bool alternate) -> Storage* {
@@ -101,19 +121,23 @@ auto RecentFiles::getStorage(Emulator::Interface::MediaGroup* group, bool altern
             return _s;
     }
 
-    Storage* s = new Storage;
+    auto* s = new Storage;
     s->group = group;
     s->alternate = alternate;
     s->files.clear();
     unsigned entries = getEntries(group);
     s->files.reserve(entries);
     std::string line;
+    FileIdent fileIdent;
 
     for (int i = 0; i < entries; i++) {
-        line = settings->get<std::string>(getIdent(group, alternate, i), "");
+        fileIdent.path = settings->get<std::string>(getIdentPath(group, alternate, i), "");
 
-        if (!line.empty())
-            s->files.push_back(line);
+        if (!fileIdent.path.empty()) {
+            fileIdent.file = settings->get<std::string>(getIdentFile(group, alternate, i), GUIKIT::String::getFileName(fileIdent.path) );
+            fileIdent.id = settings->get<unsigned>(getIdentId(group, alternate, i), 0);
+            s->files.push_back(fileIdent);
+        }
     }
     storage.push_back(s);
     return s;
@@ -121,8 +145,11 @@ auto RecentFiles::getStorage(Emulator::Interface::MediaGroup* group, bool altern
 
 auto RecentFiles::clear(Emulator::Interface::MediaGroup* group, bool alternate) -> void {
     load();
-    for (int i = 0; i < MAX_RECENT_ENTIRIES; i++)
-        settings->remove(getIdent(group, alternate, i));
+    for (int i = 0; i < MAX_RECENT_ENTIRIES; i++) {
+        settings->remove(getIdentPath(group, alternate, i));
+        settings->remove(getIdentFile(group, alternate, i));
+        settings->remove(getIdentId(group, alternate, i));
+    }
     
     for (auto _s : storage) {
         if (_s->group == group && _s->alternate == alternate) {

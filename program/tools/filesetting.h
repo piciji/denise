@@ -19,8 +19,8 @@ struct FileSetting {
 	std::string ident;
     Emulator::Interface* emulator = nullptr;
 	
-	std::string path = "";
-	std::string file = "";
+	std::string path;
+	std::string file;
 	unsigned id = 0;
 	bool writeProtect = false;
 	
@@ -46,7 +46,7 @@ struct FileSetting {
 	}
 	
 	auto setPath(std::string value, bool _saveable = true) -> void {
-        if (value == "")
+        if (value.empty())
             useSettings->remove( ident + "_path" );
         else
             useSettings->set<std::string>(ident + "_path", value, _saveable);
@@ -55,7 +55,7 @@ struct FileSetting {
 	}
 	
 	auto setFile(std::string value, bool _saveable = true) -> void {
-        if (value == "")
+        if (value.empty())
             useSettings->remove( ident + "_file" );
         else
             useSettings->set<std::string>(ident + "_file", value, _saveable);

@@ -26,10 +26,16 @@ struct RecentFiles {
 
     GUIKIT::Settings* settings = nullptr;
 
+    struct FileIdent {
+        std::string path;
+        std::string file;
+        unsigned id = 0;
+    };
+
     struct Storage {
         Emulator::Interface::MediaGroup* group;
         bool alternate;
-        std::vector<std::string> files;
+        std::vector<FileIdent> files;
     };
 
     std::vector<Storage*> storage;
@@ -38,11 +44,17 @@ struct RecentFiles {
 
     auto save() -> void;
 
-    auto add(Emulator::Interface::MediaGroup* group, bool alternate, const std::string& curPath, bool updateGeneric = true) -> void;
+    auto add(Emulator::Interface::MediaGroup* group, bool alternate, const FileIdent& fileIdent, bool updateGeneric = true) -> void;
 
-    auto list(Emulator::Interface::MediaGroup* group, bool alternate = false, const std::string& curPath = "") -> std::vector<std::string>&;
+    auto list(Emulator::Interface::MediaGroup* group, bool alternate = false, const FileIdent& fileIdent = {"", "", 0}) -> std::vector<FileIdent>&;
 
-    auto getIdent(Emulator::Interface::MediaGroup* group, bool alternate, unsigned pos) -> std::string;
+    auto getIdentBase(Emulator::Interface::MediaGroup* group, bool alternate) -> std::string;
+
+    auto getIdentPath(Emulator::Interface::MediaGroup* group, bool alternate, unsigned pos) -> std::string;
+
+    auto getIdentFile(Emulator::Interface::MediaGroup* group, bool alternate, unsigned pos) -> std::string;
+
+    auto getIdentId(Emulator::Interface::MediaGroup* group, bool alternate, unsigned pos) -> std::string;
 
     auto getStorage(Emulator::Interface::MediaGroup* group, bool alternate) -> Storage*;
 

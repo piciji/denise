@@ -389,8 +389,31 @@ auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {
             };
 
             block->selector.pathCombo->onChange = [this, layout, block]() {
+                auto entry = block->selector.pathCombo->getEntry( block->selector.pathCombo->selection() );
+                if (!entry)
+                    return;
 
-                drop(GUIKIT::File::resolveRelativePath(block->selector.pathCombo->text()), block);
+                GUIKIT::File* file = filePool->get(GUIKIT::File::resolveRelativePath(entry->link));
+                if (!file || !file->exists() || !file->getSize())
+                    return FileHelper::errorOpen( file, nullptr, message );
+
+                auto& items = file->scanArchive();
+                auto itemId = (unsigned)entry->userData;
+
+                GUIKIT::File::Item* item = nullptr;
+                if (items.size() > itemId)
+                    item = &items[itemId];
+
+                if (!item || (item->info.size == 0) )
+                    return FileHelper::errorOpen( file, item, message );
+
+                emuThread->lock();
+                insertImage( block, file, &items[itemId] );
+
+                if (block->media->group->isDrive())
+                    settings->set<int>("swap_pos", -1, false);
+                emuThread->unlock();
+
             };
         }
 
@@ -1013,24 +1036,35 @@ auto MediaLayout::updateMediaBlock(MediaGroupLayout::Block* block, FileSetting* 
 
     if (pathCombo) {
         auto recentFile = fileloader->getRecentFile(emulator);
-        auto& files = recentFile->list(block->media->group, block->media->parent != nullptr, fSetting->path);
+        RecentFiles::FileIdent fI{fSetting->path, fSetting->file, fSetting->id};
+        auto& fileIdents = recentFile->list(block->media->group, block->media->parent != nullptr, fI);
 
-        //pathCombo->reset();
         std::vector<GUIKIT::ComboButton::Entry> rows;
 
-        for (auto& file : files)
-           rows.push_back( {file, 0, ""} );
+        for (auto& fileIdent : fileIdents)
+           rows.push_back( {fileIdent.file, (int)fileIdent.id, "", fileIdent.path} );
 
         pathCombo->appendMulti( rows );
 
         if (fSetting->path.empty())
             pathCombo->unselect();
-        else
-            pathCombo->setSelectionByText(fSetting->path);
+        else {
+            unsigned selection = 0;
+            for (auto& entry : pathCombo->rows()) {
+                if (entry.link == fSetting->path && entry.userData == fSetting->id) {
+                    pathCombo->setSelection( selection );
+                    selection = ~0;
+                    break;
+                }
+                selection++;
+            }
+            if (selection != ~0)
+                pathCombo->unselect();
+        }
     }
 
     if (!IPMode) {
-        block->header.fileName.setText(fSetting->file);
+        block->header.fileName.setText( GUIKIT::File::getPath(fSetting->path));
         block->header.writeprotect.setChecked( fSetting->writeProtect );
     }
 
@@ -1285,7 +1319,12 @@ auto MediaLayout::insertImage( MediaGroupLayout::Block* block, GUIKIT::File* fil
     }
 
     auto recentFile = fileloader->getRecentFile(emulator);
-    recentFile->add(mediaGroup, media->parent != nullptr, GUIKIT::File::buildRelativePath(file->getFile()), updateGenericFileList);
+
+    if (!cmd->autoload) {
+        RecentFiles::FileIdent fI{GUIKIT::File::buildRelativePath(file->getFile()), fSetting->file, item->id};
+        recentFile->add(mediaGroup, media->parent != nullptr, fI, updateGenericFileList);
+    }
+
     if (view)
         view->updateRecentList(emulator);
 
@@ -1456,10 +1495,8 @@ auto MediaLayout::drop( std::string filePath, MediaGroupLayout::Block* block ) -
     if (!file)
         return;
 
-    if (!file->exists())
-        return FileHelper::errorFileSize(MAX_MEDIUM_SIZE, file->getPath(), message);
-    if (!mediaGroup->isHardDisk() && !file->isSizeValid(MAX_MEDIUM_SIZE))
-        return FileHelper::errorFileSize(MAX_MEDIUM_SIZE, file->getPath(), message);
+    if (!file->exists() || !file->getSize())
+        return FileHelper::errorOpen(file, nullptr, message);
 
     auto& items = file->scanArchive();
 
