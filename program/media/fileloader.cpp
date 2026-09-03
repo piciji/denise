@@ -870,13 +870,13 @@ auto Fileloader::insertImage(Emulator::Interface* emulator, Emulator::Interface:
 
     auto data = mediaGroup->isHardDisk() && !file->isArchived() ? nullptr : file->archiveData(item->id);
 
-    bool updateGenericFileList = !media->parent;
-
     auto useExpansion = emulator->getExpansion();
 
     auto insertedExpansion = emulator == activeEmulator && useExpansion && useExpansion->mediaGroup == mediaGroup;
 
     bool mediaIsRam = media->type == Emulator::Interface::Media::MemoryType::RAM || media->type == Emulator::Interface::Media::MemoryType::SRAM;
+
+    bool updateGenericFileList = !media->parent && (mediaGroup->isProgram() || !mediaIsRam);
 
     if (!mediaGroup->isExpansion() || (insertedExpansion && (mediaIsRam || (media->parent && (mediaGroup->selected == media->parent))))) {
         emulator->ejectMedium(media);

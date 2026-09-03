@@ -307,6 +307,7 @@ struct Interface {
     struct Data {
         uint8_t* ptr;
         unsigned size;
+        auto reset() -> void { ptr = nullptr; size = 0; }
     };
 
     struct Item {
@@ -388,7 +389,10 @@ struct Interface {
         virtual auto writeAssignedMedia(Media*, uint8_t*, unsigned) -> unsigned { return 0; }
 		virtual auto getFileNameFromMedia(Media*) -> std::string { return ""; }
         virtual auto unloadMedia(Media*) -> void {}
-        virtual auto truncateMedia(Media* ) -> bool { return false; }
+        virtual auto truncateMedia(Media*) -> bool { return false; }
+        virtual auto isArchivedMedia(Media*) -> bool { return false; }
+        virtual auto getFileFromArchive(Media*, unsigned) -> Data { return{nullptr, 0}; }
+        virtual auto getFileList(Media* media, const std::string& sub) -> std::vector<std::pair<unsigned, std::string>> { return {}; }
         virtual auto updateDeviceState(Media*, bool, unsigned, uint8_t, bool ) -> void {}
         virtual auto updateLedState(Emulator::Interface::LedId, uint8_t) -> void {}
         virtual auto log(std::string, bool) -> void {} //for debugging
@@ -457,12 +461,24 @@ struct Interface {
     auto truncateMedia(Media* media) -> bool {
         return bind->truncateMedia( media );
     }
+
+    auto isArchivedMedia(Media* media) -> bool {
+        return bind->isArchivedMedia( media );
+    }
+
+    auto getFileFromArchive(Media* media, unsigned id) -> Data {
+        return bind->getFileFromArchive(media, id);
+    }
+
+    auto getFileList(Media* media, const std::string& sub = "") -> std::vector<std::pair<unsigned, std::string>> {
+        return bind->getFileList( media, sub );
+    }
     
     auto updateDeviceState(Media* media, bool write, unsigned position, uint8_t LED, bool motorOff ) -> void {
         bind->updateDeviceState(media, write, position, LED, motorOff);
     }
 
-    auto updateLedState(Emulator::Interface::LedId ledId, uint8_t state) -> void {
+    auto updateLedState(LedId ledId, uint8_t state) -> void {
         bind->updateLedState(ledId, state);
     }
     

@@ -16,7 +16,7 @@ struct ExpansionPort {
         setId( Interface::ExpansionIdNone );
     }
     
-    virtual ~ExpansionPort() {}
+    virtual ~ExpansionPort() = default;
     
     struct {
         uint16_t addr;

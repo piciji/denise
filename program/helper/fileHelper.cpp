@@ -127,6 +127,54 @@ auto FileHelper::truncateMedia(Emulator::Interface::Media* media) -> bool {
     return file->truncate();
 }
 
+auto FileHelper::isArchivedMedia(Emulator::Interface::Media* media) -> bool {
+    if (!activeEmulator || !media || !media->guid)
+        return false;
+
+    auto file = (GUIKIT::File*)media->guid;
+
+    return file->isArchived();
+}
+
+auto FileHelper::getFileFromArchive(Emulator::Interface::Media* media, unsigned id) -> Emulator::Interface::Data {
+    if (!activeEmulator || !media || !media->guid)
+        return {nullptr, 0};
+
+    auto file = reinterpret_cast<GUIKIT::File*>(media->guid);
+
+    auto items = file->scanArchive();
+
+    for (auto& item : items) {
+        file->freeArchiveData( item.id );
+    }
+
+    Emulator::Interface::Data data{};
+
+    data.ptr = file->archiveData( id );
+    data.size = file->archiveDataSize( id );
+
+    return data;
+}
+
+auto FileHelper::getFileList(Emulator::Interface::Media* media, const std::string& sub) -> std::vector<std::pair<unsigned, std::string>> {
+    if (!activeEmulator || !media || !media->guid)
+        return {};
+
+    auto file = (GUIKIT::File*)media->guid;
+
+    auto items = file->scanArchive();
+
+    std::vector<std::pair<unsigned, std::string>> result;
+
+    for (auto& item : items) {
+        if (item.parent)
+            continue;
+        result.push_back( {item.id, item.info.name} );
+    }
+
+    return result;
+}
+
 auto FileHelper::getFileNameFromMedia(Emulator::Interface::Media* media) -> std::string {
     if (!media->guid)
         return "";

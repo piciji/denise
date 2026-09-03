@@ -350,6 +350,9 @@
     <Filter Include="emulation\libc64\expansionPort\trilogicExpert">
       <UniqueIdentifier>{24164dbf-2131-4698-9b95-2b489bb295e5}</UniqueIdentifier>
     </Filter>
+    <Filter Include="emulation\libc64\expansionPort\uci">
+      <UniqueIdentifier>{27d00f37-70db-4f0d-8740-614a260bc00a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\emulation\interface.h">
@@ -1422,6 +1425,9 @@
     </ClInclude>
     <ClInclude Include="..\emulation\libc64\expansionPort\trilogicExpert\expert.h">
       <Filter>emulation\libc64\expansionPort\trilogicExpert</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libc64\expansionPort\uci\uci.h">
+      <Filter>emulation\libc64\expansionPort\uci</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -2777,6 +2783,9 @@
     </ClCompile>
     <ClCompile Include="..\emulation\libc64\expansionPort\trilogicExpert\expert.cpp">
       <Filter>emulation\libc64\expansionPort\trilogicExpert</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\expansionPort\uci\uci.cpp">
+      <Filter>emulation\libc64\expansionPort\uci</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

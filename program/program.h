@@ -122,6 +122,9 @@ struct Program : Emulator::Interface::Bind {
 	auto readAssignedMedia(Emulator::Interface::Media* media, uint8_t*& buffer, bool preview) -> unsigned override;
 	auto writeAssignedMedia(Emulator::Interface::Media* media, uint8_t* buffer, unsigned length) -> unsigned override;
     auto truncateMedia(Emulator::Interface::Media* media) -> bool override;
+    auto isArchivedMedia(Emulator::Interface::Media* media) -> bool override;
+    auto getFileFromArchive(Emulator::Interface::Media* media, unsigned id) -> Emulator::Interface::Data override;
+    auto getFileList(Emulator::Interface::Media* media, const std::string& sub) -> std::vector<std::pair<unsigned, std::string>> override;
     auto getFileNameFromMedia(Emulator::Interface::Media* media) -> std::string override;
     auto unloadMedia(Emulator::Interface::Media* media) -> void override;
 

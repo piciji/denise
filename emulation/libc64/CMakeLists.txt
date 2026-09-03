@@ -73,6 +73,7 @@ set(headers
         expansionPort/trilogicExpert/expert.h
         expansionPort/reu/reu.h
         expansionPort/superCpu/superCpu.h
+        expansionPort/uci/uci.h
         expansionPort/expansionPort.h
         input/controlPort/analogControl.h
         input/controlPort/cga.cpp
@@ -212,6 +213,7 @@ target_sources(coreC64 PRIVATE
         expansionPort/fastloader/fastloader.cpp
         expansionPort/finalChessCard/chessCard.cpp
         expansionPort/superCpu/superCpu.cpp
+        expansionPort/uci/uci.cpp
 
         system/clipboard.cpp
         sid/reSid.cpp

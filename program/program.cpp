@@ -1040,6 +1040,18 @@ auto Program::truncateMedia(Emulator::Interface::Media* media) -> bool {
     return FileHelper::truncateMedia( media );
 }
 
+auto Program::isArchivedMedia(Emulator::Interface::Media* media) -> bool {
+    return FileHelper::isArchivedMedia( media );
+}
+
+auto Program::getFileFromArchive(Emulator::Interface::Media* media, unsigned id) -> Emulator::Interface::Data {
+    return FileHelper::getFileFromArchive(media, id);
+}
+
+auto Program::getFileList(Emulator::Interface::Media* media, const std::string& sub) -> std::vector<std::pair<unsigned, std::string>> {
+    return FileHelper::getFileList( media, sub );
+}
+
 auto Program::libraryMissing(std::string plugin) -> void {
     MiscHelper::libraryMissing(plugin);
 }

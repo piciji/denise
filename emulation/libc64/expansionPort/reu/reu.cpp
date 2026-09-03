@@ -6,7 +6,7 @@
 
 namespace LIBC64 {  
 
-Reu::Reu(System* system) : ExpansionPort(system), sysTimer(system->sysTimer) {
+Reu::Reu(System* system) : ExpansionPort(system), sysTimer(system->sysTimer), uci(system->interface) {
     setId( Interface::ExpansionIdReu );
     prepareRam( 128 );
 
@@ -53,8 +53,7 @@ Reu::Reu(System* system) : ExpansionPort(system), sysTimer(system->sysTimer) {
 }    
 
 Reu::~Reu() {
-    if (data)
-        delete[] data;
+    delete[] data;
 }
 
 auto Reu::isExrom( ) -> bool {
@@ -82,7 +81,15 @@ auto Reu::setExpander( ExpansionPort* expander ) -> void {
 }
 
 auto Reu::setRom(Emulator::Interface::Media* media, uint8_t* rom, unsigned romSize) -> void {
-    
+    if (!media->parent) { // RAM
+        this->dump = rom;
+        this->dumpSize = romSize;
+        this->ramMedia = media;
+        uci.setMedia( rom ? media : nullptr );
+        injectRam();
+        return;
+    }
+    // ROM
     if (rom && (romSize & 2) ) {
         // simple check if prg header is attached
         romSize -= 2;
@@ -148,11 +155,12 @@ auto Reu::prepareRam(unsigned size) -> void {
 
     size <<= 10;
     
-    if (data && (size == this->size))
+    if (data && (size == this->size)) {
+        uci.setTarget( data, size );
         return;
-    
-    if(data)
-        delete[] data;
+    }
+
+    delete[] data;
         
     this->size = size;
         
@@ -167,23 +175,14 @@ auto Reu::prepareRam(unsigned size) -> void {
     else if (sizeInKb == 256 || sizeInKb == 512)
         dramWrapAround = 0x7ffff;
     
-    status = sizeInKb == 128 ? 0 : 0x10;    
-}
+    status = sizeInKb == 128 ? 0 : 0x10;
 
-auto Reu::setRam( uint8_t* dump, unsigned dumpSize ) -> void {
-    this->dump = dump;
-    this->dumpSize = dumpSize;
-    injectRam();
-}
-
-auto Reu::unsetRam() -> void {
-    this->dump = nullptr;
-    this->dumpSize = 0;
+    uci.setTarget( data, size );
 }
 
 auto Reu::injectRam( ) -> void {
 
-    if (!data ||!dump || dumpSize == 0)
+    if (!data || !dump || dumpSize == 0)
         return;
     
     std::memcpy(data, dump, std::min(dumpSize, size) );
@@ -198,27 +197,27 @@ auto Reu::reset(bool softReset) -> void {
 	
 	uint8_t value = 0;
 	uint8_t inverter = 0;
-	
-	for(unsigned i = 0; i < size; i++) {
+
+    if (!dump) {
+        for(unsigned i = 0; i < size; i++) {
 				
-		if (++inverter == 2) {
-			inverter = 0;
-			
-			value ^= 0xff;
-		}		
-		
-		if (i != 0x20000) {	
-			if ( (i & 0xff) == 0) {
-				inverter = 1;
-				value ^= 0xff;
-			}
-		}
-		
-		data[i] = value;
-	}	
-	
-    injectRam( );
-    
+            if (++inverter == 2) {
+                inverter = 0;
+
+                value ^= 0xff;
+            }
+
+            if (i != 0x20000) {
+                if ( (i & 0xff) == 0) {
+                    inverter = 1;
+                    value ^= 0xff;
+                }
+            }
+
+            data[i] = value;
+        }
+    }
+
     command = 0x10; // FF00 trigger disabled    
     intMask = 0x1f;    
     control = 0x3f;
@@ -237,6 +236,8 @@ auto Reu::reset(bool softReset) -> void {
 	busFloating = 0xff;
 
     memChange = nullptr;
+
+    uci.reset();
 }
 
 inline auto Reu::readReu() -> uint8_t {
@@ -541,7 +542,11 @@ auto Reu::readIo2( uint16_t addr ) -> uint8_t {
         case 9:
             val = intMask | 0x1f; break;
         case 0xa:
-            val = control | 0x3f; break;                 
+            val = control | 0x3f; break;
+        default:
+            if (system->processFrame())
+                val = uci.read( addr );
+            break;
     }
     
 	if (expander)
@@ -618,6 +623,10 @@ auto Reu::writeIo2( uint16_t addr, uint8_t value ) -> void {
             break;
         case 0xa:
             control = value | 0x3f;
+            break;
+        default:
+            if (system->processFrame())
+                uci.write( addr, value );
             break;
     }
         
@@ -741,8 +750,10 @@ auto Reu::serialize(Emulator::Serializer& s) -> void {
             memChange->reset(data);
     }
 
-    if (!memUsage)
+    if (!memUsage) {
         s.array( data, size );
+        uci.serialize( s );
+    }
     
     s.integer( status );
     s.integer( command );
@@ -765,7 +776,7 @@ auto Reu::serialize(Emulator::Serializer& s) -> void {
     s.integer( busValue );
     s.integer( busValue2 );
 	s.integer( busFloating );
-    s.integer( swapRead );     
+    s.integer( swapRead );
     
     ExpansionPort::serialize( s );
 	

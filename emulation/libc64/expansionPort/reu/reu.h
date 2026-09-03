@@ -2,14 +2,15 @@
 #pragma once
 
 #include "../expansionPort.h"
+#include "../uci/uci.h"
 
 namespace LIBC64 {
     
 struct Reu : ExpansionPort {   
-    
+
     Reu(System* system);
-    ~Reu();	
-    
+    ~Reu() override;
+
     using Callback = std::function<void ()>;
 
     Emulator::SystemTimer& sysTimer;
@@ -36,6 +37,8 @@ struct Reu : ExpansionPort {
     
     unsigned dumpSize = 0;
     uint8_t* dump = nullptr;
+    Emulator::Interface::Media* ramMedia = nullptr;
+    Uci uci;
         
     uint32_t wrapAround;
     uint32_t dramWrapAround;
@@ -49,7 +52,7 @@ struct Reu : ExpansionPort {
     uint8_t vicBaLow;
     bool steal;
     uint8_t busValue;
-    uint8_t busValue2;    
+    uint8_t busValue2;
 	uint8_t busFloating;
     bool swapRead;
 
@@ -64,9 +67,6 @@ struct Reu : ExpansionPort {
 
     auto setRamSize(int id) -> void;
     auto getRamSize() -> int;
-
-    auto setRam( uint8_t* dump, unsigned dumpSize ) -> void;
-    auto unsetRam() -> void;
     auto injectRam() -> void;
 	
 	auto isExrom( ) -> bool;

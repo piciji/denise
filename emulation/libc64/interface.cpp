@@ -1305,7 +1305,7 @@ auto Interface::insertExpansionImage(Media* media, uint8_t* data, unsigned size)
     if (group->expansion->id == ExpansionIdGame)
         system->gameCart->setRom(media, data, size);
     else if (group->expansion->id == ExpansionIdReu)
-        !media->parent ? system->reu->setRam(data, size) : system->reu->setRom(media, data, size);
+        system->reu->setRom(media, data, size);
     else if (group->expansion->id == ExpansionIdFreezer)
         system->freezer->setRom(media, data, size);
     else if (group->expansion->id == ExpansionIdEasyFlash)
@@ -1402,7 +1402,7 @@ auto Interface::ejectExpansionImage(Media* media) -> void {
     if (group->expansion->id == ExpansionIdGame)
         system->gameCart->setRom(media, nullptr, 0);
     else if (group->expansion->id == ExpansionIdReu) {
-        !media->parent ? system->reu->unsetRam() : system->reu->setRom(media, nullptr, 0);
+        system->reu->setRom(media, nullptr, 0);
     } else if (group->expansion->id == ExpansionIdFreezer)
         system->freezer->setRom(media, nullptr, 0);
     else if (group->expansion->id == ExpansionIdEasyFlash)

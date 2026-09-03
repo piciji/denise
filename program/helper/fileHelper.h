@@ -21,6 +21,9 @@ struct FileHelper {
     static auto writeMedia(Emulator::Interface::Media* media, uint8_t* buffer, unsigned length, uint64_t offset) -> unsigned;
     static auto writeAssignedMedia(Emulator::Interface::Media* media, uint8_t* buffer, unsigned length) -> unsigned;
     static auto truncateMedia(Emulator::Interface::Media* media) -> bool;
+    static auto isArchivedMedia(Emulator::Interface::Media* media) -> bool;
+    static auto getFileFromArchive(Emulator::Interface::Media* media, unsigned id) -> Emulator::Interface::Data;
+    static auto getFileList(Emulator::Interface::Media* media, const std::string& sub) -> std::vector<std::pair<unsigned, std::string>>;
     static auto getFileNameFromMedia(Emulator::Interface::Media* media) -> std::string;
     static auto unloadMedia(Emulator::Interface::Media* media) -> void;
 
