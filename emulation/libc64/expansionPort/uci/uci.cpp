@@ -1,6 +1,9 @@
 
 #include "uci.h"
 #include "../../../tools/buffer.h"
+#include "../../../tools/memchangetracker.h"
+
+namespace LIBC64 {
 
 auto Uci::reset() -> void {
     enabled = false;
@@ -90,6 +93,14 @@ auto Uci::read(uint8_t addr) -> uint8_t {
                                 if ((reuAddr + transferSize) > targetSize)
                                     transferSize = targetSize - reuAddr;
 
+                                auto* memChange = expansioPort->memChange;
+
+                                if (memChange) { // history support
+                                    for (unsigned i = reuAddr; i < (reuAddr + transferSize); i++) {
+                                        memChange->remember(i);
+                                    }
+                                }
+
                                 std::memcpy(targetPtr + reuAddr, fileData.ptr, transferSize );
                             }
                         }
@@ -148,8 +159,8 @@ auto Uci::read(uint8_t addr) -> uint8_t {
             break;
     }
 
-//    if (enabled)
-  //      fprintf( stdout, "read: %x %x \n", addr, val  );
+    // if (enabled)
+    //   fprintf( stdout, "read: %x %x \n", addr, val  );
 
     return val;
 }
@@ -158,7 +169,7 @@ auto Uci::write(uint8_t addr, uint8_t value) -> void {
     if (!enabled)
         return;
 
-//    fprintf( stdout, "write: %x %x\n", addr, value  );
+    // fprintf( stdout, "write: %x %x\n", addr, value  );
 
     switch (addr) {
         case 0x1c: { // control
@@ -242,7 +253,8 @@ auto Uci::write(uint8_t addr, uint8_t value) -> void {
         } break;
 
         case 0x1d:
-            commandQueue.push_back( value );
+            if (commandQueue.size() < QUEUE_MAX_SIZE)
+                commandQueue.push_back( value );
             break;
 
         default:
@@ -274,16 +286,16 @@ auto Uci::findFileIdent(const std::string& fileName) -> unsigned {
 
 auto Uci::serialize(Emulator::Serializer& s) -> void {
     s.integer( enabled );
-    if (!enabled)
-        return;
-
     s.integer( packetPos );
     s.integer( statPos );
     s.integer( filePos );
     s.integer( openedIdent );
-    s.vector( commandQueue );
+    if (s.mode() == Emulator::Serializer::Mode::Size)
+        s.bufferPtr( QUEUE_MAX_SIZE + 4 ); // reserve some space
+    else
+        s.vector( commandQueue );
 
-    if ( (s.mode() == Emulator::Serializer::Mode::Load) && media ) {
+    if (!s.memUsage() && (s.mode() == Emulator::Serializer::Mode::Load) && media ) {
         if (dirFiles.empty())
             dirFiles = interface->getFileList( media );
 
@@ -292,4 +304,6 @@ auto Uci::serialize(Emulator::Serializer& s) -> void {
         else
             fileData.reset();
     }
+}
+
 }

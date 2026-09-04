@@ -23,11 +23,13 @@ auto KeyBuffer::add( Action action, bool inSeconds ) -> void {
 
     system->serializationSize += s.size();
 
+    system->serializationSizeLight += s.size();
+
     hasJobs = true;
 }
 
 auto KeyBuffer::forceDefaultKernalDelay() -> void {
-    if (!queue.size())
+    if (queue.empty())
         return;
 
     queue[0].delay = (unsigned)(system->interface->stats.fps * 2.2);
@@ -57,6 +59,8 @@ auto KeyBuffer::serialize(Emulator::Serializer& s) -> void {
 
     uint8_t vSize = queue.size();
     s.integer( vSize );
+    if (!vSize)
+        return;
 
     if ( s.mode() == Emulator::Serializer::Mode::Load ) {
         reset();

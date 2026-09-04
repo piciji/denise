@@ -6,10 +6,14 @@
 #include <string>
 #include "../../../interface.h"
 #include "../../../tools/serializer.h"
+#include "../../expansionPort/expansionPort.h"
+
+namespace LIBC64 {
 
 class Uci {
 public:
-    Uci(Emulator::Interface* interface) : interface( interface ) {}
+    Uci(Emulator::Interface* interface, ExpansionPort* expansioPort)
+    : interface( interface ), expansioPort( expansioPort ) {}
 
     enum class Command { None, OpenFile, CloseFile, ChangeDir, GetPath, OpenDir, ReadDir, LoadReu, DeleteFile } command = Command::None;
 
@@ -18,6 +22,8 @@ private:
     static constexpr uint8_t STAT_AV = 0x40;
     static constexpr uint8_t DATA_LAST = 0x20;
     static constexpr uint8_t DATA_MORE = 0x30;
+
+    static constexpr unsigned QUEUE_MAX_SIZE = 100;
 
     bool enabled = false;
     std::vector<uint8_t> commandQueue;
@@ -29,6 +35,7 @@ private:
     std::vector<std::pair<unsigned, std::string>> dirFiles;
     Emulator::Interface::Media* media = nullptr;
     Emulator::Interface* interface;
+    ExpansionPort* expansioPort;
 
     Emulator::Interface::Data fileData;
     unsigned openedIdent = ~0;
@@ -51,3 +58,5 @@ public:
 
     auto serialize(Emulator::Serializer& s) -> void;
 };
+
+}

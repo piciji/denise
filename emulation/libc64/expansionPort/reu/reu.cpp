@@ -4,9 +4,9 @@
 #include "../retroReplay/retroReplay.h"
 #include "../superCpu/superCpu.h"
 
-namespace LIBC64 {  
+namespace LIBC64 {
 
-Reu::Reu(System* system) : ExpansionPort(system), sysTimer(system->sysTimer), uci(system->interface) {
+Reu::Reu(System* system) : ExpansionPort(system), sysTimer(system->sysTimer), uci(system->interface, this) {
     setId( Interface::ExpansionIdReu );
     prepareRam( 128 );
 
@@ -752,8 +752,9 @@ auto Reu::serialize(Emulator::Serializer& s) -> void {
 
     if (!memUsage) {
         s.array( data, size );
-        uci.serialize( s );
     }
+
+    uci.serialize( s );
     
     s.integer( status );
     s.integer( command );
