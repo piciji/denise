@@ -710,7 +710,10 @@ Typical:
             return;
 
         renderCrt<T, options>(width, height, src, srcPitch, iHold ? nullptr : gpuData, gpuPitch - width, cropTop);
-	}		           
+	}
+
+    if (audioManager->lumaInterference.enabled)
+        sampleLuma(width, height, (uint8_t*)src, srcPitch);
 
     videoDriver->unlockAndRedraw( );
 }
@@ -830,6 +833,31 @@ template<typename T, bool interlace, bool field> inline auto VideoManager::rende
             dest += destPitch;
         }
     }
+}
+
+auto VideoManager::sampleLuma(unsigned width, unsigned height, const uint8_t* src, unsigned srcPitch) -> void {
+    unsigned mask = (1 << countColorBits) - 1;
+    float lum;
+    auto& ali = audioManager->lumaInterference;
+
+    for(unsigned h = 0; h < height; h++) {
+        lum = 0.0;
+        for(unsigned w = 0; w < width; w++) {
+            lum += static_cast<float>(lumaChromaTable[*src++ & mask].y);
+        }
+
+        ali.avgLines[h] = lum / (static_cast<float>(width) * 3.0f);
+        src += srcPitch;
+    }
+
+    lum = 0.0;
+    for(unsigned h = 0; h < height; h++)
+        lum += ali.avgLines[h];
+
+    ali.avgFrame = lum / static_cast<float>(height);
+
+    ali.avgLines[height] = 0.0;
+    ali.lines = height + 1;
 }
 
 #define screenshot3channel(x) { auto& _x = x; *dest++ = _x.r; *dest++ = _x.g; *dest++ = _x.b; }

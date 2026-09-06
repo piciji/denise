@@ -1022,11 +1022,13 @@ auto System::setCycleRenderer(bool state) -> void {
 }
 
 auto System::updateStats() -> void {
-    interface->stats.region = vicII->isNTSCGeometry() ? Interface::Region::Ntsc : Interface::Region::Pal;
-    interface->stats.sampleIntervall = sidManager.sampleLimit;
-    interface->stats.sampleRate = (double)vicII->frequency() / (double)sidManager.sampleLimit;
-    interface->stats.fps = 1.0 / ( (double)vicII->cyclesPerFrame() / (double)vicII->frequency() );
-    interface->stats.stereoSound = sidManager.isStereo();
+    auto& stats = interface->stats;
+    stats.region = vicII->isNTSCGeometry() ? Interface::Region::Ntsc : Interface::Region::Pal;
+    stats.sampleIntervall = sidManager.sampleLimit;
+    stats.sampleRate = (double)vicII->frequency() / (double)sidManager.sampleLimit;
+    stats.fps = 1.0 / ( (double)vicII->cyclesPerFrame() / (double)vicII->frequency() );
+    stats.stereoSound = sidManager.isStereo();
+    stats.cyclesPerLine = vicII->cyclesPerLine();
     history.reset();
 }
 

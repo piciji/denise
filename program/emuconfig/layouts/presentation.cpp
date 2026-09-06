@@ -13,6 +13,7 @@
 #include "../../helper/settingsHelper.h"
 #include "../../video/shaderParser.h"
 #include "../../helper/miscHelper.h"
+#include "../../audio/manager.h"
 #include <cmath>
 
 #define _settings this->tabWindow->settings
@@ -43,7 +44,11 @@ VideoBaseLayout::View::Option::Option(bool withSpectrum) {
     if (withSpectrum)
         append(newLuma, {0u, 0u}, 10);
 
-    append(linearInterpolation, {0u, 0u});
+    append(linearInterpolation, {0u, 0u}, 10);
+
+    if (withSpectrum)
+        append(audioInterference, {0u, 0u});
+
     append(spacer, {~0u, 0u});
 
     append(trLabel, {0u, 0u}, 5);
@@ -831,6 +836,13 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
         _settings->set<bool>("video_filter", checked );
         emuThread->lock();
         program->setVideoFilter();
+        emuThread->unlock();
+    };
+
+    layBase.view.option.audioInterference.onToggle = [this](bool checked) {
+        _settings->set<bool>("video_audio_interference", checked );
+        emuThread->lock();
+        audioManager->setInterference();
         emuThread->unlock();
     };
 
@@ -2145,6 +2157,7 @@ auto PresentationLayout::translate() -> void {
     layBase.view.phase.name.setText( trans->get("phase", {}, true) );
     layBase.view.option.newLuma.setText( trans->get("new_luma") );
     layBase.view.option.linearInterpolation.setText( trans->get("linear_interpolation") );
+    layBase.view.option.audioInterference.setText( trans->getA("Audio Interference") );
     layBase.view.option.trLabel.setText( trans->getA("Threaded Renderer", true) );
     layBase.view.option.trOn.setText( trans->getA("On") );
     layBase.view.option.trOn.setTooltip( trans->getA("Threaded Renderer tooltip") );
@@ -2367,6 +2380,7 @@ auto PresentationLayout::loadSettings(bool init) -> void {
     updatePresets(!init, true);
 
     layBase.view.option.linearInterpolation.setChecked( _settings->get<bool>("video_filter", true) );
+    layBase.view.option.audioInterference.setChecked( _settings->get<bool>("video_audio_interference", false) );
 
     unsigned tr = _settings->get<unsigned>("threaded_renderer", 0);
     switch(tr) {

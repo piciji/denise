@@ -32,6 +32,7 @@ struct VideoBaseLayout : GUIKIT::VerticalLayout {
         struct Option : GUIKIT::HorizontalLayout {
             GUIKIT::CheckBox newLuma;
             GUIKIT::CheckBox linearInterpolation;
+            GUIKIT::CheckBox audioInterference;
             GUIKIT::Widget spacer;
             GUIKIT::Label trLabel;
             GUIKIT::RadioBox trOff;

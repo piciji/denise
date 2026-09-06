@@ -67,6 +67,21 @@ struct AudioManager {
         float maxRaw;
 
     } statistics;
+
+    struct LumaInterference {
+        bool enabled = false;
+
+        float avgFrame;
+        float avgLines[313] = {};
+        unsigned lines;
+
+        unsigned linePos;
+        unsigned lineDiff;
+
+        unsigned noisePos;
+        unsigned noiseDiff;
+
+    } lumaInterference;
         
     double inputFPS;
 
@@ -88,6 +103,7 @@ struct AudioManager {
     auto setFrequency() -> void;     
     auto setSynchronize() -> void;
     auto setVolume() -> void;
+    auto setInterference() -> void;
     auto setRateControl() -> void;
     auto resetDriveSounds() -> void;
     auto setDriveSounds(bool init = true) -> void;
@@ -99,6 +115,7 @@ struct AudioManager {
     auto power() -> void;
     auto powerOff() -> void;
     auto applyDsp() -> void;
+    auto applyInterference() -> void;
 
     auto checkIfUINeedsAnUpdate() -> void;
     auto reverseAndFlushBuffer() -> void;

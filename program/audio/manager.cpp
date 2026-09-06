@@ -161,6 +161,24 @@ auto AudioManager::setVolume() -> void {
         volumeAdjust = ( (float)volume * 0.01 ) / 32768.0;
 }
 
+auto AudioManager::setInterference() -> void {
+    if (!activeEmulator)
+        return;
+
+    LumaInterference& ali = lumaInterference;
+    ali.enabled = false;
+    if (dynamic_cast<LIBC64::Interface*>(activeEmulator)) {
+        auto settings = Program::getSettings(activeEmulator);
+        ali.enabled = settings->get<bool>("video_audio_interference", false);
+    }
+
+    ali.lines = 0;
+    ali.linePos = 0;
+    ali.lineDiff = 0;
+    ali.noiseDiff = 0;
+    ali.noisePos = 0;
+}
+
 auto AudioManager::setTapeNoise( ) -> void {
     if (!activeEmulator)
         return;
@@ -325,6 +343,7 @@ auto AudioManager::power() -> void {
     setBufferSize();
     setAudioDsp();
     setVolume();
+    setInterference();
     setDriveSounds();
     setTapeNoise();
 
@@ -415,6 +434,9 @@ auto AudioManager::flush( ) -> void {
 
     bufferPos = 0;
 
+    if (lumaInterference.enabled)
+        applyInterference();
+
     if (dynamicRateControl || statistics.enable) {
         double deviation = audioDriver->getCenterBufferDeviation();
 
@@ -456,6 +478,49 @@ auto AudioManager::flush( ) -> void {
 
     if (measureUiUpdate.enable)
         checkIfUINeedsAnUpdate();
+}
+
+auto AudioManager::applyInterference() -> void {
+    LumaInterference& ali = lumaInterference;
+    float sample;
+
+    static constexpr float whiteNoise[] = {
+        2.0f, 1.0f, 2.0f, 1.0f,
+        2.0f, 3.0f, 1.0f, 2.0f,
+        1.0f, 2.0f, 2.0f, 1.0f,
+        3.0f, 2.0f, 1.0f, 2.0f,
+        2.0f, 1.0f, 3.0f, 1.0f,
+        2.0f, 2.0f, 1.0f, 2.0f,
+        1.0f, 3.0f, 2.0f, 1.0f,
+        2.0f, 1.0f, 2.0f, 3.0f
+    };
+
+    if (ali.lines) {
+        auto _noiseFreq = static_cast<unsigned>((float) stat.cyclesPerLine * 0.19f);
+
+        for (unsigned s = 0; s < bufferSize; s++) {
+            sample = buffer[s];
+
+            sample += (ali.avgLines[ali.linePos] * 1.0f) * volumeAdjust;
+            sample += ((whiteNoise[ali.noisePos] * ali.avgFrame * 0.6f) ) * volumeAdjust;
+
+            ali.lineDiff += static_cast<unsigned>(stat.sampleIntervall);
+            if (ali.lineDiff >= stat.cyclesPerLine  ) {
+                ali.lineDiff -= stat.cyclesPerLine  ;
+                if (++ali.linePos >= ali.lines)
+                    ali.linePos = 0;
+            }
+
+            ali.noiseDiff += stat.sampleIntervall;
+            if (ali.noiseDiff >= _noiseFreq) {
+                ali.noiseDiff -= _noiseFreq;
+                if (++ali.noisePos >= std::size( whiteNoise ))
+                    ali.noisePos = 0;
+            }
+
+            buffer[s] = sample;
+        }
+    }
 }
 
 auto AudioManager::calcStatistics( float adjust ) -> void {

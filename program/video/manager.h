@@ -264,7 +264,7 @@ struct VideoManager {
     auto translateShaderBufferType(ShaderPreset::BufferType& bufferType) -> const std::string;
     auto getColorSpectrum(unsigned id, unsigned col) -> C64ColorSpectrum&;
     auto lumaChromaMode() -> bool;
-
+    auto sampleLuma(unsigned width, unsigned height, const uint8_t* src, unsigned srcPitch) -> void;
     auto fetchShader(ShaderPreset::Pass& pass, unsigned passId) -> bool;
     template<typename T> auto takeScreenshot(unsigned unscaled, const T* _src, unsigned _width, unsigned _height, unsigned _pitch, uint8_t _options) -> void;
 };

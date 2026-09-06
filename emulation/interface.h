@@ -65,10 +65,11 @@ struct Interface {
     };
     enum class ThreadPriority { Normal = 0, High = 1, Realtime = 2 };
     enum class LedId { Power, CapsLock, MHz2 };
+    enum RefreshOptions { REF_Normal = 0, REF_LACE_ODD = 1, REF_LACE_EVEN = 2, REF_HIRES = 4, REF_SHRES = 8 };
 
     std::string ident;
     
-	Interface( std::string ident ) {
+	Interface( const std::string& ident ) {
         this->ident = ident;        
     }
 
@@ -268,6 +269,7 @@ struct Interface {
         Region region;
         double sampleRate;
         uint8_t sampleIntervall;
+        unsigned cyclesPerLine;
         double fps;
         bool stereoSound;
         auto isPal() -> bool { return region == Region::Pal; }

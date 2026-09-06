@@ -145,6 +145,7 @@ struct VicIIBase {
 	auto isNTSCEncoding() -> bool { return ntscEncoding; }
 	auto frequency() -> unsigned { return cyclesPerSec; }
 	auto cyclesPerFrame() -> unsigned { return lineCycles * lines; }
+    auto cyclesPerLine() -> unsigned { return lineCycles; }
 	auto getCycle() -> uint8_t { return cycle; }
 
 	auto getReg18() -> uint8_t;
