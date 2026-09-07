@@ -151,12 +151,9 @@ struct Program : Emulator::Interface::Bind {
     auto unsetObsoleteConfigs(GUIKIT::Settings* settings, Emulator::Interface* emulator) -> void;
 
     //audio
-    auto initAudio() -> void;
-	auto getAudioDriver() -> std::string;
     auto audioSample(int16_t sampleLeft, int16_t sampleRight) -> void override;
     auto audioFlush() -> void override;
-    auto mixDriveSound( Emulator::Interface::Media* media, Emulator::Interface::DriveSound driveSound, bool alternate, uint8_t data = 0) -> void override;
-    auto toggleRecord() -> void;
+    auto mixDriveSound( Emulator::Interface::Media* media, Emulator::Interface::DriveSound driveSound, bool alternate, uint8_t data) -> void override;
     
     //video
     auto setVideoDimension(Emulator::Interface* emulator = nullptr) -> void;
@@ -194,18 +191,8 @@ struct Program : Emulator::Interface::Bind {
     auto updateBFI() -> void;
 	
     //input
-    auto initInput() -> void;
-	auto getInputDriver() -> std::string;
     auto inputPoll(uint16_t deviceId, uint16_t inputId) -> int16_t override;
-    auto getDevice( Emulator::Interface* emulator, Emulator::Interface::Connector* connector ) -> Emulator::Interface::Device*;
-    auto isAnalogDeviceConnected( ) -> bool;
-    auto couldDeviceBlockSecondMouseButton( ) -> bool;
-    auto absoluteMouseToEmu( Emulator::Interface* emulator ) -> GUIKIT::Position;
     auto jitPoll(int delay) -> bool override;
-    auto resetRunAhead() -> void;
-    auto setRunAhead(Emulator::Interface* emulator) -> void;
-    auto setJit(Emulator::Interface* emulator) -> void;
-    auto setRewind(Emulator::Interface* emulator) -> void;
 
     auto openDebugger(Emulator::Interface* emulator, DebuggerTheme theme) -> void;
     auto createDebugger(Emulator::Interface* emulator, DebuggerTheme theme) -> Debugger*;

@@ -101,8 +101,7 @@ template<bool lightMode> auto InputMapping::adjustAnalogValue( Assign& hid ) -> 
                 // if mouse is not acquired we use the mouse position given by OS 
                 // within viewport
                 if ( !inputManager->uiMouse.updated ) {
-                    inputManager->uiMouse.updated = true;
-                    inputManager->uiMouse.pos = program->absoluteMouseToEmu( inputManager->emulator );
+                    inputManager->absoluteMouseToEmu( );
                 }
 
                 // expect first input element as x-axis

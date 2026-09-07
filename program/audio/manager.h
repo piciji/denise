@@ -120,6 +120,11 @@ struct AudioManager {
     auto checkIfUINeedsAnUpdate() -> void;
     auto reverseAndFlushBuffer() -> void;
     auto setRewind(bool state) -> void;
+
+    auto mixDriveSound( Emulator::Interface::Media* media, Emulator::Interface::DriveSound driveSound, bool alternate, uint8_t data ) -> void;
+
+    static auto initDriver() -> void;
+    static auto getSelectedDriver() -> std::string;
 };
 
 extern AudioManager* audioManager;

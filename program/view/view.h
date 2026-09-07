@@ -399,6 +399,9 @@ struct View : GUIKIT::Window {
     auto updateFPSMenu() -> void;
     auto buildFpsWindow() -> void;
     static auto getReadable(DebuggerTheme theme, Emulator::Interface* emulator = nullptr) -> std::string;
+    auto couldDeviceBlockSecondMouseButton( ) -> bool;
+    auto isAnalogDeviceConnected( ) -> bool;
+    auto toggleRecord() -> void;
     
     View();
 };

@@ -439,7 +439,7 @@ auto StatusHandler::init(GUIKIT::StatusBar* statusBar) -> void {
         if (activeEmulator)
             this->setExpansionClick();
     } );    // expansion LED
-    statusBar->append(14, &(view->recordStatusImage), []() { program->toggleRecord(); });    // REC Status
+    statusBar->append(14, &(view->recordStatusImage), []() { view->toggleRecord(); });    // REC Status
     statusBar->append( 18, 21, 60, [](unsigned position) {
         if (!activeEmulator)
             return;

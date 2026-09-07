@@ -176,6 +176,8 @@ struct InputManager {
     static auto jitPoll(int delay) -> bool;
     static auto resetJit() -> void;
     static auto preventSharingOfAutoFireMappings(InputMapping* captureObject, InputMapping::Assign& captureHid) -> void;
+    static auto initDriver() -> void;
+    static auto getSelectedDriver() -> std::string;
 	
     auto autoAssign( KeyboardLayout::Type type, bool keyboardOnly = true ) -> void;
     auto autoAssign( Emulator::Interface::Device& device ) -> void;
@@ -205,6 +207,8 @@ struct InputManager {
     auto setIllegalMappings() -> void;
     auto updateMiscSettings() -> void;
     auto setupKeycodeTransfer() -> void;
+
+    auto absoluteMouseToEmu() -> GUIKIT::Position;
     
     inline auto updateAndTrigger() -> void;
     inline auto addAndTrigger(InputMapping* newTrigger) -> void;

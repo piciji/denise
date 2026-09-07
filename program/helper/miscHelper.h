@@ -33,6 +33,12 @@ struct MiscHelper {
     static auto getFont(const std::string& file, int fontIndex) -> DisplayFont*;
     static auto removeFont(const std::string& file, uint8_t mode) -> bool;
 
+    static auto resetRunAhead() -> void;
+    static auto setRunAhead(Emulator::Interface* emulator) -> void;
+    static auto setRewind(Emulator::Interface* emulator) -> void;
+    static auto setJit(Emulator::Interface* emulator) -> void;
+    static auto getDevice( Emulator::Interface* emulator, Emulator::Interface::Connector* connector ) -> Emulator::Interface::Device*;
+
     static auto applyGeometry(GUIKIT::Window* window, GUIKIT::Settings* settings, const std::string& ident, GUIKIT::Geometry defGeo) -> void;
     static auto centerGeometry(GUIKIT::Window* window, GUIKIT::Size _size, GUIKIT::Geometry _containerGeo) -> void;
 };

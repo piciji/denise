@@ -136,7 +136,7 @@ DriversLayout::DriversLayout() {
         emuThread->unlock();
     };
 
-    selectedDriver = program->getAudioDriver();
+    selectedDriver = AudioManager::getSelectedDriver();
     i = 0;
     for(auto& driver : audioDriver->available()) {
         adl.top.driver.combo.append( driver );
@@ -152,7 +152,7 @@ DriversLayout::DriversLayout() {
         emuThread->lock();
         globalSettings->set<std::string>("audio_driver", adl.top.driver.combo.text() );
         audioManager->record.finish();
-        program->initAudio();
+        AudioManager::initDriver();
         emuThread->unlock();
     };
 
@@ -201,7 +201,7 @@ DriversLayout::DriversLayout() {
         }
     }
 
-    selectedDriver = program->getInputDriver();
+    selectedDriver = InputManager::getSelectedDriver();
     i = 0;
     for (auto& driver : inputDriver->available()) {
         idl.top.driver.combo.append(driver);
@@ -217,7 +217,7 @@ DriversLayout::DriversLayout() {
         emuThread->lock();
         globalSettings->set<std::string>("input_driver", idl.top.driver.combo.text());
         InputManager::rememberLastDeviceState();
-        program->initInput();
+        InputManager::initDriver();
         emuThread->unlock();
     };
 

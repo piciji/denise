@@ -10,6 +10,7 @@
 #include "../tools/filepool.h"
 #include "../emuconfig/config.h"
 #include "../emuconfig/layouts/system.h"
+#include "../emuconfig/layouts/misc.h"
 #include "../states/states.h"
 #include "fileHelper.h"
 #include "settingsHelper.h"
@@ -318,4 +319,72 @@ auto MiscHelper::applyGeometry(GUIKIT::Window* window, GUIKIT::Settings* setting
 
     if (!settings || window->isOffscreen())
         window->setGeometry(defGeo);
+}
+
+auto MiscHelper::resetRunAhead() -> void {
+
+    auto settings = Program::getSettings( activeEmulator );
+
+    if ( settings->get<bool>( "runahead_disable", true) ) {
+
+        settings->set<unsigned>( "runahead", 0);
+
+        activeEmulator->runAhead( 0 );
+
+        auto emuView = EmuConfigView::TabWindow::getView( activeEmulator );
+
+        if (emuView && emuView->miscLayout)
+            emuView->miscLayout->setRunAhead( 0, false );
+    }
+}
+
+auto MiscHelper::setRunAhead(Emulator::Interface* emulator) -> void {
+
+    auto settings = Program::getSettings( emulator );
+
+    emulator->runAhead( settings->get<unsigned>( "runahead", 0, {0u, 10u}) );
+
+    emulator->runAheadPerformance( settings->get<bool>( "runahead_performance", dynamic_cast<LIBAMI::Interface*>(emulator)) );
+
+    emulator->runAheadPreventJit( settings->get<bool>( "runahead_prevent_jit", true ) );
+}
+
+auto MiscHelper::setRewind(Emulator::Interface* emulator) -> void {
+    auto settings = Program::getSettings( emulator );
+
+    bool rewindEnable = settings->get<bool>("rewind_enable", false);
+    unsigned rewindStep = settings->get<unsigned>("rewind_step", 1, {1, 60});
+    unsigned rewindBuffer = settings->get<unsigned>("rewind_buffer", 100, {10, 500});
+
+    emulator->configRewind(rewindEnable ? rewindStep : 0, rewindBuffer);
+}
+
+auto MiscHelper::setJit(Emulator::Interface* emulator) -> void {
+
+    auto settings = Program::getSettings(emulator);
+
+    emulator->setInputSampling( settings->get<unsigned>("input_sampling", 2, {0, 2}) );
+
+    auto manager = InputManager::getManager(emulator);
+
+    manager->jit.rescanDelay = settings->get<unsigned>("input_jit_delay", 5, {1, 10});
+}
+
+auto MiscHelper::getDevice( Emulator::Interface* emulator, Emulator::Interface::Connector* connector ) -> Emulator::Interface::Device* {
+    unsigned defaultDevice = 0;
+
+    for(auto& device : emulator->devices) {
+        if (device.isJoypad() && connector->isPort2()) {
+            defaultDevice = device.id;
+            break;
+        }
+        if (device.isMouse() && dynamic_cast<LIBAMI::Interface*>( emulator ) && connector->isPort1()) {
+            defaultDevice = device.id;
+            break;
+        }
+    }
+
+    auto deviceId = Program::getSettings(emulator)->get<unsigned>( _underscore(connector->name), defaultDevice);
+
+    return emulator->getDevice( deviceId );
 }

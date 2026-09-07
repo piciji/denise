@@ -1884,12 +1884,6 @@
     <ClCompile Include="..\program\video.cpp">
       <Filter>program</Filter>
     </ClCompile>
-    <ClCompile Include="..\program\audio.cpp">
-      <Filter>program</Filter>
-    </ClCompile>
-    <ClCompile Include="..\program\input.cpp">
-      <Filter>program</Filter>
-    </ClCompile>
     <ClCompile Include="..\program\audio\manager.cpp">
       <Filter>program\audio</Filter>
     </ClCompile>

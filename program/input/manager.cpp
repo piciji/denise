@@ -9,6 +9,7 @@
 #include "../tools/filesetting.h"
 #include "../tools/chronos.h"
 #include "../helper/settingsHelper.h"
+#include "../cmd/cmd.h"
 #include <algorithm>
 #include <cstdlib>
 
@@ -517,4 +518,76 @@ auto InputManager::alternateSort() -> void {
             temp.push_back( mapping->alternate );
         }
     }
+}
+
+auto InputManager::absoluteMouseToEmu() -> GUIKIT::Position {
+
+    // absolute mouse position within viewport.
+    GUIKIT::Position absPos = view->viewport.getMousePosition();
+
+    DRIVER::Viewport& viewport = videoDriver->getViewport();
+
+    uiMouse.updated = true;
+
+    if (!viewport.width || !viewport.height) {
+        uiMouse.pos = absPos;
+        return absPos;
+    }
+
+    if (absPos.x > viewport.x)
+        absPos.x -= viewport.x;
+    else
+        absPos.x = 0;
+
+    if (absPos.y > viewport.y)
+        absPos.y -= viewport.y;
+    else
+        absPos.y = 0;
+
+    unsigned emuWidth = emulator->cropWidth();
+    unsigned emuHeight = emulator->cropHeight();
+
+    // scale host position to emu position
+    absPos.x = (absPos.x * emuWidth) / viewport.width;
+    absPos.y = (absPos.y * emuHeight) / viewport.height;
+
+    uiMouse.pos = absPos;
+
+    return absPos;
+}
+
+auto InputManager::initDriver() -> void {
+
+    if (inputDriver)
+        delete inputDriver;
+
+    if (cmd->noDriver) {
+        inputDriver = new DRIVER::Input;
+        return;
+    }
+
+    inputDriver = DRIVER::Input::create( getSelectedDriver() );
+
+    if ( !inputDriver->init( view->handle() ) ) {
+        delete inputDriver;
+        inputDriver = new DRIVER::Input;
+    }
+    init();
+
+    for( auto emuView : emuConfigViews ) {
+        if (emuView->inputLayout)
+            emuView->inputLayout->loadDeviceList();
+    }
+}
+
+auto InputManager::getSelectedDriver() -> std::string {
+    auto curDriver = globalSettings->get<std::string>("input_driver", "");
+    auto drivers = DRIVER::Input::available();
+
+    for(auto& driver : drivers) {
+        if(curDriver == driver)
+            return driver;
+    }
+
+    return DRIVER::Input::preferred();
 }

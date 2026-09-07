@@ -167,7 +167,8 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
             if (!activeEmulator)
                 break;
 
-            program->toggleRecord();
+            if (view)
+                view->toggleRecord();
         } break;
         case Hotkey::Id::RunAheadDown:
         case Hotkey::Id::RunAheadUp: {
@@ -399,7 +400,7 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
                 // dinput needs this, when grab button is mapped to mouse
                 view->prepareCursorHide(200);
                 //inputDriver->mAcquire();
-            } else if (!program->isPause && program->isAnalogDeviceConnected()) {
+            } else if (!program->isPause && view->isAnalogDeviceConnected()) {
                 view->prepareCursorHide(200);
                 // inputDriver->mAcquire();
                 view->setFocused();

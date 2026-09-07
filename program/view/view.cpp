@@ -189,7 +189,7 @@ auto View::build() -> void {
 	
 	onContext = [this]() {
         emuThread->lock();
-        if ( program->couldDeviceBlockSecondMouseButton( ) ) {
+        if ( couldDeviceBlockSecondMouseButton( ) ) {
             emuThread->unlock();
             return false;
         }
@@ -1605,7 +1605,7 @@ auto View::buildMenu() -> void {
     miscMenu.append(*GUIKIT::MenuSeparator::getInstance());
 
     recordAudio.onActivate = [this]() {    
-        program->toggleRecord();
+        toggleRecord();
     };
     recordAudio.setIcon(recordAudioImage);
     miscMenu.append(recordAudio);
@@ -3069,4 +3069,54 @@ auto View::getReadable(DebuggerTheme theme, Emulator::Interface* emulator) -> st
     }
 
     return "";
+}
+
+auto View::couldDeviceBlockSecondMouseButton( ) -> bool {
+    if (!activeEmulator)
+        return false;
+
+    for(auto& connector : activeEmulator->connectors) {
+
+        auto device = activeEmulator->getConnectedDevice( &connector );
+
+        // light devices are usable even if mouse is not acquired.
+        // some of these devices (light pens) needs two mouse buttons.
+        // normally the second mouse button is reserved for displaying context menu.
+        // in this case, we want to disable context menu.
+        if ( device->isLightDevice() && device->inputs.size() > 3 )
+            return true;
+    }
+
+    return false;
+}
+
+auto View::isAnalogDeviceConnected( ) -> bool {
+
+    if (!activeEmulator)
+        return false;
+
+    for(auto& connector : activeEmulator->connectors) {
+
+        auto device = activeEmulator->getConnectedDevice( &connector );
+
+        if ( device->isMouse() || device->isPaddles() || device->isLightDevice() )
+            return true;
+    }
+
+    return false;
+}
+
+auto View::toggleRecord() -> void {
+    auto emuView = EmuConfigView::TabWindow::getView(activeEmulator);
+    if (emuView && emuView->audioLayout) {
+        emuView->audioLayout->toggleRecord();
+    } else if (audioManager) {
+        emuThread->lock();
+        std::string errorText;
+        if (!audioManager->record.toggle(activeEmulator, errorText))
+            statusHandler->setMessage(errorText, true);
+
+        setAudioRecordText();
+        emuThread->unlock();
+    }
 }

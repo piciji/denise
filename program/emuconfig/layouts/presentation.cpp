@@ -1708,7 +1708,7 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
     layRewind.enableRewind.onToggle = [this](bool checked) {
         _settings->set<bool>("rewind_enable", checked);
         emuThread->lock();
-        program->setRewind(emulator);
+        MiscHelper::setRewind(emulator);
         emuThread->unlock();
     };
 
@@ -1716,7 +1716,7 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
         _settings->set<unsigned>("rewind_step", position + 1);
         layRewind.framesPerStep.setValue( std::to_string(position + 1) );
         emuThread->lock();
-        program->setRewind(emulator);
+        MiscHelper::setRewind(emulator);
         emuThread->unlock();
     };
 
@@ -1725,7 +1725,7 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
         _settings->set<unsigned>("rewind_buffer", _size);
         layRewind.bufferSize.setValue( std::to_string(_size) );
         emuThread->lock();
-        program->setRewind(emulator);
+        MiscHelper::setRewind(emulator);
         emuThread->unlock();
     };
 
