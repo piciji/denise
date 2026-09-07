@@ -57,6 +57,8 @@
 		9D1338A13008C456008C6652 /* LICENSE in Resources */ = {isa = PBXBuildFile; fileRef = 9D1338963008C456008C6652 /* LICENSE */; };
 		9D1338A23008C456008C6652 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 9D1338973008C456008C6652 /* README.md */; };
 		9D1338A43008C456008C6652 /* USBSID.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D1338993008C456008C6652 /* USBSID.cpp */; settings = {COMPILER_FLAGS = "-I$(PROJECT_DIR)/data/libs/include/"; }; };
+		9D19C4C2304F0835004B3715 /* uci.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D19C4C0304F0835004B3715 /* uci.cpp */; };
+		9D19C4C3304F0835004B3715 /* uci.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D19C4C0304F0835004B3715 /* uci.cpp */; };
 		9D31E3BE2DF2083600F88404 /* recentFiles.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D31E3BC2DF2083600F88404 /* recentFiles.cpp */; };
 		9D3226672F97727E005B3154 /* paulaDebugger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D3226652F97727E005B3154 /* paulaDebugger.cpp */; };
 		9D3226682F97727E005B3154 /* paulaDebugger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D3226652F97727E005B3154 /* paulaDebugger.cpp */; };
@@ -627,6 +629,8 @@
 		9D1338973008C456008C6652 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		9D1338983008C456008C6652 /* USBSID.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = USBSID.h; sourceTree = "<group>"; };
 		9D1338993008C456008C6652 /* USBSID.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = USBSID.cpp; sourceTree = "<group>"; };
+		9D19C4BF304F0835004B3715 /* uci.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = uci.h; sourceTree = "<group>"; };
+		9D19C4C0304F0835004B3715 /* uci.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = uci.cpp; sourceTree = "<group>"; };
 		9D31E3BC2DF2083600F88404 /* recentFiles.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = recentFiles.cpp; sourceTree = "<group>"; };
 		9D31E3BD2DF2083600F88404 /* recentFiles.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = recentFiles.h; sourceTree = "<group>"; };
 		9D3226652F97727E005B3154 /* paulaDebugger.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = paulaDebugger.cpp; sourceTree = "<group>"; };
@@ -738,7 +742,6 @@
 		9D8FAA892CB3F6EF006905BE /* chronos.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = chronos.h; sourceTree = "<group>"; };
 		9D8FAA8A2CB3F6EF006905BE /* filepool.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = filepool.h; sourceTree = "<group>"; };
 		9D8FAA8B2CB3F6EF006905BE /* gaussianBlur.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = gaussianBlur.h; sourceTree = "<group>"; };
-		9D8FAA8C2CB3F6EF006905BE /* input.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = input.cpp; sourceTree = "<group>"; };
 		9D8FAA8E2CB3F6EF006905BE /* archiveViewer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = archiveViewer.cpp; sourceTree = "<group>"; };
 		9D8FAA8F2CB3F6EF006905BE /* config.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = config.h; sourceTree = "<group>"; };
 		9D8FAA902CB3F6EF006905BE /* slider.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = slider.h; sourceTree = "<group>"; };
@@ -751,7 +754,6 @@
 		9D8FAA9E2CB3F6EF006905BE /* mapping.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = mapping.cpp; sourceTree = "<group>"; };
 		9D8FAA9F2CB3F6EF006905BE /* manager.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = manager.cpp; sourceTree = "<group>"; };
 		9D8FAAA02CB3F6EF006905BE /* global.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = global.cpp; sourceTree = "<group>"; };
-		9D8FAAA12CB3F6EF006905BE /* audio.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = audio.cpp; sourceTree = "<group>"; };
 		9D8FAAA22CB3F6EF006905BE /* video.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = video.cpp; sourceTree = "<group>"; };
 		9D8FAAA52CB3F6EF006905BE /* wavWriter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = wavWriter.h; sourceTree = "<group>"; };
 		9D8FAAA62CB3F6EF006905BE /* wavWriter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = wavWriter.cpp; sourceTree = "<group>"; };
@@ -1501,6 +1503,15 @@
 			path = "deps/USBSID-Pico";
 			sourceTree = "<group>";
 		};
+		9D19C4C1304F0835004B3715 /* uci */ = {
+			isa = PBXGroup;
+			children = (
+				9D19C4BF304F0835004B3715 /* uci.h */,
+				9D19C4C0304F0835004B3715 /* uci.cpp */,
+			);
+			path = uci;
+			sourceTree = "<group>";
+		};
 		9D32BA9A2F940ED900AC6442 /* helper */ = {
 			isa = PBXGroup;
 			children = (
@@ -1676,10 +1687,8 @@
 				9D8FAA732CB3F6EF006905BE /* firmware */,
 				9D8FAA762CB3F6EF006905BE /* video */,
 				9D8FAA802CB3F6EF006905BE /* tools */,
-				9D8FAA8C2CB3F6EF006905BE /* input.cpp */,
 				9D8FAA8D2CB3F6EF006905BE /* config */,
 				9D8FAA992CB3F6EF006905BE /* input */,
-				9D8FAAA12CB3F6EF006905BE /* audio.cpp */,
 				9D8FAAA22CB3F6EF006905BE /* video.cpp */,
 				9D8FAAA32CB3F6EF006905BE /* audio */,
 				9D8FAAC82CB3F6EF006905BE /* states */,
@@ -2483,6 +2492,7 @@
 		9D8FAD232CB40DF7006905BE /* expansionPort */ = {
 			isa = PBXGroup;
 			children = (
+				9D19C4C1304F0835004B3715 /* uci */,
 				9D11571B3020E2C1003065FA /* trilogicExpert */,
 				9D5539572D5A8FBC0083E91B /* finalChessCard */,
 				9D5539542D5A8F4D0083E91B /* superCpu */,
@@ -3241,6 +3251,7 @@
 				9DA75E762FE702E200766658 /* Filter8580.cpp in Sources */,
 				9D8FAB1C2CB3F6F0006905BE /* states.cpp in Sources */,
 				9D8FAE742CB40DF9006905BE /* drive.cpp in Sources */,
+				9D19C4C3304F0835004B3715 /* uci.cpp in Sources */,
 				9D64044C2DCDEF2E00624A00 /* hardDrive.cpp in Sources */,
 				9D32BAA32F940EEF00AC6442 /* fileHelper.cpp in Sources */,
 				9D8F51082EDB5A2A00153A53 /* watcher.cpp in Sources */,
@@ -3465,6 +3476,7 @@
 				9DA75E772FE702E200766658 /* Filter8580.cpp in Sources */,
 				9DECF93C2E45F309005C0BBA /* states.cpp in Sources */,
 				9DECF93D2E45F309005C0BBA /* drive.cpp in Sources */,
+				9D19C4C2304F0835004B3715 /* uci.cpp in Sources */,
 				9DECF93E2E45F309005C0BBA /* hardDrive.cpp in Sources */,
 				9D32BAA42F940EEF00AC6442 /* fileHelper.cpp in Sources */,
 				9D8F51092EDB5A2A00153A53 /* watcher.cpp in Sources */,

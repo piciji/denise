@@ -56,57 +56,57 @@ struct Reu : ExpansionPort {
 	uint8_t busFloating;
     bool swapRead;
 
-    auto writeIo1( uint16_t addr, uint8_t value ) -> void;    
-    auto readIo1( uint16_t addr ) -> uint8_t;
-    auto peekIo1( uint16_t addr ) -> uint8_t;
-    auto writeIo2( uint16_t addr, uint8_t value ) -> void;    
-    auto readIo2( uint16_t addr ) -> uint8_t;
-    auto peekIo2( uint16_t addr ) -> uint8_t;
-    auto setRom(Emulator::Interface::Media* media, uint8_t* rom, unsigned romSize) -> void;
+    auto writeIo1( uint16_t addr, uint8_t value ) -> void override;
+    auto readIo1( uint16_t addr ) -> uint8_t override;
+    auto peekIo1( uint16_t addr ) -> uint8_t override;
+    auto writeIo2( uint16_t addr, uint8_t value ) -> void override;
+    auto readIo2( uint16_t addr ) -> uint8_t override;
+    auto peekIo2( uint16_t addr ) -> uint8_t override;
+    auto setRom(Emulator::Interface::Media* media, uint8_t* rom, unsigned romSize) -> void override;
     auto prepareRam(unsigned size) -> void;
 
-    auto setRamSize(int id) -> void;
-    auto getRamSize() -> int;
+    auto setRamSize(int id) -> void override;
+    auto getRamSize() -> int override;
     auto injectRam() -> void;
 	
-	auto isExrom( ) -> bool;
-	auto isGame( ) -> bool;
+	auto isExrom( ) -> bool override;
+	auto isGame( ) -> bool override;
 
-    auto clock() -> void;
+    auto clock() -> void override;
     auto clockSCPU() -> void;
-    auto reset(bool softReset = false) -> void;
-    auto serialize(Emulator::Serializer& s) -> void;
+    auto reset(bool softReset = false) -> void override;
+    auto serialize(Emulator::Serializer& s) -> void override;
     
     auto incrementAddresses() -> void;
     auto decrementTransferLength() -> void;
     auto readReu() -> uint8_t;
     auto writeReu(uint8_t value) -> void;
     auto allowIrq() -> bool;
-    auto isBootable( ) -> bool;
-    auto hasFreezeButton() -> bool;
-    auto freeze() -> void;
+    auto isBootable( ) -> bool override;
+    auto hasFreezeButton() -> bool override;
+    auto freeze() -> void override;
     
     template<bool fromSCPU = false> inline auto stash() -> void;
     template<bool fromSCPU = false> inline auto fetch() -> void;
     template<bool fromSCPU = false> inline auto swap() -> void;
     template<bool fromSCPU = false> inline auto verify() -> void;
 	
-	auto readRomL(uint16_t addr) -> uint8_t;
-    auto peekRomL(uint16_t addr) -> uint8_t;
-	auto writeRomL( uint16_t addr, uint8_t data ) -> void;
-    auto listenToWritesAt80To9F(uint16_t addr, uint8_t data ) -> void;
-    auto writeUltimaxRomL( uint16_t addr, uint8_t data ) -> void;    
-    auto readRomH( uint16_t addr ) -> uint8_t;
-    auto peekRomH( uint16_t addr ) -> uint8_t;
-    auto readUltimaxA0( uint16_t addr ) -> uint8_t;
-    auto peekUltimaxA0( uint16_t addr ) -> uint8_t;
-    auto writeRomH( uint16_t addr, uint8_t data ) -> void;
-    auto writeUltimaxA0( uint16_t addr, uint8_t data ) -> void;
+	auto readRomL(uint16_t addr) -> uint8_t override;
+    auto peekRomL(uint16_t addr) -> uint8_t override;
+	auto writeRomL( uint16_t addr, uint8_t data ) -> void override;
+    auto listenToWritesAt80To9F(uint16_t addr, uint8_t data ) -> void override;
+    auto writeUltimaxRomL( uint16_t addr, uint8_t data ) -> void override;
+    auto readRomH( uint16_t addr ) -> uint8_t override;
+    auto peekRomH( uint16_t addr ) -> uint8_t override;
+    auto readUltimaxA0( uint16_t addr ) -> uint8_t override;
+    auto peekUltimaxA0( uint16_t addr ) -> uint8_t override;
+    auto writeRomH( uint16_t addr, uint8_t data ) -> void override;
+    auto writeUltimaxA0( uint16_t addr, uint8_t data ) -> void override;
 
-    auto hasRom() -> bool { return rom ? true : false; }
+    auto hasRom() -> bool override { return rom ? true : false; }
 
 	auto setExpander( ExpansionPort* expander ) -> void;
-    auto getSizeNotConsideredForMemorySerialization() -> unsigned;
+    auto getSizeNotConsideredForMemorySerialization() -> unsigned override;
 
 };    
 
