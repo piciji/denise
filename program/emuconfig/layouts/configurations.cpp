@@ -1064,6 +1064,8 @@ auto ConfigurationsLayout::load( std::string path, bool showError ) -> bool {
         return false;
     }
 
+    SettingsHelper::unsetObsoleteConfigs( _settings, this->emulator );
+
     program->initEmulator(this->emulator);
 
     auto inputManager = InputManager::getManager(this->emulator);

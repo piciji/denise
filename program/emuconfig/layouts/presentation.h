@@ -11,6 +11,7 @@
 namespace EmuConfigView {
 
 struct TabWindow;
+struct PresentationLayout;
 
 struct VideoBaseLayout : GUIKIT::VerticalLayout {
 
@@ -19,12 +20,11 @@ struct VideoBaseLayout : GUIKIT::VerticalLayout {
             GUIKIT::RadioBox palette;
             GUIKIT::RadioBox spectrumPALette;
             GUIKIT::RadioBox spectrumColodore;
-            GUIKIT::RadioBox rgb;
-            GUIKIT::RadioBox cpu;
-            GUIKIT::RadioBox gpu;
-
             GUIKIT::Widget spacer;
-            GUIKIT::Button reset;
+            GUIKIT::Label trLabel;
+            GUIKIT::RadioBox trOff;
+            GUIKIT::RadioBox trOn;
+            GUIKIT::RadioBox trAuto;
 
             Mode(bool withSpectrum);
         } mode;
@@ -33,11 +33,10 @@ struct VideoBaseLayout : GUIKIT::VerticalLayout {
             GUIKIT::CheckBox newLuma;
             GUIKIT::CheckBox linearInterpolation;
             GUIKIT::CheckBox audioInterference;
+            GUIKIT::CheckBox legacyCRTonCPU;
+            GUIKIT::Button legacyParams;
             GUIKIT::Widget spacer;
-            GUIKIT::Label trLabel;
-            GUIKIT::RadioBox trOff;
-            GUIKIT::RadioBox trOn;
-            GUIKIT::RadioBox trAuto;
+            GUIKIT::Button reset;
 
             Option(bool withSpectrum);
         } option;
@@ -48,27 +47,48 @@ struct VideoBaseLayout : GUIKIT::VerticalLayout {
         SliderLayout contrast;
         SliderLayout phase;
         SliderLayout interlace;
-        SliderLayout scanlines;
 
         View(bool withSpectrum);
     } view;
 
-    struct Encoding : GUIKIT::FramedVerticalLayout {
-        SliderLayout phaseError;
-        SliderLayout hanoverBars;
-        SliderLayout blur;
-
-        Encoding();
-    } encoding;
-
-    struct LumaDelay : GUIKIT::FramedVerticalLayout {
-        SliderLayout lumaRise;
-        SliderLayout lumaFall;
-
-        LumaDelay();
-    } lumaDelay;
-
     VideoBaseLayout(bool withSpectrum);
+};
+
+struct SCVideoWindow : GUIKIT::Window {
+    PresentationLayout* presentation;
+
+    struct Main : GUIKIT::VerticalLayout {
+        struct Option : GUIKIT::HorizontalLayout {
+            GUIKIT::MultilineEdit multiLine;
+            GUIKIT::Button reset;
+
+            Option();
+        } option;
+
+        struct Encoding : GUIKIT::FramedVerticalLayout {
+            SliderLayout phaseError;
+            SliderLayout hanoverBars;
+            SliderLayout blur;
+            SliderLayout scanlines;
+
+            Encoding();
+        } encoding;
+
+        struct LumaDelay : GUIKIT::FramedVerticalLayout {
+            SliderLayout lumaRise;
+            SliderLayout lumaFall;
+
+            LumaDelay();
+        } lumaDelay;
+
+        Main(bool withLumaDelay);
+    } main;
+
+    auto build() -> void;
+    auto updateVisibillity() -> void;
+    auto translate() -> void;
+
+    SCVideoWindow(PresentationLayout* presentation);
 };
 
 struct VideoShaderLayout : GUIKIT::VerticalLayout {
@@ -379,8 +399,6 @@ struct VideoRewindLayout : GUIKIT::FramedVerticalLayout {
     VideoRewindLayout();
 };
 
-struct PresentationLayout;
-
 struct ParamEditor : GUIKIT::Window {
     ParamEditor(PresentationLayout* presentation);
 
@@ -456,9 +474,9 @@ struct PresentationLayout : GUIKIT::HorizontalLayout {
     unsigned selectedParamId;
     std::vector<std::pair<unsigned, unsigned>> params;
     ParamEditor* paramEditor = nullptr;
+    SCVideoWindow* scVideoWindow = nullptr;
     	
     auto translate() -> void;
-    auto sliderIdent() -> std::string;
     auto updatePresets(bool reloadDriver, bool reloadPreset) -> void;
     auto updateVisibillity() -> void;
     auto loadSettings(bool init = false) -> void;
@@ -475,7 +493,6 @@ struct PresentationLayout : GUIKIT::HorizontalLayout {
     auto presentShaderError() -> void;
     auto clearShaderError() -> void;
     auto addShaderUI() -> void;
-    auto enableGPUMode(bool state) -> void;
     auto updateScreenText(bool keepFontPath) -> void;
     auto prepareColBox() -> void;
     auto fillFontTypeList() -> void;

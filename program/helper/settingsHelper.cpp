@@ -141,6 +141,134 @@ auto SettingsHelper::unsetObsoleteConfigs(GUIKIT::Settings* settings, Emulator::
             }
         }
     } else {
+        if (!settings->get("unset_video_mode_ident", false)) {
+            static const std::string idents[] = {
+                "_pal", "_pal_spectrum", "_pal_spectrum_crtcpu", "_pal_spectrum_crtgpu", "_pal_crtcpu", "_pal_crtgpu",
+                "_ntsc","_ntsc_spectrum", "_ntsc_spectrum_crtcpu", "_ntsc_spectrum_crtgpu", "_ntsc_crtcpu", "_ntsc_crtgpu"
+            };
+
+            auto _crtMode = settings->get<unsigned>("video_crt", 0);
+            auto _useSpectrum = settings->get<unsigned>("video_spectrum", 1);
+            bool _pal = true;
+            bool _c64 = dynamic_cast<LIBC64::Interface*>(emulator);
+
+            if (_c64) {
+                auto _region = settings->get<unsigned>("VIC-II", 0);
+                _pal = _region <= 1 || _region == 4 || _region == 6 || _region == 7;
+
+            } else {
+                auto _region = settings->get<unsigned>("Region", 0);
+                _pal = _region == 0;
+            }
+
+            std::string _identInUse = _pal ? "_pal" : "_ntsc";
+            if (_useSpectrum && _c64)
+                _identInUse += "_spectrum";
+            if (_crtMode == 1)
+                _identInUse += "_crtcpu";
+            else if (_crtMode == 2)
+                _identInUse += "_crtgpu";
+
+            for (auto& ident : idents) {
+                if (ident == _identInUse) {
+                    settings->set<unsigned>("video_saturation", settings->get<unsigned>("video_saturation" + ident, 100u,{0u, 200u}));
+                    settings->set<unsigned>("video_contrast", settings->get<unsigned>("video_contrast" + ident, 100u,{0u, 200u}));
+                    settings->set<unsigned>("video_gamma", settings->get<unsigned>("video_gamma" + ident, 100u,{30u, 280u}));
+                    settings->set<unsigned>("video_brightness", settings->get<unsigned>("video_brightness" + ident, 100u,{0u, 200u}));
+                    if (_c64) {
+                        settings->set<int>("video_phase", settings->get<int>("video_phase" + ident, 0u,{-180, 180}));
+                        settings->set<bool>("video_new_luma", settings->get<bool>("video_new_luma" + ident, true));
+                    }
+                    settings->set<float>("video_phase_error", settings->get<float>("video_phase_error" + ident,  _pal ? (_c64 ? 22.5f : 3.5f ) : 0,{-45.0, 45.0}));
+                    settings->set<bool>("video_phase_error_use", settings->get<bool>("video_phase_error_use" + ident, true));
+
+                    settings->set<int>("video_hanover_bars", settings->get<int>("video_hanover_bars" + ident, -10, {-100, 100}));
+                    settings->set<bool>("video_hanover_bars_use", settings->get<bool>("video_hanover_bars_use" + ident, true));
+                    settings->set<unsigned>("video_blur", settings->get<unsigned>("video_blur" + ident, 30u,{0u, 100u}));
+                    settings->set<bool>("video_blur_use", settings->get<bool>("video_blur_use" + ident, true));
+                    settings->set<bool>("video_scanlines_use", settings->get<bool>("video_scanlines_use" + ident, false));
+                    settings->set<unsigned>("video_scanlines", settings->get<unsigned>("video_scanlines" + ident, 33u,{0u, 100u}));
+                    if (!_c64) {
+                        settings->set<bool>("video_interlace_use", settings->get<bool>("video_interlace_use" + ident, true));
+                        settings->set<unsigned>("video_interlace", settings->get<unsigned>("video_interlace" + ident, 0u,{0u, 100u}));
+                    } else {
+                        settings->set<bool>("video_luma_rise_use", settings->get<bool>("video_luma_rise_use" + ident, true));
+                        settings->set<bool>("video_luma_fall_use", settings->get<bool>("video_luma_fall_use" + ident, true));
+                        settings->set<float>("video_luma_rise", settings->get<float>("video_luma_rise" + ident,  2.0, {1.0, 4.0}));
+                        settings->set<float>("video_luma_fall", settings->get<float>("video_luma_fall" + ident,  1.2, {1.0, 4.0}));
+                    }
+                }
+
+                settings->remove("video_saturation" + ident);
+                settings->remove("video_contrast" + ident);
+                settings->remove("video_gamma" + ident);
+                settings->remove("video_brightness" + ident);
+                settings->remove("video_phase" + ident);
+                settings->remove("video_phase_error" + ident);
+                settings->remove("video_phase_error_use" + ident);
+                settings->remove("video_new_luma" + ident);
+                settings->remove("video_hanover_bars" + ident);
+                settings->remove("video_hanover_bars_use" + ident);
+
+                settings->remove("video_blur" + ident);
+                settings->remove("video_blur_use" + ident);
+                settings->remove("video_scanlines_use" + ident);
+                settings->remove("video_scanlines" + ident);
+                settings->remove("video_interlace_use" + ident);
+                settings->remove("video_interlace" + ident);
+                settings->remove("video_luma_rise_use" + ident);
+                settings->remove("video_luma_rise" + ident);
+                settings->remove("video_luma_fall_use" + ident);
+                settings->remove("video_luma_fall" + ident);
+
+                settings->remove("video_radial_distortion" + ident);
+                settings->remove("video_radial_distortion_use" + ident);
+                settings->remove("video_random_line_offset" + ident);
+                settings->remove("video_luma_noise" + ident);
+                settings->remove("video_chroma_noise" + ident);
+                settings->remove("video_bloom_weight" + ident);
+                settings->remove("video_bloom_weight_use" + ident);
+                settings->remove("video_bloom_variance" + ident);
+                settings->remove("video_bloom_glow" + ident);
+                settings->remove("video_bloom_radius" + ident);
+                settings->remove("video_aec_glitch_use" + ident);
+                settings->remove("video_ba_glitch_use" + ident);
+                settings->remove("video_phi0_glitch_use" + ident);
+                settings->remove("video_ras_glitch_use" + ident);
+                settings->remove("video_cas_glitch_use" + ident);
+                settings->remove("video_aec_glitch" + ident);
+                settings->remove("video_ba_glitch" + ident);
+                settings->remove("video_phi0_glitch" + ident);
+                settings->remove("video_ras_glitch" + ident);
+                settings->remove("video_cas_glitch" + ident);
+                settings->remove("video_fir_filter_length" + ident);
+                settings->remove("video_tv_gamma" + ident);
+                settings->remove("video_crt_real_gamma" + ident);
+
+                settings->remove("video_fir_filter_sharp" + ident);
+                settings->remove("video_mask_luminance" + ident);
+                settings->remove("video_mask_level_use" + ident);
+                settings->remove("video_mask_level" + ident);
+                settings->remove("video_mask_dpi" + ident);
+                settings->remove("video_mask_pitch" + ident);
+
+                settings->remove("video_mask_type" + ident);
+                settings->remove("video_distortion_hires" + ident);
+                settings->remove("video_hires" + ident);
+                settings->remove("video_luminance" + ident);
+                settings->remove("video_light_from_center" + ident);
+                settings->remove("video_light_from_center_use" + ident);
+                settings->remove("video_chroma_noise_use" + ident);
+                settings->remove("video_luma_noise_use" + ident);
+                settings->remove("video_bloom_glow_use" + ident);
+                settings->remove("video_random_line_offset_use" + ident);
+            }
+
+            settings->remove("video_crt");
+
+            settings->set("unset_video_mode_ident", true);
+        }
+
         if (!settings->get("unset_mid", false)) {
             for (auto setting : settings->getList()) {
                 if (GUIKIT::String::findString(setting->getIdent(), "mouse")

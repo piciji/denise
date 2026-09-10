@@ -4,12 +4,12 @@
 #include "../../emulation/interface.h"
 #include "../../driver/tools/shaderpass.h"
 
-#define VPARAMS _useSpectrum, _crtMode, _region, _useInterlace, _interlace, \
+#define VPARAMS _useSpectrum, _legacyCrtMode, _region, _useInterlace, _interlace, \
     _saturation, _contrast, _gamma, _brightness, _phase, _usePhaseError, _phaseError,  \
     _newLuma, _hanoverBars, _useHanoverBars, \
     _useBlur, _blur, _useScanlines, _scanlines, _useLumaRise, _lumaRise, _useLumaFall, _lumaFall
 
-#define VPARAMST unsigned, unsigned, unsigned, bool, unsigned, \
+#define VPARAMST unsigned, bool, unsigned, bool, unsigned, \
     unsigned, unsigned, unsigned, unsigned, int, bool, float, \
     bool, int, bool, \
     bool, unsigned, bool, unsigned, bool, float, bool, float
@@ -80,7 +80,8 @@ struct VideoManager {
     static auto setHardSync() -> void;
     static auto unloadDataStorage() -> void;
 
-    enum class CrtMode : unsigned { None = 0u, Cpu = 1u, Gpu = 2u } crtMode;
+    bool legacyCRTonCPU;
+    bool suppressShaderByHotkey;
 
     struct DataUpdates {
         std::string ident;
@@ -207,11 +208,10 @@ struct VideoManager {
     static auto getInstance( Emulator::Interface* emulator ) -> VideoManager*;
 	static auto updateAll() -> void;
     auto useLumaDelay() -> bool;
-    auto useRegionEncoding() -> bool;
     // seter props
     auto usePal(bool state) -> void; // pal or ntsc
     auto useColorSpectrum(unsigned state) -> void; // color spectrum or palette
-    auto setCrtMode(CrtMode _mode) -> void;
+    auto setLegacyCrtMode(bool state) -> void;
     
     auto setSaturation(unsigned saturation) -> void;
     auto setBrightness(unsigned brightness) -> void;
@@ -232,7 +232,7 @@ struct VideoManager {
     auto reloadSettings(bool reloadPreset) -> void;
     auto getSettings() -> std::tuple<VPARAMST>;   
     auto resetSettings() -> void;
-    auto getModeIdent() -> std::string;
+    auto resetLegacySettings() -> void;
     auto applyMeta() -> void;
 
     auto updateData(int offset, float data) -> void;
@@ -267,6 +267,7 @@ struct VideoManager {
     auto sampleLuma(unsigned width, unsigned height, const uint8_t* src, unsigned srcPitch) -> void;
     auto fetchShader(ShaderPreset::Pass& pass, unsigned passId) -> bool;
     template<typename T> auto takeScreenshot(unsigned unscaled, const T* _src, unsigned _width, unsigned _height, unsigned _pitch, uint8_t _options) -> void;
+    auto toggleShaderTemporary() -> bool;
 };
 
 extern std::vector<VideoManager*> videoManagers;

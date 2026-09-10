@@ -67,6 +67,8 @@ float_framebuffer7 = true
 scale_type7 = source
 scale7 = 1.0
 
+vicGlitches = 0.0
+
 
 # LUT generation: program/video/luts.cpp
 textures = "lutBandwidth"

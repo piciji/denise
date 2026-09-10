@@ -14,6 +14,7 @@ layout(push_constant) uniform Push
     float glitch_phi;
     float glitch_aec;
     float glitch_ba;
+    float vicGlitches;
     float AppCropLeft;
     float AppPAL;
 } params;
@@ -32,6 +33,7 @@ layout(std140, set = 0, binding = 0) uniform UBO
 // RAS: first pixel of each half cycle will be non darkened
 
 #pragma parameter vicGlitches_head      "[VICII GLITCHES]"   0 0 0.001 0.001
+#pragma parameter vicGlitches           "enable next 5 options" 1 0 1 1
 #pragma parameter glitch_aec            "AEC"                10.5 0 25 0.1
 #pragma parameter glitch_ba             "BA"                 10.5 0 25 0.1
 #pragma parameter glitch_phi            "PHI"                10.5 0 25 0.1
@@ -57,6 +59,11 @@ layout(set = 0, binding = 2) uniform sampler2D Source;
 
 void main() {
     vec4 color = texture(Source, vTexCoord);
+    if (!bool(params.vicGlitches)) {
+        FragColor = vec4(color.xyz, 1.0);
+        return;
+    }
+
     float AEC = params.glitch_aec * params.glitch_aec * 0.0001;
     float BA = params.glitch_ba * params.glitch_ba * 0.0001;
     float PHI0 = params.glitch_phi * params.glitch_phi * 0.0001;

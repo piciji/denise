@@ -193,7 +193,9 @@ void main() {
             _gamma *= 2.8 / 2.2;
 
     } else {
-        yuv.yz = calcBandwidth(yuv.yz, 0.0);
+        if (bool(params.chromaSubsampling)) {
+            yuv.yz = calcBandwidth(yuv.yz, 0.0);
+        }
         color = yuv.xyz * mat3(1.0, 1.630, 0.317, 1.0, -0.378, -0.466, 1.0, -1.089, 1.677);
     }
 

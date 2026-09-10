@@ -24,32 +24,10 @@ VideoBaseLayout::View::Mode::Mode(bool withSpectrum) {
     if (withSpectrum) {
         append(palette,{0u, 0u}, 10);
         append(spectrumPALette,{0u, 0u}, 10);
-        append(spectrumColodore,{0u, 0u}, 30);
+        append(spectrumColodore,{0u, 0u});
         GUIKIT::RadioBox::setGroup(palette, spectrumColodore, spectrumPALette);
+        append(spacer,{~0u, 0u});
     }
-
-    append(rgb,{0u, 0u}, 10);
-    append(cpu,{0u, 0u}, 10);
-    append(gpu,{0u, 0u});
-
-    append(spacer,{~0u, 0u});
-    append(reset,{0u, 0u});
-
-    GUIKIT::RadioBox::setGroup(rgb, cpu, gpu);
-
-    setAlignment(0.5);
-}
-
-VideoBaseLayout::View::Option::Option(bool withSpectrum) {
-    if (withSpectrum)
-        append(newLuma, {0u, 0u}, 10);
-
-    append(linearInterpolation, {0u, 0u}, 10);
-
-    if (withSpectrum)
-        append(audioInterference, {0u, 0u});
-
-    append(spacer, {~0u, 0u});
 
     append(trLabel, {0u, 0u}, 5);
     append(trOff, {0u, 0u}, 5);
@@ -61,11 +39,26 @@ VideoBaseLayout::View::Option::Option(bool withSpectrum) {
     setAlignment(0.5);
 }
 
+VideoBaseLayout::View::Option::Option(bool withSpectrum) {
+    append(linearInterpolation, {0u, 0u}, withSpectrum ? 10 : 20);
+
+    if (withSpectrum) {
+        append(newLuma, {0u, 0u}, 10);
+        append(audioInterference, {0u, 0u}, 20);
+    }
+
+    append(legacyCRTonCPU,{0u, 0u}, 5);
+    append(legacyParams,{0u, 0u});
+    append(spacer, {~0u, 0u});
+    append(reset,{0u, 0u});
+
+    setAlignment(0.5);
+}
+
 VideoBaseLayout::View::View(bool withSpectrum) :
 mode(withSpectrum),
 option(withSpectrum),
 phase("°"),
-scanlines("%", SliderLayout::ACTIVATOR),
 interlace("%", SliderLayout::ACTIVATOR) {
 
     append(mode, {~0u, 0u}, 2);
@@ -78,7 +71,6 @@ interlace("%", SliderLayout::ACTIVATOR) {
     append(contrast, {~0u, 0u}, 2);
     append(brightness, {~0u, 0u}, 2);
     append(gamma, {~0u, 0u}, 2);
-    append(scanlines,{~0u, 0u}, withSpectrum ? 0 : 2);
 
     if (!withSpectrum)
         append(interlace,{~0u, 0u});
@@ -88,31 +80,48 @@ interlace("%", SliderLayout::ACTIVATOR) {
     brightness.slider.setLength(201);
     contrast.slider.setLength(201);
     phase.slider.setLength(361);
-    scanlines.slider.setLength(101);
     interlace.slider.setLength(101);
 
     setPadding(8);
     setFont(GUIKIT::Font::system("bold"));
 }
 
-VideoBaseLayout::Encoding::Encoding() :
+VideoBaseLayout::VideoBaseLayout(bool withSpectrum) :
+view(withSpectrum) {
+
+    append(view, {~0u, 0u});
+}
+
+SCVideoWindow::Main::Option::Option() {
+    multiLine.setEditable( false );
+
+    append(multiLine,{~0u, 70u}, 20);
+    append(reset,{0u, 0u});
+
+    setAlignment(0.5);
+}
+
+SCVideoWindow::Main::Encoding::Encoding() :
 phaseError("°", SliderLayout::ACTIVATOR),
 hanoverBars("%", SliderLayout::ACTIVATOR),
+scanlines("%", SliderLayout::ACTIVATOR),
 blur("%", SliderLayout::ACTIVATOR) {
 
-    append(phaseError,{~0u, 0u}, 2);
-    append(hanoverBars,{~0u, 0u}, 2);
-    append(blur,{~0u, 0u});
+    append(phaseError,{~0u, 0u}, 5);
+    append(hanoverBars,{~0u, 0u}, 5);
+    append(blur,{~0u, 0u}, 5);
+    append(scanlines,{~0u, 0u});
 
     phaseError.slider.setLength(181); // -45° <-> 45°  ( 0.5 steps )
     hanoverBars.slider.setLength(201); // saturation change -100% <-> 100%
     blur.slider.setLength(101);
+    scanlines.slider.setLength(101);
 
     setFont(GUIKIT::Font::system("bold"));
     setPadding(8);
 }
 
-VideoBaseLayout::LumaDelay::LumaDelay() :
+SCVideoWindow::Main::LumaDelay::LumaDelay() :
 lumaRise("px", SliderLayout::ACTIVATOR),
 lumaFall("px", SliderLayout::ACTIVATOR) {
     append(lumaRise,{~0u, 0u}, 2);
@@ -125,14 +134,19 @@ lumaFall("px", SliderLayout::ACTIVATOR) {
     setPadding(8);
 }
 
-VideoBaseLayout::VideoBaseLayout(bool withSpectrum) :
-view(withSpectrum) {
-
-    append(view, {~0u, 0u}, 5);
+SCVideoWindow::Main::Main(bool withLumaDelay) {
+    append(option, {~0u, 0u}, 5);
     append(encoding, {~0u, 0u}, 5);
 
-    if (withSpectrum)
+    if (withLumaDelay)
         append(lumaDelay, {~0u, 0u});
+
+    setMargin( 10 );
+}
+
+SCVideoWindow::SCVideoWindow(PresentationLayout* presentation) :
+main(dynamic_cast<LIBC64::Interface*>(presentation->tabWindow->emulator)),
+presentation(presentation) {
 }
 
 VideoShaderLayout::Main::Control::Control() {
@@ -581,6 +595,8 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
     rewindImage.loadPng((uint8_t*)Icons::rewind, sizeof(Icons::rewind) );
     starImage.loadPng((uint8_t*)Icons::star, sizeof(Icons::star) );
 
+    layBase.view.option.legacyParams.setImage( &menuImage );
+
     layScreenText.options.font.addFont.setImage(&addImage);
     layScreenText.options.font.removeFont.setImage(&delImage);
 
@@ -639,7 +655,7 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
     layPass.control.down.setImage(&pageDownGray);
     layPass.control.down.setEnabled(false);
 
-    layBase.view.mode.reset.setImage(&backImage);
+    layBase.view.option.reset.setImage(&backImage);
     layShader.main.progress.close.setImage(&backImage);
 
     layMotion.hdr.maxNits.defaultButton.setImage(&backImage);
@@ -819,16 +835,10 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
     setSliderAction<unsigned>( &layBase.view.brightness, "brightness" );
     setSliderAction<unsigned>( &layBase.view.contrast, "contrast" );
     setSliderAction<int>( &layBase.view.phase, "phase", [](unsigned position) { return (int)position - 180; } );
-    setSliderAction<unsigned>( &layBase.view.scanlines, "scanlines", [](unsigned position) { return std::max(position, 1u); } );
     setSliderAction<unsigned>( &layBase.view.interlace, "interlace", [](unsigned position) { return std::max(position, 0u); } );
-    setSliderAction<unsigned>( &layBase.encoding.blur, "blur" );
-    setSliderAction<float>( &layBase.encoding.phaseError, "phase_error", [](unsigned position) { return (float)((int)position - 90) / 2.0f; } );
-    setSliderAction<int>( &layBase.encoding.hanoverBars, "hanover_bars", [](unsigned position) { return (int)position - 100; } );
-    setSliderAction<float>( &layBase.lumaDelay.lumaRise, "luma_rise", [](unsigned position) { return ((float)std::max(position, 1u) / 10.0f) + 1.0f; } );
-    setSliderAction<float>( &layBase.lumaDelay.lumaFall, "luma_fall", [](unsigned position) { return ((float)std::max(position, 1u) / 10.0f) + 1.0f; } );
 
     layBase.view.option.newLuma.onToggle = [this](bool checked) {
-        _settings->set<bool>( "video_new_luma" + this->sliderIdent(), checked);
+        _settings->set<bool>( "video_new_luma", checked);
         vManager()->updateData<bool>("new_luma", checked);
     };
 	
@@ -846,7 +856,7 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
         emuThread->unlock();
     };
 
-    layBase.view.option.trOn.onActivate = [this]() {
+    layBase.view.mode.trOn.onActivate = [this]() {
         emuThread->lock();
         _settings->set<unsigned>("threaded_renderer", 1);
         if (emulator == activeEmulator)
@@ -854,7 +864,7 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
         emuThread->unlock();
     };
 
-    layBase.view.option.trAuto.onActivate = [this]() {
+    layBase.view.mode.trAuto.onActivate = [this]() {
         emuThread->lock();
         _settings->set<unsigned>("threaded_renderer", 2);
         if (emulator == activeEmulator) {
@@ -864,7 +874,7 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
         emuThread->unlock();
     };
 
-    layBase.view.option.trOff.onActivate = [this]() {
+    layBase.view.mode.trOff.onActivate = [this]() {
         emuThread->lock();
         _settings->set<unsigned>("threaded_renderer", 0);
         if (emulator == activeEmulator)
@@ -872,7 +882,7 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
         emuThread->unlock();
     };
 
-    layBase.view.mode.reset.onActivate = [this]() {
+    layBase.view.option.reset.onActivate = [this]() {
         vManager()->resetSettings();
         emuThread->lock();
         updatePresets(true, false);
@@ -900,31 +910,22 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
         emuThread->unlock();
     };
 
-    layBase.view.mode.rgb.onActivate = [this]() {
-        _settings->set<unsigned>("video_crt", (unsigned)VideoManager::CrtMode::None);
+    layBase.view.option.legacyCRTonCPU.onToggle = [this](bool checked) {
+        _settings->set<bool>("video_crt_legacy", checked);
         emuThread->lock();
         program->setWarp( Program::Warp::Off );
         updatePresets(true, false);
-        view->updateShader(emulator);
         emuThread->unlock();
     };
 
-    layBase.view.mode.cpu.onActivate = [this]() {
-        _settings->set<unsigned>("video_crt", (unsigned)VideoManager::CrtMode::Cpu);
-        emuThread->lock();
-        program->setWarp( Program::Warp::Off );
-        updatePresets(true, false);
-        view->updateShader(emulator);
-        emuThread->unlock();
-    };
+    layBase.view.option.legacyParams.onActivate = [this]() {
+        if (!scVideoWindow) {
+            scVideoWindow = new SCVideoWindow(this);
+            scVideoWindow->build();
+        }
 
-    layBase.view.mode.gpu.onActivate = [this]() {
-        _settings->set<unsigned>("video_crt", (unsigned)VideoManager::CrtMode::Gpu);
-        emuThread->lock();
-        program->setWarp( Program::Warp::Off );
-        updatePresets(true, false);
-        view->updateShader(emulator);
-        emuThread->unlock();
+        scVideoWindow->setVisible();
+        scVideoWindow->setFocused();
     };
 
     layShader.main.control.load.onActivate = [this]() {
@@ -970,14 +971,15 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
 
         emuThread->lock();
         std::vector<std::string> errors;
-        ShaderPreset* preset = vManager()->addPreset(path, true, errors);
+        auto _vManager = vManager();
+        ShaderPreset* preset = _vManager->addPreset(path, true, errors);
 
         if (preset) {
             buildShaderUI(preset);
-            layShader.main.info.loaded.setText( vManager()->getPresetPathDetailed() );
+            layShader.main.info.loaded.setText( _vManager->getPresetPathDetailed() );
             _settings->set<std::string>("slang_folder", GUIKIT::File::buildRelativePath(GUIKIT::File::getPath(path)));
             layShader.favourite.control.add.setEnabled();
-            layBase.view.gamma.setEnabled( !layBase.view.mode.gpu.checked() || !vManager()->shaderRgb10BitInput() );
+            layBase.view.gamma.setEnabled( _vManager->legacyCRTonCPU || !_vManager->shaderRgb10BitInput() );
         }
         emuThread->unlock();
         showErrors(errors);
@@ -990,14 +992,15 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
 
         emuThread->lock();
         std::vector<std::string> errors;
-        ShaderPreset* preset = vManager()->addPreset(path, false, errors);
+        auto _vManager = vManager();
+        ShaderPreset* preset = _vManager->addPreset(path, false, errors);
 
         if (preset) {
             buildShaderUI(preset);
-            layShader.main.info.loaded.setText( vManager()->getPresetPathDetailed() );
+            layShader.main.info.loaded.setText( _vManager->getPresetPathDetailed() );
             _settings->set<std::string>("slang_folder", GUIKIT::File::buildRelativePath(GUIKIT::File::getPath(path)));
             layShader.favourite.control.add.setEnabled();
-            layBase.view.gamma.setEnabled( !layBase.view.mode.gpu.checked() || !vManager()->shaderRgb10BitInput() );
+            layBase.view.gamma.setEnabled( _vManager->legacyCRTonCPU || !_vManager->shaderRgb10BitInput() );
         }
         emuThread->unlock();
         showErrors(errors);
@@ -2011,7 +2014,7 @@ template<typename T> auto PresentationLayout::setSliderAction( SliderLayout* lay
 
     if (layout->withActivator)
         layout->active.onToggle = [this, layout, baseIdent, callTransfer](bool checked) {
-            _settings->set<bool>("video_" + baseIdent + "_use" + this->sliderIdent(), checked);
+            _settings->set<bool>("video_" + baseIdent + "_use", checked);
             layout->slider.setEnabled(checked);
 
             unsigned position = layout->slider.position();
@@ -2022,13 +2025,13 @@ template<typename T> auto PresentationLayout::setSliderAction( SliderLayout* lay
             if (baseIdent == "interlace") {
                 vManager()->updateData<bool>("interlace_fields", checked);
             }
-    };
+        };
 
     layout->slider.onChange = [this, layout, baseIdent, callTransfer](unsigned position) {
         T value = callTransfer( position );
         auto unit = layout->unit;
 
-        _settings->set<T>("video_" + baseIdent + this->sliderIdent(), value);
+        _settings->set<T>("video_" + baseIdent, value);
 
         if (std::is_same<T, float>::value)
             layout->value.setText( GUIKIT::String::formatFloatingPoint(value, 1) + " " + unit);
@@ -2045,11 +2048,13 @@ template<typename T> auto PresentationLayout::setSliderAction( SliderLayout* lay
 }
 
 auto PresentationLayout::updatePresets(bool reloadDriver, bool reloadPreset) -> void {
+    auto _vManager = vManager();
+    _vManager->suppressShaderByHotkey = false;
 
-    auto [VPARAMS] = VideoManager::getInstance( emulator )->getSettings( );
+    auto [VPARAMS] = _vManager->getSettings( );
 
     if (videoDriver && reloadDriver)
-        VideoManager::getInstance( emulator )->reloadSettings(reloadPreset);
+        _vManager->reloadSettings(reloadPreset);
 
     layBase.view.option.newLuma.setChecked( _newLuma );
     layBase.view.saturation.slider.setPosition(_saturation);
@@ -2062,28 +2067,34 @@ auto PresentationLayout::updatePresets(bool reloadDriver, bool reloadPreset) -> 
     layBase.view.contrast.value.setText(std::to_string(_contrast) + " %");
     layBase.view.phase.slider.setPosition(_phase + 180);
     layBase.view.phase.value.setText(std::to_string(_phase) + " °");
-    layBase.view.scanlines.active.setChecked( _useScanlines );
-    layBase.view.scanlines.slider.setPosition( _scanlines );
-    layBase.view.scanlines.value.setText( std::to_string(_scanlines) + " %" );
     layBase.view.interlace.active.setChecked( _useInterlace );
     layBase.view.interlace.slider.setPosition( _interlace );
     layBase.view.interlace.value.setText( std::to_string(_interlace) + " %" );
-    // crt
-    layBase.encoding.phaseError.active.setChecked( _usePhaseError );
-    layBase.encoding.phaseError.slider.setPosition( int(_phaseError * 2.0) + 90);
-    layBase.encoding.phaseError.value.setText( GUIKIT::String::formatFloatingPoint(_phaseError, 1) + " °");
-    layBase.encoding.hanoverBars.active.setChecked( _useHanoverBars );
-    layBase.encoding.hanoverBars.slider.setPosition( _hanoverBars + 100 );
-    layBase.encoding.hanoverBars.value.setText( std::to_string(_hanoverBars) + " %" );
-    layBase.encoding.blur.active.setChecked( _useBlur );
-    layBase.encoding.blur.slider.setPosition( _blur );
-    layBase.encoding.blur.value.setText( std::to_string(_blur) + " %" );
-    layBase.lumaDelay.lumaRise.active.setChecked( _useLumaRise );
-    layBase.lumaDelay.lumaRise.slider.setPosition( (unsigned)((_lumaRise - 1.0) * 10.0) );
-    layBase.lumaDelay.lumaRise.value.setText( GUIKIT::String::formatFloatingPoint(_lumaRise, 1) + " px" );
-    layBase.lumaDelay.lumaFall.active.setChecked( _useLumaFall );
-    layBase.lumaDelay.lumaFall.slider.setPosition( (unsigned)((_lumaFall - 1.0) * 10.0) );
-    layBase.lumaDelay.lumaFall.value.setText( GUIKIT::String::formatFloatingPoint(_lumaFall, 1) + " px" );
+
+    // legacy CRT on CPU
+    if (scVideoWindow) {
+        auto& sc = scVideoWindow->main;
+        sc.encoding.scanlines.active.setChecked( _useScanlines );
+        sc.encoding.scanlines.slider.setPosition( _scanlines );
+        sc.encoding.scanlines.value.setText( std::to_string(_scanlines) + " %" );
+        sc.encoding.phaseError.active.setChecked( _usePhaseError );
+        sc.encoding.phaseError.slider.setPosition( int(_phaseError * 2.0) + 90);
+        sc.encoding.phaseError.value.setText( GUIKIT::String::formatFloatingPoint(_phaseError, 1) + " °");
+        sc.encoding.hanoverBars.active.setChecked( _useHanoverBars );
+        sc.encoding.hanoverBars.slider.setPosition( _hanoverBars + 100 );
+        sc.encoding.hanoverBars.value.setText( std::to_string(_hanoverBars) + " %" );
+        sc.encoding.blur.active.setChecked( _useBlur );
+        sc.encoding.blur.slider.setPosition( _blur );
+        sc.encoding.blur.value.setText( std::to_string(_blur) + " %" );
+        sc.lumaDelay.lumaRise.active.setChecked( _useLumaRise );
+        sc.lumaDelay.lumaRise.slider.setPosition( (unsigned)((_lumaRise - 1.0) * 10.0) );
+        sc.lumaDelay.lumaRise.value.setText( GUIKIT::String::formatFloatingPoint(_lumaRise, 1) + " px" );
+        sc.lumaDelay.lumaFall.active.setChecked( _useLumaFall );
+        sc.lumaDelay.lumaFall.slider.setPosition( (unsigned)((_lumaFall - 1.0) * 10.0) );
+        sc.lumaDelay.lumaFall.value.setText( GUIKIT::String::formatFloatingPoint(_lumaFall, 1) + " px" );
+
+        scVideoWindow->updateVisibillity();
+    }
 
     std::vector<std::string> errors;
     ShaderPreset* preset = vManager()->getPreset(errors);
@@ -2100,20 +2111,6 @@ auto PresentationLayout::updatePresets(bool reloadDriver, bool reloadPreset) -> 
 }
 
 auto PresentationLayout::updateVisibillity() -> void {
-    bool _pal = emulator->getRegionEncoding() == Emulator::Interface::Region::Pal;
-    bool isC64 = dynamic_cast<LIBC64::Interface*>(emulator);
-    bool crtCpuChecked = layBase.view.mode.cpu.checked();
-    bool crtGpuChecked = layBase.view.mode.gpu.checked();
-
-    if (!videoDriver->shaderSupport()) {
-        if(crtGpuChecked) {
-            layBase.view.mode.rgb.setChecked();
-            crtGpuChecked = false;
-        }
-        layBase.view.mode.gpu.setEnabled(false);
-    } else
-        layBase.view.mode.gpu.setEnabled();
-
     if (!layBase.view.mode.palette.checked()) {
         layBase.view.phase.setEnabled();
         layBase.view.option.newLuma.setEnabled();
@@ -2122,29 +2119,9 @@ auto PresentationLayout::updateVisibillity() -> void {
         layBase.view.option.newLuma.setEnabled(false);
     }
 
-    layBase.view.gamma.setEnabled( !crtGpuChecked || !vManager()->shaderRgb10BitInput() );
-
-    layBase.view.scanlines.setEnabled(crtCpuChecked);
-    if (crtCpuChecked)
-        layBase.view.scanlines.slider.setEnabled( layBase.view.scanlines.active.checked() );
+    layBase.view.gamma.setEnabled( vManager()->legacyCRTonCPU || !vManager()->shaderRgb10BitInput() );
 
     layBase.view.interlace.slider.setEnabled( layBase.view.interlace.active.checked() );
-
-    layBase.encoding.setEnabled( crtCpuChecked );
-    if (crtCpuChecked) {
-        layBase.encoding.phaseError.slider.setEnabled( layBase.encoding.phaseError.active.checked() );
-        layBase.encoding.hanoverBars.setEnabled( _pal );
-        layBase.encoding.hanoverBars.slider.setEnabled( _pal && layBase.encoding.hanoverBars.active.checked() );
-        layBase.encoding.blur.slider.setEnabled(  layBase.encoding.blur.active.checked() );
-    }
-
-    if (isC64) {
-        layBase.lumaDelay.setEnabled(crtCpuChecked);
-        if (crtCpuChecked) {
-            layBase.lumaDelay.lumaRise.slider.setEnabled(layBase.lumaDelay.lumaRise.active.checked());
-            layBase.lumaDelay.lumaFall.slider.setEnabled(layBase.lumaDelay.lumaFall.active.checked());
-        }
-    }
 }
 
 auto PresentationLayout::translate() -> void {
@@ -2158,30 +2135,19 @@ auto PresentationLayout::translate() -> void {
     layBase.view.option.newLuma.setText( trans->get("new_luma") );
     layBase.view.option.linearInterpolation.setText( trans->get("linear_interpolation") );
     layBase.view.option.audioInterference.setText( trans->getA("Audio Interference") );
-    layBase.view.option.trLabel.setText( trans->getA("Threaded Renderer", true) );
-    layBase.view.option.trOn.setText( trans->getA("On") );
-    layBase.view.option.trOn.setTooltip( trans->getA("Threaded Renderer tooltip") );
-    layBase.view.option.trAuto.setText( trans->getA("Auto") );
-    layBase.view.option.trAuto.setTooltip( trans->getA("Threaded Renderer Auto") );
-    layBase.view.option.trOff.setText( trans->getA("Off") );
+    layBase.view.mode.trLabel.setText( trans->getA("Threaded Renderer", true) );
+    layBase.view.mode.trOn.setText( trans->getA("On") );
+    layBase.view.mode.trOn.setTooltip( trans->getA("Threaded Renderer tooltip") );
+    layBase.view.mode.trAuto.setText( trans->getA("Auto") );
+    layBase.view.mode.trAuto.setTooltip( trans->getA("Threaded Renderer Auto") );
+    layBase.view.mode.trOff.setText( trans->getA("Off") );
     layBase.view.mode.palette.setText( trans->get("palette") );
     layBase.view.mode.spectrumColodore.setText( trans->getA("color_spectrum") + " Colodore" );
     layBase.view.mode.spectrumPALette.setText( trans->getA("color_spectrum") + " PALette" );
-    layBase.view.mode.reset.setTooltip( trans->get("reset") );
-    layBase.view.mode.rgb.setText( trans->get("RGB") );
-    layBase.view.mode.cpu.setText( trans->get("S/C-Video CPU") );
-    layBase.view.mode.cpu.setTooltip( trans->get("S/C-Video tooltip") );
-    layBase.view.mode.gpu.setText( trans->get("Shader GPU") );
-    layBase.view.scanlines.active.setText( trans->get("scanlines", {}, true) );
+    layBase.view.option.reset.setTooltip( trans->get("reset") );
+    layBase.view.option.legacyCRTonCPU.setText( trans->get("S/C-Video CPU") );
+    layBase.view.option.legacyCRTonCPU.setTooltip( trans->get("CPU CRT deprecated") );
     layBase.view.interlace.active.setText( trans->get("interlace", {}, true) );
-
-    layBase.encoding.setText(trans->get("color encoding"));
-    layBase.encoding.phaseError.active.setText( trans->get("phase_error", {}, true) );
-    layBase.encoding.hanoverBars.active.setText( trans->get("hanover_bars", {}, true) );
-    layBase.encoding.blur.active.setText( trans->get("blur", {}, true) );
-    layBase.lumaDelay.setText(trans->get("luma delay"));
-    layBase.lumaDelay.lumaRise.active.setText( trans->get("luma_rise", {}, true) );
-    layBase.lumaDelay.lumaFall.active.setText( trans->get("luma_fall", {}, true) );
 
     layShader.main.control.prependPreset.setText( trans->getA("prepend preset") );
     layShader.main.control.prependPreset.setTooltip( trans->getA("combine shader") );
@@ -2303,7 +2269,9 @@ auto PresentationLayout::translate() -> void {
     layPass.generated.vertex.setText( trans->getA("native Vertex code") );
     layPass.generated.fragment.setText( trans->getA("native Fragment code") );
 
-    SliderLayout::scale({&layBase.view.saturation, &layBase.view.gamma, &layBase.view.brightness, &layBase.view.contrast, &layBase.view.phase, &layBase.view.scanlines, &layBase.view.interlace, &layBase.encoding.phaseError, &layBase.encoding.hanoverBars, &layBase.encoding.blur, &layBase.lumaDelay.lumaRise, &layBase.lumaDelay.lumaFall},
+    SliderLayout::scale({
+        &layBase.view.saturation, &layBase.view.gamma, &layBase.view.brightness,
+        &layBase.view.contrast, &layBase.view.phase, &layBase.view.interlace},
                         "-100 %");
 
     for(int compBox = 0; compBox < 2; compBox++) {
@@ -2338,32 +2306,14 @@ auto PresentationLayout::translate() -> void {
     layScreenShot.options.interval.name.setText(trans->getA("interval"));
     layScreenShot.options.delayScreenshot.setText(trans->getA("Delay"));
     layScreenShot.options.delayScreenshot.setTooltip(trans->getA("delay screenshot tooltip"));
-}
 
-auto PresentationLayout::sliderIdent() -> std::string {
-
-    std::string ident = (emulator->getRegionEncoding() == Emulator::Interface::Region::Pal) ? "_pal" : "_ntsc";
-
-    if (dynamic_cast<LIBC64::Interface*>(emulator) && !layBase.view.mode.palette.checked())
-        ident += "_spectrum";
-
-    if (layBase.view.mode.cpu.checked())
-        ident += "_crtcpu";
-    else if (layBase.view.mode.gpu.checked())
-        ident += "_crtgpu";
-
-    return ident;
+    if (scVideoWindow)
+        scVideoWindow->translate();
 }
 
 auto PresentationLayout::loadSettings(bool init) -> void {
-    VideoManager::CrtMode crtMode = (VideoManager::CrtMode)_settings->get<unsigned>("video_crt", (unsigned)VideoManager::CrtMode::None, {0u, 2u});
-    
-    if (crtMode == VideoManager::CrtMode::Gpu)
-        layBase.view.mode.gpu.setChecked();
-    else if (crtMode == VideoManager::CrtMode::Cpu)
-        layBase.view.mode.cpu.setChecked();
-    else
-        layBase.view.mode.rgb.setChecked();
+    bool _legacyCrtMode = _settings->get<bool>("video_crt_legacy", false);
+    layBase.view.option.legacyCRTonCPU.setChecked( _legacyCrtMode );
 
     if (dynamic_cast<LIBC64::Interface*>(emulator)) {
         unsigned _spectrum = _settings->get<unsigned>( "video_spectrum", 1);
@@ -2384,10 +2334,10 @@ auto PresentationLayout::loadSettings(bool init) -> void {
 
     unsigned tr = _settings->get<unsigned>("threaded_renderer", 0);
     switch(tr) {
-        case 0: layBase.view.option.trOff.setChecked(); break;
+        case 0: layBase.view.mode.trOff.setChecked(); break;
         default:
-        case 1: layBase.view.option.trOn.setChecked(); break;
-        case 2: layBase.view.option.trAuto.setChecked(); break;
+        case 1: layBase.view.mode.trOn.setChecked(); break;
+        case 2: layBase.view.mode.trAuto.setChecked(); break;
     }
 
     unsigned screenTextFontSize = _settings->get<unsigned>("screen_text_fontsize", 18, {8, 36});
@@ -2593,26 +2543,23 @@ auto PresentationLayout::showErrors(const std::vector<std::string>& errors) -> v
 
 auto PresentationLayout::loadShader(std::string path) -> bool {
     std::vector<std::string> errors;
-    ShaderPreset* preset = vManager()->loadPreset(path, errors);
+    auto _vManager = vManager();
+    ShaderPreset* preset = _vManager->loadPreset(path, errors);
 
     if (preset) {
         buildShaderUI(preset);
-        layShader.main.info.loaded.setText( vManager()->getPresetPathDetailed() );
+        layShader.main.info.loaded.setText( _vManager->getPresetPathDetailed() );
         layShader.main.control.setEnabled();
-        layBase.view.gamma.setEnabled( !layBase.view.mode.gpu.checked() || !vManager()->shaderRgb10BitInput() );
-        view->updateShader(emulator);
-        enableGPUMode(true);
+        layBase.view.gamma.setEnabled( _vManager->legacyCRTonCPU || !_vManager->shaderRgb10BitInput() );
+
+        if (layBase.view.option.legacyCRTonCPU.checked())
+            layBase.view.option.legacyCRTonCPU.setChecked( false );
+
+        if (_vManager->legacyCRTonCPU)
+            layBase.view.option.legacyCRTonCPU.onToggle(false);
     }
     showErrors(errors);
     return preset != nullptr;
-}
-
-auto PresentationLayout::enableGPUMode(bool state) -> void {
-    if (state) {
-        if (!layBase.view.mode.gpu.checked() && videoDriver->shaderSupport())
-            layBase.view.mode.gpu.activate();
-    } else if (!layBase.view.mode.rgb.checked())
-        layBase.view.mode.rgb.activate();
 }
 
 auto PresentationLayout::unloadShader(bool reloadDriver) -> void {
@@ -2979,6 +2926,69 @@ auto PresentationLayout::copyCustomPresets() -> void {
         GUIKIT::File::xcopy(targetPath + pluginFolder + "disabled/led2.txt", targetPath + pluginFolder + "enabled/led2.txt");
         GUIKIT::File::xcopy(targetPath + pluginFolder + "disabled/led3.txt", targetPath + pluginFolder + "enabled/led3.txt");
     }
+}
+
+auto SCVideoWindow::build() -> void {
+    setTitle( trans->getA("S/C-Video CPU") );
+
+    MiscHelper::centerGeometry( this, {600u, 350u}, presentation->tabWindow->geometry() );
+
+    presentation->setSliderAction<unsigned>( &main.encoding.scanlines, "scanlines", [](unsigned position) { return std::max(position, 1u); } );
+    presentation->setSliderAction<unsigned>( &main.encoding.blur, "blur" );
+    presentation->setSliderAction<float>( &main.encoding.phaseError, "phase_error", [](unsigned position) { return (float)((int)position - 90) / 2.0f; } );
+    presentation->setSliderAction<int>( &main.encoding.hanoverBars, "hanover_bars", [](unsigned position) { return (int)position - 100; } );
+    presentation->setSliderAction<float>( &main.lumaDelay.lumaRise, "luma_rise", [](unsigned position) { return ((float)std::max(position, 1u) / 10.0f) + 1.0f; } );
+    presentation->setSliderAction<float>( &main.lumaDelay.lumaFall, "luma_fall", [](unsigned position) { return ((float)std::max(position, 1u) / 10.0f) + 1.0f; } );
+
+    main.option.reset.onActivate = [this]() {
+        presentation->vManager()->resetLegacySettings();
+        emuThread->lock();
+        presentation->updatePresets(true, false);
+        emuThread->unlock();
+    };
+
+    main.option.reset.setImage( &presentation->backImage );
+
+    append(main);
+
+    presentation->updatePresets( false, false );
+    translate();
+}
+
+auto SCVideoWindow::updateVisibillity() -> void {
+    Emulator::Interface* emulator = presentation->emulator;
+    bool _pal = emulator->getRegionEncoding() == Emulator::Interface::Region::Pal;
+    bool isC64 = dynamic_cast<LIBC64::Interface*>(emulator);
+
+    main.encoding.scanlines.slider.setEnabled( main.encoding.scanlines.active.checked() );
+    main.encoding.phaseError.slider.setEnabled( main.encoding.phaseError.active.checked() );
+    main.encoding.hanoverBars.setEnabled( _pal );
+    main.encoding.hanoverBars.slider.setEnabled( _pal && main.encoding.hanoverBars.active.checked() );
+    main.encoding.blur.slider.setEnabled(  main.encoding.blur.active.checked() );
+
+    if (isC64) {
+        main.lumaDelay.lumaRise.slider.setEnabled(main.lumaDelay.lumaRise.active.checked());
+        main.lumaDelay.lumaFall.slider.setEnabled(main.lumaDelay.lumaFall.active.checked());
+    }
+}
+
+auto SCVideoWindow::translate() -> void {
+    main.option.reset.setTooltip( trans->get("reset") );
+    main.option.multiLine.setText( trans->getA("CPU CRT deprecated") );
+
+    main.encoding.setText(trans->get("color encoding"));
+    main.encoding.phaseError.active.setText( trans->get("phase_error", {}, true) );
+    main.encoding.hanoverBars.active.setText( trans->get("hanover_bars", {}, true) );
+    main.encoding.blur.active.setText( trans->get("blur", {}, true) );
+    main.encoding.scanlines.active.setText( trans->get("scanlines", {}, true) );
+
+    main.lumaDelay.setText(trans->get("luma delay"));
+    main.lumaDelay.lumaRise.active.setText( trans->get("luma_rise", {}, true) );
+    main.lumaDelay.lumaFall.active.setText( trans->get("luma_fall", {}, true) );
+
+    SliderLayout::scale({
+        &main.encoding.scanlines, &main.encoding.phaseError, &main.encoding.hanoverBars, &main.encoding.blur,
+        &main.lumaDelay.lumaRise, &main.lumaDelay.lumaFall}, "-100 %");
 }
 
 }

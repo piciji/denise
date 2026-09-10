@@ -99,7 +99,8 @@ VideoManager::VideoManager(Emulator::Interface* emulator) {
 	phase = 0.0;
 	pal = true;
     colorSpectrum = 0;
-    crtMode = CrtMode::None;
+    legacyCRTonCPU = false;
+    suppressShaderByHotkey = false;
     scanlines = 0;
 
     phaseError = 22.5; 
@@ -140,7 +141,7 @@ auto VideoManager::update() -> void {
         convertLumaChromaToRGB();
     }
 
-    if ( crtMode == CrtMode::Cpu ) {
+    if (legacyCRTonCPU) {
         calculateGamma();
 
         if ((countColorBits == 4) && useLumaDelay())
@@ -244,7 +245,7 @@ auto VideoManager::generateC64ColorSpectrum() -> void {
 }
 
 auto VideoManager::lumaChromaMode() -> bool {
-    return (crtMode == CrtMode::Cpu) || ( (crtMode == CrtMode::Gpu) && shaderRgb10BitInput() );
+    return legacyCRTonCPU || shaderRgb10BitInput();
 }
 
 auto VideoManager::normalizeColorSpectrumPalGamma( double& color ) -> void {
@@ -585,6 +586,11 @@ auto VideoManager::calculateLumaDelay() -> void {
 	}
 }
 
+auto VideoManager::toggleShaderTemporary() -> bool {
+    suppressShaderByHotkey ^= 1;
+    return suppressShaderByHotkey;
+}
+
 template<typename T, uint8_t options> auto VideoManager::renderFrame(const T* src, unsigned width, unsigned height, unsigned srcPitch ) -> void {
 	unsigned gpuPitch;
     unsigned* gpuData;
@@ -596,7 +602,10 @@ template<typename T, uint8_t options> auto VideoManager::renderFrame(const T* sr
     constexpr bool isPause = options & 0x10;
     constexpr bool lores = !hires && !shres;
     bool iHold = interlace && !field && !interlaceFields;
-    bool suppressShader = program->warp.disableShader && ((program->warp.mode == Program::Warp::Normal) || (program->warp.mode == Program::Warp::Aggressive));
+    bool suppressShader = suppressShaderByHotkey
+    || (
+        program->warp.disableShader && ((program->warp.mode == Program::Warp::Normal) || (program->warp.mode == Program::Warp::Aggressive))
+    );
     bool rewind = audioManager->rewind;
     uint8_t gpuOptions = iHold | (interlace << 1) | (suppressShader << 2) | (isPause << 5) | (rewind << 6);
 
@@ -605,7 +614,7 @@ template<typename T, uint8_t options> auto VideoManager::renderFrame(const T* sr
 
     bool cropCoordUpdated = emulator->cropCoordUpdated(cropTop, cropLeft);
     if (rebuildShader) {
-        if (crtMode == CrtMode::Gpu) {
+        if (!legacyCRTonCPU) {
             auto appData = videoDriver->getAppData();
             if (appData) {
                 appData->cropTop = (float)cropTop;
@@ -684,15 +693,12 @@ template<typename T, uint8_t options> auto VideoManager::renderFrame(const T* sr
 
         renderToRgbWithDma<T, interlace, field>(width, height, src, srcPitch, gpuData, gpuPitch - width);
 
-    } else if ( suppressShader || (crtMode == CrtMode::None) ) {
-        if (!videoDriver->lock(gpuData, gpuPitch, width, height, gpuOptions))
-            return;
+    } else if (suppressShader) {
+        goto Typical;
 
-        renderToRgb<T, interlace, field>(width, height, src, srcPitch, gpuData, gpuPitch - width);
+    } else if (!legacyCRTonCPU) {
 
-	} else if (crtMode == CrtMode::Gpu) {
         if (shaderRgb10BitInput()) {
-
             if (!videoDriver->lock(gpuData, gpuPitch, width, height, gpuOptions | (uint8_t)DRIVER::OPT_RGB10 ))
                 goto Typical;
 
@@ -705,7 +711,7 @@ Typical:
 
             renderToRgb<T, interlace, field>(width, height, src, srcPitch, gpuData, gpuPitch - width);
         }
-	} else {
+	} else { // old legacy CRT over CPU
         if (!videoDriver->lock(gpuData, gpuPitch, width, (scanlines && !interlace) ? (height << 1) : height, gpuOptions))
             return;
 
@@ -1038,10 +1044,6 @@ template<typename T, uint8_t options> auto VideoManager::renderCrt(unsigned widt
 auto VideoManager::useLumaDelay() -> bool {
 
 	return lumaFall > 0.0 || lumaRise > 0.0;
-}
-
-auto VideoManager::useRegionEncoding() -> bool {
-    return (hanoverBars && pal) || phaseError > 0.0;
 }
 
 template<uint8_t options, typename T> auto VideoManager::renderPalCrt( ) -> void {
@@ -1489,7 +1491,7 @@ template<uint8_t options> auto VideoManager::getRenderOptions() -> unsigned {
     constexpr bool hires = options & 4;
     constexpr bool shres = options & 8;
 
-    if (scanlines && !interlace) out |= 1; // surpress user requested scanlines if software requests interlace
+    if (scanlines && !interlace) out |= 1; // suppress user requested scanlines if software requests interlace
     if ((countColorBits == 4) && useLumaDelay()) out |= 2;
     if (interlace) {
         bool laceToggle = !!(frameOptions & 0x80);
@@ -1543,11 +1545,13 @@ auto VideoManager::loadPreset() -> bool {
 }
 
 auto VideoManager::loadPreset(const std::string& path) -> void {
+    suppressShaderByHotkey = false;
     std::vector<std::string> errors;
     loadPreset(path, errors);
 }
 
 auto VideoManager::loadPreset(const std::string& path, std::vector<std::string>& errors) -> ShaderPreset* {
+    suppressShaderByHotkey = false;
     ShaderParser* tempParser = new ShaderParser;
 
     bool res = tempParser->loadPreset(path);
@@ -1586,6 +1590,7 @@ auto VideoManager::loadPreset(const std::string& path, std::vector<std::string>&
 }
 
 auto VideoManager::addPreset(std::string path, bool prepend, std::vector<std::string>& errors) -> ShaderPreset* {
+    suppressShaderByHotkey = false;
     ShaderParser* tempParser = new ShaderParser;
     bool res = tempParser->loadPreset(path);
     GUIKIT::Vector::combine(errors, tempParser->errors);

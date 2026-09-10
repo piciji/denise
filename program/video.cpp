@@ -265,17 +265,6 @@ auto Program::getVideoDriver() -> std::string {
 	return DRIVER::Video::preferred();
 }
 
-auto Program::activateGPU(Emulator::Interface* emulator, bool state) -> void {
-    auto vManager = VideoManager::getInstance( emulator );
-    bool shaderActive = vManager->crtMode == VideoManager::CrtMode::Gpu;
-
-    if (state != shaderActive) {
-        auto settings = Program::getSettings(emulator);
-        settings->set<unsigned>("video_crt", state ? (unsigned)VideoManager::CrtMode::Gpu : (unsigned)VideoManager::CrtMode::None);
-        vManager->reloadSettings(true);
-    }
-}
-
 auto Program::videoRefresh(const uint16_t* frame, unsigned width, unsigned height, unsigned linePitch, uint8_t options) -> void {
 
 	if (cmd->noGui)
@@ -640,12 +629,6 @@ auto Program::checkShaderSupport(Emulator::Interface* emulator) -> void {
             emuView->presentationLayout->addShaderUI();
         return;
     }
-
-    auto settings = Program::getSettings( emulator );
-    auto crtMode = settings->get<unsigned>("video_crt", (unsigned)VideoManager::CrtMode::None, {0u, 2u});
-
-    if ((VideoManager::CrtMode)crtMode == VideoManager::CrtMode::Gpu)
-        settings->set<unsigned>("video_crt", (unsigned)VideoManager::CrtMode::None);
 
     auto vManager = VideoManager::getInstance(emulator);
 

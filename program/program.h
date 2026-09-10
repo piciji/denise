@@ -183,7 +183,6 @@ struct Program : Emulator::Interface::Bind {
     auto setRotation() -> void;
     auto checkShaderSupport(Emulator::Interface* emulator) -> void;
     auto loadProgress() -> void;
-	auto activateGPU(Emulator::Interface* emulator, bool state) -> void;
 	auto updateOnScreenText(bool keepFontPath = false) -> void;
     auto takeScreenshot(uint8_t* _data, unsigned _width, unsigned _height) -> void;
     auto bufferScreenshot(uint8_t* _data, unsigned _size) -> void;

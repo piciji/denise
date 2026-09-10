@@ -833,11 +833,6 @@ auto View::updateShader(Emulator::Interface* emulator) -> void {
 
         auto vManager = VideoManager::getInstance( sM.emulator );
         std::string loaded = vManager->getPresetPath();
-        if (vManager->crtMode != VideoManager::CrtMode::Gpu) {
-            sM.shaderFavourites[0].item->setChecked();
-            break;
-        }
-
         bool found = false;
 
         for(auto& fav : sM.shaderFavourites) {
@@ -861,7 +856,6 @@ auto View::buildShader() -> void {
         auto emulator = sM.emulator;
         auto settings = Program::getSettings(emulator);
 		auto vManager = VideoManager::getInstance( emulator );
-        bool shaderActive = vManager->crtMode == VideoManager::CrtMode::Gpu;
 
         std::string loaded = vManager->getPresetPath();
         sM.shaderFavourites.clear();
@@ -885,8 +879,8 @@ auto View::buildShader() -> void {
         items.push_back(noneItem);
 
         int i = 0;
-        while(1) {
-            std::string fav = settings->get<std::string>( "shader_fav_" + std::to_string(i), "");
+        while(true) {
+            auto fav = settings->get<std::string>( "shader_fav_" + std::to_string(i), "");
             fav = GUIKIT::File::resolveRelativePath(fav);
             if (fav.empty())
                 break;
@@ -917,7 +911,11 @@ auto View::buildShader() -> void {
                 if (emuView && emuView->presentationLayout)
                     emuView->presentationLayout->loadShader(shaderPath);
                 else {
-                    program->activateGPU(emulator, true);
+                    if (vManager->legacyCRTonCPU) {
+                        Program::getSettings(emulator)->set<bool>("video_crt_legacy", false);
+                        vManager->reloadSettings(true);
+                    }
+
                     vManager->loadPreset(shaderPath);
                 }
                 emuThread->unlock();
@@ -929,7 +927,7 @@ auto View::buildShader() -> void {
         sM.shaderFavourites.insert(sM.shaderFavourites.begin(), {"none", noneItem});
 
         GUIKIT::MenuRadioItem::setGroup(items);
-        if (checkedItem && shaderActive)
+        if (checkedItem)
             checkedItem->setChecked();
 
         for(auto child : sM.shaderMenu->childs)

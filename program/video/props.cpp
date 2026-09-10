@@ -18,12 +18,12 @@ auto VideoManager::useColorSpectrum(unsigned state) -> void {
     requestUpdate();
 }
 
-auto VideoManager::setCrtMode(CrtMode _mode) -> void {        
+auto VideoManager::setLegacyCrtMode(bool state) -> void {
 
-    if (this->crtMode != _mode)
+    if (this->legacyCRTonCPU != state)
         rebuildShader = true;
 
-    this->crtMode = _mode;
+    this->legacyCRTonCPU = state;
     requestUpdate();
 }
 
@@ -144,49 +144,29 @@ auto VideoManager::getData(const std::string& ident) -> ShaderPreset::Param* {
 }
 
 auto VideoManager::resetSettings() -> void {
-
-    auto modeIdent = getModeIdent();
-    
-    settings->remove( "video_new_luma" + modeIdent );
-    settings->remove( "video_saturation" + modeIdent );
-    settings->remove( "video_brightness" + modeIdent );
-    settings->remove( "video_gamma" + modeIdent );
-    settings->remove( "video_contrast" + modeIdent );
-    settings->remove( "video_phase" + modeIdent );
-    settings->remove( "video_hanover_bars" + modeIdent );
-    settings->remove( "video_hanover_bars_use" + modeIdent );
-
-    settings->remove( "video_phase_error_use" + modeIdent );
-    settings->remove( "video_phase_error" + modeIdent );
-    settings->remove( "video_scanlines_use" + modeIdent );
-    settings->remove( "video_scanlines" + modeIdent );
-    settings->remove( "video_interlace_use" + modeIdent );
-    settings->remove( "video_interlace" + modeIdent );
-
-    settings->remove( "video_blur_use" + modeIdent );
-    settings->remove( "video_blur" + modeIdent );
-    settings->remove( "video_luma_rise_use" + modeIdent );
-    settings->remove( "video_luma_rise" + modeIdent );
-    settings->remove( "video_luma_fall_use" + modeIdent );
-    settings->remove( "video_luma_fall" + modeIdent );
+    settings->remove( "video_new_luma" );
+    settings->remove( "video_saturation" );
+    settings->remove( "video_brightness" );
+    settings->remove( "video_gamma" );
+    settings->remove( "video_contrast" );
+    settings->remove( "video_phase" );
+    settings->remove( "video_interlace_use" );
+    settings->remove( "video_interlace" );
 }
 
-auto VideoManager::getModeIdent() -> std::string {
-    bool _pal = emulator->getRegionEncoding() == Emulator::Interface::Region::Pal;
-    unsigned _useSpectrum = settings->get<unsigned>("video_spectrum", 1);
-    unsigned _crtMode = settings->get<unsigned>("video_crt", (unsigned)CrtMode::None, {0u, 2u});
-
-    std::string modeIdent = _pal ? "_pal" : "_ntsc";
-
-    if (dynamic_cast<LIBC64::Interface*> (emulator) && _useSpectrum)
-        modeIdent += "_spectrum";
-
-    if (_crtMode == (unsigned)CrtMode::Cpu)
-        modeIdent += "_crtcpu";
-    else if (_crtMode == (unsigned)CrtMode::Gpu)
-        modeIdent += "_crtgpu";
-
-    return modeIdent;
+auto VideoManager::resetLegacySettings() -> void {
+    settings->remove( "video_hanover_bars" );
+    settings->remove( "video_hanover_bars_use" );
+    settings->remove( "video_phase_error_use" );
+    settings->remove( "video_phase_error" );
+    settings->remove( "video_scanlines_use" );
+    settings->remove( "video_scanlines" );
+    settings->remove( "video_blur_use" );
+    settings->remove( "video_blur" );
+    settings->remove( "video_luma_rise_use" );
+    settings->remove( "video_luma_rise" );
+    settings->remove( "video_luma_fall_use" );
+    settings->remove( "video_luma_fall" );
 }
 
 auto VideoManager::getSettings() -> std::tuple<VPARAMST> {
@@ -194,32 +174,30 @@ auto VideoManager::getSettings() -> std::tuple<VPARAMST> {
 	unsigned _region = emulator->getRegionEncoding();
 	bool _pal = _region == Emulator::Interface::Region::Pal;
 	
-    unsigned _crtMode = settings->get<unsigned>("video_crt", (unsigned)CrtMode::None, {0u, 2u});
+    bool _legacyCrtMode = settings->get<bool>("video_crt_legacy", false);
     bool moreError = isC64();
 
-    auto modeIdent = getModeIdent();
+    unsigned _saturation = settings->get<unsigned>("video_saturation", 100u,{0u, 200u});
+    unsigned _contrast = settings->get<unsigned>("video_contrast", 100u,{0u, 200u});
+    unsigned _gamma = settings->get<unsigned>("video_gamma", 100u,{30u, 280u});
+    unsigned _brightness = settings->get<unsigned>("video_brightness", 100u,{0, 200u});
+    int _phase = settings->get<int>("video_phase", 0,{-180, 180});
+    float _phaseError = settings->get<float>("video_phase_error", _pal ? (moreError ? 22.5f : 3.5f ) : 0, {-45.0, 45.0});
+    bool _usePhaseError = settings->get<bool>("video_phase_error_use", true);
+    bool _newLuma = settings->get<bool>("video_new_luma", true);
+    int _hanoverBars = settings->get<int>("video_hanover_bars", -10, {-100, 100});
+    bool _useHanoverBars = settings->get<bool>("video_hanover_bars_use", true);
+    unsigned _blur = settings->get<unsigned>("video_blur", 30,{0, 100});
+    bool _useBlur = settings->get<bool>("video_blur_use", true);
+    bool _useScanlines = settings->get<bool>("video_scanlines_use", false);
+    unsigned _scanlines = settings->get<unsigned>("video_scanlines", 33, {0, 100});
+    bool _useInterlace = settings->get<bool>("video_interlace_use", true);
+    unsigned _interlace = settings->get<unsigned>("video_interlace", 0, {0u, 100});
 
-    unsigned _saturation = settings->get<unsigned>("video_saturation" + modeIdent, 100u,{0u, 200u});
-    unsigned _contrast = settings->get<unsigned>("video_contrast" + modeIdent, 100u,{0u, 200u});
-    unsigned _gamma = settings->get<unsigned>("video_gamma" + modeIdent, 100u,{30u, 280u});
-    unsigned _brightness = settings->get<unsigned>("video_brightness" + modeIdent, 100u,{0, 200u});
-    int _phase = settings->get<int>("video_phase" + modeIdent, 0,{-180, 180});
-    float _phaseError = settings->get<float>("video_phase_error" + modeIdent, _pal ? (moreError ? 22.5 : 3.5 ) : 0, {-45.0, 45.0});
-    bool _usePhaseError = settings->get<bool>("video_phase_error_use" + modeIdent, true);
-    bool _newLuma = settings->get<bool>("video_new_luma" + modeIdent, true);
-    int _hanoverBars = settings->get<int>("video_hanover_bars" + modeIdent, -10, {-100, 100});
-    bool _useHanoverBars = settings->get<bool>("video_hanover_bars_use" + modeIdent, true);
-    unsigned _blur = settings->get<unsigned>("video_blur" + modeIdent, 30,{0, 100});
-    bool _useBlur = settings->get<bool>("video_blur_use" + modeIdent, true);
-    bool _useScanlines = settings->get<bool>("video_scanlines_use" + modeIdent, false);
-    unsigned _scanlines = settings->get<unsigned>("video_scanlines" + modeIdent, 33, {0, 100});
-    bool _useInterlace = settings->get<bool>("video_interlace_use" + modeIdent, true);
-    unsigned _interlace = settings->get<unsigned>("video_interlace" + modeIdent, 0, {0u, 100});
-
-    bool _useLumaRise = settings->get<bool>("video_luma_rise_use" + modeIdent, moreError);
-	float _lumaRise = settings->get<float>("video_luma_rise" + modeIdent, 2.0, {1.0, 4.0}); 
-	bool _useLumaFall = settings->get<bool>("video_luma_fall_use" + modeIdent, moreError);
-	float _lumaFall = settings->get<float>("video_luma_fall" + modeIdent, 1.2, {1.0, 4.0});
+    bool _useLumaRise = settings->get<bool>("video_luma_rise_use", moreError);
+	float _lumaRise = settings->get<float>("video_luma_rise", 2.0, {1.0, 4.0});
+	bool _useLumaFall = settings->get<bool>("video_luma_fall_use", moreError);
+	float _lumaFall = settings->get<float>("video_luma_fall", 1.2, {1.0, 4.0});
     
     return std::make_tuple( VPARAMS);
 }
@@ -244,7 +222,7 @@ auto VideoManager::reloadSettings(bool reloadPreset) -> void {
 
     usePal(_region == 0);
     useColorSpectrum(_useSpectrum);
-    setCrtMode( (CrtMode)_crtMode );
+    setLegacyCrtMode( _legacyCrtMode );
 
     auto appData = videoDriver->getAppData();
     if (appData)
@@ -257,7 +235,7 @@ auto VideoManager::reloadSettings(bool reloadPreset) -> void {
 }
 
 auto VideoManager::applyMeta() -> void {
-    emulator->videoAddMeta( (crtMode == CrtMode::Gpu) && parser->needMetaData() );
+    emulator->videoAddMeta( !legacyCRTonCPU && parser->needMetaData() );
 }
 
 auto VideoManager::requestUpdate() -> void {
