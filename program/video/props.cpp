@@ -240,5 +240,5 @@ auto VideoManager::applyMeta() -> void {
 
 auto VideoManager::requestUpdate() -> void {
     colorTableUpdated = false;
-    needAUpdate = true;
+    needUpdateForAllInstances = true;
 }

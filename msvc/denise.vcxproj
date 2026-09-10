@@ -373,6 +373,7 @@
     <ClInclude Include="..\program\tools\socket.h" />
     <ClInclude Include="..\program\video\manager.h" />
     <ClInclude Include="..\program\video\palette.h" />
+    <ClInclude Include="..\program\video\scVideo.h" />
     <ClInclude Include="..\program\video\shaderParser.h" />
     <ClInclude Include="..\program\view\message.h" />
     <ClInclude Include="..\program\view\status.h" />
@@ -1969,6 +1970,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|win32'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="..\program\video\scVideo.cpp" />
     <ClCompile Include="..\program\video\shaderParser.cpp" />
     <ClCompile Include="..\program\video\sync.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>

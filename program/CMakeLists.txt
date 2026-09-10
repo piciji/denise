@@ -57,14 +57,13 @@ set(headers
         video/manager.h
         video/palette.h
         video/props.cpp
+        video/scVideo.h
         video/shaderParser.h
         video/sync.cpp
         view/message.h
         view/placeholder.cpp
         view/status.h
         view/view.h
-        audio.cpp
-        input.cpp
         video.cpp
         helper/fileHelper.h
         helper/miscHelper.h
@@ -132,6 +131,7 @@ set(srcs
         video/palette.cpp
         video/manager.cpp
         video/shaderParser.cpp
+        video/scVideo.cpp
         tools/httpClient.cpp
         tools/diskGuesser.cpp
         tools/socket.cpp

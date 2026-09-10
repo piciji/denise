@@ -1429,6 +1429,9 @@
     <ClInclude Include="..\emulation\libc64\expansionPort\uci\uci.h">
       <Filter>emulation\libc64\expansionPort\uci</Filter>
     </ClInclude>
+    <ClInclude Include="..\program\video\scVideo.h">
+      <Filter>program\video</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\emulation\cia\base.cpp">
@@ -2780,6 +2783,9 @@
     </ClCompile>
     <ClCompile Include="..\emulation\libc64\expansionPort\uci\uci.cpp">
       <Filter>emulation\libc64\expansionPort\uci</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\video\scVideo.cpp">
+      <Filter>program\video</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
