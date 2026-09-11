@@ -86,10 +86,57 @@ interlace("%", SliderLayout::ACTIVATOR) {
     setFont(GUIKIT::Font::system("bold"));
 }
 
+VideoBaseLayout::Shader::Control::Control() {
+    append(unload,{0u, 0u});
+    append(spacer, { ~0u, 0u });
+    append(yuvEncoding, { 0u, 0u }, 10);
+
+    append(prependPreset,{0u, 0u}, 10);
+    append(appendPreset,{0u, 0u}, 10);
+    append(downloadShader, { 0u, 0u }, 10);
+    append(loadDefaultShader,{0u, 0u}, 10);
+    append(load,{0u, 0u});
+
+    unload.setEnabled(false);
+    prependPreset.setEnabled(false);
+    appendPreset.setEnabled(false);
+
+    setAlignment(0.5);
+}
+
+VideoBaseLayout::Shader::Info::Info() {
+    append(label,{0u, 0u}, 5);
+    append(loaded,{~0u, 0u});
+    append(clearCache,{0u, 0u}, 10);
+    append(toParams,{0u, 0u});
+
+    setAlignment(0.5);
+    loaded.setFont(GUIKIT::Font::system("bold"));
+    toParams.setEnabled(false);
+}
+
+VideoBaseLayout::Shader::Progress::Progress() {
+    append(bar, { ~0u, 0u }, 10);
+    append(label, { 0u, 0u }, 50);
+    append(close, { 0u, 0u });
+
+    label.setFont(GUIKIT::Font::system("bold"));
+    setAlignment(0.5);
+}
+
+VideoBaseLayout::Shader::Shader() {
+    append(control,{~0u, 0u}, 10);
+    append(info,{~0u, 0u});
+
+    setPadding(10);
+    setFont(GUIKIT::Font::system("bold"));
+}
+
 VideoBaseLayout::VideoBaseLayout(bool withSpectrum) :
 view(withSpectrum) {
 
-    append(view, {~0u, 0u});
+    append(view, {~0u, 0u}, 10);
+    append(shader, {~0u, 0u});
 }
 
 SCVideoWindow::Main::Option::Option() {
@@ -149,53 +196,7 @@ main(dynamic_cast<LIBC64::Interface*>(presentation->tabWindow->emulator)),
 presentation(presentation) {
 }
 
-VideoShaderLayout::Main::Control::Control() {
-    append(unload,{0u, 0u});
-    append(spacer, { ~0u, 0u });
-    append(yuvEncoding, { 0u, 0u }, 10);
-
-    append(prependPreset,{0u, 0u}, 10);
-    append(appendPreset,{0u, 0u}, 10);
-    append(downloadShader, { 0u, 0u }, 10);
-    append(loadDefaultShader,{0u, 0u}, 10);
-    append(load,{0u, 0u});
-
-    unload.setEnabled(false);
-    prependPreset.setEnabled(false);
-    appendPreset.setEnabled(false);
-
-    setAlignment(0.5);
-}
-
-VideoShaderLayout::Main::Info::Info() {
-    append(label,{0u, 0u}, 5);
-    append(loaded,{~0u, 0u});
-    append(clearCache,{0u, 0u}, 10);
-    append(toParams,{0u, 0u});
-
-    setAlignment(0.5);
-    loaded.setFont(GUIKIT::Font::system("bold"));
-    toParams.setEnabled(false);
-}
-
-VideoShaderLayout::Main::Progress::Progress() {
-    append(bar, { ~0u, 0u }, 10);
-    append(label, { 0u, 0u }, 50);
-    append(close, { 0u, 0u });
-
-    label.setFont(GUIKIT::Font::system("bold"));
-    setAlignment(0.5);
-}
-
-VideoShaderLayout::Main::Main() {
-    append(control,{~0u, 0u}, 10);
-    append(info,{~0u, 0u});
-
-    setPadding(10);
-    setFont(GUIKIT::Font::system("bold"));
-}
-
-VideoShaderLayout::Favourite::Control::Control() {
+VideoFavLayout::Control::Control() {
     append(remove,{0u, 0u});
     append(spacer,{~0u, 0u});
     append(add,{0u, 0u});
@@ -204,7 +205,7 @@ VideoShaderLayout::Favourite::Control::Control() {
     setAlignment(0.5);
 }
 
-VideoShaderLayout::Favourite::Favourite() {
+VideoFavLayout::VideoFavLayout() {
     append(list,{~0u, ~0u}, 10);
     append(control,{~0u, 0u});
 
@@ -212,11 +213,6 @@ VideoShaderLayout::Favourite::Favourite() {
     setFont(GUIKIT::Font::system("bold"));
     list.setHeaderText({"", ""});
     list.setHeaderVisible(true);
-}
-
-VideoShaderLayout::VideoShaderLayout() {
-    append(main,{~0u, 0u}, 10);
-    append(favourite,{~0u, ~0u});
 }
 
 VideoPassLayout::Settings::Line::Line() {
@@ -579,6 +575,7 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
     imgFolderOpen.loadPng((uint8_t*)Icons::folderOpen, sizeof(Icons::folderOpen) );
     imgFolderClosed.loadPng((uint8_t*)Icons::folderClosed, sizeof(Icons::folderClosed) );
     imgDocument.loadPng((uint8_t*)Icons::document, sizeof(Icons::document) );
+    imgScript.loadPng((uint8_t*)Icons::script, sizeof(Icons::script) );
     imgError.loadPng((uint8_t*)Icons::error, sizeof(Icons::error) );
     pageUp.loadPng((uint8_t*)Icons::pageUp, sizeof(Icons::pageUp) );
     pageDown.loadPng((uint8_t*)Icons::pageDown, sizeof(Icons::pageDown) );
@@ -600,48 +597,45 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
     layScreenText.options.font.addFont.setImage(&addImage);
     layScreenText.options.font.removeFont.setImage(&delImage);
 
-    layShader.main.control.downloadShader.setImage(&downloadImage);
-    layShader.main.control.loadDefaultShader.setImage(&starImage);
+    layBase.shader.control.downloadShader.setImage(&downloadImage);
+    layBase.shader.control.loadDefaultShader.setImage(&starImage);
+
+    layFav.control.add.setImage( &addImage );
+    layFav.control.remove.setImage( &delImage );
 
     tviBase.setUserData( (uintptr_t)1 );
     tviBase.setImage( colorImage );
+    tviFav.setImageExpanded(imgFolderOpen);
 
-    tviScreenText.setUserData( (uintptr_t)11 );
+    tviParams.setUserData( (uintptr_t)2 );
+    tviParams.setImage(imgScript);
+
+    tviFav.setUserData( (uintptr_t)3 );
+    tviFav.setImage(imgDocument);
+
+    tviScreenText.setUserData( (uintptr_t)4 );
     tviScreenText.setImage( menuImage );
 
-    tviScreenShot.setUserData((uintptr_t)12);
+    tviScreenShot.setUserData((uintptr_t)5);
     tviScreenShot.setImage(screenshotImage);
 
-    tviMotion.setUserData((uintptr_t)13);
+    tviMotion.setUserData((uintptr_t)6);
     tviMotion.setImage(hdrImage);
 
-    tviRewind.setUserData((uintptr_t)14);
+    tviRewind.setUserData((uintptr_t)7);
     tviRewind.setImage(rewindImage);
 
-    tviShader.setUserData( (uintptr_t)2 );
-    tviShader.setImage(imgFolderClosed);
-    tviShader.setImageExpanded(imgFolderOpen);
-
-    tviParams.setUserData( (uintptr_t)3 );
-    tviParams.setImage(imgDocument);
-
-    moduleTree.append(tviBase);
-    moduleTree.append(tviScreenText);
-    moduleTree.append(tviScreenShot);
-    moduleTree.append(tviMotion);
-    moduleTree.append(tviRewind);
+    setModuls();
     tviBase.setSelected();
-    if (videoDriver->shaderSupport())
-        moduleTree.append(tviShader);
 
     moduleSwitch.setLayout(1, layBase, {~0u, ~0u});
-    moduleSwitch.setLayout(11, layScreenText, {~0u, ~0u});
-    moduleSwitch.setLayout(12, layScreenShot, { ~0u, ~0u });
-    moduleSwitch.setLayout(13, layMotion, { ~0u, ~0u });
-    moduleSwitch.setLayout(14, layRewind, { ~0u, ~0u });
-    moduleSwitch.setLayout(2, layShader, {~0u, ~0u});
-    moduleSwitch.setLayout(21, layPass, {~0u, ~0u});
-    moduleSwitch.setLayout(3, layParam, {~0u, ~0u});
+    moduleSwitch.setLayout(11, layPass, {~0u, ~0u});
+    moduleSwitch.setLayout(2, layParam, {~0u, ~0u});
+    moduleSwitch.setLayout(3, layFav, {~0u, ~0u});
+    moduleSwitch.setLayout(4, layScreenText, {~0u, ~0u});
+    moduleSwitch.setLayout(5, layScreenShot, { ~0u, ~0u });
+    moduleSwitch.setLayout(6, layMotion, { ~0u, ~0u });
+    moduleSwitch.setLayout(7, layRewind, { ~0u, ~0u });
 
     layNav.append( moduleTree, { GUIKIT::Font::scale(160), ~0u} );
     layNav.setPadding(10);
@@ -656,50 +650,55 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
     layPass.control.down.setEnabled(false);
 
     layBase.view.option.reset.setImage(&backImage);
-    layShader.main.progress.close.setImage(&backImage);
+    layBase.shader.progress.close.setImage(&backImage);
 
     layMotion.hdr.maxNits.defaultButton.setImage(&backImage);
     layMotion.hdr.paperWhiteNits.defaultButton.setImage(&backImage);
     layMotion.hdr.contrast.defaultButton.setImage(&backImage);
 
+    setShaderVisible(videoDriver->shaderSupport());
+
     moduleSwitch.setSelection( 1 );
 
-    layShader.main.progress.close.onActivate = [this]() {
-        if (layShader.main.has(layShader.main.progress)) {
-            layShader.main.remove(layShader.main.progress);
-            layShader.main.update(layShader.main.info, 0u);
-            layShader.synchronizeLayout();
+    layBase.shader.progress.close.onActivate = [this]() {
+        if (layBase.shader.has(layBase.shader.progress)) {
+            layBase.shader.remove(layBase.shader.progress);
+            layBase.shader.update(layBase.shader.info, 0u);
+            layBase.synchronizeLayout();
         }
-        layShader.main.control.downloadShader.setEnabled();
+        layBase.shader.control.downloadShader.setEnabled();
     };
 
-    layShader.main.control.downloadShader.onClick = [&]() {
+    layBase.shader.control.downloadShader.onClick = [&]() {
+        auto& shader = layBase.shader;
         std::string uri = "https://buildbot.libretro.com/assets/frontend/shaders_slang.zip";
 
-        if (!layShader.main.control.downloadShader.enabled())
+        if (!layBase.shader.control.downloadShader.enabled())
             return;
 
-        layShader.main.control.downloadShader.setUri("");
-        layShader.main.control.downloadShader.setEnabled(false);
+        shader.control.downloadShader.setUri("");
+        shader.control.downloadShader.setEnabled(false);
 
         std::string shaderPath = FileHelper::generatedFolder("shaders");
-        layShader.main.progress.bar.setPosition(0);
-        layShader.main.progress.label.resetForegroundColor();
-        layShader.main.progress.label.setText( trans->getA("shader download") );
+        shader.progress.bar.setPosition(0);
+        shader.progress.label.resetForegroundColor();
+        shader.progress.label.setText( trans->getA("shader download") );
         
-        if (!layShader.main.has(layShader.main.progress)) {
-            layShader.main.update(layShader.main.info, 10u);
-            layShader.main.insert(layShader.main.progress, layShader.main.info, { ~0u, 0u }, 0);
-            layShader.synchronizeLayout();
+        if (!shader.has(shader.progress)) {
+            shader.update(shader.info, 10u);
+            shader.insert(shader.progress, shader.info, { ~0u, 0u }, 0);
+            layBase.synchronizeLayout();
         }
 
         auto settings = Program::getSettings(emulator);
 
         std::thread t1([shaderPath, uri, settings, this] {
+            auto& progress = layBase.shader.progress;
+
             try {
                 std::string url = uri;
-                std::string urlPath = "";
-                std::string archiveName = "";
+                std::string urlPath;
+                std::string archiveName;
 
                 GUIKIT::String::replace(url, "https", "http");
 
@@ -711,19 +710,19 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
 
                 httpClient.setProgressCallback([this](uint64_t len, uint64_t total) {
                     unsigned percent = (len * 50) / total + 0.5;
-                    layShader.main.progress.bar.setPositionThreaded(percent);
+                    layBase.shader.progress.bar.setPositionThreaded(percent);
                 });
 
                 archiveName = GUIKIT::String::getFileName(urlPath);
 
                 if (httpClient.download(urlPath, shaderPath + archiveName)) {
-                    layShader.main.progress.label.setTextThreaded(trans->getA("unpack"));
+                    progress.label.setTextThreaded(trans->getA("unpack"));
                     GUIKIT::File file(shaderPath + archiveName);
 
                     if (!file.open())
                         throw Error("can't open file " + shaderPath + archiveName);
                     
-                    layShader.main.progress.bar.setPositionThreaded(50);
+                    progress.bar.setPositionThreaded(50);
                     auto items = file.scanArchive();
                     unsigned fileCount = items.size();
                     if (!fileCount)
@@ -766,11 +765,11 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
                         if (++countUIUpdate == updateCount) {
                             countUIUpdate = 0;
                             unsigned percent = (countAll * 50) / fileCount + 0.5;
-                            layShader.main.progress.bar.setPositionThreaded(50 + percent);
+                            progress.bar.setPositionThreaded(50 + percent);
                         }
                     }
-                    if (layShader.main.progress.bar.position() != 100)
-                        layShader.main.progress.bar.setPositionThreaded(100);
+                    if (progress.bar.position() != 100)
+                        progress.bar.setPositionThreaded(100);
 
                     file.reset();
                     file.del();
@@ -781,23 +780,23 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
 
                     copyCustomPresets();
 
-                    layShader.main.progress.label.setForegroundColorThreaded(SUCCESS_COLOR);
-                    layShader.main.progress.label.setTextThreaded(trans->getA("complete"));
+                    progress.label.setForegroundColorThreaded(SUCCESS_COLOR);
+                    progress.label.setTextThreaded(trans->getA("complete"));
 
                 } else
                     throw Error("can't download " + url);
 
             } catch (Error& e) {
                 _error("Shader update: %s", e.what());
-                layShader.main.progress.label.setForegroundColorThreaded(ERROR_COLOR);
-                layShader.main.progress.label.setTextThreaded(trans->getA("error"));
+                progress.label.setForegroundColorThreaded(ERROR_COLOR);
+                progress.label.setTextThreaded(trans->getA("error"));
                 copyCustomPresets(); // at least we have older denise shader
             }
         });
         t1.detach();
     };
 
-    layShader.main.control.yuvEncoding.onToggle = [this](bool checked) {
+    layBase.shader.control.yuvEncoding.onToggle = [this](bool checked) {
         _settings->set<bool>("prepend_yuv_shader", checked );
     };
 
@@ -806,14 +805,12 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
         if (!item)
             return;
 
-        unsigned navIdent = (unsigned)item->userData();
+        auto navIdent = (unsigned)item->userData();
 
-        if (navIdent >= 3000) {
-            navIdent = 3;
-        } else if (navIdent >= 210 ) {
+        if (navIdent >= 110 ) {
             ShaderPreset* preset = vManager()->getPreset();
-            unsigned passPos = navIdent - 210;
-            navIdent = 21;
+            unsigned passPos = navIdent - 110;
+            navIdent = 11;
 
             if (preset) {
                 if (passPos < preset->passes.size()) {
@@ -928,20 +925,20 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
         scVideoWindow->setFocused();
     };
 
-    layShader.main.control.load.onActivate = [this]() {
+    layBase.shader.control.load.onActivate = [this]() {
         auto path = openShaderFileDialog();
         if (path.empty())
             return;
 
         emuThread->lock();
         if (loadShader(path)) {
-            layShader.favourite.control.add.setEnabled();
+            layFav.control.add.setEnabled();
             _settings->set<std::string>("slang_folder", GUIKIT::File::buildRelativePath(GUIKIT::File::getPath(path)));
         }
         emuThread->unlock();
     };
 
-    layShader.main.control.loadDefaultShader.onActivate = [this]() {
+    layBase.shader.control.loadDefaultShader.onActivate = [this]() {
         std::string path = FileHelper::generatedFolder("shaders");
         path += "bezel/koko-aio/Presets-4.1/";
         if (dynamic_cast<LIBC64::Interface*>(emulator))
@@ -958,13 +955,13 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
 
         emuThread->lock();
         if (loadShader(path)) {
-            layShader.favourite.control.add.setEnabled();
+            layFav.control.add.setEnabled();
             _settings->set<std::string>("slang_folder", GUIKIT::File::buildRelativePath(GUIKIT::File::getPath(path)));
         }
         emuThread->unlock();
     };
 
-    layShader.main.control.prependPreset.onActivate = [this]() {
+    layBase.shader.control.prependPreset.onActivate = [this]() {
         auto path = openShaderFileDialog();
         if (path.empty())
             return;
@@ -976,16 +973,16 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
 
         if (preset) {
             buildShaderUI(preset);
-            layShader.main.info.loaded.setText( _vManager->getPresetPathDetailed() );
+            layBase.shader.info.loaded.setText( _vManager->getPresetPathDetailed() );
             _settings->set<std::string>("slang_folder", GUIKIT::File::buildRelativePath(GUIKIT::File::getPath(path)));
-            layShader.favourite.control.add.setEnabled();
+            layFav.control.add.setEnabled();
             layBase.view.gamma.setEnabled( _vManager->legacyCRTonCPU || !_vManager->shaderRgb10BitInput() );
         }
         emuThread->unlock();
         showErrors(errors);
     };
 
-    layShader.main.control.appendPreset.onActivate = [this]() {
+    layBase.shader.control.appendPreset.onActivate = [this]() {
         auto path = openShaderFileDialog();
         if (path.empty())
             return;
@@ -997,16 +994,16 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
 
         if (preset) {
             buildShaderUI(preset);
-            layShader.main.info.loaded.setText( _vManager->getPresetPathDetailed() );
+            layBase.shader.info.loaded.setText( _vManager->getPresetPathDetailed() );
             _settings->set<std::string>("slang_folder", GUIKIT::File::buildRelativePath(GUIKIT::File::getPath(path)));
-            layShader.favourite.control.add.setEnabled();
+            layFav.control.add.setEnabled();
             layBase.view.gamma.setEnabled( _vManager->legacyCRTonCPU || !_vManager->shaderRgb10BitInput() );
         }
         emuThread->unlock();
         showErrors(errors);
     };
 
-    layShader.main.control.unload.onActivate = [this]() {
+    layBase.shader.control.unload.onActivate = [this]() {
         emuThread->lock();
         unloadShader();
         emuThread->unlock();
@@ -1038,7 +1035,7 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
         }
 
         if (vManager()->savePreset(path)) {
-            layShader.main.info.loaded.setText( vManager()->getPresetPathDetailed() );
+            layBase.shader.info.loaded.setText( vManager()->getPresetPathDetailed() );
             _settings->set<std::string>("slang_folder_save", GUIKIT::File::buildRelativePath(GUIKIT::File::getPath(path)));
         }
     };
@@ -1047,7 +1044,7 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
         layPass.control.save.onActivate();
     };
 
-    layShader.favourite.control.add.onActivate = [this]() {
+    layFav.control.add.onActivate = [this]() {
         std::string path = vManager()->getPresetPath();
 
         if (path.empty())
@@ -1074,13 +1071,13 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
         view->buildShader();
     };
 
-    layShader.favourite.control.remove.onActivate = [this]() {
-        if (!layShader.favourite.list.selected())
+    layFav.control.remove.onActivate = [this]() {
+        if (!layFav.list.selected())
             return;
 
         std::vector<std::string> storage;
-        int selection = layShader.favourite.list.selection();
-        layShader.favourite.list.reset();
+        int selection = layFav.list.selection();
+        layFav.list.reset();
 
         int i = 0;
         while(1) {
@@ -1102,12 +1099,12 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
             i++;
         }
 
-        layShader.favourite.control.remove.setEnabled(false);
+        layFav.control.remove.setEnabled(false);
         view->buildShader();
     };
 
-    layShader.favourite.list.onActivate = [this]() {
-        int selection = layShader.favourite.list.selection();
+    layFav.list.onActivate = [this]() {
+        int selection = layFav.list.selection();
         std::string path = _settings->get<std::string>( "shader_fav_" + std::to_string(selection), "");
         if (path.empty())
             return;
@@ -1118,10 +1115,10 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
         emuThread->unlock();
     };
 
-    layShader.favourite.list.onChange = [this]() {
+    layFav.list.onChange = [this]() {
         if (vManager()->getPreset())
-            layShader.favourite.control.add.setEnabled();
-        layShader.favourite.control.remove.setEnabled();
+            layFav.control.add.setEnabled();
+        layFav.control.remove.setEnabled();
     };
 
     MiscHelper::applyGeometry( &codeWindow, nullptr, "", {100, 100, 600, 350} );
@@ -1239,12 +1236,12 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
         tviPasses[selectedPassId]->setSelected();
     };
 
-    layShader.main.info.toParams.onActivate = [this]() {
+    layBase.shader.info.toParams.onActivate = [this]() {
         tviParams.setSelected();
-        moduleSwitch.setSelection( 3 );
+        moduleSwitch.setSelection( 2 );
     };
 
-    layShader.main.info.clearCache.onActivate = [this]() {
+    layBase.shader.info.clearCache.onActivate = [this]() {
         std::string cacheFolder = FileHelper::generatedFolder("cache");
         GUIKIT::File::removeDirectory( cacheFolder );
     };
@@ -1815,17 +1812,18 @@ auto PresentationLayout::countFloatingPoint(ShaderPreset::Param& param, int& pla
 auto PresentationLayout::buildShaderUI(ShaderPreset* preset) -> void {
 
     for(auto tviPass : tviPasses) {
-        tviShader.remove(*tviPass);
+        tviBase.remove(*tviPass);
         delete tviPass;
     }
 
     tviPasses.clear();
-    moduleTree.remove(tviParams);
-    layShader.main.info.toParams.setEnabled(false);
+    layBase.shader.info.toParams.setEnabled(false);
     layPass.errorMessage.setText("");
 
-    if (!preset)
+    if (!preset) {
+        layParam.listView.reset();
         return;
+    }
 
     for(int i = 0; i < preset->passes.size(); i++) {
         ShaderPreset::Pass& pass = preset->passes[i];
@@ -1835,14 +1833,14 @@ auto PresentationLayout::buildShaderUI(ShaderPreset* preset) -> void {
         if (!pass.alias.empty())
             passIdent += " " + pass.alias;
 
-        tviPass->setUserData( (uintptr_t)(210 + i) );
+        tviPass->setUserData( (uintptr_t)(110 + i) );
         tviPass->setText( passIdent );
 
         if (pass.inUse && !pass.error.empty())
             tviPass->setImage(imgError);
         else
             tviPass->setImage( imgDocument );
-        tviShader.append(*tviPass);
+        tviBase.append(*tviPass);
 
         tviPasses.push_back(tviPass);
     }
@@ -1873,14 +1871,12 @@ auto PresentationLayout::buildShaderUI(ShaderPreset* preset) -> void {
     plist.unlockRedraw();
 
     if (plist.rowCount()) {
-        moduleTree.append(tviParams);
-        layShader.main.info.toParams.setEnabled();
-    } else
-        tviShader.setExpanded();
+        layBase.shader.info.toParams.setEnabled();
+    }
 
     if ( !tviBase.selected() && !isSecondaryViewSelected()) {
-        tviShader.setSelected();
-        moduleSwitch.setSelection( 2 );
+        tviBase.setSelected();
+        moduleSwitch.setSelection( 1 );
     }
 }
 
@@ -2100,9 +2096,9 @@ auto PresentationLayout::updatePresets(bool reloadDriver, bool reloadPreset) -> 
     ShaderPreset* preset = vManager()->getPreset(errors);
     if (preset) {
         buildShaderUI(preset);
-        layShader.main.info.loaded.setText( vManager()->getPresetPathDetailed() );
-        layShader.main.control.setEnabled();
-        layShader.favourite.control.add.setEnabled();
+        layBase.shader.info.loaded.setText( vManager()->getPresetPathDetailed() );
+        layBase.shader.control.setEnabled();
+        layFav.control.add.setEnabled();
         showErrors(errors);
     } else
         unloadShader(reloadDriver);
@@ -2149,31 +2145,32 @@ auto PresentationLayout::translate() -> void {
     layBase.view.option.legacyCRTonCPU.setTooltip( trans->get("CPU CRT deprecated") );
     layBase.view.interlace.active.setText( trans->get("interlace", {}, true) );
 
-    layShader.main.control.prependPreset.setText( trans->getA("prepend preset") );
-    layShader.main.control.prependPreset.setTooltip( trans->getA("combine shader") );
-    layShader.main.control.appendPreset.setText( trans->getA("append preset") );
-    layShader.main.control.appendPreset.setTooltip( trans->getA("combine shader") );
+    layBase.shader.control.prependPreset.setText( trans->getA("prepend preset") );
+    layBase.shader.control.prependPreset.setTooltip( trans->getA("combine shader") );
+    layBase.shader.control.appendPreset.setText( trans->getA("append preset") );
+    layBase.shader.control.appendPreset.setTooltip( trans->getA("combine shader") );
 
-    layShader.main.control.downloadShader.setTooltip(trans->getA("download shader tooltip"));
-    layShader.main.control.loadDefaultShader.setTooltip(trans->getA("shader favourite"));
+    layBase.shader.control.downloadShader.setTooltip(trans->getA("download shader tooltip"));
+    layBase.shader.control.loadDefaultShader.setTooltip(trans->getA("shader favourite"));
 
-    layShader.main.control.unload.setText( trans->getA("unload") );
+    layBase.shader.control.unload.setText( trans->getA("unload") );
     layPass.control.save.setText( trans->getA("save") );
-    layShader.main.control.load.setText( trans->getA("load") );
-    layShader.main.control.load.setTooltip( trans->getA("load shader tooltip") );
+    layBase.shader.control.load.setText( trans->getA("load") );
+    layBase.shader.control.load.setTooltip( trans->getA("load shader tooltip") );
     layPass.control.save.setTooltip( trans->getA("save parameter tooltip") );
 
-    layShader.main.setText( trans->getA("Shader") );
-    layShader.favourite.setText( trans->getA("favourites") );
-    layShader.favourite.list.setHeaderText({trans->getA("selection"), trans->getA("path")});
+    layBase.shader.setText( trans->getA("Shader") );
+    layFav.setText( trans->getA("favourites") );
+    layFav.list.setHeaderText({trans->getA("selection"), trans->getA("path")});
 
-    layShader.main.info.label.setText( trans->getA("loaded", true) );
-    layShader.main.info.clearCache.setText( trans->getA("clear cache") );
-    layShader.main.info.toParams.setText( trans->getA("Parameter") );
-    layShader.favourite.control.add.setText( trans->getA("add") );
-    layShader.favourite.control.remove.setText( trans->getA("remove") );
-    layShader.main.control.yuvEncoding.setText( trans->getA("YUV Encoding") );
-    layShader.main.control.yuvEncoding.setTooltip( trans->getA("YUV Encoding tooltip") );
+    layBase.shader.info.label.setText( trans->getA("loaded", true) );
+    layBase.shader.info.clearCache.setText( trans->getA("clear cache") );
+    layBase.shader.info.toParams.setText( trans->getA("Parameter") );
+    layBase.shader.control.yuvEncoding.setText( trans->getA("YUV Encoding") );
+    layBase.shader.control.yuvEncoding.setTooltip( trans->getA("YUV Encoding tooltip") );
+
+    layFav.control.add.setTooltip( trans->getA("add shader favourite") );
+    layFav.control.remove.setTooltip( trans->getA("delete shader favourite") );
 
     layPass.settings.file.ident.setText( trans->getA("file", true) );
     layPass.settings.filter.ident.setText( trans->getA("filter", true) );
@@ -2250,7 +2247,7 @@ auto PresentationLayout::translate() -> void {
     tviBase.setText( trans->getA("overview") );
     tviScreenText.setText( trans->getA("screen text") );
     tviScreenShot.setText(trans->getA("screenshot"));
-    tviShader.setText( trans->getA("Shader") );
+    tviFav.setText( trans->getA("Favourites") );
     tviParams.setText( trans->getA("Parameter") );
     tviMotion.setText(trans->getA("HDR / BFI"));
     tviRewind.setText(trans->getA("Rewind"));
@@ -2456,7 +2453,7 @@ auto PresentationLayout::loadSettings(bool init) -> void {
     layRewind.bufferSize.setValue( std::to_string(rewindBuffer) );
 
     if (_settings->get<bool>("prepend_yuv_shader", dynamic_cast<LIBC64::Interface*>(emulator) ))
-        layShader.main.control.yuvEncoding.setChecked();
+        layBase.shader.control.yuvEncoding.setChecked();
 
     updateBfiVisibilities();
 }
@@ -2506,12 +2503,12 @@ auto PresentationLayout::clearErrors() -> void {
 }
 
 auto PresentationLayout::showErrors(const std::vector<std::string>& errors) -> void {
-    bool hasLabels = layShader.main.errorLabels.size();
-    for(auto errorLabel : layShader.main.errorLabels) {
-        layShader.main.remove(*errorLabel);
+    bool hasLabels = layBase.shader.errorLabels.size();
+    for(auto errorLabel : layBase.shader.errorLabels) {
+        layBase.shader.remove(*errorLabel);
         delete errorLabel;
     }
-    layShader.main.errorLabels.clear();
+    layBase.shader.errorLabels.clear();
     unsigned errSize = errors.size();
 
     if (errSize) {
@@ -2519,8 +2516,8 @@ auto PresentationLayout::showErrors(const std::vector<std::string>& errors) -> v
         label->setText( trans->getA("corrupted files", true) );
         label->setForegroundColor(ERROR_COLOR);
         label->setFont(GUIKIT::Font::system("bold"));
-        layShader.main.errorLabels.push_back(label);
-        layShader.main.append(*label, {0u, 0u}, 2);
+        layBase.shader.errorLabels.push_back(label);
+        layBase.shader.append(*label, {0u, 0u}, 2);
     }
 
     int i = 0;
@@ -2528,17 +2525,17 @@ auto PresentationLayout::showErrors(const std::vector<std::string>& errors) -> v
         auto label = new GUIKIT::Label;
         label->setText(error);
         label->setForegroundColor(ERROR_COLOR);
-        layShader.main.errorLabels.push_back(label);
-        layShader.main.append(*label, {0u, 0u}, 2);
+        layBase.shader.errorLabels.push_back(label);
+        layBase.shader.append(*label, {0u, 0u}, 2);
         if (i > 5)
             break;
     }
 
     if (hasLabels || errSize)
-        layShader.synchronizeLayout();
+        layBase.synchronizeLayout();
 
-    tviShader.setImage(errSize ? imgError : imgFolderClosed);
-    tviShader.setImageExpanded(errSize ? imgError : imgFolderOpen);
+    tviBase.setImage(errSize ? imgError : colorImage);
+    tviBase.setImageExpanded(errSize ? imgError : imgFolderOpen);
 }
 
 auto PresentationLayout::loadShader(std::string path) -> bool {
@@ -2548,8 +2545,8 @@ auto PresentationLayout::loadShader(std::string path) -> bool {
 
     if (preset) {
         buildShaderUI(preset);
-        layShader.main.info.loaded.setText( _vManager->getPresetPathDetailed() );
-        layShader.main.control.setEnabled();
+        layBase.shader.info.loaded.setText( _vManager->getPresetPathDetailed() );
+        layBase.shader.control.setEnabled();
         layBase.view.gamma.setEnabled( _vManager->legacyCRTonCPU || !_vManager->shaderRgb10BitInput() );
 
         if (layBase.view.option.legacyCRTonCPU.checked())
@@ -2566,26 +2563,19 @@ auto PresentationLayout::unloadShader(bool reloadDriver) -> void {
     if (reloadDriver)
         vManager()->clearPreset();
     buildShaderUI(nullptr);
-    layShader.main.info.loaded.setText( "" );
+    layBase.shader.info.loaded.setText( "" );
 
-    layShader.main.control.unload.setEnabled(false);
-    layShader.main.control.appendPreset.setEnabled(false);
-    layShader.main.control.prependPreset.setEnabled(false);
+    layBase.shader.control.unload.setEnabled(false);
+    layBase.shader.control.appendPreset.setEnabled(false);
+    layBase.shader.control.prependPreset.setEnabled(false);
 
-    layShader.favourite.control.add.setEnabled(false);
+    layFav.control.add.setEnabled(false);
     layBase.view.gamma.setEnabled();
     clearErrors();
 
-    if (!videoDriver->shaderSupport()) {
-        moduleTree.remove(tviParams);
-        moduleTree.remove(tviShader);
-        if (!isSecondaryViewSelected()) {
-            tviBase.setSelected();
-            moduleSwitch.setSelection( 1 );
-        }
-    } else if (!tviBase.selected() && !isSecondaryViewSelected()) {
-        tviShader.setSelected();
-        moduleSwitch.setSelection( 2 );
+    if (!tviBase.selected() && !isSecondaryViewSelected()) {
+        tviBase.setSelected();
+        moduleSwitch.setSelection( 1 );
     }
 }
 
@@ -2593,10 +2583,8 @@ auto PresentationLayout::isSecondaryViewSelected() -> bool {
     return tviScreenText.selected() || tviScreenShot.selected() || tviMotion.selected() || tviRewind.selected();
 }
 
-auto PresentationLayout::addShaderUI() -> void {
-    if (!moduleTree.has(tviShader)) {
-        moduleTree.append(tviShader);
-    }
+auto PresentationLayout::setShaderVisible(bool state) -> void {
+    layBase.shader.setEnabled( state );
 }
 
 auto PresentationLayout::getShaderFolder() -> std::string {
@@ -2637,8 +2625,8 @@ auto PresentationLayout::presentShaderError() -> void {
     for(auto& pass : preset->passes) {
         if (pass.inUse && !pass.error.empty()) {
             tviPasses[passId]->setImage(imgError);
-            if (!tviShader.expanded())
-                tviShader.setExpanded();
+            if (!tviBase.expanded())
+                tviBase.setExpanded();
 
             if (selectedPassId == passId) {
                 std::string _error = pass.error;
@@ -2657,7 +2645,7 @@ auto PresentationLayout::appendFavourite(std::string& path) -> void {
     auto fileName = GUIKIT::String::getFileName(path, true);
     auto _path = GUIKIT::File::getPath(path);
 
-    layShader.favourite.list.append({fileName, _path});
+    layFav.list.append({fileName, _path});
 }
 
 auto PresentationLayout::sortFavourites() -> void {
@@ -2690,8 +2678,12 @@ auto PresentationLayout::sortFavourites() -> void {
 
 auto PresentationLayout::listFavourites() -> void {
     int i = 0;
-    layShader.favourite.list.reset();
-    while(1) {
+    layFav.list.reset();
+
+    if (!videoDriver->shaderSupport())
+        return;
+
+    while(true) {
         std::string fav = _settings->get<std::string>( "shader_fav_" + std::to_string(i++), "");
         if (fav.empty())
             break;
@@ -2926,6 +2918,20 @@ auto PresentationLayout::copyCustomPresets() -> void {
         GUIKIT::File::xcopy(targetPath + pluginFolder + "disabled/led2.txt", targetPath + pluginFolder + "enabled/led2.txt");
         GUIKIT::File::xcopy(targetPath + pluginFolder + "disabled/led3.txt", targetPath + pluginFolder + "enabled/led3.txt");
     }
+}
+
+auto PresentationLayout::setModuls() -> void {
+    moduleTree.reset();
+
+    moduleTree.append(tviBase);
+    if (videoDriver->shaderSupport()) {
+        moduleTree.append(tviFav);
+        moduleTree.append(tviParams);
+    }
+    moduleTree.append(tviScreenText);
+    moduleTree.append(tviScreenShot);
+    moduleTree.append(tviMotion);
+    moduleTree.append(tviRewind);
 }
 
 auto SCVideoWindow::build() -> void {

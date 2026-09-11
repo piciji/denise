@@ -12,7 +12,6 @@
 #include "../thread/emuThread.h"
 #include "shaderParser.h"
 #include "../helper/settingsHelper.h"
-#include "props.cpp"
 #include "sync.cpp"
 #include "../debugger/dmaDebugger.h"
 #include "../tools/colors.h"
@@ -111,6 +110,12 @@ VideoManager::VideoManager(Emulator::Interface* emulator) {
 
     parser = new ShaderParser;
     scVideo = new SCVideo(this);
+}
+
+VideoManager::~VideoManager() {
+    free();
+    delete parser;
+    delete scVideo;
 }
 
 auto VideoManager::update() -> void {
@@ -1198,10 +1203,245 @@ auto VideoManager::getColorSpectrum(unsigned id, unsigned col) -> C64ColorSpectr
     return c64ColorSpectrum[id & 1][newLuma ? 0 : 1][col & 15];
 }
 
-VideoManager::~VideoManager() {
-    free();
-    delete parser;
-    delete scVideo;
+auto VideoManager::usePal(bool state) -> void {
+	pal = state;
+    requestUpdate();
+
+    auto appData = videoDriver->getAppData();
+    if (appData) {
+        appData->pal = (float)pal;
+        appData->subRegion = (float)emulator->getSubRegion();
+    }
+}
+
+auto VideoManager::useColorSpectrum(unsigned state) -> void {
+    colorSpectrum = !isC64() ? 0 : state;
+    requestUpdate();
+}
+
+auto VideoManager::setLegacyCrtMode(bool state) -> void {
+
+    if (this->legacyCRTonCPU != state)
+        rebuildShader = true;
+
+    this->legacyCRTonCPU = state;
+    requestUpdate();
+}
+
+auto VideoManager::setPalette(Emulator::Interface::Palette* palette) -> void {
+    this->palette = palette;
+
+    if (!colorSpectrum)
+        requestUpdate();
+}
+
+auto VideoManager::setSaturation(unsigned saturation) -> void {
+    this->saturation = (double)saturation / 100.0;
+    requestUpdate();
+}
+
+auto VideoManager::setContrast(unsigned contrast) -> void {
+    this->contrast = (double)contrast / 100.0;
+    requestUpdate();
+}
+
+auto VideoManager::setBrightness(unsigned brightness) -> void {
+    this->brightness = (double)brightness - 100.0;
+    requestUpdate();
+}
+
+auto VideoManager::setGamma(unsigned gamma) -> void {
+    this->gamma = (double)gamma / 100.0;
+    requestUpdate();
+}
+
+auto VideoManager::setNewLuma(bool state) -> void {
+    newLuma = state;
+    requestUpdate();
+}
+
+auto VideoManager::setPhase( int degree ) -> void {
+    phase = degree;
+    requestUpdate();
+}
+
+auto VideoManager::setPhaseError( float phaseError ) -> void {
+    this->phaseError = (double)phaseError;
+    requestUpdate();
+}
+
+auto VideoManager::setHanoverBars( int hanoverBars ) -> void {
+    int _oddSat = -1 * std::abs(hanoverBars);
+    this->hanoverBars = (int32_t)(((double)(100 + _oddSat) / 100.0) * 128.0);
+    this->hanoverBarsAlt = 0;
+
+    if (hanoverBars > 0)
+        this->hanoverBarsAlt = (int32_t)(((double)(100 + hanoverBars) / 100.0) * 128.0);
+
+    requestUpdate();
+}
+
+auto VideoManager::setBlur( unsigned blur ) -> void {
+    this->blur = (double)blur / 50.0;
+    requestUpdate();
+}
+
+auto VideoManager::setLumaRise( float pixel ) -> void {
+    lumaRise = pixel == 0.0 ? 0.0 : (double)(1.0 / (double)pixel);
+    requestUpdate();
+}
+
+auto VideoManager::setLumaFall( float pixel ) -> void {
+    lumaFall = pixel == 0.0 ? 0.0 : (double)(1.0 / (double)pixel);
+    requestUpdate();
+}
+
+auto VideoManager::setScanlines(unsigned intensity) -> void {
+    scanlines = intensity;
+    requestUpdate();
+}
+
+auto VideoManager::setInterlace(unsigned intensity) -> void {
+    interlaceDecay = intensity;
+    requestUpdate();
+}
+
+auto VideoManager::setInterlaceFields(bool state) -> void {
+    interlaceFields = state;
+    requestUpdate();
+}
+
+auto VideoManager::setData(const std::string& ident, float value) -> void {
+    if (activeEmulator != emulator)
+        rebuildShader = true;
+    else
+        for(auto& param : parser->shaderPreset.params) {
+            if (param.id == ident) {
+              //  videoDriver->waitRenderThread();
+                param.value = value;
+                break;
+            }
+        }
+}
+
+auto VideoManager::setData( unsigned offset, float value) -> void {
+    if (activeEmulator != emulator)
+        rebuildShader = true;
+    else {
+        auto& params = parser->shaderPreset.params;
+        if (offset < params.size()) {
+            // videoDriver->waitRenderThread();
+            params[offset].value = value;
+        }
+    }
+}
+
+auto VideoManager::getData(const std::string& ident) -> ShaderPreset::Param* {
+    for(auto& param : parser->shaderPreset.params) {
+        if (param.id == ident)
+            return &param;
+    }
+    return nullptr;
+}
+
+auto VideoManager::resetSettings() -> void {
+    settings->remove( "video_new_luma" );
+    settings->remove( "video_saturation" );
+    settings->remove( "video_brightness" );
+    settings->remove( "video_gamma" );
+    settings->remove( "video_contrast" );
+    settings->remove( "video_phase" );
+    settings->remove( "video_interlace_use" );
+    settings->remove( "video_interlace" );
+}
+
+auto VideoManager::resetLegacySettings() -> void {
+    settings->remove( "video_hanover_bars" );
+    settings->remove( "video_hanover_bars_use" );
+    settings->remove( "video_phase_error_use" );
+    settings->remove( "video_phase_error" );
+    settings->remove( "video_scanlines_use" );
+    settings->remove( "video_scanlines" );
+    settings->remove( "video_blur_use" );
+    settings->remove( "video_blur" );
+    settings->remove( "video_luma_rise_use" );
+    settings->remove( "video_luma_rise" );
+    settings->remove( "video_luma_fall_use" );
+    settings->remove( "video_luma_fall" );
+}
+
+auto VideoManager::getSettings() -> std::tuple<VPARAMST> {
+    unsigned _useSpectrum = settings->get<unsigned>("video_spectrum", 1);
+	unsigned _region = emulator->getRegionEncoding();
+	bool _pal = _region == Emulator::Interface::Region::Pal;
+
+    bool _legacyCrtMode = settings->get<bool>("video_crt_legacy", false);
+    bool moreError = isC64();
+
+    unsigned _saturation = settings->get<unsigned>("video_saturation", 100u,{0u, 200u});
+    unsigned _contrast = settings->get<unsigned>("video_contrast", 100u,{0u, 200u});
+    unsigned _gamma = settings->get<unsigned>("video_gamma", 100u,{30u, 280u});
+    unsigned _brightness = settings->get<unsigned>("video_brightness", 100u,{0, 200u});
+    int _phase = settings->get<int>("video_phase", 0,{-180, 180});
+    float _phaseError = settings->get<float>("video_phase_error", _pal ? (moreError ? 22.5f : 3.5f ) : 0, {-45.0, 45.0});
+    bool _usePhaseError = settings->get<bool>("video_phase_error_use", true);
+    bool _newLuma = settings->get<bool>("video_new_luma", true);
+    int _hanoverBars = settings->get<int>("video_hanover_bars", -10, {-100, 100});
+    bool _useHanoverBars = settings->get<bool>("video_hanover_bars_use", true);
+    unsigned _blur = settings->get<unsigned>("video_blur", 30,{0, 100});
+    bool _useBlur = settings->get<bool>("video_blur_use", true);
+    bool _useScanlines = settings->get<bool>("video_scanlines_use", false);
+    unsigned _scanlines = settings->get<unsigned>("video_scanlines", 33, {0, 100});
+    bool _useInterlace = settings->get<bool>("video_interlace_use", true);
+    unsigned _interlace = settings->get<unsigned>("video_interlace", 0, {0u, 100});
+
+    bool _useLumaRise = settings->get<bool>("video_luma_rise_use", moreError);
+	float _lumaRise = settings->get<float>("video_luma_rise", 2.0, {1.0, 4.0});
+	bool _useLumaFall = settings->get<bool>("video_luma_fall_use", moreError);
+	float _lumaFall = settings->get<float>("video_luma_fall", 1.2, {1.0, 4.0});
+
+    return std::make_tuple( VPARAMS);
+}
+
+auto VideoManager::reloadSettings(bool reloadPreset) -> void {
+    auto [VPARAMS] = getSettings();
+
+    setSaturation(_saturation);
+    setContrast(_contrast);
+    setBrightness(_brightness);
+    setGamma(_gamma);
+    setPhase(_phase);
+    setNewLuma(_newLuma);
+    setPhaseError(_usePhaseError ? _phaseError : 0 );
+    setHanoverBars( _useHanoverBars ? _hanoverBars : 0);
+    setScanlines(_useScanlines ? _scanlines : 0);
+    setInterlace(_useInterlace ? _interlace : 0);
+    setInterlaceFields( _useInterlace );
+    setBlur( _useBlur ? _blur : 0 );
+	setLumaRise( _useLumaRise ? _lumaRise : 0.0 );
+	setLumaFall( _useLumaFall ? _lumaFall : 0.0 );
+
+    usePal(_region == 0);
+    useColorSpectrum(_useSpectrum);
+    setLegacyCrtMode( _legacyCrtMode );
+
+    auto appData = videoDriver->getAppData();
+    if (appData)
+        appData->flags = (float)( pal && (colorSpectrum == 2));
+
+    if (reloadPreset)
+        loadPreset();
+
+    applyMeta();
+}
+
+auto VideoManager::applyMeta() -> void {
+    emulator->videoAddMeta( !legacyCRTonCPU && parser->needMetaData() );
+}
+
+auto VideoManager::requestUpdate() -> void {
+    colorTableUpdated = false;
+    needUpdateForAllInstances = true;
 }
 
 template auto VideoManager::renderFrame<uint8_t>(const uint8_t* src, unsigned width, unsigned height, unsigned srcPitch) -> void;

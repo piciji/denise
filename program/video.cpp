@@ -623,12 +623,15 @@ auto Program::setRotation() -> void {
 
 auto Program::checkShaderSupport(Emulator::Interface* emulator) -> void {
     auto emuView = EmuConfigView::TabWindow::getView(emulator);
+    bool support = videoDriver->shaderSupport();
 
-    if (videoDriver->shaderSupport()) {
-        if (emuView && emuView->presentationLayout)
-            emuView->presentationLayout->addShaderUI();
-        return;
+    if (emuView && emuView->presentationLayout) {
+        emuView->presentationLayout->setShaderVisible(support);
+        emuView->presentationLayout->setModuls();
     }
+
+    if (support)
+        return;
 
     auto vManager = VideoManager::getInstance(emulator);
 

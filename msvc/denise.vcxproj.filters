@@ -2010,9 +2010,6 @@
     <ClCompile Include="..\program\thread\emuThread.cpp">
       <Filter>program\thread</Filter>
     </ClCompile>
-    <ClCompile Include="..\program\video\props.cpp">
-      <Filter>program\video</Filter>
-    </ClCompile>
     <ClCompile Include="..\program\video\sync.cpp">
       <Filter>program\video</Filter>
     </ClCompile>

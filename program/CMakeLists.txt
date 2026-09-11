@@ -56,7 +56,6 @@ set(headers
         video/luts.cpp
         video/manager.h
         video/palette.h
-        video/props.cpp
         video/scVideo.h
         video/shaderParser.h
         video/sync.cpp

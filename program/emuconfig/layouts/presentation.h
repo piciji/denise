@@ -51,6 +51,43 @@ struct VideoBaseLayout : GUIKIT::VerticalLayout {
         View(bool withSpectrum);
     } view;
 
+    struct Shader : GUIKIT::FramedVerticalLayout {
+        struct Control : GUIKIT::HorizontalLayout {
+            GUIKIT::Button unload;
+            GUIKIT::Widget spacer;
+            GUIKIT::CheckBox yuvEncoding;
+            GUIKIT::ImageView downloadShader;
+            GUIKIT::Button loadDefaultShader;
+
+            GUIKIT::Button prependPreset;
+            GUIKIT::Button appendPreset;
+            GUIKIT::Button load;
+
+            Control();
+        } control;
+
+        struct Info : GUIKIT::HorizontalLayout {
+            GUIKIT::Label label;
+            GUIKIT::Label loaded;
+            GUIKIT::Button clearCache;
+            GUIKIT::Button toParams;
+
+            Info();
+        } info;
+
+        struct Progress : GUIKIT::HorizontalLayout {
+            GUIKIT::ProgressBar bar;
+            GUIKIT::Label label;
+            GUIKIT::Button close;
+
+            Progress();
+        } progress;
+
+        Shader();
+
+        std::vector<GUIKIT::Label*> errorLabels;
+    } shader;
+
     VideoBaseLayout(bool withSpectrum);
 };
 
@@ -91,60 +128,18 @@ struct SCVideoWindow : GUIKIT::Window {
     SCVideoWindow(PresentationLayout* presentation);
 };
 
-struct VideoShaderLayout : GUIKIT::VerticalLayout {
+struct VideoFavLayout : GUIKIT::FramedVerticalLayout {
+    GUIKIT::ListView list;
 
-    struct Main : GUIKIT::FramedVerticalLayout {
-        struct Control : GUIKIT::HorizontalLayout {
-            GUIKIT::Button unload;
-            GUIKIT::Widget spacer;
-            GUIKIT::CheckBox yuvEncoding;
-            GUIKIT::ImageView downloadShader;
-            GUIKIT::Button loadDefaultShader;
+    struct Control : GUIKIT::HorizontalLayout {
+        GUIKIT::Widget spacer;
+        GUIKIT::Button remove;
+        GUIKIT::Button add;
 
-            GUIKIT::Button prependPreset;
-            GUIKIT::Button appendPreset;
-            GUIKIT::Button load;
+        Control();
+    } control;
 
-            Control();
-        } control;
-
-        struct Info : GUIKIT::HorizontalLayout {
-            GUIKIT::Label label;
-            GUIKIT::Label loaded;
-            GUIKIT::Button clearCache;
-            GUIKIT::Button toParams;
-
-            Info();
-        } info;
-
-        struct Progress : GUIKIT::HorizontalLayout {
-            GUIKIT::ProgressBar bar;
-            GUIKIT::Label label;
-            GUIKIT::Button close;
-
-            Progress();
-        } progress;
-
-        Main();
-
-        std::vector<GUIKIT::Label*> errorLabels;
-    } main;
-
-    struct Favourite : GUIKIT::FramedVerticalLayout {
-        GUIKIT::ListView list;
-
-        struct Control : GUIKIT::HorizontalLayout {
-            GUIKIT::Widget spacer;
-            GUIKIT::Button remove;
-            GUIKIT::Button add;
-
-            Control();
-        } control;
-
-        Favourite();
-    } favourite;
-
-    VideoShaderLayout();
+    VideoFavLayout();
 };
 
 struct VideoPassLayout : GUIKIT::FramedVerticalLayout {
@@ -434,12 +429,12 @@ struct PresentationLayout : GUIKIT::HorizontalLayout {
     GUIKIT::TreeViewItem tviMotion;
     GUIKIT::TreeViewItem tviRewind;
 
-    GUIKIT::TreeViewItem tviShader;
+    GUIKIT::TreeViewItem tviFav;
     std::vector<GUIKIT::TreeViewItem*> tviPasses;
     GUIKIT::TreeViewItem tviParams;
 
     VideoBaseLayout layBase;
-    VideoShaderLayout layShader;
+    VideoFavLayout layFav;
     VideoPassLayout layPass;
     VideoParamLayout layParam;
     VideoScreenTextLayout layScreenText;
@@ -454,6 +449,7 @@ struct PresentationLayout : GUIKIT::HorizontalLayout {
     GUIKIT::Image imgFolderOpen;
     GUIKIT::Image imgFolderClosed;
     GUIKIT::Image imgDocument;
+    GUIKIT::Image imgScript;
     GUIKIT::Image imgError;
     GUIKIT::Image pageUp;
     GUIKIT::Image pageDown;
@@ -469,6 +465,7 @@ struct PresentationLayout : GUIKIT::HorizontalLayout {
     GUIKIT::Image screenshotImage;
     GUIKIT::Image hdrImage;
     GUIKIT::Image rewindImage;
+
 
     unsigned selectedPassId;
     unsigned selectedParamId;
@@ -492,7 +489,7 @@ struct PresentationLayout : GUIKIT::HorizontalLayout {
     auto openShaderFileDialog() -> std::string;
     auto presentShaderError() -> void;
     auto clearShaderError() -> void;
-    auto addShaderUI() -> void;
+    auto setShaderVisible(bool state) -> void;
     auto updateScreenText(bool keepFontPath) -> void;
     auto prepareColBox() -> void;
     auto fillFontTypeList() -> void;
@@ -506,6 +503,7 @@ struct PresentationLayout : GUIKIT::HorizontalLayout {
     auto sortFavourites() -> void;
     auto listFavourites() -> void;
     auto copyCustomPresets() -> void;
+    auto setModuls() -> void;
     
     template<typename T> auto setSliderAction( SliderLayout* layout, std::string baseIdent, std::function<T ( unsigned position )> callTransfer = [](unsigned position) { return position; } ) -> void;
     auto vManager() -> VideoManager* { return VideoManager::getInstance(emulator); }

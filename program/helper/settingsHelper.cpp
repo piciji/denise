@@ -131,6 +131,12 @@ auto SettingsHelper::unsetObsoleteConfigs(GUIKIT::Settings* settings, Emulator::
                 }
                 settings->set("unset_ds", true);
             }
+            if (!settings->get("unset_d3d9", false)) {
+                if (settings->get<std::string>("video_driver", "") == "Direct3D9") {
+                    settings->remove("video_driver");
+                }
+                settings->set("unset_d3d9", true);
+            }
         } else if (GUIKIT::Application::isCocoa()) {
             if (!settings->get("unset_ca", false)) {
                 if (settings->get<std::string>("audio_driver", "") == "CoreAudio") {
@@ -284,61 +290,6 @@ auto SettingsHelper::unsetObsoleteConfigs(GUIKIT::Settings* settings, Emulator::
             }
 
             settings->set("unset_mid", true);
-        }
-
-        if (dynamic_cast<LIBAMI::Interface*>(emulator)) {
-            if (!settings->get("update_key_acute", false)) {
-                if (settings->get<std::string>("keyboard_95", "") == "")
-                    settings->set<std::string>("keyboard_95", "0|0|0|13|0");
-                settings->set("update_key_acute", true);
-            }
-
-            if (!settings->get("update_joy_but3", false)) {
-                settings->changeIdent("joypad#1_15", "joypad#1_18");
-                settings->changeIdent("joypad#1_15_alt", "joypad#1_18_alt");
-                settings->changeIdent("joypad#1_14", "joypad#1_17");
-                settings->changeIdent("joypad#1_14_alt", "joypad#1_17_alt");
-                settings->changeIdent("joypad#1_13", "joypad#1_16");
-                settings->changeIdent("joypad#1_13_alt", "joypad#1_16_alt");
-                settings->changeIdent("joypad#1_12", "joypad#1_15");
-                settings->changeIdent("joypad#1_12_alt", "joypad#1_15_alt");
-                settings->changeIdent("joypad#1_11", "joypad#1_14");
-                settings->changeIdent("joypad#1_11_alt", "joypad#1_14_alt");
-                settings->changeIdent("joypad#1_10", "joypad#1_13");
-                settings->changeIdent("joypad#1_10_alt", "joypad#1_13_alt");
-
-                settings->changeIdent("joypad#1_9", "joypad#1_10");
-                settings->changeIdent("joypad#1_9_alt", "joypad#1_10_alt");
-                settings->changeIdent("joypad#1_8", "joypad#1_9");
-                settings->changeIdent("joypad#1_8_alt", "joypad#1_9_alt");
-                settings->changeIdent("joypad#1_7", "joypad#1_8");
-                settings->changeIdent("joypad#1_7_alt", "joypad#1_8_alt");
-                settings->changeIdent("joypad#1_6", "joypad#1_7");
-                settings->changeIdent("joypad#1_6_alt", "joypad#1_7_alt");
-
-                settings->changeIdent("joypad#2_15", "joypad#2_18");
-                settings->changeIdent("joypad#2_15_alt", "joypad#2_18_alt");
-                settings->changeIdent("joypad#2_14", "joypad#2_17");
-                settings->changeIdent("joypad#2_14_alt", "joypad#2_17_alt");
-                settings->changeIdent("joypad#2_13", "joypad#2_16");
-                settings->changeIdent("joypad#2_13_alt", "joypad#2_16_alt");
-                settings->changeIdent("joypad#2_12", "joypad#2_15");
-                settings->changeIdent("joypad#2_12_alt", "joypad#2_15_alt");
-                settings->changeIdent("joypad#2_11", "joypad#2_14");
-                settings->changeIdent("joypad#2_11_alt", "joypad#2_14_alt");
-                settings->changeIdent("joypad#2_10", "joypad#2_13");
-                settings->changeIdent("joypad#2_10_alt", "joypad#2_13_alt");
-
-                settings->changeIdent("joypad#2_9", "joypad#2_10");
-                settings->changeIdent("joypad#2_9_alt", "joypad#2_10_alt");
-                settings->changeIdent("joypad#2_8", "joypad#2_9");
-                settings->changeIdent("joypad#2_8_alt", "joypad#2_9_alt");
-                settings->changeIdent("joypad#2_7", "joypad#2_8");
-                settings->changeIdent("joypad#2_7_alt", "joypad#2_8_alt");
-                settings->changeIdent("joypad#2_6", "joypad#2_7");
-                settings->changeIdent("joypad#2_6_alt", "joypad#2_7_alt");
-                settings->set("update_joy_but3", true);
-            }
         }
     }
 }
