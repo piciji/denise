@@ -40,6 +40,8 @@
 		9D07CD122E296CD000A9787E /* lha_endian.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D07CCF82E296CD000A9787E /* lha_endian.cpp */; };
 		9D07CD182E29703800A9787E /* depsSpirv.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D07CD162E29703800A9787E /* depsSpirv.cpp */; };
 		9D07CD192E29703800A9787E /* depsSlang.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D07CD172E29703800A9787E /* depsSlang.cpp */; settings = {COMPILER_FLAGS = "-I$(PROJECT_DIR)/deps/glslang/"; }; };
+		9D09767A3054982E00FE871F /* scVideo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D0976793054982D00FE871F /* scVideo.cpp */; };
+		9D09767B3054982E00FE871F /* scVideo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D0976793054982D00FE871F /* scVideo.cpp */; };
 		9D0C380B2CB584D800363301 /* denise.icns in Resources */ = {isa = PBXBuildFile; fileRef = 9D0C380A2CB584D800363301 /* denise.icns */; };
 		9D0C380D2CB5861C00363301 /* fonts in Resources */ = {isa = PBXBuildFile; fileRef = 9D0C380C2CB5861C00363301 /* fonts */; };
 		9D0C38112CB586AD00363301 /* translation in Resources */ = {isa = PBXBuildFile; fileRef = 9D0C38102CB586AD00363301 /* translation */; };
@@ -614,6 +616,8 @@
 		9D07CD152E296D5500A9787E /* stb_image.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = stb_image.h; sourceTree = "<group>"; };
 		9D07CD162E29703800A9787E /* depsSpirv.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = depsSpirv.cpp; path = deps/depsSpirv.cpp; sourceTree = "<group>"; };
 		9D07CD172E29703800A9787E /* depsSlang.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = depsSlang.cpp; path = deps/depsSlang.cpp; sourceTree = "<group>"; };
+		9D0976783054982D00FE871F /* scVideo.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = scVideo.h; sourceTree = "<group>"; };
+		9D0976793054982D00FE871F /* scVideo.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = scVideo.cpp; sourceTree = "<group>"; };
 		9D0C380A2CB584D800363301 /* denise.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; name = denise.icns; path = data/img/denise.icns; sourceTree = "<group>"; };
 		9D0C380C2CB5861C00363301 /* fonts */ = {isa = PBXFileReference; lastKnownFileType = folder; name = fonts; path = data/fonts; sourceTree = "<group>"; };
 		9D0C38102CB586AD00363301 /* translation */ = {isa = PBXFileReference; lastKnownFileType = folder; name = translation; path = data/translation; sourceTree = "<group>"; };
@@ -723,7 +727,6 @@
 		9D8FAA722CB3F6EF006905BE /* program.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = program.cpp; sourceTree = "<group>"; };
 		9D8FAA742CB3F6EF006905BE /* manager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = manager.h; sourceTree = "<group>"; };
 		9D8FAA752CB3F6EF006905BE /* manager.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = manager.cpp; sourceTree = "<group>"; };
-		9D8FAA772CB3F6EF006905BE /* props.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = props.cpp; sourceTree = "<group>"; };
 		9D8FAA782CB3F6EF006905BE /* manager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = manager.h; sourceTree = "<group>"; };
 		9D8FAA792CB3F6EF006905BE /* sync.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = sync.cpp; sourceTree = "<group>"; };
 		9D8FAA7A2CB3F6EF006905BE /* manager.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = manager.cpp; sourceTree = "<group>"; };
@@ -1722,7 +1725,8 @@
 		9D8FAA762CB3F6EF006905BE /* video */ = {
 			isa = PBXGroup;
 			children = (
-				9D8FAA772CB3F6EF006905BE /* props.cpp */,
+				9D0976783054982D00FE871F /* scVideo.h */,
+				9D0976793054982D00FE871F /* scVideo.cpp */,
 				9D8FAA782CB3F6EF006905BE /* manager.h */,
 				9D8FAA792CB3F6EF006905BE /* sync.cpp */,
 				9D8FAA7A2CB3F6EF006905BE /* manager.cpp */,
@@ -3368,6 +3372,7 @@
 				9D7E7E863006A8F100FFACCD /* binaryMonitor.cpp in Sources */,
 				9D07CD042E296CD000A9787E /* lk7_decoder.cpp in Sources */,
 				9D8FAB2A2CB3F6F0006905BE /* config.cpp in Sources */,
+				9D09767A3054982E00FE871F /* scVideo.cpp in Sources */,
 				9DA75E362FE702BD00766658 /* SincResampler.cpp in Sources */,
 				9D7B485F2E40D7640010B152 /* cgif_raw.cpp in Sources */,
 				9D8FAB192CB3F6EF006905BE /* panning.cpp in Sources */,
@@ -3593,6 +3598,7 @@
 				9D7E7E873006A8F100FFACCD /* binaryMonitor.cpp in Sources */,
 				9DECF98D2E45F309005C0BBA /* lk7_decoder.cpp in Sources */,
 				9DECF98E2E45F309005C0BBA /* config.cpp in Sources */,
+				9D09767B3054982E00FE871F /* scVideo.cpp in Sources */,
 				9DA75E372FE702BD00766658 /* SincResampler.cpp in Sources */,
 				9DECF9902E45F309005C0BBA /* cgif_raw.cpp in Sources */,
 				9DECF9912E45F309005C0BBA /* panning.cpp in Sources */,
