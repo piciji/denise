@@ -140,7 +140,7 @@ view(withSpectrum) {
 SCVideoWindow::Main::Option::Option() {
     multiLine.setEditable( false );
 
-    append(multiLine,{~0u, 70u}, 20);
+    append(multiLine,{~0u, 80u}, 20);
     append(reset,{0u, 0u});
 
     setAlignment(0.5);
@@ -180,8 +180,8 @@ lumaFall("px", SliderLayout::ACTIVATOR) {
 }
 
 SCVideoWindow::Main::Main(bool withLumaDelay) {
-    append(option, {~0u, 0u}, 5);
-    append(encoding, {~0u, 0u}, 5);
+    append(option, {~0u, 0u}, 10);
+    append(encoding, {~0u, 0u}, 10);
 
     if (withLumaDelay)
         append(lumaDelay, {~0u, 0u});
@@ -2962,7 +2962,7 @@ auto SCVideoWindow::updateVisibillity() -> void {
 
 auto SCVideoWindow::translate() -> void {
     main.option.reset.setTooltip( trans->get("reset") );
-    main.option.multiLine.setText( trans->getA("CPU CRT deprecated") );
+    main.option.multiLine.setText( trans->get("CPU CRT deprecated", {{"%emu%",presentation->emulator->ident }}) );
 
     main.encoding.setText(trans->get("color encoding"));
     main.encoding.phaseError.active.setText( trans->get("phase_error", {}, true) );
