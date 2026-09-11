@@ -54,12 +54,12 @@ struct VideoBaseLayout : GUIKIT::VerticalLayout {
     struct Shader : GUIKIT::FramedVerticalLayout {
         struct Control : GUIKIT::HorizontalLayout {
             GUIKIT::Button unload;
+            GUIKIT::Button clearCache;
             GUIKIT::Widget spacer;
             GUIKIT::CheckBox yuvEncoding;
             GUIKIT::ImageView downloadShader;
             GUIKIT::Button loadDefaultShader;
 
-            GUIKIT::Button prependPreset;
             GUIKIT::Button appendPreset;
             GUIKIT::Button load;
 
@@ -69,7 +69,6 @@ struct VideoBaseLayout : GUIKIT::VerticalLayout {
         struct Info : GUIKIT::HorizontalLayout {
             GUIKIT::Label label;
             GUIKIT::Label loaded;
-            GUIKIT::Button clearCache;
             GUIKIT::Button toParams;
 
             Info();
@@ -465,7 +464,10 @@ struct PresentationLayout : GUIKIT::HorizontalLayout {
     GUIKIT::Image screenshotImage;
     GUIKIT::Image hdrImage;
     GUIKIT::Image rewindImage;
-
+    GUIKIT::Image openImage;
+    GUIKIT::Image appendImage;
+    GUIKIT::Image closeImage;
+    GUIKIT::Image clearImage;
 
     unsigned selectedPassId;
     unsigned selectedParamId;

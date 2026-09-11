@@ -208,4 +208,6 @@ extern uint8_t star[304];
 
 extern uint8_t close[377];
 
+extern uint8_t append[597];
+
 }

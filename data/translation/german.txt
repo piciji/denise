@@ -946,6 +946,6 @@ cart_image = %cart% Abbild
 select_cart_image = %cart% Abbild auswählen ...
 blank_cart_image = neues %cart% Abbild auswählen ...
 memory_creator = Flash/EEPROM/SRAM erstellen
-CPU CRT deprecated = CRT Simulation über die CPU ist ressourcenhungrig und bietet nur einen Teil des Funktios-Umfanges von Shadern. Die Verwendung ist nur noch sinnvoll für Nutzer sehr alter onboard Grafikeinheiten. Ein Shader mit der selben grafischen Ausgabe findet man im Shader Ordner unter "internal/*_svideo_light"
+CPU CRT deprecated = CRT Simulation über die CPU ist ressourcenhungrig und bietet nur einen Teil des Funktios-Umfanges von Shadern. Die Verwendung ist nur noch sinnvoll für Nutzer sehr alter onboard Grafikeinheiten. Ein Shader mit der selben grafischen Ausgabe findet man im Shader Ordner unter "internal/%emu%_svideo_light"
 add shader favourite = aktuell geladenen Shader zur Favoritenliste hinzufügen
 delete shader favourite = ausgewählten Shader aus der Favoritenliste entfernen

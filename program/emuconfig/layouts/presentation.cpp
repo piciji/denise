@@ -87,18 +87,17 @@ interlace("%", SliderLayout::ACTIVATOR) {
 }
 
 VideoBaseLayout::Shader::Control::Control() {
-    append(unload,{0u, 0u});
+    append(unload,{0u, 0u}, 10);
+    append(clearCache,{0u, 0u});
     append(spacer, { ~0u, 0u });
     append(yuvEncoding, { 0u, 0u }, 10);
 
-    append(prependPreset,{0u, 0u}, 10);
     append(appendPreset,{0u, 0u}, 10);
     append(downloadShader, { 0u, 0u }, 10);
     append(loadDefaultShader,{0u, 0u}, 10);
     append(load,{0u, 0u});
 
     unload.setEnabled(false);
-    prependPreset.setEnabled(false);
     appendPreset.setEnabled(false);
 
     setAlignment(0.5);
@@ -107,7 +106,6 @@ VideoBaseLayout::Shader::Control::Control() {
 VideoBaseLayout::Shader::Info::Info() {
     append(label,{0u, 0u}, 5);
     append(loaded,{~0u, 0u});
-    append(clearCache,{0u, 0u}, 10);
     append(toParams,{0u, 0u});
 
     setAlignment(0.5);
@@ -591,6 +589,10 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
     hdrImage.loadPng((uint8_t*)Icons::hdr, sizeof(Icons::hdr));
     rewindImage.loadPng((uint8_t*)Icons::rewind, sizeof(Icons::rewind) );
     starImage.loadPng((uint8_t*)Icons::star, sizeof(Icons::star) );
+    openImage.loadPng((uint8_t*)Icons::open, sizeof(Icons::open) );
+    appendImage.loadPng((uint8_t*)Icons::append, sizeof(Icons::append) );
+    closeImage.loadPng((uint8_t*)Icons::close, sizeof(Icons::close) );
+    clearImage.loadPng((uint8_t*)Icons::clear, sizeof(Icons::clear) );
 
     layBase.view.option.legacyParams.setImage( &menuImage );
 
@@ -599,6 +601,12 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
 
     layBase.shader.control.downloadShader.setImage(&downloadImage);
     layBase.shader.control.loadDefaultShader.setImage(&starImage);
+    layBase.shader.control.load.setImage(&openImage);
+    layBase.shader.control.appendPreset.setImage(&appendImage);
+    layBase.shader.control.unload.setImage(&closeImage);
+    layBase.shader.control.clearCache.setImage(&clearImage);
+
+    layBase.shader.info.toParams.setImage(&menuImage);
 
     layFav.control.add.setImage( &addImage );
     layFav.control.remove.setImage( &delImage );
@@ -961,27 +969,6 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
         emuThread->unlock();
     };
 
-    layBase.shader.control.prependPreset.onActivate = [this]() {
-        auto path = openShaderFileDialog();
-        if (path.empty())
-            return;
-
-        emuThread->lock();
-        std::vector<std::string> errors;
-        auto _vManager = vManager();
-        ShaderPreset* preset = _vManager->addPreset(path, true, errors);
-
-        if (preset) {
-            buildShaderUI(preset);
-            layBase.shader.info.loaded.setText( _vManager->getPresetPathDetailed() );
-            _settings->set<std::string>("slang_folder", GUIKIT::File::buildRelativePath(GUIKIT::File::getPath(path)));
-            layFav.control.add.setEnabled();
-            layBase.view.gamma.setEnabled( _vManager->legacyCRTonCPU || !_vManager->shaderRgb10BitInput() );
-        }
-        emuThread->unlock();
-        showErrors(errors);
-    };
-
     layBase.shader.control.appendPreset.onActivate = [this]() {
         auto path = openShaderFileDialog();
         if (path.empty())
@@ -1241,7 +1228,7 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
         moduleSwitch.setSelection( 2 );
     };
 
-    layBase.shader.info.clearCache.onActivate = [this]() {
+    layBase.shader.control.clearCache.onActivate = [this]() {
         std::string cacheFolder = FileHelper::generatedFolder("cache");
         GUIKIT::File::removeDirectory( cacheFolder );
     };
@@ -2142,30 +2129,26 @@ auto PresentationLayout::translate() -> void {
     layBase.view.mode.spectrumPALette.setText( trans->getA("color_spectrum") + " PALette" );
     layBase.view.option.reset.setTooltip( trans->get("reset") );
     layBase.view.option.legacyCRTonCPU.setText( trans->get("S/C-Video CPU") );
-    layBase.view.option.legacyCRTonCPU.setTooltip( trans->get("CPU CRT deprecated") );
+    layBase.view.option.legacyCRTonCPU.setTooltip( trans->get("CPU CRT deprecated", {{"%emu%",emulator->ident }}) );
     layBase.view.interlace.active.setText( trans->get("interlace", {}, true) );
 
-    layBase.shader.control.prependPreset.setText( trans->getA("prepend preset") );
-    layBase.shader.control.prependPreset.setTooltip( trans->getA("combine shader") );
-    layBase.shader.control.appendPreset.setText( trans->getA("append preset") );
     layBase.shader.control.appendPreset.setTooltip( trans->getA("combine shader") );
 
     layBase.shader.control.downloadShader.setTooltip(trans->getA("download shader tooltip"));
     layBase.shader.control.loadDefaultShader.setTooltip(trans->getA("shader favourite"));
 
-    layBase.shader.control.unload.setText( trans->getA("unload") );
+    layBase.shader.control.unload.setTooltip( trans->getA("unload") );
     layPass.control.save.setText( trans->getA("save") );
-    layBase.shader.control.load.setText( trans->getA("load") );
-    layBase.shader.control.load.setTooltip( trans->getA("load shader tooltip") );
     layPass.control.save.setTooltip( trans->getA("save parameter tooltip") );
+    layBase.shader.control.load.setTooltip( trans->getA("load shader tooltip") );
 
     layBase.shader.setText( trans->getA("Shader") );
     layFav.setText( trans->getA("favourites") );
     layFav.list.setHeaderText({trans->getA("selection"), trans->getA("path")});
 
     layBase.shader.info.label.setText( trans->getA("loaded", true) );
-    layBase.shader.info.clearCache.setText( trans->getA("clear cache") );
-    layBase.shader.info.toParams.setText( trans->getA("Parameter") );
+    layBase.shader.info.toParams.setTooltip( trans->getA("Parameter") );
+    layBase.shader.control.clearCache.setTooltip( trans->getA("clear cache") );
     layBase.shader.control.yuvEncoding.setText( trans->getA("YUV Encoding") );
     layBase.shader.control.yuvEncoding.setTooltip( trans->getA("YUV Encoding tooltip") );
 
@@ -2567,7 +2550,6 @@ auto PresentationLayout::unloadShader(bool reloadDriver) -> void {
 
     layBase.shader.control.unload.setEnabled(false);
     layBase.shader.control.appendPreset.setEnabled(false);
-    layBase.shader.control.prependPreset.setEnabled(false);
 
     layFav.control.add.setEnabled(false);
     layBase.view.gamma.setEnabled();
