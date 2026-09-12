@@ -1,12 +1,12 @@
 
-#include "m68000.h"
+#include "m68Core.h"
 
 enum { S6 = 6, S8 = 8, S12 = 12, SO /* second operand */ = 1 << 4, O_16 = 2 << 4, O_256 = 4 << 4 };
 enum { DR = 1, AR = 2, AI = 4, AIPI = 8, AIPD = 16, AID = 32, AII = 64, AS = 128, AL = 256, PCD = 512, PCI = 1024, IM = 2048,
         ADR_TYPICAL = AI | AIPI | AIPD | AID | AII | AS | AL, ADR_FULL = ADR_TYPICAL | PCD | PCI | IM };
 
-#define _bindEA(id, F, I, M, S) { opTable[id] = &M68000::op##F<I, M, S>; dasmTable[id] = &M68000::dasm##F<I, M, S>; mnemonics[id] = DasmHandler::mnemonic( I ); }
-#define _bind(id, F, I, S) { opTable[id] = &M68000::op##F<I, S>; dasmTable[id] = &M68000::dasm##F<I, S>; mnemonics[id] = DasmHandler::mnemonic( I ); }
+#define _bindEA(id, F, I, M, S) { opTable[id] = &M68Core::op##F<I, M, S>; dasmTable[id] = &M68Core::dasm##F<I, M, S>; mnemonics[id] = DasmHandler::mnemonic( I ); }
+#define _bind(id, F, I, S) { opTable[id] = &M68Core::op##F<I, S>; dasmTable[id] = &M68Core::dasm##F<I, S>; mnemonics[id] = DasmHandler::mnemonic( I ); }
 
 #define _M_( op, F, I, M, S ) { \
     for (int j = 0; j < 8; j++) { \
@@ -50,14 +50,14 @@ enum { DR = 1, AR = 2, AI = 4, AIPI = 8, AIPD = 16, AID = 32, AII = 64, AS = 128
 
 namespace M68FAMILY {
 
-auto M68000::parse(const char* s, uint16_t sum) -> uint16_t {
+auto M68Core::parse(const char* s, uint16_t sum) -> uint16_t {
 
     return  *s == '1' ? parse(s + 1, (sum << 1) + 1) :
             *s == ' ' ? parse(s + 1, sum) :
             *s ? parse(s + 1, sum << 1) : sum;
 }
 
-auto M68000::build() -> void {
+auto M68Core::build() -> void {
     uint16_t o;
     dasmTable = new OpDasm[0x10000];
 
@@ -553,38 +553,38 @@ auto M68000::build() -> void {
 
     // nop
     o = parse("0100 1110 0111 0001");
-    opTable[o] = &M68000::opNop;
-    dasmTable[o] = &M68000::dasmNop;
+    opTable[o] = &M68Core::opNop;
+    dasmTable[o] = &M68Core::dasmNop;
     mnemonics[o] = DasmHandler::mnemonic( Nop );
 
     // reset
     o = parse("0100 1110 0111 0000");
-    opTable[o] = &M68000::opReset;
-    dasmTable[o] = &M68000::dasmReset;
+    opTable[o] = &M68Core::opReset;
+    dasmTable[o] = &M68Core::dasmReset;
     mnemonics[o] = DasmHandler::mnemonic( Reset );
 
     // rte
     o = parse("0100 1110 0111 0011");
-    opTable[o] = &M68000::opRte;
-    dasmTable[o] = &M68000::dasmRte;
+    opTable[o] = &M68Core::opRte;
+    dasmTable[o] = &M68Core::dasmRte;
     mnemonics[o] = DasmHandler::mnemonic( Rte );
 
     // rtr
     o = parse("0100 1110 0111 0111");
-    opTable[o] = &M68000::opRtr;
-    dasmTable[o] = &M68000::dasmRtr;
+    opTable[o] = &M68Core::opRtr;
+    dasmTable[o] = &M68Core::dasmRtr;
     mnemonics[o] = DasmHandler::mnemonic( Rtr );
 
     // rts
     o = parse("0100 1110 0111 0101");
-    opTable[o] = &M68000::opRts;
-    dasmTable[o] = &M68000::dasmRts;
+    opTable[o] = &M68Core::opRts;
+    dasmTable[o] = &M68Core::dasmRts;
     mnemonics[o] = DasmHandler::mnemonic( Rts );
 
     // stop
     o = parse("0100 1110 0111 0010");
-    opTable[o] = &M68000::opStop;
-    dasmTable[o] = &M68000::dasmStop;
+    opTable[o] = &M68Core::opStop;
+    dasmTable[o] = &M68Core::dasmStop;
     mnemonics[o] = DasmHandler::mnemonic( _Stop );
 
     // swap
@@ -597,7 +597,7 @@ auto M68000::build() -> void {
 
     // trapv
     o = parse("0100 1110 0111 0110");
-    opTable[o] = &M68000::opTrapv;
+    opTable[o] = &M68Core::opTrapv;
     mnemonics[o] = DasmHandler::mnemonic( Trapv );
 
     // unlink
@@ -615,10 +615,10 @@ auto M68000::build() -> void {
     _B_( o | (1 << 6), SO, MovepEa, Movep, Long )
 
     for (int i = 0; i < 0x1000; i++) {
-        opTable[(0xa << 12) | i] = &M68000::lineA;
-        opTable[(0xf << 12) | i] = &M68000::lineF;
-        dasmTable[(0xa << 12) | i] = &M68000::dasmLineA;
-        dasmTable[(0xf << 12) | i] = &M68000::dasmLineF;
+        opTable[(0xa << 12) | i] = &M68Core::lineA;
+        opTable[(0xf << 12) | i] = &M68Core::lineF;
+        dasmTable[(0xa << 12) | i] = &M68Core::dasmLineA;
+        dasmTable[(0xf << 12) | i] = &M68Core::dasmLineF;
         mnemonics[(0xa << 12) | i] = DasmHandler::mnemonic( LineA );
         mnemonics[(0xf << 12) | i] = DasmHandler::mnemonic( LineF );
     }
@@ -631,8 +631,8 @@ auto M68000::build() -> void {
 
         if (!opTable[i]) {
             // note: initialized with zero in header file
-            opTable[i] = &M68000::illegal;
-            dasmTable[i] = &M68000::dasmIllegal;
+            opTable[i] = &M68Core::illegal;
+            dasmTable[i] = &M68Core::dasmIllegal;
             mnemonics[i] = DasmHandler::mnemonic( Illegal );
         }
     }

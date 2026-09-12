@@ -1,9 +1,9 @@
 
-#include "m68000.h"
+#include "m68Core.h"
 
 namespace M68FAMILY {
 
-auto M68000::trapException(uint8_t vector) -> void { // group 2 exceptions
+auto M68Core::trapException(uint8_t vector) -> void { // group 2 exceptions
     uint16_t SR = getSR();
     setSuperVisor();
 
@@ -21,27 +21,27 @@ auto M68000::trapException(uint8_t vector) -> void { // group 2 exceptions
     executeAt( vector << 2, 2 );
 }
 
-auto M68000::illegal(uint16_t opcode) -> void {
+auto M68Core::illegal(uint16_t opcode) -> void {
     group1Exception(4);
 }
 
-auto M68000::lineA(uint16_t opcode) -> void {
+auto M68Core::lineA(uint16_t opcode) -> void {
     group1Exception(10);
 }
 
-auto M68000::lineF(uint16_t opcode) -> void {
+auto M68Core::lineF(uint16_t opcode) -> void {
     group1Exception(11);
 }
 
-auto M68000::privilegeException() -> void {
+auto M68Core::privilegeException() -> void {
     group1Exception( 8 );
 }
 
-auto M68000::traceException() -> void {
+auto M68Core::traceException() -> void {
     group1Exception( 9 );
 }
 
-auto M68000::group1Exception(uint8_t vector) -> void {
+auto M68Core::group1Exception(uint8_t vector) -> void {
     uint16_t SR = getSR();
     setSuperVisor();
     pc -= 2;
@@ -61,7 +61,7 @@ auto M68000::group1Exception(uint8_t vector) -> void {
     executeAt( vector << 2, 1 );
 }
 
-auto M68000::IRQException() -> void { // a group 1 exception
+auto M68Core::IRQException() -> void { // a group 1 exception
     uint16_t SR = getSR();
     setSuperVisor();
     i = iplSample;
@@ -91,7 +91,7 @@ auto M68000::IRQException() -> void { // a group 1 exception
     // this also applies for a possible address exception which not causing a double fault.
 }
 
-auto M68000::getInterruptVector(uint8_t level) -> uint8_t {
+auto M68Core::getInterruptVector(uint8_t level) -> uint8_t {
     // IACK cycle is a special (4 cycle minimum) read operation which is finished by a handshake.
     // IACK cycle is recognized by external devices, when all function codes FC0-2 bits set.
     // the interrupt level is placed on A1 - A3, A4 - A23 are all set.
@@ -119,7 +119,7 @@ auto M68000::getInterruptVector(uint8_t level) -> uint8_t {
     return vector;
 }
 
-template<uint8_t Mode, uint8_t Size> auto M68000::addressExceptionEA(uint32_t ea) -> void {
+template<uint8_t Mode, uint8_t Size> auto M68Core::addressExceptionEA(uint32_t ea) -> void {
     uint32_t _pc = pc;
 
     if constexpr(Mode == AddressRegisterIndirectWithPreDecrement && Size != Long)
@@ -130,7 +130,7 @@ template<uint8_t Mode, uint8_t Size> auto M68000::addressExceptionEA(uint32_t ea
     addressException(ea, _pc, SF_READ | (isPcMode<Mode>() ? SF_PRG : SF_DATA) );
 }
 
-template<uint8_t Mode, uint8_t Size> auto M68000::addressExceptionMoveEA(uint32_t ea, uint32_t data) -> void {
+template<uint8_t Mode, uint8_t Size> auto M68Core::addressExceptionMoveEA(uint32_t ea, uint32_t data) -> void {
     uint32_t _pc = pc;
     uint8_t flags = SF_DATA;
 
@@ -153,7 +153,7 @@ template<uint8_t Mode, uint8_t Size> auto M68000::addressExceptionMoveEA(uint32_
     addressException(ea, _pc, flags, data);
 }
 
-auto M68000::addressException(uint32_t adr, uint32_t _pc, uint8_t flags, uint16_t value) -> void {
+auto M68Core::addressException(uint32_t adr, uint32_t _pc, uint8_t flags, uint16_t value) -> void {
     // misalignment is recognized during BUS cycle, UDS and LDS are never asserted.
     // AS line is asserted and in case of a "Write", data is put on data BUS.
     // periphery typically treat a BUS cycle as valid when DS is asserted.
@@ -192,7 +192,7 @@ auto M68000::addressException(uint32_t adr, uint32_t _pc, uint8_t flags, uint16_
     executeAt(3 << 2, 0);
 }
 
-auto M68000::executeAt(uint16_t adr, uint8_t group) -> void { // 18 cycles
+auto M68Core::executeAt(uint16_t adr, uint8_t group) -> void { // 18 cycles
     if ((control & ExceptionPoint) && exceptionPoints.check( adr >> 2, true )) {
         DEBUG_POINT_REACHED(ExceptionPoint, exceptionPoints, adr >> 2);
     }
@@ -211,7 +211,7 @@ auto M68000::executeAt(uint16_t adr, uint8_t group) -> void { // 18 cycles
     prefetch<SampleIPL>();
 }
 
-auto M68000::resetRoutine() -> void { // highest prioritized group 0 routine
+auto M68Core::resetRoutine() -> void { // highest prioritized group 0 routine
     SYNC(12); // confirmed with fx68k
     control &= ~ResetRoutine;
 
@@ -228,7 +228,7 @@ auto M68000::resetRoutine() -> void { // highest prioritized group 0 routine
     prefetch<SampleIPL>();
 }
 
-auto M68000::setSuperVisor(bool state) -> void {
+auto M68Core::setSuperVisor(bool state) -> void {
     if (s == state)
         return;
 
@@ -243,7 +243,7 @@ auto M68000::setSuperVisor(bool state) -> void {
     }
 }
 
-template<uint8_t Size> auto M68000::misaligned(uint32_t adr) -> bool {
+template<uint8_t Size> auto M68Core::misaligned(uint32_t adr) -> bool {
     return (adr & 1) && Size != Byte;
 }
 

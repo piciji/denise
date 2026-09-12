@@ -1056,11 +1056,11 @@ auto Agnus::debugPointReached(int source, Emulator::WatchPoints& wp, unsigned ad
     Emulator::Interface::DebuggerAction action;
 
     switch (source) {
-        case M68FAMILY::M68000::WatchPoint: action = DebuggerAction::Watchpoint; break;
-        case M68FAMILY::M68000::WatchPointWrite: action = DebuggerAction::WatchpointWrite; break;
-        case M68FAMILY::M68000::ExceptionPoint: action = DebuggerAction::ExceptionPoint; break;
-        case M68FAMILY::M68000::BreakPoint: action = DebuggerAction::Breakpoint; break;
-        case M68FAMILY::M68000::SoftStop: action = DebuggerAction::Softstop; break;
+        case M68FAMILY::M68Core::WatchPoint: action = DebuggerAction::Watchpoint; break;
+        case M68FAMILY::M68Core::WatchPointWrite: action = DebuggerAction::WatchpointWrite; break;
+        case M68FAMILY::M68Core::ExceptionPoint: action = DebuggerAction::ExceptionPoint; break;
+        case M68FAMILY::M68Core::BreakPoint: action = DebuggerAction::Breakpoint; break;
+        case M68FAMILY::M68Core::SoftStop: action = DebuggerAction::Softstop; break;
         default: return;
     }
 

@@ -39,9 +39,9 @@
 
 namespace M68FAMILY {
 
-class M68000 {
-    typedef void (M68000::*OpTable)(uint16_t);
-    typedef void (M68000::*OpDasm)(uint16_t, uint32_t&, DasmHandler&);
+class M68Core {
+    typedef void (M68Core::*OpTable)(uint16_t);
+    typedef void (M68Core::*OpDasm)(uint16_t, uint32_t&, DasmHandler&);
 
     OpTable opTable[0x10000] = {nullptr};
     OpDasm* dasmTable = nullptr;
@@ -54,13 +54,13 @@ class M68000 {
 protected:
     const char* mnemonics[0x10000] = {nullptr};
 #ifdef REF
-    M68000(REF_NS::REF& ref) : ref(ref) { build(); }
+    M68Core(REF_NS::REF& ref) : ref(ref) { build(); }
     REF_NS::REF& ref;
 #else
-    M68000() { build(); }
+    M68Core() { build(); }
 #endif
 
-    ~M68000();
+    ~M68Core();
 
     enum { Asl, Asr, Lsl, Lsr, Rol, Ror, Roxl, Roxr,
         Bchg, Bset, Bclr, Btst,

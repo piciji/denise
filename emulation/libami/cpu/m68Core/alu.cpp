@@ -1,9 +1,9 @@
 
-#include "m68000.h"
+#include "m68Core.h"
 
 namespace M68FAMILY {
 
-template<uint8_t Inst, uint8_t Size, bool SingleShift> auto M68000::shifter(uint32_t data, int shift) -> uint32_t {
+template<uint8_t Inst, uint8_t Size, bool SingleShift> auto M68Core::shifter(uint32_t data, int shift) -> uint32_t {
     switch(Inst) {
         case Asl: {
             if constexpr(SingleShift) {
@@ -179,7 +179,7 @@ template<uint8_t Inst, uint8_t Size, bool SingleShift> auto M68000::shifter(uint
     return clip<Size>(data);
 }
 
-template<uint8_t Inst> auto M68000::bcd(uint32_t src, uint32_t dest) -> uint8_t {
+template<uint8_t Inst> auto M68Core::bcd(uint32_t src, uint32_t dest) -> uint8_t {
     uint16_t result;
 
     switch (Inst) {
@@ -216,7 +216,7 @@ template<uint8_t Inst> auto M68000::bcd(uint32_t src, uint32_t dest) -> uint8_t 
     return result;
 }
 
-template<uint8_t Inst, uint8_t Size> auto M68000::arithmetic(uint32_t src, uint32_t dest) -> uint32_t {
+template<uint8_t Inst, uint8_t Size> auto M68Core::arithmetic(uint32_t src, uint32_t dest) -> uint32_t {
     if constexpr ((Size == Long) && ((Inst == Add) || (Inst == Addx) || (Inst == Sub) || (Inst == Subx)
         || (Inst == Cmp) || (Inst == Cmpi) || (Inst == Neg) || (Inst == Negx) || (Inst == Addi) || (Inst == Subi)|| (Inst == Addq) || (Inst == Subq)))
         return arithmeticT<uint64_t, int64_t, Inst, Size>(src, dest);
@@ -224,7 +224,7 @@ template<uint8_t Inst, uint8_t Size> auto M68000::arithmetic(uint32_t src, uint3
         return arithmeticT<uint32_t, int32_t, Inst, Size>(src, dest);
 }
 
-template<typename T, typename TSign, uint8_t Inst, uint8_t Size> auto M68000::arithmeticT(uint32_t src, uint32_t dest) -> uint32_t {
+template<typename T, typename TSign, uint8_t Inst, uint8_t Size> auto M68Core::arithmeticT(uint32_t src, uint32_t dest) -> uint32_t {
     T result;
 
     switch (Inst) {
@@ -306,7 +306,7 @@ template<typename T, typename TSign, uint8_t Inst, uint8_t Size> auto M68000::ar
     return result;
 }
 
-template<uint8_t Inst> auto M68000::bit(uint32_t data, int bit) -> uint32_t {
+template<uint8_t Inst> auto M68Core::bit(uint32_t data, int bit) -> uint32_t {
     z = 1 ^ ((data >> bit) & 1);
 
     switch (Inst) {
@@ -321,7 +321,7 @@ template<uint8_t Inst> auto M68000::bit(uint32_t data, int bit) -> uint32_t {
     }
 }
 
-template<uint8_t Inst> auto M68000::ccr(uint8_t data) -> void {
+template<uint8_t Inst> auto M68Core::ccr(uint8_t data) -> void {
     switch(Inst) {
         case And:	setCCR( getCCR() & data ); break;
         case Or:	setCCR( getCCR() | data ); break;
@@ -329,7 +329,7 @@ template<uint8_t Inst> auto M68000::ccr(uint8_t data) -> void {
     }
 }
 
-template<uint8_t Inst> auto M68000::sr(uint16_t data) -> void {
+template<uint8_t Inst> auto M68Core::sr(uint16_t data) -> void {
     switch(Inst) {
         case And:	setSR( getSR() & data ); break;
         case Or:	setSR( getSR() | data ); break;
@@ -337,7 +337,7 @@ template<uint8_t Inst> auto M68000::sr(uint16_t data) -> void {
     }
 }
 
-template<uint8_t Inst> auto M68000::testCondition() -> bool {
+template<uint8_t Inst> auto M68Core::testCondition() -> bool {
     switch( Inst ) {
         case Dbt: case Bra: case St:    return true;
         case Dbf: case Sf:              return false;
@@ -361,13 +361,13 @@ template<uint8_t Inst> auto M68000::testCondition() -> bool {
     return false; // unreachable
 }
 
-template<uint8_t Size> auto M68000::defaultFlags(uint32_t data) -> void {
+template<uint8_t Size> auto M68Core::defaultFlags(uint32_t data) -> void {
     v = c = false;
     n = negative<Size>(data);
     z = zero<Size>(data);
 }
 
-template<uint8_t Size> auto M68000::applyRoxRange(int& shift) -> void {
+template<uint8_t Size> auto M68Core::applyRoxRange(int& shift) -> void {
     switch(Size) {
         case Byte:
             if (shift >= 36) shift -= 36;

@@ -1,5 +1,5 @@
 
-#include "m68000.h"
+#include "m68Core.h"
 
 #ifdef FC_SUPPORT
 #define FC_EA_PRG (isPcMode<Mode>() ? PRG : 0)
@@ -15,91 +15,91 @@
 
 namespace M68FAMILY {
 
-template<uint8_t Size> auto M68000::clip(uint32_t data) -> uint32_t {
+template<uint8_t Size> auto M68Core::clip(uint32_t data) -> uint32_t {
     if constexpr (Size == Byte) return data & 0xff;
     if constexpr (Size == Word) return data & 0xffff;
     if constexpr (Size == Long) return data & 0xffffffff;
 }
 
-template<uint8_t Size> constexpr auto M68000::mask() -> uint32_t {
+template<uint8_t Size> constexpr auto M68Core::mask() -> uint32_t {
     if constexpr (Size == Byte) return 0xff;
     if constexpr (Size == Word) return 0xffff;
     if constexpr (Size == Long) return 0xffffffff;
 }
 
-template<uint8_t Size> constexpr auto M68000::inverseMask() -> uint32_t {
+template<uint8_t Size> constexpr auto M68Core::inverseMask() -> uint32_t {
     if constexpr (Size == Byte) return 0xffffff00;
     if constexpr (Size == Word) return 0xffff0000;
     if constexpr (Size == Long) return 0;
 }
 
-template<uint8_t Size> constexpr auto M68000::msb() -> uint32_t {
+template<uint8_t Size> constexpr auto M68Core::msb() -> uint32_t {
     if constexpr (Size == Byte) return 0x80;
     if constexpr (Size == Word) return 0x8000;
     if constexpr (Size == Long) return 0x80000000;
 }
 
-template<uint8_t Size> auto M68000::negative(uint32_t data) -> bool {
+template<uint8_t Size> auto M68Core::negative(uint32_t data) -> bool {
     if constexpr (Size == Byte) return (data & 0x80) != 0;
     if constexpr (Size == Word) return (data & 0x8000) != 0;
     if constexpr (Size == Long) return (data & 0x80000000) != 0;
 }
 
-template<uint8_t Size> auto M68000::carry(uint64_t data) -> bool {
+template<uint8_t Size> auto M68Core::carry(uint64_t data) -> bool {
     if constexpr (Size == Byte) return (data & 0x100) != 0;
     if constexpr (Size == Word) return (data & 0x10000) != 0;
     if constexpr (Size == Long) return (data & 0x100000000) != 0;
 }
 
-template<uint8_t Size> auto M68000::sign(uint32_t data) -> int32_t {
+template<uint8_t Size> auto M68Core::sign(uint32_t data) -> int32_t {
     if constexpr (Size == Byte) return (int8_t)data;
     if constexpr (Size == Word) return (int16_t)data;
     if constexpr (Size == Long) return (int32_t)data;
 }
 
-template<uint8_t Size> constexpr auto M68000::bits() -> uint8_t {
+template<uint8_t Size> constexpr auto M68Core::bits() -> uint8_t {
     if constexpr (Size == Byte) return 8;
     if constexpr (Size == Word) return 16;
     if constexpr (Size == Long) return 32;
 }
 
-template<uint8_t Size> auto M68000::readRegD(int reg) -> uint32_t {
+template<uint8_t Size> auto M68Core::readRegD(int reg) -> uint32_t {
     return clip<Size>( regsD[reg] );
 }
 
-template<uint8_t Size> auto M68000::writeRegD(int reg, uint32_t data) -> void {
+template<uint8_t Size> auto M68Core::writeRegD(int reg, uint32_t data) -> void {
     regsD[reg] = (regsD[reg] & inverseMask<Size>()) | (data & mask<Size>());
 }
 
-template<uint8_t Size> auto M68000::readRegA(int reg) -> uint32_t {
+template<uint8_t Size> auto M68Core::readRegA(int reg) -> uint32_t {
     return clip<Size>( regsA[reg] );
 }
 
-auto M68000::writeRegA(int reg, uint32_t data) -> void {
+auto M68Core::writeRegA(int reg, uint32_t data) -> void {
     regsA[reg] = data;
 }
 
-template<uint8_t Flags> auto M68000::fullPrefetch() -> void {
+template<uint8_t Flags> auto M68Core::fullPrefetch() -> void {
     firstPrefetch();
     prefetch<Flags>();
 }
 
-auto M68000::firstPrefetch() -> void {
+auto M68Core::firstPrefetch() -> void {
     irc = read<Word, FC_PRG>(pc);
 }
 
-template<uint8_t Flags> auto M68000::prefetch() -> void {
+template<uint8_t Flags> auto M68Core::prefetch() -> void {
     ird = irc;
     pc += 2;
     irc = read<Word, Flags OR_FC_PRG>(pc);
 }
 
-template<uint8_t Flags> auto M68000::readExtensionWord() -> void {
+template<uint8_t Flags> auto M68Core::readExtensionWord() -> void {
     pc += 2;
     irc = read<Word, Flags OR_FC_PRG>(pc);
 }
 
-template<uint8_t Size> auto M68000::peekInc(uint32_t& adr, DasmHandler& d) -> uint32_t {
+template<uint8_t Size> auto M68Core::peekInc(uint32_t& adr, DasmHandler& d) -> uint32_t {
     switch(Size) {
         case Long:
             return peekInc<Word>(adr, d) << 16 | peekInc<Word>(adr, d);
@@ -109,11 +109,11 @@ template<uint8_t Size> auto M68000::peekInc(uint32_t& adr, DasmHandler& d) -> ui
     }
 }
 
-auto M68000::peek(uint32_t adr) -> uint16_t {
+auto M68Core::peek(uint32_t adr) -> uint16_t {
     return PEEK_WORD(adr & 0xffffff);
 }
 
-template<uint8_t Size, uint8_t Flags> auto M68000::read(uint32_t adr) -> uint32_t {
+template<uint8_t Size, uint8_t Flags> auto M68Core::read(uint32_t adr) -> uint32_t {
     uint32_t result;
 
     if (control & WatchPoint) {
@@ -163,7 +163,7 @@ template<uint8_t Size, uint8_t Flags> auto M68000::read(uint32_t adr) -> uint32_
     return result;
 }
 
-template<uint8_t Size, uint8_t Flags> auto M68000::write(uint32_t adr, uint32_t data) -> void {
+template<uint8_t Size, uint8_t Flags> auto M68Core::write(uint32_t adr, uint32_t data) -> void {
 
     if (control & (WatchPointWrite | ModifiedCode) ) {
         modifiedCode.checkAndSet( adr, Size );
@@ -203,7 +203,7 @@ template<uint8_t Size, uint8_t Flags> auto M68000::write(uint32_t adr, uint32_t 
     SYNC(2);
 }
 
-template<uint8_t Mode, uint8_t Size, uint8_t Flags> auto M68000::readEA(int reg, uint32_t& result, uint32_t& ea) -> bool {
+template<uint8_t Mode, uint8_t Size, uint8_t Flags> auto M68Core::readEA(int reg, uint32_t& result, uint32_t& ea) -> bool {
     ea = calcEA<Mode, Size, Flags>(reg);
     
     if (Mode == DataRegisterDirect) {
@@ -229,7 +229,7 @@ template<uint8_t Mode, uint8_t Size, uint8_t Flags> auto M68000::readEA(int reg,
     return result = read<Size, Flags OR_FC_EA_PRG>(ea), true;
 }
 
-template<uint8_t Mode, uint8_t Size, uint8_t Flags> auto M68000::writeEA(uint32_t ea, uint32_t data) -> void {
+template<uint8_t Mode, uint8_t Size, uint8_t Flags> auto M68Core::writeEA(uint32_t ea, uint32_t data) -> void {
     if constexpr(Mode == DataRegisterDirect)
         writeRegD<Size>(ea, data);
     else if constexpr(Mode == AddressRegisterDirect)
@@ -238,7 +238,7 @@ template<uint8_t Mode, uint8_t Size, uint8_t Flags> auto M68000::writeEA(uint32_
         write<Size, Flags>(ea, data);
 }
 
-template<uint8_t Mode, uint8_t Size, uint8_t Flags> auto M68000::calcEA(int reg) -> uint32_t {
+template<uint8_t Mode, uint8_t Size, uint8_t Flags> auto M68Core::calcEA(int reg) -> uint32_t {
     uint32_t adr;
     
     switch(Mode) {
@@ -321,7 +321,7 @@ template<uint8_t Mode, uint8_t Size, uint8_t Flags> auto M68000::calcEA(int reg)
     }
 }
 
-template<uint8_t Mode, uint8_t Size> auto M68000::prepareEaForDasm(uint32_t& adr, uint8_t reg, DasmHandler& d) -> void {
+template<uint8_t Mode, uint8_t Size> auto M68Core::prepareEaForDasm(uint32_t& adr, uint8_t reg, DasmHandler& d) -> void {
     d.mode = Mode;
     d.reg = reg;
 

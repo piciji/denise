@@ -1,5 +1,5 @@
 
-#include "m68000.h"
+#include "m68Core.h"
 
 #ifdef REF
     #ifdef REF_INCLUDE
@@ -41,14 +41,14 @@
 
 namespace M68FAMILY {
 
-M68000::~M68000() {
+M68Core::~M68Core() {
     if (mulCycleLookup)
         delete[] mulCycleLookup;
 
     delete[] dasmTable;
 }
 
-auto M68000::process() -> void {
+auto M68Core::process() -> void {
 
     if (control) {
         if (control & Halt)
@@ -101,7 +101,7 @@ auto M68000::process() -> void {
         (this->*opTable[ird])(ird);
 }
 
-auto M68000::controlBreaks() -> void {
+auto M68Core::controlBreaks() -> void {
     if (control & (TraceScheduled | Stop) )
         return;
 
@@ -117,7 +117,7 @@ auto M68000::controlBreaks() -> void {
         DEBUG_POINT_REACHED(source, breakPoints, pcEdge);
 }
 
-auto M68000::loadTrace(Emulator::HistoryEntry<uint16_t>& entry) -> void {
+auto M68Core::loadTrace(Emulator::HistoryEntry<uint16_t>& entry) -> void {
     uint32_t addr = pcEdge;
     entry.addr = pcEdge;
     entry.flags = getSR();
@@ -128,7 +128,7 @@ auto M68000::loadTrace(Emulator::HistoryEntry<uint16_t>& entry) -> void {
     }
 }
 
-auto M68000::power() -> void {
+auto M68Core::power() -> void {
     // E-Clock phase is non deterministic on power up.
     usp = 0;
     for(uint8_t i = 0; i < 8; i++) {
@@ -140,7 +140,7 @@ auto M68000::power() -> void {
     reset();
 }
 
-auto M68000::reset() -> void { // highest prioritized group 0 routine
+auto M68Core::reset() -> void { // highest prioritized group 0 routine
     // E-Clock phase is unchanged on soft reset, but depends on reset pulse duration.
     c = v = z = n = x = false;
     s = true;
@@ -156,11 +156,11 @@ auto M68000::reset() -> void { // highest prioritized group 0 routine
     historyHandler.flagWhenNeeded();
 }
 
-auto M68000::getCCR() -> uint8_t {
+auto M68Core::getCCR() -> uint8_t {
     return c << 0 | v << 1 | z << 2 | n << 3 | x << 4;
 }
 
-auto M68000::setCCR(uint8_t data) -> void {
+auto M68Core::setCCR(uint8_t data) -> void {
     c = data & 1;
     v = (data >> 1) & 1;
     z = (data >> 2) & 1;
@@ -168,11 +168,11 @@ auto M68000::setCCR(uint8_t data) -> void {
     x = (data >> 4) & 1;
 }
 
-auto M68000::getSR() -> uint16_t {
+auto M68Core::getSR() -> uint16_t {
     return getCCR() | (i & 7) << 8 | s << 13 | !!((control & Trace) != 0) << 15;
 }
 
-auto M68000::setSR(uint16_t data) -> void {
+auto M68Core::setSR(uint16_t data) -> void {
     setCCR( data & 0xff );
 
     i = (data >> 8) & 7;
@@ -189,7 +189,7 @@ auto M68000::setSR(uint16_t data) -> void {
     setSuperVisor( (data >> 13) & 1 );
 }
 
-inline auto M68000::sampleInterrupt() -> void {
+inline auto M68Core::sampleInterrupt() -> void {
     if (control & IRQScheduled) {
         control &= ~IRQScheduled;
         iplSample = iplPins;
@@ -203,7 +203,7 @@ inline auto M68000::sampleInterrupt() -> void {
     }
 }
 
-auto M68000::setInterrupt( uint8_t level ) -> void {
+auto M68Core::setInterrupt( uint8_t level ) -> void {
     // 1 - 6 are level sensitive
     // 7 is edge sensitive, but a mask change can re-trigger it without having to change the PIN state (wtf)
     level &= 7;
@@ -214,11 +214,11 @@ auto M68000::setInterrupt( uint8_t level ) -> void {
     control |= IRQScheduled;
 }
 
-auto M68000::setHalt() -> void {
+auto M68Core::setHalt() -> void {
     control |= Halt;
 }
 
-template<uint8_t Inst> auto M68000::cyclesBit(int bit) -> void {
+template<uint8_t Inst> auto M68Core::cyclesBit(int bit) -> void {
     switch(Inst) {
         case Btst: SYNC(2); break;
         case Bclr: SYNC( bit > 15 ? 6 : 4); break;
@@ -227,7 +227,7 @@ template<uint8_t Inst> auto M68000::cyclesBit(int bit) -> void {
     }
 }
 
-template<uint8_t Inst> auto M68000::cyclesMul(uint16_t data) -> void {
+template<uint8_t Inst> auto M68Core::cyclesMul(uint16_t data) -> void {
     switch (Inst) {
         case Muls:
             data = ((data << 1) ^ data) & 0xffff;
@@ -238,7 +238,7 @@ template<uint8_t Inst> auto M68000::cyclesMul(uint16_t data) -> void {
     }
 }
 
-template<uint8_t Inst> auto M68000::cyclesDiv(uint32_t dividend, uint16_t divisor) -> int {
+template<uint8_t Inst> auto M68Core::cyclesDiv(uint32_t dividend, uint16_t divisor) -> int {
     if constexpr(Inst == Divu) {
         uint32_t hdivisor = divisor << 16;
         int cycles = 36 << 1; // minimum: 3 + (15 * 2) + 2 + 1
@@ -297,7 +297,7 @@ template<uint8_t Inst> auto M68000::cyclesDiv(uint32_t dividend, uint16_t diviso
     return 0;
 }
 
-template<uint8_t Mode, uint8_t destMode, uint8_t Size> auto M68000::setMoveCCWhenAddressError(uint32_t data) -> void {
+template<uint8_t Mode, uint8_t destMode, uint8_t Size> auto M68Core::setMoveCCWhenAddressError(uint32_t data) -> void {
     if constexpr(Size == Word) {
         if (isRegisterMode<Mode>() || (destMode != DataRegisterDirect))
             defaultFlags<Word>(data);
@@ -331,14 +331,14 @@ template<uint8_t Mode, uint8_t destMode, uint8_t Size> auto M68000::setMoveCCWhe
     }
 }
 
-auto M68000::nextIsGroup1Exception() -> bool {
+auto M68Core::nextIsGroup1Exception() -> bool {
     auto opMethod = opTable[ird];
 
-    if ((opMethod == &M68000::lineA) || (opMethod == &M68000::lineF) || (opMethod == &M68000::illegal))
+    if ((opMethod == &M68Core::lineA) || (opMethod == &M68Core::lineF) || (opMethod == &M68Core::illegal))
         return true;
 
     if (!s) {
-        if ((opMethod == &M68000::opReset) || (opMethod == &M68000::opRte) || (opMethod == &M68000::opStop) )
+        if ((opMethod == &M68Core::opReset) || (opMethod == &M68Core::opRte) || (opMethod == &M68Core::opStop) )
             return true;
 
         if (ird == 0x27c || ird == 0x7c || ird == 0xa7c) // opSr
@@ -357,7 +357,7 @@ auto M68000::nextIsGroup1Exception() -> bool {
     return false;
 }
 
-auto M68000::firstMovemWrite( uint16_t mask, unsigned shift, bool reverseOrder) -> uint16_t {
+auto M68Core::firstMovemWrite( uint16_t mask, unsigned shift, bool reverseOrder) -> uint16_t {
     for(int i = 0; i < 16; i++) {
         if ((mask >> i) & 1) {
             if (reverseOrder)
@@ -369,7 +369,7 @@ auto M68000::firstMovemWrite( uint16_t mask, unsigned shift, bool reverseOrder) 
     return ~0;
 }
 
-template<uint8_t phaseShift> auto M68000::internalWaitCyclesBasedOnMainClockCycles(int clockCycles) -> uint8_t {
+template<uint8_t phaseShift> auto M68Core::internalWaitCyclesBasedOnMainClockCycles(int clockCycles) -> uint8_t {
     // get E-Clock cycle position from continous main clock cycle counter.
     // keep in mind, that a wrap around of cycle counter distort E-Clock phase. handle the wrap around manually!
     return internalWaitCyclesBasedOnEClock<phaseShift>( clockCycles % 10 );
@@ -377,7 +377,7 @@ template<uint8_t phaseShift> auto M68000::internalWaitCyclesBasedOnMainClockCycl
 
 // initial phase shift of E-Clock at power up (cold start) is non-deterministic.
 // keep phase shift after reset
-template<> auto M68000::internalWaitCyclesBasedOnEClock<0>(int eCyclePos) -> uint8_t {
+template<> auto M68Core::internalWaitCyclesBasedOnEClock<0>(int eCyclePos) -> uint8_t {
     if (eCyclePos == 1) return 7;
     if (eCyclePos == 2) return 6;
     if (eCyclePos == 3) return 15;
@@ -390,7 +390,7 @@ template<> auto M68000::internalWaitCyclesBasedOnEClock<0>(int eCyclePos) -> uin
     /*if (eCyclePos == 0)*/ return 8;
 }
 
-template<> auto M68000::internalWaitCyclesBasedOnEClock<2>(int eCyclePos) -> uint8_t {
+template<> auto M68Core::internalWaitCyclesBasedOnEClock<2>(int eCyclePos) -> uint8_t {
     if (eCyclePos == 1) return 9;
     if (eCyclePos == 2) return 8;
     if (eCyclePos == 3) return 7;
@@ -403,7 +403,7 @@ template<> auto M68000::internalWaitCyclesBasedOnEClock<2>(int eCyclePos) -> uin
     /*if (eCyclePos == 0)*/ return 10;
 }
 
-template<> auto M68000::internalWaitCyclesBasedOnEClock<4>(int eCyclePos) -> uint8_t {
+template<> auto M68Core::internalWaitCyclesBasedOnEClock<4>(int eCyclePos) -> uint8_t {
     if (eCyclePos == 1) return 11;
     if (eCyclePos == 2) return 10;
     if (eCyclePos == 3) return 9;
@@ -416,7 +416,7 @@ template<> auto M68000::internalWaitCyclesBasedOnEClock<4>(int eCyclePos) -> uin
     /*if (eCyclePos == 0)*/ return 12;
 }
 
-template<> auto M68000::internalWaitCyclesBasedOnEClock<6>(int eCyclePos) -> uint8_t {
+template<> auto M68Core::internalWaitCyclesBasedOnEClock<6>(int eCyclePos) -> uint8_t {
     if (eCyclePos == 1) return 13;
     if (eCyclePos == 2) return 12;
     if (eCyclePos == 3) return 11;
@@ -429,7 +429,7 @@ template<> auto M68000::internalWaitCyclesBasedOnEClock<6>(int eCyclePos) -> uin
     /*if (eCyclePos == 0)*/ return 14;
 }
 
-template<> auto M68000::internalWaitCyclesBasedOnEClock<8>(int eCyclePos) -> uint8_t {
+template<> auto M68Core::internalWaitCyclesBasedOnEClock<8>(int eCyclePos) -> uint8_t {
     if (eCyclePos == 1) return 15;
     if (eCyclePos == 2) return 14;
     if (eCyclePos == 3) return 13;
@@ -442,20 +442,20 @@ template<> auto M68000::internalWaitCyclesBasedOnEClock<8>(int eCyclePos) -> uin
     /*if (eCyclePos == 0)*/ return 6;
 }
 
-inline auto M68000::appendStepOut(uint32_t addr) -> void {
+inline auto M68Core::appendStepOut(uint32_t addr) -> void {
     if (stepOuts.size() == stepOuts.capacity())
         stepOuts.clear();
     stepOuts.push_back( addr );
 }
 
-auto M68000::flagDebugAction(int action, bool state) -> void {
+auto M68Core::flagDebugAction(int action, bool state) -> void {
     if (state)
         control |= action;
     else
         control &= ~action;
 }
 
-auto M68000::checkSoftStop(uint32_t addr) -> bool {
+auto M68Core::checkSoftStop(uint32_t addr) -> bool {
     if (!softStep.has_value() || softStep.value_or(0) == addr) {
         control &= ~SoftStop;
         return true;
@@ -463,7 +463,7 @@ auto M68000::checkSoftStop(uint32_t addr) -> bool {
     return false;
 }
 
-auto M68000::debuggerStepOver(bool subroutineOnly) -> void {
+auto M68Core::debuggerStepOver(bool subroutineOnly) -> void {
     bool _over = true;
 
     if (subroutineOnly) {
@@ -483,12 +483,12 @@ auto M68000::debuggerStepOver(bool subroutineOnly) -> void {
     control |= SoftStop;
 }
 
-auto M68000::debuggerStepInto() -> void {
+auto M68Core::debuggerStepInto() -> void {
     softStep = std::nullopt;
     control |= SoftStop;
 }
 
-auto M68000::debuggerStepOut() -> bool {
+auto M68Core::debuggerStepOut() -> bool {
     if (stepOuts.empty())
         return false;
     softStep = stepOuts.back();

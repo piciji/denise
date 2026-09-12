@@ -1,12 +1,12 @@
 
-#include "m68000.h"
+#include "m68Cpu.h"
 #include "../agnus/agnus.h"
 #include "../../tools/serializer.h"
 #include "../system/debuggerSnapshot.h"
 
 namespace LIBAMI {
 
-Cpu::Cpu(Agnus& agnus) : M68FAMILY::M68000(agnus) {
+Cpu::Cpu(Agnus& agnus) : M68FAMILY::M68Core(agnus) {
 
     watchPoints.callback = [this](bool state) { this->flagDebugAction( WatchPoint, state ); };
     watchPointsWrite.callback = [this](bool state) { this->flagDebugAction( WatchPointWrite, state ); };

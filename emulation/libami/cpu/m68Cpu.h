@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "m68000/m68000.h"
+#include "m68Core/m68Core.h"
 #include "../../interface.h"
 #include <string>
 
@@ -17,7 +17,7 @@ typedef Emulator::Interface::DebuggerTheme DebuggerTheme;
 struct Agnus;
 struct DebuggerSnapshot;
 
-struct Cpu : M68FAMILY::M68000 {
+struct Cpu : M68FAMILY::M68Core {
     Cpu(Agnus& agnus);
 
     auto serialize(Emulator::Serializer& s) -> void;

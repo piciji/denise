@@ -1,5 +1,5 @@
 #include "dasmHandler.h"
-#include "m68000.h"
+#include "m68Core.h"
 
 namespace M68FAMILY {
 
@@ -88,12 +88,12 @@ auto DasmHandler::usp() -> DasmHandler {
 }
 
 auto DasmHandler::si( uint8_t size ) -> DasmHandler& {
-    size == M68000::Byte ? str.append(".b") : (size == M68000::Word ? str.append(".w") : str.append(".l"));
+    size == M68Core::Byte ? str.append(".b") : (size == M68Core::Word ? str.append(".w") : str.append(".l"));
     return *this;
 }
 
 auto DasmHandler::sis( uint8_t size ) -> DasmHandler& {
-    size == M68000::Byte ? str.append(".s") : (size == M68000::Word ? str.append(".w") : str.append(".l"));
+    size == M68Core::Byte ? str.append(".s") : (size == M68Core::Word ? str.append(".w") : str.append(".l"));
     return *this;
 }
 
@@ -182,40 +182,40 @@ auto DasmHandler::addComment() -> DasmHandler& {
 
 auto DasmHandler::ea() -> DasmHandler& {
     switch (mode) {
-        case M68000::DataRegisterDirect:
+        case M68Core::DataRegisterDirect:
             return dn(reg);
-        case M68000::AddressRegisterDirect:
+        case M68Core::AddressRegisterDirect:
             return an(reg);
-        case M68000::AddressRegisterIndirect:
+        case M68Core::AddressRegisterIndirect:
             str.append("(A" + std::to_string(reg) + ")");
             break;
-        case M68000::AddressRegisterIndirectWithPostIncrement:
+        case M68Core::AddressRegisterIndirectWithPostIncrement:
             str.append("(A" + std::to_string(reg) + ")+");
             break;
-        case M68000::AddressRegisterIndirectWithPreDecrement:
+        case M68Core::AddressRegisterIndirectWithPreDecrement:
             str.append("-(A" + std::to_string(reg) + ")");
             break;
-        case M68000::AddressRegisterIndirectWithDisplacement:
+        case M68Core::AddressRegisterIndirectWithDisplacement:
             str.append("(");
             hexS(static_cast<int16_t>(ext));
             str.append(",A" + std::to_string(reg) + ")");
             break;
-        case M68000::AddressRegisterIndirectWithIndex:
+        case M68Core::AddressRegisterIndirectWithIndex:
             str.append("(");
             hexS(static_cast<int8_t>(ext & 0xff));
             str.append(",A" + std::to_string(reg) + ",");
             rn(ext >> 12);
             str.append(ext & 0x800 ? ".l)" : ".w)");
             break;
-        case M68000::AbsoluteShort:
+        case M68Core::AbsoluteShort:
             hex(ext);
-            si(M68000::Word);
+            si(M68Core::Word);
             break;
-        case M68000::AbsoluteLong:
+        case M68Core::AbsoluteLong:
             hex(ext);
-            si(M68000::Long);
+            si(M68Core::Long);
             break;
-        case M68000::ProgramCounterIndirectWithDisplacement:
+        case M68Core::ProgramCounterIndirectWithDisplacement:
             str.append("(");
             hexS(static_cast<int16_t>(ext));
             str.append(",PC)");
@@ -225,14 +225,14 @@ auto DasmHandler::ea() -> DasmHandler& {
             comment->hex( pc + 2 + static_cast<int16_t>(ext) );
             comment->str.append(")");
             break;
-        case M68000::ProgramCounterIndirectWithIndex:
+        case M68Core::ProgramCounterIndirectWithIndex:
             str.append("(");
             hexS(static_cast<int8_t>(ext & 0xff));
             str.append(",PC,");
             rn(ext >> 12);
             str.append(ext & 0x800 ? ".l)" : ".w)");
             break;
-        case M68000::Immediate:
+        case M68Core::Immediate:
             immU(ext);
             break;
         default:
