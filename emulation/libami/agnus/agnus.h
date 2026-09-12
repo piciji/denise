@@ -8,7 +8,7 @@
 #include "../expansionPort/fastMem.h"
 #include "../expansionPort/hdController.h"
 #include "../../tools/history.h"
-#include "../cpu/m68Cpu.h"
+#include "../cpu/cpu.h"
 #include "../system/debuggerSnapshot.h"
 #include "../../tools/crop.h"
 

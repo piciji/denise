@@ -103,9 +103,9 @@
     <ClInclude Include="..\emulation\libami\agnus\agnus.h" />
     <ClInclude Include="..\emulation\libami\agnus\blitter.h" />
     <ClInclude Include="..\emulation\libami\agnus\copper.h" />
+    <ClInclude Include="..\emulation\libami\cpu\cpu.h" />
     <ClInclude Include="..\emulation\libami\cpu\m68Core\dasmHandler.h" />
     <ClInclude Include="..\emulation\libami\cpu\m68Core\m68Core.h" />
-    <ClInclude Include="..\emulation\libami\cpu\m68Cpu.h" />
     <ClInclude Include="..\emulation\libami\drive\diskDrive.h" />
     <ClInclude Include="..\emulation\libami\drive\diskStructure.h" />
     <ClInclude Include="..\emulation\libami\drive\dms\cdata.h" />
@@ -675,6 +675,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|win32'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="..\emulation\libami\cpu\cpu.cpp" />
     <ClCompile Include="..\emulation\libami\cpu\m68Core\alu.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|win32'">true</ExcludedFromBuild>
@@ -713,7 +714,6 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="..\emulation\libami\cpu\m68Cpu.cpp" />
     <ClCompile Include="..\emulation\libami\drive\adf.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>

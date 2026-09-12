@@ -1,7 +1,7 @@
 
 #include "copper.h"
 #include "agnus.h"
-#include "../cpu/m68Cpu.h"
+#include "../cpu/cpu.h"
 
 #include "../interface.h"
 #include "../../tools/string.h"

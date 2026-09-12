@@ -19,7 +19,7 @@ set(headers
         agnus/minterm.cpp
         agnus/register.cpp
         agnus/serialization.cpp
-        cpu/m68Cpu.h
+        cpu/cpu.h
         cpu/m68Core/alu.cpp
         cpu/m68Core/exception.cpp
         cpu/m68Core/instruction.cpp
@@ -108,7 +108,7 @@ target_sources(coreAmiga PRIVATE
 
         cpu/m68Core/m68Core.cpp
         cpu/m68Core/dasmHandler.cpp
-        cpu/m68Cpu.cpp
+        cpu/cpu.cpp
         agnus/agnus.cpp
         agnus/blitter.cpp
         agnus/copper.cpp

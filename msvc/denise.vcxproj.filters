@@ -1423,14 +1423,14 @@
     <ClInclude Include="..\program\video\scVideo.h">
       <Filter>program\video</Filter>
     </ClInclude>
-    <ClInclude Include="..\emulation\libami\cpu\m68Cpu.h">
-      <Filter>emulation\libami\cpu</Filter>
-    </ClInclude>
     <ClInclude Include="..\emulation\libami\cpu\m68Core\dasmHandler.h">
       <Filter>emulation\libami\cpu\m68Core</Filter>
     </ClInclude>
     <ClInclude Include="..\emulation\libami\cpu\m68Core\m68Core.h">
       <Filter>emulation\libami\cpu\m68Core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libami\cpu\cpu.h">
+      <Filter>emulation\libami\cpu</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -2757,9 +2757,6 @@
     <ClCompile Include="..\program\video\scVideo.cpp">
       <Filter>program\video</Filter>
     </ClCompile>
-    <ClCompile Include="..\emulation\libami\cpu\m68Cpu.cpp">
-      <Filter>emulation\libami\cpu</Filter>
-    </ClCompile>
     <ClCompile Include="..\emulation\libami\cpu\m68Core\alu.cpp">
       <Filter>emulation\libami\cpu\m68Core</Filter>
     </ClCompile>
@@ -2783,6 +2780,9 @@
     </ClCompile>
     <ClCompile Include="..\emulation\libami\cpu\m68Core\optable.cpp">
       <Filter>emulation\libami\cpu\m68Core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libami\cpu\cpu.cpp">
+      <Filter>emulation\libami\cpu</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
