@@ -3,7 +3,7 @@
 
 namespace M68FAMILY {
 
-auto M68Core::trapException(uint8_t vector) -> void { // group 2 exceptions
+template<M68Core::Engine E> auto M68Core::trapException(uint8_t vector) -> void { // group 2 exceptions
     uint16_t SR = getSR();
     setSuperVisor();
 
@@ -11,37 +11,47 @@ auto M68Core::trapException(uint8_t vector) -> void { // group 2 exceptions
     uint32_t& sp = regsA[7];
     
     if (misaligned(sp))
-        return addressException(sp - 2, pc, SF_DATA, pc & 0xffff);
+        return addressException<E>(sp - 2, pc, SF_DATA, pc & 0xffff);
 
     write<Word>(sp - 2, pc & 0xffff);
     sp -= 6;
     write<Word>(sp + 0, SR);
     write<Word>(sp + 2, (pc >> 16) & 0xffff);
     appendStepOut( pc );
-    executeAt( vector << 2, 2 );
+    executeAt<E>( vector << 2, 2 );
 }
 
-auto M68Core::illegal(uint16_t opcode) -> void {
-    group1Exception(4);
+template<M68Core::Engine E> auto M68Core::illegal(uint16_t opcode) -> void {
+    group1Exception<E>(4);
 }
 
-auto M68Core::lineA(uint16_t opcode) -> void {
-    group1Exception(10);
+template<M68Core::Engine E> auto M68Core::lineA(uint16_t opcode) -> void {
+    group1Exception<E>(10);
 }
 
-auto M68Core::lineF(uint16_t opcode) -> void {
-    group1Exception(11);
+template<M68Core::Engine E> auto M68Core::lineF(uint16_t opcode) -> void {
+    group1Exception<E>(11);
 }
 
 auto M68Core::privilegeException() -> void {
-    group1Exception( 8 );
+    if (engine == Engine::M68000)
+        group1Exception<Engine::M68000>( 8 );
+    else if (engine == Engine::M68020)
+        group1Exception<Engine::M68020>( 8 );
+}
+
+template<M68Core::Engine E> auto M68Core::privilegeException() -> void {
+    group1Exception<E>( 8 );
 }
 
 auto M68Core::traceException() -> void {
-    group1Exception( 9 );
+    if (engine == Engine::M68000)
+        group1Exception<Engine::M68000>( 9 );
+    else if (engine == Engine::M68020)
+        group1Exception<Engine::M68020>( 9 );
 }
 
-auto M68Core::group1Exception(uint8_t vector) -> void {
+template<M68Core::Engine E> auto M68Core::group1Exception(uint8_t vector) -> void {
     uint16_t SR = getSR();
     setSuperVisor();
     pc -= 2;
@@ -51,17 +61,24 @@ auto M68Core::group1Exception(uint8_t vector) -> void {
     uint32_t& sp = regsA[7];
 
     if (misaligned(sp))
-        return addressException(sp - 2, pc, SF_DATA | SF_EXC, pc & 0xffff);
+        return addressException<E>(sp - 2, pc, SF_DATA | SF_EXC, pc & 0xffff);
 
     write<Word>(sp - 2, pc & 0xffff);
     sp -= 6;
     write<Word>(sp + 0, SR);
     write<Word>(sp + 2, (pc >> 16) & 0xffff);
     appendStepOut( pc );
-    executeAt( vector << 2, 1 );
+    executeAt<E>( vector << 2, 1 );
 }
 
-auto M68Core::IRQException() -> void { // a group 1 exception
+auto M68Core::IRQException() -> void {
+    if (engine == Engine::M68000)
+        IRQException<Engine::M68000>();
+    else if (engine == Engine::M68020)
+        IRQException<Engine::M68020>();
+}
+
+template<M68Core::Engine E> auto M68Core::IRQException() -> void { // a group 1 exception
     uint16_t SR = getSR();
     setSuperVisor();
     i = iplSample;
@@ -75,7 +92,7 @@ auto M68Core::IRQException() -> void { // a group 1 exception
     uint32_t& sp = regsA[7];
 
     if (misaligned(sp))
-        return addressException(sp - 2, pc, SF_DATA | SF_EXC, pc & 0xffff);
+        return addressException<E>(sp - 2, pc, SF_DATA | SF_EXC, pc & 0xffff);
 
     write<Word>(sp - 2, pc & 0xffff);
     ird = (uint16_t)getInterruptVector( iplSample & 7 );
@@ -85,7 +102,7 @@ auto M68Core::IRQException() -> void { // a group 1 exception
     write<Word>(sp + 0, SR);
     write<Word>(sp + 2, (pc >> 16) & 0xffff);
     appendStepOut( pc );
-    executeAt( vectorAdr, 1 );
+    executeAt<E>( vectorAdr, 1 );
 
     // when IPL sample state changes, another IRQ service routine could be processed without a single instruction in between.
     // this also applies for a possible address exception which not causing a double fault.
@@ -119,7 +136,7 @@ auto M68Core::getInterruptVector(uint8_t level) -> uint8_t {
     return vector;
 }
 
-template<uint8_t Mode, uint8_t Size> auto M68Core::addressExceptionEA(uint32_t ea) -> void {
+template<M68Core::Engine E, uint8_t Mode, uint8_t Size> auto M68Core::addressExceptionEA(uint32_t ea) -> void {
     uint32_t _pc = pc;
 
     if constexpr(Mode == AddressRegisterIndirectWithPreDecrement && Size != Long)
@@ -127,10 +144,10 @@ template<uint8_t Mode, uint8_t Size> auto M68Core::addressExceptionEA(uint32_t e
     else if constexpr(isIndexMode<Mode>() || isDisplacementMode<Mode>())
         _pc -= 2;
 
-    addressException(ea, _pc, SF_READ | (isPcMode<Mode>() ? SF_PRG : SF_DATA) );
+    addressException<E>(ea, _pc, SF_READ | (isPcMode<Mode>() ? SF_PRG : SF_DATA) );
 }
 
-template<uint8_t Mode, uint8_t Size> auto M68Core::addressExceptionMoveEA(uint32_t ea, uint32_t data) -> void {
+template<M68Core::Engine E, uint8_t Mode, uint8_t Size> auto M68Core::addressExceptionMoveEA(uint32_t ea, uint32_t data) -> void {
     uint32_t _pc = pc;
     uint8_t flags = SF_DATA;
 
@@ -146,14 +163,14 @@ template<uint8_t Mode, uint8_t Size> auto M68Core::addressExceptionMoveEA(uint32
     if constexpr(Mode == AddressRegisterIndirectWithPreDecrement && Size != Long) {
         // In this case, the "prefetch" happened before and TVN has already been updated.
         // A possible address error will now stack the exception flag.
-        if (nextIsGroup1Exception())
+        if (nextIsGroup1Exception<E>())
             flags |= SF_EXC;
     }
 
-    addressException(ea, _pc, flags, data);
+    addressException<E>(ea, _pc, flags, data);
 }
 
-auto M68Core::addressException(uint32_t adr, uint32_t _pc, uint8_t flags, uint16_t value) -> void {
+template<M68Core::Engine E> auto M68Core::addressException(uint32_t adr, uint32_t _pc, uint8_t flags, uint16_t value) -> void {
     // misalignment is recognized during BUS cycle, UDS and LDS are never asserted.
     // AS line is asserted and in case of a "Write", data is put on data BUS.
     // periphery typically treat a BUS cycle as valid when DS is asserted.
@@ -189,10 +206,10 @@ auto M68Core::addressException(uint32_t adr, uint32_t _pc, uint8_t flags, uint16
     write<Word>(sp + 0, code );
     write<Word>(sp + 2, (adr >> 16) & 0xffff);
     appendStepOut( pc );
-    executeAt(3 << 2, 0);
+    executeAt<E>(3 << 2, 0);
 }
 
-auto M68Core::executeAt(uint16_t adr, uint8_t group) -> void { // 18 cycles
+template<M68Core::Engine E> auto M68Core::executeAt(uint16_t adr, uint8_t group) -> void { // 18 cycles
     if ((control & ExceptionPoint) && exceptionPoints.check( adr >> 2, true )) {
         DEBUG_POINT_REACHED(ExceptionPoint, exceptionPoints, adr >> 2);
     }
@@ -203,15 +220,22 @@ auto M68Core::executeAt(uint16_t adr, uint8_t group) -> void { // 18 cycles
             SYNC(4 + 4); // finish the BUS cycle
             return setHalt();
         }
-        return addressException(pc, adr/* not PC here, always vector adr */, SF_READ | SF_PRG | (group != 2 ? SF_EXC : 0) );
+        return addressException<E>(pc, adr/* not PC here, always vector adr */, SF_READ | SF_PRG | (group != 2 ? SF_EXC : 0) );
     }
 
-    firstPrefetch();
+    firstPrefetch<E>();
     SYNC(2);
-    prefetch<SampleIPL>();
+    prefetch<E, SampleIPL>();
 }
 
-auto M68Core::resetRoutine() -> void { // highest prioritized group 0 routine
+auto M68Core::resetRoutine() -> void {
+    if (engine == Engine::M68000)
+        resetRoutine<Engine::M68000>();
+    else if (engine == Engine::M68020)
+        resetRoutine<Engine::M68020>();
+}
+
+template<M68Core::Engine E> auto M68Core::resetRoutine() -> void { // highest prioritized group 0 routine
     SYNC(12); // confirmed with fx68k
     control &= ~ResetRoutine;
 
@@ -223,9 +247,9 @@ auto M68Core::resetRoutine() -> void { // highest prioritized group 0 routine
         return setHalt();
     }
 
-    firstPrefetch();
+    firstPrefetch<E>();
     SYNC(2);
-    prefetch<SampleIPL>();
+    prefetch<E, SampleIPL>();
 }
 
 auto M68Core::setSuperVisor(bool state) -> void {

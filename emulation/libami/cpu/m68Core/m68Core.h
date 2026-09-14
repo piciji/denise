@@ -51,13 +51,16 @@ class M68Core {
     friend struct ModifiedCodes;
     friend struct HistoryHandler;
 
+public:
+    enum class Engine { M68000, M68020 };
+
 protected:
-    const char* mnemonics[0x10000] = {nullptr};
+    const char** mnemonics = nullptr;
 #ifdef REF
-    M68Core(REF_NS::REF& ref) : ref(ref) { build(); }
+    M68Core(REF_NS::REF& ref) : ref(ref) { create(); }
     REF_NS::REF& ref;
 #else
-    M68Core() { build(); }
+    M68Core() { create(); }
 #endif
 
     ~M68Core();
@@ -83,7 +86,7 @@ protected:
     };
 
     enum { None = 0, SampleIPL = 1, SkipExtension = 2, TasCycle = 4,
-           PRG = 8, ConcurrentAdrCalc = 16 /* happens while prefetching */, Reverse = 32 };
+           PRG = 8, ConcurrentAdrCalc = 16 /* happens while prefetching */, Reverse = 32, FirstPrefetch = 64 };
     enum { SF_DATA = 1, SF_PRG = 2, SF_EXC = 8, SF_READ = 16 };
 
 public:
@@ -111,6 +114,7 @@ public:
     };
 
 protected:
+    Engine engine = Engine::M68000;
     uint32_t regsD[8];
     uint32_t regsA[8];
     uint32_t pc;
@@ -136,6 +140,19 @@ protected:
     int control;
     std::vector<uint32_t> stepOuts;
 
+    uint32_t cacr;
+    uint32_t caar;
+
+    struct CacheEntry {
+        uint32_t data;
+        uint32_t tag;
+        bool valid;
+    };
+    CacheEntry cacheEntries[64];
+
+    // independent of instruction cache
+    uint32_t cahr; // cache holding register
+
     Emulator::WatchPoints watchPoints = Emulator::WatchPoints();
     Emulator::WatchPoints watchPointsWrite = Emulator::WatchPoints();
     Emulator::WatchPoints breakPoints = Emulator::WatchPoints();
@@ -148,6 +165,8 @@ protected:
 public:
     enum { USER_VECTOR = 0, AUTO_VECTOR = 1, UNINITIALIZED = 2,  SPURIOUS = -1};
 
+    auto setEngine(Engine engine) -> void;
+    auto getEngine() const -> Engine { return this->engine; }
     auto process() -> void;
     auto setInterrupt( uint8_t level ) -> void;
     auto reset() -> void;
@@ -197,6 +216,7 @@ protected:
     // after each cold start the phase of E-Clock could be different.
     virtual auto readByte(uint32_t adr) -> uint8_t = 0;
     virtual auto readWord(uint32_t adr) -> uint16_t = 0;
+    virtual auto readLong(uint32_t adr) -> uint32_t = 0;
     virtual auto peekWord(uint32_t adr) -> uint16_t = 0;
     virtual auto writeByte(uint32_t adr, uint8_t data) -> void = 0;
     virtual auto writeWord(uint32_t adr, uint16_t data) -> void = 0;
@@ -237,6 +257,7 @@ protected:
     // works like "readByte" / "readWord" but hints periphery that FC1 is asserted
     virtual auto readBytePRG(uint32_t adr) -> uint8_t { return 0; }
     virtual auto readWordPRG(uint32_t adr) -> uint16_t { return 0; }
+    virtual auto readLongPRG(uint32_t adr) -> uint32_t { return 0; }
 
     // some devices observe AS line only and treat BUS cycles which cause an address exception as valid read/write cycles.
     // don't know for sure ... there are some Amiga expansions doing this, so override it when needed.
@@ -252,6 +273,8 @@ protected:
     virtual auto tasCycleEnd() -> void {}
 
     virtual auto debugPointReached(int source, Emulator::WatchPoints& wp, unsigned addr) -> void {}
+
+    virtual auto portSize(uint32_t adr) -> unsigned { return 4; }
 #endif
 
     auto flagDebugAction(int action, bool state) -> void;
@@ -259,9 +282,11 @@ private:
     auto controlBreaks() -> void;
     auto setCCR(uint8_t data) -> void;
     auto setSR(uint16_t data) -> void;
-    auto build() -> void;
+    template<Engine E> auto build() -> void;
+    auto create() -> void;
     auto sampleInterrupt() -> void;
     auto setSuperVisor(bool state = true) -> void;
+    auto syncParallel(unsigned cycles) -> void;
     template<uint8_t Size = Word> auto misaligned(uint32_t adr) -> bool;
 
     template<uint8_t Size = Long> inline auto readRegD(int reg) -> uint32_t;
@@ -272,16 +297,17 @@ private:
 
     template<uint8_t Size, uint8_t Flags = 0> auto read(uint32_t adr) -> uint32_t;
     template<uint8_t Size, uint8_t Flags = 0> auto write(uint32_t adr, uint32_t data) -> void;
-    inline auto firstPrefetch() -> void;
-    template<uint8_t Flags = None> inline auto prefetch() -> void;
-    template<uint8_t Flags = None> auto fullPrefetch() -> void;
+    template<Engine E>  auto firstPrefetch() -> void;
+    template<Engine E, uint8_t Flags = None> inline auto prefetch() -> void;
+    template<uint8_t Flags> auto cachedPrefetch(uint32_t adr) -> uint16_t;
+    template<Engine E, uint8_t Flags = None> auto fullPrefetch() -> void;
     template<uint8_t Flags = None> inline auto readExtensionWord() -> void;
 
     auto peek(uint32_t adr) -> uint16_t;
     template<uint8_t Size> auto peekInc(uint32_t& adr, DasmHandler& d) -> uint32_t;
     
-    template<uint8_t Mode, uint8_t Size, uint8_t Flags = None> auto calcEA(int reg) -> uint32_t;
-    template<uint8_t Mode, uint8_t Size, uint8_t Flags = None> auto readEA(int reg, uint32_t& result, uint32_t& ea) -> bool;
+    template<Engine E, uint8_t Mode, uint8_t Size, uint8_t Flags = None> auto calcEA(int reg) -> uint32_t;
+    template<Engine E, uint8_t Mode, uint8_t Size, uint8_t Flags = None> auto readEA(int reg, uint32_t& result, uint32_t& ea) -> bool;
     template<uint8_t Mode, uint8_t Size, uint8_t Flags = None> auto writeEA(uint32_t ea, uint32_t data) -> void;
     template<uint8_t Mode, uint8_t Size> auto prepareEaForDasm(uint32_t& adr, uint8_t reg, DasmHandler& d) -> void;
 
@@ -300,11 +326,11 @@ private:
     }
 
     #define OP_DECLARE(ident) \
-        template<uint8_t Inst, uint8_t Size> auto op##ident(uint16_t) -> void; \
+        template<Engine E, uint8_t Inst, uint8_t Size> auto op##ident(uint16_t) -> void; \
         template<uint8_t Inst, uint8_t Size> auto dasm##ident(uint16_t, uint32_t&, DasmHandler&) -> void;
 
     #define OP_DECLARE_EA(ident) \
-        template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto op##ident(uint16_t) -> void; \
+        template<Engine E, uint8_t Inst, uint8_t Mode, uint8_t Size> auto op##ident(uint16_t) -> void; \
         template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto dasm##ident(uint16_t, uint32_t&, DasmHandler&) -> void;
 
     OP_DECLARE(ImmShift)
@@ -375,13 +401,13 @@ private:
     #undef OP_DECLARE_EA
     #undef OP_DECLARE
 
-    auto opTrapv(uint16_t opcode) -> void;
-    auto opNop(uint16_t opcode) -> void;
-    auto opReset(uint16_t opcode) -> void;
-    auto opRte(uint16_t opcode) -> void;
-    auto opRtr(uint16_t opcode) -> void;
-    auto opRts(uint16_t opcode) -> void;
-    auto opStop(uint16_t opcode) -> void;
+    template<Engine E> auto opTrapv(uint16_t opcode) -> void;
+    template<Engine E> auto opNop(uint16_t opcode) -> void;
+    template<Engine E> auto opReset(uint16_t opcode) -> void;
+    template<Engine E> auto opRte(uint16_t opcode) -> void;
+    template<Engine E> auto opRtr(uint16_t opcode) -> void;
+    template<Engine E> auto opRts(uint16_t opcode) -> void;
+    template<Engine E> auto opStop(uint16_t opcode) -> void;
 
     auto dasmTrapv(uint16_t opcode, uint32_t& adr, DasmHandler& d) -> void;
     auto dasmNop(uint16_t opcode, uint32_t& adr, DasmHandler& d) -> void;
@@ -410,20 +436,23 @@ private:
     template<uint8_t Size> auto defaultFlags(uint32_t data) -> void;
     template<uint8_t Mode, uint8_t destMode, uint8_t Size> auto setMoveCCWhenAddressError(uint32_t data) -> void;
 
-    auto executeAt(uint16_t adr, uint8_t group) -> void;
-    template<uint8_t Mode, uint8_t Size> auto addressExceptionEA(uint32_t ea) -> void;
-    template<uint8_t Mode, uint8_t Size> auto addressExceptionMoveEA(uint32_t ea, uint32_t data) -> void;
-    auto addressException(uint32_t adr, uint32_t _pc, uint8_t flags, uint16_t value = 0) -> void;
+    template<Engine E> auto executeAt(uint16_t adr, uint8_t group) -> void;
+    template<Engine E, uint8_t Mode, uint8_t Size> auto addressExceptionEA(uint32_t ea) -> void;
+    template<Engine E, uint8_t Mode, uint8_t Size> auto addressExceptionMoveEA(uint32_t ea, uint32_t data) -> void;
+    template<Engine E> auto addressException(uint32_t adr, uint32_t _pc, uint8_t flags, uint16_t value = 0) -> void;
 
+    template<Engine E> auto resetRoutine() -> void;
     auto resetRoutine() -> void;
-    auto group1Exception(uint8_t vector) -> void;
+    template<Engine E> auto group1Exception(uint8_t vector) -> void;
+    template<Engine E> auto IRQException() -> void;
     auto IRQException() -> void;
     auto traceException() -> void;
-    auto trapException(uint8_t vector) -> void;
+    template<Engine E> auto trapException(uint8_t vector) -> void;
     auto privilegeException() -> void;
-    auto illegal(uint16_t opcode) -> void;
-    auto lineF(uint16_t opcode) -> void;
-    auto lineA(uint16_t opcode) -> void;
+    template<Engine E> auto privilegeException() -> void;
+    template<Engine E> auto illegal(uint16_t opcode) -> void;
+    template<Engine E> auto lineF(uint16_t opcode) -> void;
+    template<Engine E> auto lineA(uint16_t opcode) -> void;
     auto getInterruptVector(uint8_t level) -> uint8_t;
 
     template<uint8_t Inst> auto ccr(uint8_t data) -> void;
@@ -441,10 +470,12 @@ private:
     template<uint8_t Mode> constexpr static auto isPcMode() -> bool { return Mode == ProgramCounterIndirectWithIndex || Mode == ProgramCounterIndirectWithDisplacement; }
 
     auto firstMovemWrite( uint16_t mask, unsigned shift, bool reverseOrder ) -> uint16_t;
-    auto nextIsGroup1Exception() -> bool;
+    template<Engine E> auto nextIsGroup1Exception() -> bool;
 
     auto checkSoftStop(uint32_t addr) -> bool;
     auto loadTrace(Emulator::HistoryEntry<uint16_t>& entry) -> void;
+
+    auto invalidateCache() -> void;
 };
 
 }

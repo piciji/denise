@@ -77,7 +77,7 @@ SystemLayout::SystemLayout(TabWindow* tabWindow) {
     if (dynamic_cast<LIBC64::Interface*>(emulator))
         dim = { 4, 4 };
     else
-        dim = { 1, 3, 3 };
+        dim = { 1, 4, 3 };
 
     typedef Emulator::Interface::Model::Purpose Purpose;
 
@@ -282,6 +282,7 @@ auto SystemModelLayout::updated( Line::Block* block, Emulator::Interface::Model*
                     VideoManager::getInstance( emulator )->reloadSettings(false);
                 // fallthrough
             case LIBAMI::Interface::ModelIdSystem:
+            case LIBAMI::Interface::ModelIdCpu:
                 if (this->emulator == activeEmulator)
                     program->power(activeEmulator);
                 break;

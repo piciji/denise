@@ -1,5 +1,6 @@
 
 #include "m68Core.h"
+#include <stdexcept>
 
 #ifdef REF
     #ifdef REF_INCLUDE
@@ -10,17 +11,21 @@
     #define REF_CALL
 #endif
 
+#define READ_LONG           REF_CALL readLong
 #define READ_WORD           REF_CALL readWord
 #define READ_BYTE           REF_CALL readByte
 #define WRITE_WORD          REF_CALL writeWord
 #define WRITE_BYTE          REF_CALL writeByte
 #define PEEK_WORD           REF_CALL peekWord
 #define DEBUG_POINT_REACHED REF_CALL debugPointReached
+#define PORT_SIZE           REF_CALL portSize
 
 #ifdef FC_SUPPORT
+#define READ_LONG_PRG   REF_CALL readLongPRG
 #define READ_WORD_PRG   REF_CALL readWordPRG
 #define READ_BYTE_PRG   REF_CALL readBytePRG
 #else
+#define READ_LONG_PRG   READ_LONG
 #define READ_WORD_PRG   READ_WORD
 #define READ_BYTE_PRG   READ_BYTE
 #endif
@@ -42,10 +47,19 @@
 namespace M68FAMILY {
 
 M68Core::~M68Core() {
-    if (mulCycleLookup)
-        delete[] mulCycleLookup;
-
+    delete[] mulCycleLookup;
     delete[] dasmTable;
+    delete[] mnemonics;
+}
+
+auto M68Core::create() -> void {
+    dasmTable = new OpDasm[0x10000];
+    mulCycleLookup = new uint8_t[0x10000];
+    mnemonics = new const char*[0x10000];
+
+    mulCycleLookup[0] = 34;
+    for( int i = 0; i < 0x10000; i++ )
+        mulCycleLookup[i] = ((i & 1) << 1) + mulCycleLookup[i / 2];
 }
 
 auto M68Core::process() -> void {
@@ -146,6 +160,11 @@ auto M68Core::reset() -> void { // highest prioritized group 0 routine
     s = true;
     i = 7;
     iplPins = iplSample = 0;
+    cacr = 0;
+    caar = 0;
+    cahr = 0;
+    invalidateCache();
+
     control = ResetRoutine; // emulation begins, when reset line is de-asserted
     stepOuts.clear();
     watchPoints.reset();
@@ -154,6 +173,9 @@ auto M68Core::reset() -> void { // highest prioritized group 0 routine
     exceptionPoints.reset();
     modifiedCode.disable();
     historyHandler.flagWhenNeeded();
+
+    if (!opTable[0])
+        throw std::runtime_error("68k not initialized");
 }
 
 auto M68Core::getCCR() -> uint8_t {
@@ -331,14 +353,14 @@ template<uint8_t Mode, uint8_t destMode, uint8_t Size> auto M68Core::setMoveCCWh
     }
 }
 
-auto M68Core::nextIsGroup1Exception() -> bool {
+template<M68Core::Engine E> auto M68Core::nextIsGroup1Exception() -> bool {
     auto opMethod = opTable[ird];
 
-    if ((opMethod == &M68Core::lineA) || (opMethod == &M68Core::lineF) || (opMethod == &M68Core::illegal))
+    if ((opMethod == &M68Core::lineA<E>) || (opMethod == &M68Core::lineF<E>) || (opMethod == &M68Core::illegal<E>))
         return true;
 
     if (!s) {
-        if ((opMethod == &M68Core::opReset) || (opMethod == &M68Core::opRte) || (opMethod == &M68Core::opStop) )
+        if ((opMethod == &M68Core::opReset<E>) || (opMethod == &M68Core::opRte<E>) || (opMethod == &M68Core::opStop<E>) )
             return true;
 
         if (ird == 0x27c || ird == 0x7c || ird == 0xa7c) // opSr
@@ -496,6 +518,22 @@ auto M68Core::debuggerStepOut() -> bool {
     return true;
 }
 
+auto M68Core::setEngine( Engine engine ) -> void {
+    if (!opTable[0] || (engine != this->engine)) {
+        this->engine = engine;
+        if (engine == Engine::M68000) build<Engine::M68000>();
+        else if (engine == Engine::M68020) build<Engine::M68020>();
+    }
+}
 
+auto M68Core::syncParallel(unsigned cycles) -> void {
+    SYNC( cycles );
+}
+
+auto M68Core::invalidateCache() -> void {
+    for (auto& cache : cacheEntries) {
+        cache.valid = false;
+    }
+}
 
 }

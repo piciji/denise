@@ -26,6 +26,18 @@ namespace LIBAMI {
     dmaLogger.hilight = _write ? DebuggerDmaHilight::Write : DebuggerDmaHilight::Default; \
 }
 
+auto Agnus::portSize(uint32_t adr) -> unsigned {
+    return 4;
+}
+
+auto Agnus::readLongPRG(uint32_t adr) -> uint32_t {
+    return 0;
+}
+
+auto Agnus::readLong(uint32_t adr) -> uint32_t {
+    return 0;
+}
+
 auto Agnus::readBytePRG(uint32_t adr) -> uint8_t {
     return debugger.dmaLog ? readByte<true, true>(adr) : readByte<false, true>(adr);
 }

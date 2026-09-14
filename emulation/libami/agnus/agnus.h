@@ -340,6 +340,7 @@ struct Agnus {
     auto writeAutoConfWord(uint32_t addr, uint16_t value) -> void;
     auto checkHardDrives() -> void;
 
+    auto portSize(uint32_t adr) -> unsigned;
     auto readByte(uint32_t adr) -> uint8_t;
     auto readBytePRG(uint32_t adr) -> uint8_t;
     template<bool logDma, bool prg> auto readByte(uint32_t adr) -> uint8_t;
@@ -353,6 +354,9 @@ struct Agnus {
     auto editWord(uint32_t adr, uint16_t value) -> void;
     template<bool logDma> auto writeWord(uint32_t adr, uint16_t value) -> void;
     auto memoryDump(uint8_t bank, uint16_t* dump) -> void;
+
+    auto readLong(uint32_t adr) -> uint32_t;
+    auto readLongPRG(uint32_t adr) -> uint32_t;
 
     auto fakeWriteByte(uint32_t adr, uint8_t value) -> void;
     auto fakeWriteByte(uint32_t adr, uint8_t* data, unsigned len) -> void;
