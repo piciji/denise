@@ -167,7 +167,8 @@ struct Agnus {
     bool secureRA;
 
     struct {
-        unsigned speed;
+        unsigned speed; // user requested
+        unsigned speedInternal;
         unsigned cycles;
     } overclock;
 
@@ -357,6 +358,9 @@ struct Agnus {
 
     auto readLong(uint32_t adr) -> uint32_t;
     auto readLongPRG(uint32_t adr) -> uint32_t;
+    template<bool logDma, bool prg> auto readLong(uint32_t adr) -> uint32_t;
+    auto writeLong(uint32_t adr, uint32_t data) -> void;
+    template<bool logDma> auto writeLong(uint32_t adr, uint32_t value) -> void;
 
     auto fakeWriteByte(uint32_t adr, uint8_t value) -> void;
     auto fakeWriteByte(uint32_t adr, uint8_t* data, unsigned len) -> void;

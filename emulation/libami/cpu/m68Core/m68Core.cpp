@@ -14,6 +14,7 @@
 #define READ_LONG           REF_CALL readLong
 #define READ_WORD           REF_CALL readWord
 #define READ_BYTE           REF_CALL readByte
+#define WRITE_LONG          REF_CALL writeLong
 #define WRITE_WORD          REF_CALL writeWord
 #define WRITE_BYTE          REF_CALL writeByte
 #define PEEK_WORD           REF_CALL peekWord

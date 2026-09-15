@@ -110,6 +110,14 @@ auto Agnus::setRas() -> void {
 
 auto Agnus::power(bool softReset, bool resetInstruction) -> void {
     overclock.cycles = 0;
+    overclock.speedInternal = overclock.speed;
+    if (cpu.getEngine() == M68FAMILY::M68Core::Engine::M68020) {
+        if (!overclock.speed)
+            overclock.speedInternal = 2;
+
+        overclock.speedInternal <<= 1;
+    }
+
     debugger.oneTimeAction = Interface::DebuggerAction::None;
     unsigned resetDelay = hasActiveEvent<EVENT_KBD>() ? getEventDelay<EVENT_KBD>() : 0;
     clearEvents();
@@ -358,8 +366,41 @@ auto Agnus::addDmaLogEntry() -> void {
     peekDmaWatcher(dmaLogger);
 }
 
+template<bool logDma> inline auto Agnus::sync(unsigned cycles) -> void {
+    if (overclock.speedInternal) {
+        overclock.cycles += cycles;
+
+        while (overclock.cycles >= overclock.speedInternal) {
+            if constexpr (logDma) {
+                checkDmaStops();
+            }
+            dmaCycle();
+            overclock.cycles -= overclock.speedInternal;
+
+            if constexpr (logDma) {
+                addDmaLogEntry();
+            }
+        }
+
+    } else {
+        // triggers DMA cycle following current CPU micro cycle.
+        // means it is always a DMA cycle ahead of CPU to find out if next cycle is usable for CPU
+        while( cycles ) {
+            if constexpr (logDma) {
+                checkDmaStops();
+            }
+            dmaCycle();
+            cycles -= 2;
+
+            if constexpr (logDma) {
+                addDmaLogEntry();
+            }
+        }
+    }
+}
+
 template<bool logDma> inline auto Agnus::addWaitstatesToCPU() -> void {
-    if (overclock.speed) {
+    if (overclock.speedInternal) {
         if (overclock.cycles) {
             if constexpr (logDma) {
                 checkDmaStops();
@@ -374,7 +415,7 @@ template<bool logDma> inline auto Agnus::addWaitstatesToCPU() -> void {
         }
 
         // access BUS (clock stretch to stock speed)
-        overclock.cycles = overclock.speed - 2;
+        overclock.cycles = overclock.speedInternal - 2;
     }
 
     while (busUsage != BUS_FREE) {
@@ -749,39 +790,6 @@ auto Agnus::POSR(bool vhpos) -> uint16_t {
 
 auto Agnus::sync(unsigned cycles) -> void {
     debugger.dmaLog ? sync<true>(cycles) : sync<false>(cycles);
-}
-
-template<bool logDma> inline auto Agnus::sync(unsigned cycles) -> void {
-    if (overclock.speed) {
-        overclock.cycles += cycles;
-
-        while (overclock.cycles >= overclock.speed) {
-            if constexpr (logDma) {
-                checkDmaStops();
-            }
-            dmaCycle();
-            overclock.cycles -= overclock.speed;
-
-            if constexpr (logDma) {
-                addDmaLogEntry();
-            }
-        }
-
-    } else {
-        // triggers DMA cycle following current CPU micro cycle.
-        // means it is always a DMA cycle ahead of CPU to find out if next cycle is usable for CPU
-        while( cycles ) {
-            if constexpr (logDma) {
-                checkDmaStops();
-            }
-            dmaCycle();
-            cycles -= 2;
-
-            if constexpr (logDma) {
-                addDmaLogEntry();
-            }
-        }
-    }
 }
 
 auto Agnus::iackCycle(uint8_t level, uint8_t& vector) -> int {

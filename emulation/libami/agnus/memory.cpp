@@ -27,15 +27,18 @@ namespace LIBAMI {
 }
 
 auto Agnus::portSize(uint32_t adr) -> unsigned {
-    return 4;
-}
+    uint8_t _map = mapper[adr >> 16];
 
-auto Agnus::readLongPRG(uint32_t adr) -> uint32_t {
-    return 0;
-}
-
-auto Agnus::readLong(uint32_t adr) -> uint32_t {
-    return 0;
+    switch ( _map ) {
+        case CHIP_MEM:
+        case KICK_ROM:
+        case EXT_ROM:
+            return aga() ? 4 : 2; // real 32 bit access on Chip MEM in A500 is not possible
+        case FAST_MEM:
+            return 4;
+        default:
+            return 2;
+    }
 }
 
 auto Agnus::readBytePRG(uint32_t adr) -> uint8_t {
@@ -238,6 +241,49 @@ auto Agnus::memoryDump(uint8_t bank, uint16_t* dump) -> void {
                 *dump++ = _irc;
             break;
     }
+}
+
+auto Agnus::readLongPRG(uint32_t adr) -> uint32_t {
+    return debugger.dmaLog ? readLong<true, true>(adr) : readLong<false, true>(adr);
+}
+
+auto Agnus::readLong(uint32_t adr) -> uint32_t {
+    return debugger.dmaLog ? readLong<true, false>(adr) : readLong<false, false>(adr);
+}
+
+template<bool logDma, bool prg> inline auto Agnus::readLong(uint32_t adr) -> uint32_t {
+    adr &= 0xffffff;
+    uint8_t _map = mapper[adr >> 16];
+    uint32_t res;
+
+    switch( _map ) {
+        case CHIP_MEM: {
+            addWaitstatesToCPU<logDma>();
+            res = _swapLong(*(uint32_t*)(chipMem + (adr & chipMemMask)));
+            dataBus = res >> 16;
+            LOG_DMA(res, false, true, prg)
+            return res;
+        }
+        case FAST_MEM: {
+            res = _swapLong(*(uint32_t*)(fastMem + (adr - fastMemExpansion.baseAdr)));
+            LOG_DMA_CPU( res, false, true, prg )
+            return res;
+        }
+        case KICK_ROM: {
+            res = _swapLong(*(uint32_t*)(kickRom + (adr & kickRomMask)));
+            LOG_DMA_CPU( res, false, true, prg )
+            return res;
+        }
+        case EXT_ROM: {
+            res = _swapLong(*(uint32_t*)(extRom + (adr & extRomMask)));
+            LOG_DMA_CPU( res, false, true, prg )
+            return res;
+        }
+        default: // should never happen
+            return 0;
+    }
+
+    _unreachable
 }
 
 auto Agnus::readWordPRG(uint32_t adr) -> uint16_t {
@@ -495,6 +541,47 @@ template<bool logDma> inline auto Agnus::writeWord(uint32_t adr, uint16_t value)
             LOG_DMA_CPU( value, true, true, false )
             break;
         case Unmapped:
+            LOG_DMA_CPU( value, true, true, false )
+            break;
+    }
+}
+
+auto Agnus::writeLong(uint32_t adr, uint32_t value) -> void {
+    debugger.dmaLog ? writeLong<true>(adr, value) : writeLong<false>(adr, value);
+}
+
+template<bool logDma> inline auto Agnus::writeLong(uint32_t adr, uint32_t value) -> void {
+    adr &= 0xffffff;
+    uint8_t _map = mapper[adr >> 16];
+
+    switch( _map ) {
+        case CHIP_MEM:
+            addWaitstatesToCPU<logDma>();
+            adr &= chipMemMask;
+            if (memState) {
+                memState->trackers[TRACKER_CHIP].remember(adr);
+                memState->trackers[TRACKER_CHIP].remember(adr + 2);
+            }
+
+            *(uint32_t*)(chipMem + adr) = _swapLong(value);
+            dataBus = value >> 16;
+            LOG_DMA(value, true, true, false)
+            break;
+        case FAST_MEM:
+            adr -= fastMemExpansion.baseAdr;
+            if (memState) {
+                memState->trackers[TRACKER_FAST].remember(adr);
+                memState->trackers[TRACKER_FAST].remember(adr + 2);
+            }
+            *(uint32_t*)(fastMem + adr) = _swapLong(value);
+            LOG_DMA_CPU( value, true, true, false )
+            break;
+        case KICK_ROM:
+            if ( (model == OCS_A1000) && !womLock)
+                lockWom();
+            LOG_DMA_CPU( value, true, true, false )
+            break;
+        case EXT_ROM:
             LOG_DMA_CPU( value, true, true, false )
             break;
     }

@@ -86,7 +86,7 @@ template<M68Core::Engine E, uint8_t Flags> auto M68Core::fullPrefetch() -> void 
 
 template<M68Core::Engine E> auto M68Core::firstPrefetch() -> void {
     if (E == Engine::M68020)
-        irc = cachedPrefetch<FC_PRG | FirstPrefetch>( pc );
+        irc = cachedPrefetch<FirstPrefetch OR_FC_PRG >( pc );
     else
         irc = read<Word, FC_PRG>(pc);
 }
@@ -101,9 +101,13 @@ template<M68Core::Engine E, uint8_t Flags> auto M68Core::prefetch() -> void {
         irc = read<Word, Flags OR_FC_PRG>(pc);
 }
 
-template<uint8_t Flags> auto M68Core::readExtensionWord() -> void {
+template<M68Core::Engine E, uint8_t Flags> auto M68Core::readExtensionWord() -> void {
     pc += 2;
-    irc = read<Word, Flags OR_FC_PRG>(pc);
+
+    if (E == Engine::M68020)
+        irc = cachedPrefetch<Flags OR_FC_PRG>( pc );
+    else
+        irc = read<Word, Flags OR_FC_PRG>(pc);
 }
 
 template<uint8_t Flags> auto M68Core::cachedPrefetch(uint32_t adr) -> uint16_t {
@@ -132,10 +136,22 @@ template<uint8_t Flags> auto M68Core::cachedPrefetch(uint32_t adr) -> uint16_t {
 
             switch (PORT_SIZE(addrAligned)) {
                 default:
-                case 4: cahr = READ_LONG_PRG(addrAligned); break;
-                case 2: cahr = READ_WORD_PRG(addrAligned) << 16 | READ_WORD_PRG(addrAligned + 2); break;
-                case 1: cahr = READ_BYTE_PRG(addrAligned) << 24 | READ_BYTE_PRG(addrAligned + 1) << 16
-                    | READ_BYTE_PRG(addrAligned + 2) << 8 | READ_BYTE_PRG(addrAligned + 3); break;
+                case 4:
+                    cahr = READ_LONG_PRG(addrAligned); break;
+                case 2:
+                    cahr = READ_WORD_PRG(addrAligned) << 16;
+                    SYNC(3);
+                    cahr |= READ_WORD_PRG(addrAligned + 2);
+                    break;
+                case 1:
+                    cahr = READ_BYTE_PRG(addrAligned) << 24;
+                    SYNC(3);
+                    cahr |= READ_BYTE_PRG(addrAligned + 1) << 16;
+                    SYNC(3);
+                    cahr |= READ_BYTE_PRG(addrAligned + 2) << 8;
+                    SYNC(3);
+                    cahr |= READ_BYTE_PRG(addrAligned + 3);
+                    break;
             }
 
             if ((cacr & 3) == 1) {
@@ -143,6 +159,7 @@ template<uint8_t Flags> auto M68Core::cachedPrefetch(uint32_t adr) -> uint16_t {
                 entry.tag = tag;
                 entry.valid = true;
             }
+            SYNC(1);
         }
 
         return adr & 2 ? cahr & 0xffff : (cahr >> 16) & 0xffff;
@@ -313,7 +330,7 @@ template<M68Core::Engine E, uint8_t Mode, uint8_t Size, uint8_t Flags> auto M68C
             
         case AddressRegisterIndirectWithDisplacement:
             adr = readRegA( reg ) + (int16_t)irc;
-            if constexpr((Flags & SkipExtension) == 0) readExtensionWord();
+            if constexpr((Flags & SkipExtension) == 0) readExtensionWord<E>();
             return adr;
             
         case AddressRegisterIndirectWithIndex: {
@@ -326,24 +343,24 @@ template<M68Core::Engine E, uint8_t Mode, uint8_t Size, uint8_t Flags> auto M68C
 
             adr = (int64_t)an + (int64_t)((irc & 0x800) ? dispReg : (int16_t)dispReg) + (int64_t)d;
 
-            if constexpr((Flags & SkipExtension) == 0) readExtensionWord();
+            if constexpr((Flags & SkipExtension) == 0) readExtensionWord<E>();
             return adr;
         }
         case AbsoluteShort:
             adr = (int16_t)irc;
-            if constexpr((Flags & SkipExtension) == 0) readExtensionWord();
+            if constexpr((Flags & SkipExtension) == 0) readExtensionWord<E>();
             return adr;
             
         case AbsoluteLong:
             adr = irc << 16;
-            readExtensionWord();
+            readExtensionWord<E>();
             adr |= irc;
-            if constexpr((Flags & SkipExtension) == 0) readExtensionWord();
+            if constexpr((Flags & SkipExtension) == 0) readExtensionWord<E>();
             return adr;
             
         case ProgramCounterIndirectWithDisplacement:
             adr = pc + (int16_t)irc;
-            if constexpr((Flags & SkipExtension) == 0) readExtensionWord();
+            if constexpr((Flags & SkipExtension) == 0) readExtensionWord<E>();
             return adr;
             
         case ProgramCounterIndirectWithIndex: {
@@ -355,7 +372,7 @@ template<M68Core::Engine E, uint8_t Mode, uint8_t Size, uint8_t Flags> auto M68C
 
             adr = (int64_t)pc + (int64_t)((irc & 0x800) ? dispReg : (int16_t)dispReg) + (int64_t)d;
 
-            if constexpr((Flags & SkipExtension) == 0) readExtensionWord();
+            if constexpr((Flags & SkipExtension) == 0) readExtensionWord<E>();
             return adr;
         }
         case Immediate:
@@ -365,10 +382,10 @@ template<M68Core::Engine E, uint8_t Mode, uint8_t Size, uint8_t Flags> auto M68C
                 adr = irc;
             } else {
                 adr = irc << 16;
-                readExtensionWord();
+                readExtensionWord<E>();
                 adr |= irc;
             }
-            readExtensionWord();
+            readExtensionWord<E>();
             return adr;
     }
 }

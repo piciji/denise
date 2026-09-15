@@ -343,12 +343,12 @@ struct Interface {
         // DMA usage
         uint8_t usage;
         uint32_t address;
-        uint16_t data;
+        uint32_t data;
 
         // CPU usage or DMA
         uint8_t usageCpu;
         uint32_t addrCpu;
-        uint16_t dataCpu;
+        uint32_t dataCpu;
         Hilight hilight;
         const char* mnemonic;
 

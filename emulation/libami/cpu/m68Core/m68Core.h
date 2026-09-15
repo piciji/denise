@@ -220,6 +220,7 @@ protected:
     virtual auto peekWord(uint32_t adr) -> uint16_t = 0;
     virtual auto writeByte(uint32_t adr, uint8_t data) -> void = 0;
     virtual auto writeWord(uint32_t adr, uint16_t data) -> void = 0;
+    virtual auto writeLong(uint32_t adr, uint32_t data) -> void = 0;
 
     // BUS cycle to fetch the Interrupt vector.
     // in contrast to the BUS cycle operations above, this one returns the termination type.
@@ -301,7 +302,7 @@ private:
     template<Engine E, uint8_t Flags = None> inline auto prefetch() -> void;
     template<uint8_t Flags> auto cachedPrefetch(uint32_t adr) -> uint16_t;
     template<Engine E, uint8_t Flags = None> auto fullPrefetch() -> void;
-    template<uint8_t Flags = None> inline auto readExtensionWord() -> void;
+    template<Engine E, uint8_t Flags = None> inline auto readExtensionWord() -> void;
 
     auto peek(uint32_t adr) -> uint16_t;
     template<uint8_t Size> auto peekInc(uint32_t& adr, DasmHandler& d) -> uint32_t;

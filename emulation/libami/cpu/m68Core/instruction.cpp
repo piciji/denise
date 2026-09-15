@@ -99,7 +99,7 @@ template<M68Core::Engine E, uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68Co
 template<M68Core::Engine E, uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68Core::opImmBit(uint16_t opcode) -> void {
     uint32_t result, ea;
     int bits = (Size == Long) ? (irc & 31) : (irc & 7);
-    readExtensionWord();
+    readExtensionWord<E>();
 
     if (!readEA<E, Mode, Size>(opcode & 7, result, ea))
         return;
@@ -434,7 +434,7 @@ template<M68Core::Engine E, uint8_t Inst, uint8_t Mode, uint8_t Size> inline aut
             write<Size, Reverse>(ea, result);
 
         if constexpr(Inst == AbsoluteLong && !isDirectMode<Mode>())
-            readExtensionWord();
+            readExtensionWord<E>();
     }
 
     defaultFlags<Size>(result);
@@ -520,7 +520,7 @@ template<M68Core::Engine E, uint8_t Inst, uint8_t Size> auto M68Core::opBcc(uint
         fullPrefetch<E, SampleIPL>();
     } else {
         SYNC(2);
-        if (Size == Word) readExtensionWord();
+        if (Size == Word) readExtensionWord<E>();
         prefetch<E, SampleIPL>();
     }
 }
@@ -644,7 +644,7 @@ template<M68Core::Engine E, uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68Co
 
 template<M68Core::Engine E, uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68Core::opMovemToReg(uint16_t opcode) -> void {
     uint16_t mask = irc;
-    readExtensionWord();
+    readExtensionWord<E>();
     uint32_t ea = calcEA<E, Mode, Size>(opcode & 7);
 
     if (misaligned<Long>(ea))
@@ -684,7 +684,7 @@ template<M68Core::Engine E, uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68Co
 
 template<M68Core::Engine E, uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68Core::opMovemToEa(uint16_t opcode) -> void {
     uint16_t mask = irc;
-    readExtensionWord();
+    readExtensionWord<E>();
 
     if constexpr(Mode == AddressRegisterIndirectWithPreDecrement) {
         uint32_t ea = readRegA(opcode & 7);
@@ -823,7 +823,7 @@ template<M68Core::Engine E, uint8_t Inst, uint8_t Size> auto M68Core::opCmpm(uin
 
 template<M68Core::Engine E, uint8_t Inst, uint8_t Size> auto M68Core::opCcr(uint16_t opcode) -> void {
     uint8_t data = irc & 0xff;
-    readExtensionWord();
+    readExtensionWord<E>();
     SYNC(8); // confirmed with fx68k
     ccr<Inst>( data );
     fullPrefetch<E, SampleIPL>(); // first fetch is dummy at same address like extension word
@@ -834,7 +834,7 @@ template<M68Core::Engine E, uint8_t Inst, uint8_t Size> auto M68Core::opSr(uint1
         return privilegeException<E>();
 
     uint16_t data = irc;
-    readExtensionWord();
+    readExtensionWord<E>();
     SYNC(8);
     sr<Inst>( data );
     fullPrefetch<E, SampleIPL>(); // first fetch is dummy at same address like extension word
@@ -1058,7 +1058,7 @@ template<M68Core::Engine E> auto M68Core::opTrapv(uint16_t opcode) -> void {
 
 template<M68Core::Engine E, uint8_t Inst, uint8_t Size> auto M68Core::opLink(uint16_t opcode) -> void {
     int16_t displacement = (int16_t)irc;
-    readExtensionWord();
+    readExtensionWord<E>();
     uint32_t _regA = readRegA(opcode & 7);
     uint32_t sp = regsA[7];
     sp -= 4;
