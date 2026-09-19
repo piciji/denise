@@ -10,13 +10,13 @@ template<M68Core::Engine E> auto M68Core::trapException(uint8_t vector) -> void 
     control &= ~(Stop | Trace); // a scheduled trace exception still happens directly afterwards
     uint32_t& sp = regsA[7];
     
-    if (misaligned(sp))
+    if (E < Engine::M68020 && misaligned(sp))
         return addressException<E>(sp - 2, pc, SF_DATA, pc & 0xffff);
 
-    write<Word>(sp - 2, pc & 0xffff);
+    write<E, Word>(sp - 2, pc & 0xffff);
     sp -= 6;
-    write<Word>(sp + 0, SR);
-    write<Word>(sp + 2, (pc >> 16) & 0xffff);
+    write<E, Word>(sp + 0, SR);
+    write<E, Word>(sp + 2, (pc >> 16) & 0xffff);
     appendStepOut( pc );
     executeAt<E>( vector << 2, 2 );
 }
@@ -60,13 +60,13 @@ template<M68Core::Engine E> auto M68Core::group1Exception(uint8_t vector) -> voi
     SYNC(4);
     uint32_t& sp = regsA[7];
 
-    if (misaligned(sp))
+    if (E < Engine::M68020 && misaligned(sp))
         return addressException<E>(sp - 2, pc, SF_DATA | SF_EXC, pc & 0xffff);
 
-    write<Word>(sp - 2, pc & 0xffff);
+    write<E, Word>(sp - 2, pc & 0xffff);
     sp -= 6;
-    write<Word>(sp + 0, SR);
-    write<Word>(sp + 2, (pc >> 16) & 0xffff);
+    write<E, Word>(sp + 0, SR);
+    write<E, Word>(sp + 2, (pc >> 16) & 0xffff);
     appendStepOut( pc );
     executeAt<E>( vector << 2, 1 );
 }
@@ -91,16 +91,16 @@ template<M68Core::Engine E> auto M68Core::IRQException() -> void { // a group 1 
     SYNC(6);
     uint32_t& sp = regsA[7];
 
-    if (misaligned(sp))
+    if (E < Engine::M68020 && misaligned(sp))
         return addressException<E>(sp - 2, pc, SF_DATA | SF_EXC, pc & 0xffff);
 
-    write<Word>(sp - 2, pc & 0xffff);
+    write<E, Word>(sp - 2, pc & 0xffff);
     ird = (uint16_t)getInterruptVector( iplSample & 7 );
     uint16_t vectorAdr = ird << 2;
     SYNC(4); // justify vector (2 shift operations)
     sp -= 6;
-    write<Word>(sp + 0, SR);
-    write<Word>(sp + 2, (pc >> 16) & 0xffff);
+    write<E, Word>(sp + 0, SR);
+    write<E, Word>(sp + 2, (pc >> 16) & 0xffff);
     appendStepOut( pc );
     executeAt<E>( vectorAdr, 1 );
 
@@ -190,21 +190,21 @@ template<M68Core::Engine E> auto M68Core::addressException(uint32_t adr, uint32_
     SYNC( 2 + 8); // finish the BUS cycle, put address (and data) on BUS, but without asserting UDS or LDS.
 
     uint32_t& sp = regsA[7];
-    if (misaligned<Long>(sp)) {
+    if (E < Engine::M68020 && misaligned<Long>(sp)) {
         SYNC(4 + 4); // finish the BUS cycle
         return setHalt();
     }
 
-    write<Word>(sp - 2, _pc & 0xffff);
-    write<Word>(sp - 6, SR);
-    write<Word>(sp - 4, (_pc >> 16) & 0xffff);
-    write<Word>(sp - 8, ird);
-    write<Word>(sp - 10, adr & 0xffff);
+    write<E, Word>(sp - 2, _pc & 0xffff);
+    write<E, Word>(sp - 6, SR);
+    write<E, Word>(sp - 4, (_pc >> 16) & 0xffff);
+    write<E, Word>(sp - 8, ird);
+    write<E, Word>(sp - 10, adr & 0xffff);
     // not quite right, happens after first micro cycle of following bus cycle. For the sake of simplicity, we do it now.
     // Because external processes cannot observe this directly, this decision does not lead to a possible accuracy issue.
     sp -= 14;
-    write<Word>(sp + 0, code );
-    write<Word>(sp + 2, (adr >> 16) & 0xffff);
+    write<E, Word>(sp + 0, code );
+    write<E, Word>(sp + 2, (adr >> 16) & 0xffff);
     appendStepOut( pc );
     executeAt<E>(3 << 2, 0);
 }
@@ -213,7 +213,7 @@ template<M68Core::Engine E> auto M68Core::executeAt(uint16_t adr, uint8_t group)
     if ((control & ExceptionPoint) && exceptionPoints.check( adr >> 2, true )) {
         DEBUG_POINT_REACHED(ExceptionPoint, exceptionPoints, adr >> 2);
     }
-    pc = read<Long>(adr);
+    pc = read<E, Long>(adr);
     
     if (misaligned<Long>(pc)) {
         if (group == 0) { // bus/address error during group 0 service routine halts CPU, Interrupt to vector 2 or 3 doesn't
@@ -239,8 +239,8 @@ template<M68Core::Engine E> auto M68Core::resetRoutine() -> void { // highest pr
     SYNC(12); // confirmed with fx68k
     control &= ~ResetRoutine;
 
-    regsA[7] = ssp = read<Long, FC_PRG>(0); // sets FC1
-    pc = pcEdge = read<Long, FC_PRG>(4); // sets FC1 too
+    regsA[7] = ssp = read<E, Long, FC_PRG>(0); // sets FC1
+    pc = pcEdge = read<E, Long, FC_PRG>(4); // sets FC1 too
 
     if (misaligned<Long>(pc)) { // bus/address error during group 0 service routine halts CPU.
         SYNC(4 + 4);

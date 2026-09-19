@@ -85,8 +85,9 @@ protected:
         Illegal, LineA, LineF,
     };
 
-    enum { None = 0, SampleIPL = 1, SkipExtension = 2, TasCycle = 4,
-           PRG = 8, ConcurrentAdrCalc = 16 /* happens while prefetching */, Reverse = 32, FirstPrefetch = 64 };
+    enum {  None = 0, SampleIPL = 1, SkipExtension = 2, TasCycle = 4,
+            PRG = 8, ConcurrentAdrCalc = 16 /* happens while prefetching */, Reverse = 32,
+            FirstPrefetch = 64 };
     enum { SF_DATA = 1, SF_PRG = 2, SF_EXC = 8, SF_READ = 16 };
 
 public:
@@ -152,6 +153,8 @@ protected:
 
     // independent of instruction cache
     uint32_t cahr; // cache holding register
+
+    int overlap;
 
     Emulator::WatchPoints watchPoints = Emulator::WatchPoints();
     Emulator::WatchPoints watchPointsWrite = Emulator::WatchPoints();
@@ -287,8 +290,12 @@ private:
     auto create() -> void;
     auto sampleInterrupt() -> void;
     auto setSuperVisor(bool state = true) -> void;
-    auto syncParallel(unsigned cycles) -> void;
+    auto syncSequencer(unsigned cycles) -> void;
     template<uint8_t Size = Word> auto misaligned(uint32_t adr) -> bool;
+
+    template <Engine E, uint8_t Flags, bool Scale = false> auto indirectIndexBrief(uint32_t B) -> uint32_t;
+    template <Engine E, uint8_t Flags> auto indirectIndexFull(uint32_t B) -> uint32_t;
+    template <Engine E> auto fetchDisplacement(bool longDis) -> uint32_t;
 
     template<uint8_t Size = Long> inline auto readRegD(int reg) -> uint32_t;
     template<uint8_t Size = Long> inline auto writeRegD(int reg, uint32_t data) -> void;
@@ -296,8 +303,8 @@ private:
     template<uint8_t Size = Long> inline auto readRegA(int reg) -> uint32_t;
     inline auto writeRegA(int reg, uint32_t data) -> void;
 
-    template<uint8_t Size, uint8_t Flags = 0> auto read(uint32_t adr) -> uint32_t;
-    template<uint8_t Size, uint8_t Flags = 0> auto write(uint32_t adr, uint32_t data) -> void;
+    template<Engine E, uint8_t Size, uint8_t Flags = 0> auto read(uint32_t adr) -> uint32_t;
+    template<Engine E, uint8_t Size, uint8_t Flags = 0> auto write(uint32_t adr, uint32_t data) -> void;
     template<Engine E>  auto firstPrefetch() -> void;
     template<Engine E, uint8_t Flags = None> inline auto prefetch() -> void;
     template<uint8_t Flags> auto cachedPrefetch(uint32_t adr) -> uint16_t;
@@ -309,8 +316,17 @@ private:
     
     template<Engine E, uint8_t Mode, uint8_t Size, uint8_t Flags = None> auto calcEA(int reg) -> uint32_t;
     template<Engine E, uint8_t Mode, uint8_t Size, uint8_t Flags = None> auto readEA(int reg, uint32_t& result, uint32_t& ea) -> bool;
-    template<uint8_t Mode, uint8_t Size, uint8_t Flags = None> auto writeEA(uint32_t ea, uint32_t data) -> void;
+    template<Engine E, uint8_t Mode, uint8_t Size, uint8_t Flags = None> auto writeEA(uint32_t ea, uint32_t data) -> void;
     template<uint8_t Mode, uint8_t Size> auto prepareEaForDasm(uint32_t& adr, uint8_t reg, DasmHandler& d) -> void;
+
+    template<uint8_t Flags> auto _readByte(uint32_t addr) -> uint8_t;
+    template<uint8_t Flags> auto _readWord(uint32_t addr) -> uint16_t;
+    template<uint8_t Flags> auto _readLong(uint32_t addr) -> uint32_t;
+
+    template<uint8_t Flags> auto readWordDS(uint32_t adr) -> uint16_t;
+    template<uint8_t Flags> auto readLongDS(uint32_t adr) -> uint32_t;
+    template<uint8_t Flags> auto writeWordDS(uint32_t adr, uint16_t data) -> void;
+    template<uint8_t Flags> auto writeLongDS(uint32_t adr, uint32_t data) -> void;
 
     auto parse(const char* s, uint16_t sum = 0) -> uint16_t;
     template<uint8_t Size> inline auto clip(uint32_t data) -> uint32_t;

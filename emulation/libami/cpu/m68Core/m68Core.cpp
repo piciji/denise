@@ -164,6 +164,7 @@ auto M68Core::reset() -> void { // highest prioritized group 0 routine
     cacr = 0;
     caar = 0;
     cahr = 0;
+    overlap = 0;
     invalidateCache();
 
     control = ResetRoutine; // emulation begins, when reset line is de-asserted
@@ -527,8 +528,12 @@ auto M68Core::setEngine( Engine engine ) -> void {
     }
 }
 
-auto M68Core::syncParallel(unsigned cycles) -> void {
-    SYNC( cycles );
+auto M68Core::syncSequencer(unsigned cycles) -> void {
+    if (overlap) {
+        if (cycles > overlap)
+            SYNC( cycles - overlap );
+        overlap = 0;
+    }
 }
 
 auto M68Core::invalidateCache() -> void {
