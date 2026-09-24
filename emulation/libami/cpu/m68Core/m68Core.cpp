@@ -34,7 +34,6 @@
 #define SYNC            REF_CALL sync
 #define IACK_CYCLE      REF_CALL iackCycle
 #define RESET_OUT       REF_CALL resetOut
-#define ADR_EXC_ACCESS  REF_CALL adrExcAccess
 #define TAS_CYCLE_BEGIN REF_CALL tasCycleBegin
 #define TAS_CYCLE_END   REF_CALL tasCycleEnd
 
@@ -84,7 +83,6 @@ auto M68Core::process() -> void {
 
         if (control & IRQ) {
             IRQException();
-            pcEdge = (pc - 2) & 0xffffff;
             if (control & (BreakPoint | SoftStop))
                 controlBreaks();
             return;
@@ -107,13 +105,21 @@ auto M68Core::process() -> void {
         if (control & History)
             loadTrace(historyHandler.getNext());
 
-        (this->*opTable[ird])(ird);
-        pcEdge = (pc - 2) & 0xffffff;
+        try {
+            (this->*opTable[ird])(ird);
+        } catch (const std::exception& exc) {
+            group0Exception( exc );
+        }
 
         if (control & (BreakPoint | SoftStop))
             controlBreaks();
-    } else    
-        (this->*opTable[ird])(ird);
+    } else {
+        try {
+            (this->*opTable[ird])(ird);
+        } catch (const std::exception& exc) {
+            group0Exception( exc );
+        }
+    }
 }
 
 auto M68Core::controlBreaks() -> void {
@@ -159,12 +165,15 @@ auto M68Core::reset() -> void { // highest prioritized group 0 routine
     // E-Clock phase is unchanged on soft reset, but depends on reset pulse duration.
     c = v = z = n = x = false;
     s = true;
+    m = false;
+    t0 = false;
     i = 7;
     iplPins = iplSample = 0;
     cacr = 0;
     caar = 0;
     cahr = 0;
     overlap = 0;
+    group = 2;
     invalidateCache();
 
     control = ResetRoutine; // emulation begins, when reset line is de-asserted
@@ -193,7 +202,7 @@ auto M68Core::setCCR(uint8_t data) -> void {
 }
 
 auto M68Core::getSR() -> uint16_t {
-    return getCCR() | (i & 7) << 8 | s << 13 | !!((control & Trace) != 0) << 15;
+    return getCCR() | (i & 7) << 8 | t0 << 14 | s << 13 | m << 12 | !!((control & Trace) != 0) << 15;
 }
 
 auto M68Core::setSR(uint16_t data) -> void {
@@ -211,6 +220,11 @@ auto M68Core::setSR(uint16_t data) -> void {
         control &= ~Trace;
 
     setSuperVisor( (data >> 13) & 1 );
+
+    if (engine >= Engine::M68020) {
+        setMasterSP( (data >> 12) & 1 );
+        t0 = (data >> 14) & 1;
+    }
 }
 
 inline auto M68Core::sampleInterrupt() -> void {
@@ -381,18 +395,6 @@ template<M68Core::Engine E> auto M68Core::nextIsGroup1Exception() -> bool {
     return false;
 }
 
-auto M68Core::firstMovemWrite( uint16_t mask, unsigned shift, bool reverseOrder) -> uint16_t {
-    for(int i = 0; i < 16; i++) {
-        if ((mask >> i) & 1) {
-            if (reverseOrder)
-                return (((i > 7) ? regsA[i - 8] : regsD[i]) >> shift) & 0xffff;
-
-            return (((i > 7) ? regsD[7 - (i - 8)] : regsA[7 - i]) >> shift) & 0xffff;
-        }
-    }
-    return ~0;
-}
-
 template<uint8_t phaseShift> auto M68Core::internalWaitCyclesBasedOnMainClockCycles(int clockCycles) -> uint8_t {
     // get E-Clock cycle position from continous main clock cycle counter.
     // keep in mind, that a wrap around of cycle counter distort E-Clock phase. handle the wrap around manually!
@@ -533,7 +535,8 @@ auto M68Core::syncSequencer(unsigned cycles) -> void {
         if (cycles > overlap)
             SYNC( cycles - overlap );
         overlap = 0;
-    }
+    } else
+        SYNC( cycles );
 }
 
 auto M68Core::invalidateCache() -> void {

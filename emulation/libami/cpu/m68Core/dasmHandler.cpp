@@ -97,6 +97,12 @@ auto DasmHandler::sis( uint8_t size ) -> DasmHandler& {
     return *this;
 }
 
+auto DasmHandler::scale( uint8_t size ) -> DasmHandler& {
+    if (size)
+        str.append( "*" + std::to_string( 1 << size ) );
+    return *this;
+}
+
 auto DasmHandler::tab() -> DasmHandler& {
     while (str.size() < 8)
         str.append(" ");
@@ -201,11 +207,10 @@ auto DasmHandler::ea() -> DasmHandler& {
             str.append(",A" + std::to_string(reg) + ")");
             break;
         case M68Core::AddressRegisterIndirectWithIndex:
-            str.append("(");
-            hexS(static_cast<int8_t>(ext & 0xff));
-            str.append(",A" + std::to_string(reg) + ",");
-            rn(ext >> 12);
-            str.append(ext & 0x800 ? ".l)" : ".w)");
+            if (ext & 0x100)
+                indirectIndexFull("A" + std::to_string(reg));
+            else
+                indirectIndexBrief("A" + std::to_string(reg));
             break;
         case M68Core::AbsoluteShort:
             hex(ext);
@@ -226,11 +231,10 @@ auto DasmHandler::ea() -> DasmHandler& {
             comment->str.append(")");
             break;
         case M68Core::ProgramCounterIndirectWithIndex:
-            str.append("(");
-            hexS(static_cast<int8_t>(ext & 0xff));
-            str.append(",PC,");
-            rn(ext >> 12);
-            str.append(ext & 0x800 ? ".l)" : ".w)");
+            if (ext & 0x100)
+                indirectIndexFull("PC");
+            else
+                indirectIndexBrief("PC");
             break;
         case M68Core::Immediate:
             immU(ext);
@@ -240,6 +244,79 @@ auto DasmHandler::ea() -> DasmHandler& {
     }
 
     return *this;
+}
+
+auto DasmHandler::indirectIndexBrief(const std::string& B) -> void {
+    str.append("(");
+    hexS(static_cast<int8_t>(ext & 0xff));
+    str.append("," + B + ",");
+    rn(ext >> 12);
+    si(ext & 0x800 ? M68Core::Long : M68Core::Word);
+    scale( (ext >> 9) & 3 );
+    str.append(")");
+}
+
+auto DasmHandler::indirectIndexFull(const std::string& B) -> void {
+    uint8_t iis = ext & 7;
+
+    str.append("(");
+    if (iis & 4) {
+        str.append("["); baseDisplacement(); baseRegister( B ); str.append("]");
+        indexRegister();
+        outerDisplacement();
+    } else if (iis & 3) {
+        str.append("["); baseDisplacement(); baseRegister( B ); indexRegister(); str.append("]");
+        outerDisplacement();
+    } else {
+        baseDisplacement();
+        baseRegister( B );
+        indexRegister();
+    }
+    str.append(")");
+}
+
+auto DasmHandler::baseRegister(const std::string& B) -> void {
+    sep();
+
+    if ((ext & 0x80) == 0)
+        str.append( B );
+    else if (mode ==  M68Core::ProgramCounterIndirectWithIndex)
+        str.append( "ZPC" );
+    else
+        str.append( "0" );
+}
+
+auto DasmHandler::indexRegister() -> void {
+    if (ext & 0x40)
+        return;
+
+    sep();
+    rn( ext >> 12 );
+    si( ext & 0x800 ? M68Core::Long : M68Core::Word );
+    scale( (ext >> 9) & 3 );
+}
+
+auto DasmHandler::baseDisplacement() -> void {
+    uint8_t _size = (ext >> 4) & 3;
+
+    if (_size == 3)
+        hex(ext2);
+    else if (_size == 2)
+        hexS(static_cast<int16_t>(ext2));
+    else
+        str.append( "0" );
+}
+
+auto DasmHandler::outerDisplacement() -> void {
+    uint8_t _size = ext & 3;
+
+    sep();
+    if (_size == 3)
+        hex(ext3);
+    else if (_size == 2)
+        hexS(static_cast<int16_t>(ext3));
+    else
+        str.append( "0" );
 }
 
 }

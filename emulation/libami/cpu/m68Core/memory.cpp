@@ -93,6 +93,7 @@ template<M68Core::Engine E> auto M68Core::firstPrefetch() -> void {
 
 template<M68Core::Engine E, uint8_t Flags> auto M68Core::prefetch() -> void {
     ird = irc;
+    pcEdge = pc;
     pc += 2;
 
     if (E == Engine::M68020)
@@ -448,30 +449,26 @@ template<uint8_t Flags> auto M68Core::writeLongDS(uint32_t adr, uint32_t data) -
     if constexpr(Flags & SampleIPL) sampleInterrupt();
 }
 
-template<M68Core::Engine E, uint8_t Mode, uint8_t Size, uint8_t Flags> auto M68Core::readEA(int reg, uint32_t& result, uint32_t& ea) -> bool {
+template<M68Core::Engine E, uint8_t Mode, uint8_t Size, uint8_t Flags> auto M68Core::readEA(int reg, uint32_t& ea) -> uint32_t {
     ea = calcEA<E, Mode, Size, Flags>(reg);
     
-    if constexpr (Mode == DataRegisterDirect) {
-        result = readRegD<Size>( reg );
-        return true;
-    } if constexpr (Mode == AddressRegisterDirect) {
-        result = readRegA<Size>( reg );
-        return true;
-    } if constexpr (Mode == Immediate) {
-        result = ea;
-        return true;
-    }
+    if constexpr (Mode == DataRegisterDirect)
+        return readRegD<Size>( reg );
+    if constexpr (Mode == AddressRegisterDirect)
+        return readRegA<Size>( reg );
+    if constexpr (Mode == Immediate)
+        return ea;
 
     if constexpr (Mode == AddressRegisterIndirectWithPreDecrement)
         writeRegA(reg, ea);
     
     if (E < Engine::M68020 && misaligned<Size>(ea))
-        return addressExceptionEA<E, Mode, Size>(ea), false;
+        addressExceptionEA<E, Mode, Size>(ea);
 
     if constexpr (Mode == AddressRegisterIndirectWithPostIncrement)
         writeRegA(reg, ea + ((reg == 7 && Size == Byte) ? 2 : Size));
 
-    return result = read<E, Size, Flags OR_FC_EA_PRG>(ea), true;
+    return read<E, Size, Flags OR_FC_EA_PRG>(ea);
 }
 
 template<M68Core::Engine E, uint8_t Mode, uint8_t Size, uint8_t Flags> auto M68Core::writeEA(uint32_t ea, uint32_t data) -> void {
@@ -589,7 +586,7 @@ template <M68Core::Engine E, uint8_t Flags> auto M68Core::indirectIndexFull(uint
     uint32_t xn = 0;
     uint32_t baseD = 0;
     uint32_t outerD = 0;
-    uint16_t iis = irc & 7;
+    uint8_t iis = irc & 7;
 
     if (irc & 0x80)
         B = 0;
@@ -642,11 +639,27 @@ template<uint8_t Mode, uint8_t Size> auto M68Core::prepareEaForDasm(uint32_t& ad
 
     switch(Mode) {
         case ProgramCounterIndirectWithIndex:
+            d.pc = adr;
+        case AddressRegisterIndirectWithIndex:
+            d.ext = peekInc<Word>(adr, d);
+            d.ext2 = 0;
+            d.ext3 = 0;
+
+            if (d.ext & 0x100) {
+                uint8_t bdSize = (d.ext >> 4) & 3;
+                uint8_t odSize = d.ext & 3;
+
+                if (bdSize & 2)
+                    d.ext2 = bdSize & 1 ? peekInc<Long>(adr, d) : static_cast<int16_t>(peekInc<Word>(adr, d));
+                if (odSize & 2)
+                    d.ext3 = odSize & 1 ? peekInc<Long>(adr, d) : static_cast<int16_t>(peekInc<Word>(adr, d));
+            }
+            break;
+
         case ProgramCounterIndirectWithDisplacement:
             d.pc = adr;
         case AddressRegisterIndirectWithDisplacement:
         case AbsoluteShort:
-        case AddressRegisterIndirectWithIndex:
             d.ext = peekInc<Word>(adr, d);
             break;
 

@@ -13,6 +13,8 @@ struct DasmHandler {
     uint8_t mode;
     uint8_t reg;
     uint32_t ext;
+    uint32_t ext2;
+    uint32_t ext3;
     uint32_t pc;
 
     uint16_t* memSnap = nullptr;
@@ -33,6 +35,8 @@ struct DasmHandler {
     auto si( uint8_t size ) -> DasmHandler&;
 
     auto sis( uint8_t size ) -> DasmHandler&;
+
+    auto scale( uint8_t size ) -> DasmHandler&;
 
     auto tab() -> DasmHandler&;
 
@@ -66,6 +70,19 @@ struct DasmHandler {
     auto ea() -> DasmHandler&;
 
     auto addComment() -> DasmHandler&;
+
+private:
+    auto indirectIndexBrief(const std::string& B) -> void;
+
+    auto indirectIndexFull(const std::string& B) -> void;
+
+    auto indexRegister() -> void;
+
+    auto baseRegister(const std::string& B) -> void;
+
+    auto baseDisplacement() -> void;
+
+    auto outerDisplacement() -> void;
 };
 
 }

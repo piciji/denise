@@ -1,11 +1,3 @@
-/*
- * missing features: BUS error
- *
- * external devices can raise BERR (BUS error) as a result of unwanted memory access. opcodes could be interrupted during each memory access.
- * prefetching often takes place at the same time as ALU operations, which leaves status flags with intermediate values.
- * for Amiga, BERR is wired to expansions port only. don't know if there are any expansions using this.
- * Atari can cause BUS errors.
- */
 
 #pragma once
 
@@ -17,7 +9,6 @@
 
 // Explanations are below
 #define FC_SUPPORT
-// #define ADR_EXC_BUS_CYCLE
 // #define TAS_SPINLOCK
 
 // a reference can be passed as an alternative to virtual methods. Modern compilers "should" be able to devirtualize.
@@ -123,6 +114,7 @@ protected:
 
     uint32_t usp;
     uint32_t ssp;
+    uint32_t msp;
 
     uint16_t irc;
     uint16_t ird;
@@ -135,6 +127,11 @@ protected:
 
     uint8_t i;
     bool s;
+
+    bool m;
+    bool t0;
+    uint32_t vbr;
+    uint8_t group;
 
     uint8_t iplPins;
     uint8_t iplSample;
@@ -165,6 +162,18 @@ protected:
 
     std::optional<uint32_t> softStep = std::nullopt;
 
+    struct AddressError : std::exception {
+        AddressError(uint32_t ea, uint32_t pc, unsigned flags) : ea( ea ), pc( pc ), flags( flags ) {}
+
+        uint32_t ea;
+        uint32_t pc;
+        unsigned flags;
+    };
+
+    struct BusError : AddressError {
+        BusError(uint32_t ea, uint32_t pc, unsigned flags) : AddressError( ea, pc, flags ) {}
+    };
+
 public:
     enum { USER_VECTOR = 0, AUTO_VECTOR = 1, UNINITIALIZED = 2,  SPURIOUS = -1};
 
@@ -179,6 +188,13 @@ public:
     auto setHalt() -> void; // I/O - could be halted from external device
     auto getCCR() -> uint8_t;
     auto getSR() -> uint16_t;
+
+    /* external devices can raise BERR (BUS error) as a result of unwanted memory access.
+     * prefetching often takes place at the same time as ALU operations,
+     * which leaves status flags with intermediate values. (not emulated)
+     * for Amiga 500/600, BERR is wired to expansions port. Amiga 1200 and Atari can cause BUS errors directly.
+     */
+    auto setBusError(uint32_t addr, bool read, bool prg) -> void;
 
     auto debuggerStepOver(bool subroutineOnly) -> void;
     auto debuggerStepInto() -> void;
@@ -263,12 +279,6 @@ protected:
     virtual auto readWordPRG(uint32_t adr) -> uint16_t { return 0; }
     virtual auto readLongPRG(uint32_t adr) -> uint32_t { return 0; }
 
-    // some devices observe AS line only and treat BUS cycles which cause an address exception as valid read/write cycles.
-    // don't know for sure ... there are some Amiga expansions doing this, so override it when needed.
-    // wait states are possible too. That alone is reason enough to implement this method.
-    // Another reason could be that external devices monitors the AS line and triggers actions in combination with certain addresses.
-    virtual auto adrExcAccess(bool readMode, uint32_t adr, uint8_t FC10, uint16_t value = 0) -> void {}
-
     // address strobe (AS) line remains asserted after read cycle of TAS, so read and following write are indivisible,
     // just like one single BUS cycle. when using multiple CPU's at the same BUS override following methods to
     // set up a spinlock. simply it tells you the state of AS line.
@@ -290,6 +300,7 @@ private:
     auto create() -> void;
     auto sampleInterrupt() -> void;
     auto setSuperVisor(bool state = true) -> void;
+    auto setMasterSP(bool state) -> void;
     auto syncSequencer(unsigned cycles) -> void;
     template<uint8_t Size = Word> auto misaligned(uint32_t adr) -> bool;
 
@@ -315,7 +326,7 @@ private:
     template<uint8_t Size> auto peekInc(uint32_t& adr, DasmHandler& d) -> uint32_t;
     
     template<Engine E, uint8_t Mode, uint8_t Size, uint8_t Flags = None> auto calcEA(int reg) -> uint32_t;
-    template<Engine E, uint8_t Mode, uint8_t Size, uint8_t Flags = None> auto readEA(int reg, uint32_t& result, uint32_t& ea) -> bool;
+    template<Engine E, uint8_t Mode, uint8_t Size, uint8_t Flags = None> auto readEA(int reg, uint32_t& ea) -> uint32_t;
     template<Engine E, uint8_t Mode, uint8_t Size, uint8_t Flags = None> auto writeEA(uint32_t ea, uint32_t data) -> void;
     template<uint8_t Mode, uint8_t Size> auto prepareEaForDasm(uint32_t& adr, uint8_t reg, DasmHandler& d) -> void;
 
@@ -453,10 +464,12 @@ private:
     template<uint8_t Size> auto defaultFlags(uint32_t data) -> void;
     template<uint8_t Mode, uint8_t destMode, uint8_t Size> auto setMoveCCWhenAddressError(uint32_t data) -> void;
 
-    template<Engine E> auto executeAt(uint16_t adr, uint8_t group) -> void;
+    template<Engine E> auto executeAt(uint32_t adr) -> void;
     template<Engine E, uint8_t Mode, uint8_t Size> auto addressExceptionEA(uint32_t ea) -> void;
-    template<Engine E, uint8_t Mode, uint8_t Size> auto addressExceptionMoveEA(uint32_t ea, uint32_t data) -> void;
-    template<Engine E> auto addressException(uint32_t adr, uint32_t _pc, uint8_t flags, uint16_t value = 0) -> void;
+    template<Engine E, uint8_t Mode, uint8_t Size> auto addressExceptionMoveEA(uint32_t ea) -> void;
+    auto group0Exception(const std::exception& exc) -> void;
+    template<Engine E> auto group0Exception(const std::exception& exc) -> void;
+    template<Engine E> auto group0Exception(uint32_t vector, uint32_t adr, uint32_t _pc, uint8_t flags) -> void;
 
     template<Engine E> auto resetRoutine() -> void;
     auto resetRoutine() -> void;
@@ -486,7 +499,6 @@ private:
     template<uint8_t Mode> constexpr static auto isDisplacementMode() -> bool { return Mode == AddressRegisterIndirectWithDisplacement || Mode == ProgramCounterIndirectWithDisplacement; }
     template<uint8_t Mode> constexpr static auto isPcMode() -> bool { return Mode == ProgramCounterIndirectWithIndex || Mode == ProgramCounterIndirectWithDisplacement; }
 
-    auto firstMovemWrite( uint16_t mask, unsigned shift, bool reverseOrder ) -> uint16_t;
     template<Engine E> auto nextIsGroup1Exception() -> bool;
 
     auto checkSoftStop(uint32_t addr) -> bool;
