@@ -321,6 +321,92 @@ template<uint8_t Inst> auto M68Core::bit(uint32_t data, int bit) -> uint32_t {
     }
 }
 
+template<uint8_t Inst> auto M68Core::bitField(uint32_t data, uint32_t offset, uint32_t mask) -> uint32_t {
+    uint32_t result;
+    v = false;
+    c = false;
+
+    switch (Inst) {
+        case Bfchg:
+            result = data ^ mask;
+            n = negative<Long>(data << offset);
+            z = zero<Long>(data & mask);
+            break;
+        case Bfset:
+            result = data | mask;
+            n = negative<Long>(data << offset);
+            z = zero<Long>(data & mask);
+            break;
+        case Bfclr:
+            result = data & ~mask;
+            n = negative<Long>(data << offset);
+            z = zero<Long>(data & mask);
+            break;
+        default:
+        case Bftst:
+            n = negative<Long>(data << offset);
+            z = zero<Long>(data & mask);
+            break;
+    }
+
+    return result;
+}
+
+template<uint8_t Inst> auto M68Core::bitFieldExtract(uint32_t data,  uint32_t width) -> uint32_t {
+    uint32_t result;
+    v = false;
+    c = false;
+
+    switch (Inst) {
+        case Bfexts:
+            result = sign<Long>(data) >> (32u - width);
+            n = negative<Long>(data);
+            z = zero<Long>(result);
+            break;
+        case Bfextu:
+            result = data >> (32u - width);
+            n = negative<Long>(data);
+            z = zero<Long>(result);
+            break;
+        default:
+            break;
+    }
+
+    return result;
+}
+
+auto M68Core::bitFieldFind(uint32_t data, uint32_t offset, uint32_t width) -> uint32_t {
+    v = false;
+    c = false;
+
+    uint32_t result = offset;
+
+    n = negative<Long>(data);
+    data >>= 32 - width;
+    z = zero<Long>(data);
+
+    uint32_t mask = 1 << (width - 1);
+    while (mask) {
+        if (data & mask)
+            break;
+        mask >>= 1;
+        result++;
+    }
+
+    return result;
+}
+
+template<bool withRotation> auto M68Core::bitFieldInsert(uint32_t result, uint32_t insert, uint32_t offset, uint32_t width) -> uint32_t {
+    insert <<= (32 - width);
+    v = false;
+    c = false;
+
+    n = negative<Long>(insert);
+    z = zero<Long>(insert);
+
+    return (result & ~bfMask<withRotation>( width, offset )) | bfShiftRight<withRotation>( insert, offset );
+}
+
 template<uint8_t Inst> auto M68Core::ccr(uint8_t data) -> void {
     switch(Inst) {
         case And:	setCCR( getCCR() & data ); break;

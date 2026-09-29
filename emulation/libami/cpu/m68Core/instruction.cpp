@@ -90,7 +90,7 @@ template<M68Core::Engine E, uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68Co
             case Lsr:
             case Roxl:
             case Roxr:
-                syncSequencer( 2);
+                if (!prefetchBusCycles) SYNC(2);
                 break;
         }
     }
@@ -109,7 +109,13 @@ template<M68Core::Engine E, uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68Co
     prefetch<E, SampleIPL>();
 
     if constexpr (E == Engine::M68020) {
-        if constexpr (Size == Byte) syncSequencer( 4 );
+        if constexpr (Size == Byte) {
+            if (!prefetchBusCycles) SYNC(2);
+            if constexpr(Inst == Btst) SYNC(2);
+        } else {
+            if (!prefetchBusCycles) SYNC(4);
+            else syncSequencer( 5 );
+        }
     } else {
         if constexpr(Mode == Immediate) SYNC(2);
         if constexpr(Mode == DataRegisterDirect) cyclesBit<Inst>(bits);
@@ -129,15 +135,170 @@ template<M68Core::Engine E, uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68Co
     prefetch<E, SampleIPL>();
 
     if constexpr (E == Engine::M68020) {
-        if constexpr (Size == Byte) syncSequencer( 4 );
+        if constexpr (Size == Byte) {
+            if (!prefetchBusCycles) SYNC(2);
+            if constexpr(Inst == Btst) SYNC(2);
+        } else {
+            if (!prefetchBusCycles) SYNC(4);
+            else syncSequencer( 5 );
+        }
     } else if constexpr(Mode == DataRegisterDirect) cyclesBit<Inst>(bits);
 
     if constexpr(Inst != Btst) writeEA<E, Mode, Size>(ea, result);
 }
 
-template<M68Core::Engine E, uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68Core::opClr(uint16_t opcode) -> void {
+template<M68Core::Engine E, uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68Core::opBitFieldEA(uint16_t opcode) -> void {
     uint32_t result, ea;
-    result = readEA<E, Mode, Size>(opcode & 7, ea); // dummy read
+    int ofField = (irc >> 6) & 0x1f;
+    unsigned wiField = irc & 0x1f;
+
+    unsigned width = (irc & 0x20) ? regsD[wiField & 7] : wiField;
+    width = width == 0 ? 32 : (width & 0x1f);
+
+    unsigned _offset = (irc & 0x800) ? regsD[ofField & 7] : ofField;
+
+    int offset = static_cast<int>(_offset);
+
+    int reg = (irc >> 12) & 7;
+
+    readExtensionWord<E>();
+    if (!prefetchBusCycles)
+        SYNC(2);
+
+    ea = calcEA<E, Mode, Size>(opcode & 7);
+
+    ea += offset >> 3; // negative offset e.g. -18 corresponds to -3 bytes
+
+    offset &= 7; // negative offset e.g. -18 corresponds to bit 6
+
+    unsigned shift = width + static_cast<unsigned>(offset);
+
+    result = read<E, Size, FC_EA_PRG>(ea);
+
+    prefetch<E, SampleIPL>();
+
+    switch (Inst) {
+        case Bfchg:
+        case Bfclr:
+        case Bfset:
+            result = bitField<Inst>(result, offset, bfMask<false>( width, offset ));
+            syncSequencer( 10 );
+            writeEA<E, Inst, Size>( ea, result );
+
+            if (shift > 32) {
+                result = read<E, Byte, FC_EA_PRG>(ea + 4);
+                SYNC( 2 );
+                auto mask = static_cast<uint8_t>(0xff << (40 - shift));
+                if constexpr (Inst == Bfchg) writeEA<E, Inst, Byte>(ea + 4, result ^ mask);
+                if constexpr (Inst == Bfset) writeEA<E, Inst, Byte>(ea + 4, result | mask);
+                if constexpr (Inst == Bfclr) writeEA<E, Inst, Byte>(ea + 4, result & ~mask);
+                z &= zero<Byte>(result & mask);
+            }
+
+            break;
+        default:
+        case Bftst:
+            (void)bitField<Inst>(result, offset, bfMask<false>( width, offset ));
+            syncSequencer( 9 );
+            if (shift > 32) {
+                SYNC( 1 );
+                result = read<E, Byte, FC_EA_PRG>(ea + 4);
+                auto mask = static_cast<uint8_t>(0xff << (40 - shift));
+                z &= zero<Byte>(result & mask);
+            }
+            break;
+        case Bfextu:
+        case Bfexts:
+            result = bfShiftLeft<false>( result, offset );
+            syncSequencer( 10 );
+            if (shift > 32) {
+                SYNC( 2 );
+                result |= (read<E, Byte, FC_EA_PRG>(ea + 4) << offset) >> 8;
+            }
+            result = bitFieldExtract<Inst>(result, width);
+            writeRegD<Size>(reg, result);
+            break;
+        case Bfffo:
+            result = bfShiftLeft<false>( result, offset );
+            if (shift > 32) {
+                result |= (read<E, Byte, FC_EA_PRG>(ea + 4) << offset) >> 8;
+                syncSequencer( 5 );
+            }
+
+            syncSequencer( 21 );
+            result = bitFieldFind(result, _offset, width);
+            writeRegD<Size>(reg, result);
+            break;
+        case Bfins:
+            result = bitFieldInsert<false>(result, readRegD<Size>( reg ), offset, width);
+            syncSequencer( 9 );
+            writeEA<E, Inst, Size>( ea, result );
+
+            if (shift > 32) {
+                result = read<E, Byte, FC_EA_PRG>(ea + 4);
+                uint8_t insert = readRegD<Byte>( reg ) << (40 - shift);
+                auto mask = static_cast<uint8_t>(0xff << (40 - shift));
+                writeEA<E, Inst, Byte>(ea + 4, (result & ~mask) | insert);
+                z &= zero<Byte>(insert);
+            }
+            break;
+    }
+}
+
+template<M68Core::Engine E, uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68Core::opBitField(uint16_t opcode) -> void {
+    int ofField = (irc >> 6) & 0x1f;
+    unsigned wiField = irc & 0x1f;
+
+    unsigned width = (irc & 0x20) ? regsD[wiField & 7] : wiField;
+    width = width == 0 ? 32 : (width & 0x1f);
+
+    unsigned _offset = (irc & 0x800) ? regsD[ofField & 7] : ofField;
+    unsigned offset = _offset & 0x1f;
+
+    int reg = (irc >> 12) & 7;
+    int regEA = opcode & 7;
+
+    readExtensionWord<E>();
+
+    uint32_t result = readRegD<Size>( regEA );
+
+    prefetch<E, SampleIPL>();
+
+    switch (Inst) {
+        case Bfchg:
+        case Bfclr:
+        case Bfset:
+            result = bitField<Inst>(result, offset, bfMask( width, offset ));
+            writeRegD<Size>(regEA, result);
+            syncSequencer( 12 );
+            break;
+        default:
+        case Bftst:
+            (void)bitField<Inst>(result, offset, bfMask( width, offset ));
+            syncSequencer(6);
+            break;
+        case Bfextu:
+        case Bfexts:
+            result = bitFieldExtract<Inst>( bfShiftLeft( result, offset ), width);
+            writeRegD<Size>(regEA, result);
+            syncSequencer(8);
+            break;
+        case Bfffo:
+            result = bitFieldFind( bfShiftLeft( result, offset ), _offset, width);
+            writeRegD<Size>(regEA, result);
+            syncSequencer(18);
+            break;
+        case Bfins:
+            result = bitFieldInsert(result, readRegD<Size>( reg ), offset, width);
+            writeRegD<Size>(regEA, result);
+            syncSequencer(10);
+            break;
+    }
+}
+
+template<M68Core::Engine E, uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68Core::opClr(uint16_t opcode) -> void {
+    uint32_t ea;
+    readEA<E, Mode, Size>(opcode & 7, ea); // dummy read
     
     z = true;
     n = v = c = false;
@@ -236,6 +397,81 @@ template<M68Core::Engine E, uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68Co
     prefetch<E, SampleIPL>();
     if constexpr(Size == Long) SYNC( 2 );
     arithmetic<Cmp, Size>( result, readRegD<Size>(reg) );
+}
+
+template<M68Core::Engine E, uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68Core::opCas(uint16_t opcode) -> void {
+    uint32_t result, ea;
+    int dc = irc & 7;
+    int du = (irc >> 6) & 7;
+
+    readExtensionWord<E>();
+    if (!prefetchBusCycles)
+        SYNC(2);
+
+    result = readEA<E, Mode, Size>(opcode & 7, ea);
+
+    auto compare = readRegD( dc );
+
+    arithmetic<Cmp, Size>( clip<Size>(compare), result );
+
+    SYNC(7);
+
+    if (z) {
+        write<E, Size>(ea, readRegD<Size>( du ));
+    } else {
+        writeRegD<Size>( dc, result );
+    }
+
+    prefetch<E, SampleIPL>();
+
+    if (!prefetchBusCycles)
+        SYNC(2);
+}
+
+template<M68Core::Engine E, uint8_t Inst, uint8_t Size> auto M68Core::opCas2(uint16_t opcode) -> void {
+    int dc1 = irc & 7;
+    int du1 = (irc >> 6) & 7;
+    int rn1 = (irc >> 12) & 15;
+    readExtensionWord<E>();
+    if (!prefetchBusCycles)
+        SYNC(2);
+    int dc2 = irc & 7;
+    int du2 = (irc >> 6) & 7;
+    int rn2 = (irc >> 12) & 15;
+    readExtensionWord<E>();
+    if (!prefetchBusCycles)
+        SYNC(2);
+
+    auto compare1 = readRegD( dc1 );
+    auto compare2 = readRegD( dc2 );
+
+    uint32_t addr1 = readRegR( rn1 );
+    uint32_t addr2 = readRegR( rn2 );
+
+    uint32_t data1 = read<E, Size>(addr1);
+    uint32_t data2 = read<E, Size>(addr2);
+
+    arithmetic<Cmp, Size>( clip<Size>(compare1), data1 );
+    SYNC(13);
+
+    if (z) {
+        arithmetic<Cmp, Size>( clip<Size>(compare2), data2 );
+        if (z) {
+            write<E, Size>(addr1, readRegD<Size>( du1 ));
+            write<E, Size>(addr2, readRegD<Size>( du2 ));
+            prefetch<E, SampleIPL>();
+            if (!prefetchBusCycles)
+                SYNC(2);
+            return;
+        }
+    }
+    SYNC(3);
+    writeRegD<Size>( dc1, data1 );
+    writeRegD<Size>( dc2, data2 );
+
+    prefetch<E, SampleIPL>();
+    if (!prefetchBusCycles)
+        SYNC(2);
 }
 
 template<M68Core::Engine E, uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68Core::opArithmeticEA(uint16_t opcode) -> void {
@@ -878,6 +1114,48 @@ template<M68Core::Engine E, uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68Co
     prefetch<E, SampleIPL>(); // at the end, Yacht is wrong
 }
 
+template<M68Core::Engine E, uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68Core::opChk2(uint16_t opcode) -> void {
+    int32_t value;
+    uint32_t result, result2, ea;
+    bool useExc = irc & 0x800;
+    int reg = (irc >> 12) & 0xf;
+    if (reg < 8)
+        value = sign<Size>(readRegD<Size>( reg ));
+    else
+        value = sign<Long>(readRegA( reg & 7 ));
+
+    readExtensionWord<E>();
+    if (!prefetchBusCycles)
+        SYNC(2);
+
+    result = readEA<E, Mode, Size>(opcode & 7, ea);
+
+    result2 = read<E, Size, FC_EA_PRG>(ea + Size);
+
+    int32_t boundL = sign<Size>(result);
+    int32_t boundU = sign<Size>(result2);
+
+    if (boundL <= boundU)
+        c = value < boundL || value > boundU;
+    else
+        c = value < boundL && value > boundU;
+
+    z = value == boundL || value == boundU;
+
+    setChk2UndefinedFlags(boundL, boundU, value);
+
+    SYNC(9);
+
+    if (useExc && c) {
+        SYNC(6);
+        trapException<E>(6);
+    } else {
+        prefetch<E, SampleIPL>();
+        if (!prefetchBusCycles)
+            SYNC(3);
+    }
+}
+
 template<M68Core::Engine E, uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68Core::opMoveFromSr(uint16_t opcode) -> void {
     uint32_t result, ea;
     result = readEA<E, Mode, Size>(opcode & 7, ea);
@@ -1154,6 +1432,14 @@ template<M68Core::Engine E, uint8_t Inst, uint8_t Size> auto M68Core::opMovepEa(
     write<E, Byte>(ea, result & 0xff);
 
     prefetch<E, SampleIPL>();
+}
+
+template<M68Core::Engine E, uint8_t Inst, uint8_t Size> auto M68Core::opBkpt(uint16_t opcode) -> void {
+    // when external hardware recognizes Bkpt CPU Space cycle, its able to inject instruction word via data bus
+    // A1200 doesn't respond to Bkpt CPU Space Cycle -> results in illegal exception
+    // int nr = opcode & 7;
+    (void)read<E, Size>(pc);
+    illegal<E>(opcode);
 }
 
 }

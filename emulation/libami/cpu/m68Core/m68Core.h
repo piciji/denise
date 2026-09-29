@@ -74,11 +74,14 @@ protected:
         Lea, Pea, Movem, Chk, Exg, Ext, Nop, Trap, Trapv,
         Reset, Rte, Rtr, Rts, _Stop, Swap,
         Illegal, LineA, LineF,
+        Bfchg, Bfset, Bfclr, Bftst, Bfexts, Bfextu, Bfffo, Bfins,
+        Chk2, Cmp2, Bkpt, Cas, Cas2
     };
 
     enum {  None = 0, SampleIPL = 1, SkipExtension = 2, TasCycle = 4,
-            PRG = 8, ConcurrentAdrCalc = 16 /* happens while prefetching */, Reverse = 32,
-            FirstPrefetch = 64 };
+            PRG = 8, ConcurrentAdrCalc = 0x10 /* happens while prefetching */, Reverse = 0x20,
+            FirstPrefetch = 0x40, ExtPrefetch = 0x80 };
+
     enum { SF_DATA = 1, SF_PRG = 2, SF_EXC = 8, SF_READ = 16 };
 
 public:
@@ -151,7 +154,7 @@ protected:
     // independent of instruction cache
     uint32_t cahr; // cache holding register
 
-    int overlap;
+    unsigned prefetchBusCycles;
 
     Emulator::WatchPoints watchPoints = Emulator::WatchPoints();
     Emulator::WatchPoints watchPointsWrite = Emulator::WatchPoints();
@@ -304,8 +307,8 @@ private:
     auto syncSequencer(unsigned cycles) -> void;
     template<uint8_t Size = Word> auto misaligned(uint32_t adr) -> bool;
 
-    template <Engine E, uint8_t Flags, bool Scale = false> auto indirectIndexBrief(uint32_t B) -> uint32_t;
-    template <Engine E, uint8_t Flags> auto indirectIndexFull(uint32_t B) -> uint32_t;
+    template <Engine E, unsigned Flags, bool Scale = false> auto indirectIndexBrief(uint32_t B) -> uint32_t;
+    template <Engine E, unsigned Flags> auto indirectIndexFull(uint32_t B) -> uint32_t;
     template <Engine E> auto fetchDisplacement(bool longDis) -> uint32_t;
 
     template<uint8_t Size = Long> inline auto readRegD(int reg) -> uint32_t;
@@ -313,31 +316,32 @@ private:
     
     template<uint8_t Size = Long> inline auto readRegA(int reg) -> uint32_t;
     inline auto writeRegA(int reg, uint32_t data) -> void;
+    template<uint8_t Size = Long> auto readRegR( int reg ) -> uint32_t;
 
-    template<Engine E, uint8_t Size, uint8_t Flags = 0> auto read(uint32_t adr) -> uint32_t;
-    template<Engine E, uint8_t Size, uint8_t Flags = 0> auto write(uint32_t adr, uint32_t data) -> void;
+    template<Engine E, uint8_t Size, unsigned Flags = 0> auto read(uint32_t adr) -> uint32_t;
+    template<Engine E, uint8_t Size, unsigned Flags = 0> auto write(uint32_t adr, uint32_t data) -> void;
     template<Engine E>  auto firstPrefetch() -> void;
-    template<Engine E, uint8_t Flags = None> inline auto prefetch() -> void;
-    template<uint8_t Flags> auto cachedPrefetch(uint32_t adr) -> uint16_t;
-    template<Engine E, uint8_t Flags = None> auto fullPrefetch() -> void;
-    template<Engine E, uint8_t Flags = None> inline auto readExtensionWord() -> void;
+    template<Engine E, unsigned Flags = None> inline auto prefetch() -> void;
+    template<unsigned Flags> auto cachedPrefetch(uint32_t adr) -> uint16_t;
+    template<Engine E, unsigned Flags = None> auto fullPrefetch() -> void;
+    template<Engine E, unsigned Flags = None> inline auto readExtensionWord() -> void;
 
     auto peek(uint32_t adr) -> uint16_t;
     template<uint8_t Size> auto peekInc(uint32_t& adr, DasmHandler& d) -> uint32_t;
     
-    template<Engine E, uint8_t Mode, uint8_t Size, uint8_t Flags = None> auto calcEA(int reg) -> uint32_t;
-    template<Engine E, uint8_t Mode, uint8_t Size, uint8_t Flags = None> auto readEA(int reg, uint32_t& ea) -> uint32_t;
-    template<Engine E, uint8_t Mode, uint8_t Size, uint8_t Flags = None> auto writeEA(uint32_t ea, uint32_t data) -> void;
+    template<Engine E, uint8_t Mode, uint8_t Size, unsigned Flags = None> auto calcEA(int reg) -> uint32_t;
+    template<Engine E, uint8_t Mode, uint8_t Size, unsigned Flags = None> auto readEA(int reg, uint32_t& ea) -> uint32_t;
+    template<Engine E, uint8_t Mode, uint8_t Size, unsigned Flags = None> auto writeEA(uint32_t ea, uint32_t data) -> void;
     template<uint8_t Mode, uint8_t Size> auto prepareEaForDasm(uint32_t& adr, uint8_t reg, DasmHandler& d) -> void;
 
-    template<uint8_t Flags> auto _readByte(uint32_t addr) -> uint8_t;
-    template<uint8_t Flags> auto _readWord(uint32_t addr) -> uint16_t;
-    template<uint8_t Flags> auto _readLong(uint32_t addr) -> uint32_t;
+    template<unsigned Flags> auto _readByte(uint32_t addr) -> uint8_t;
+    template<unsigned Flags> auto _readWord(uint32_t addr) -> uint16_t;
+    template<unsigned Flags> auto _readLong(uint32_t addr) -> uint32_t;
 
-    template<uint8_t Flags> auto readWordDS(uint32_t adr) -> uint16_t;
-    template<uint8_t Flags> auto readLongDS(uint32_t adr) -> uint32_t;
-    template<uint8_t Flags> auto writeWordDS(uint32_t adr, uint16_t data) -> void;
-    template<uint8_t Flags> auto writeLongDS(uint32_t adr, uint32_t data) -> void;
+    template<unsigned Flags> auto readWordDS(uint32_t adr) -> uint16_t;
+    template<unsigned Flags> auto readLongDS(uint32_t adr) -> uint32_t;
+    template<unsigned Flags> auto writeWordDS(uint32_t adr, uint16_t data) -> void;
+    template<unsigned Flags> auto writeLongDS(uint32_t adr, uint32_t data) -> void;
 
     auto parse(const char* s, uint16_t sum = 0) -> uint16_t;
     template<uint8_t Size> inline auto clip(uint32_t data) -> uint32_t;
@@ -366,6 +370,8 @@ private:
     OP_DECLARE_EA(Shift)
     OP_DECLARE_EA(Bit)
     OP_DECLARE_EA(ImmBit)
+    OP_DECLARE_EA(BitField)
+    OP_DECLARE_EA(BitFieldEA)
     OP_DECLARE_EA(Clr)
     OP_DECLARE_EA(Nbcd)
     OP_DECLARE_EA(Neg)
@@ -410,6 +416,7 @@ private:
     OP_DECLARE(Ccr)
     OP_DECLARE(Sr)
     OP_DECLARE_EA(Chk)
+    OP_DECLARE_EA(Chk2)
     OP_DECLARE_EA(MoveFromSr)
     OP_DECLARE_EA(MoveToSr)
     OP_DECLARE_EA(MoveToCcr)
@@ -425,6 +432,10 @@ private:
     OP_DECLARE(Unlink)
     OP_DECLARE(MovepReg)
     OP_DECLARE(MovepEa)
+
+    OP_DECLARE(Bkpt)
+    OP_DECLARE_EA(Cas)
+    OP_DECLARE(Cas2)
 
     #undef OP_DECLARE_EA
     #undef OP_DECLARE
@@ -449,6 +460,10 @@ private:
     auto dasmLineF(uint16_t opcode, uint32_t& adr, DasmHandler& d) -> void;
 
     template<uint8_t Inst> auto bit(uint32_t data, int bit) -> uint32_t;
+    template<uint8_t Inst> auto bitField(uint32_t data, uint32_t offset, uint32_t mask) -> uint32_t;
+    template<uint8_t Inst> auto bitFieldExtract(uint32_t data, uint32_t width) -> uint32_t;
+    template<bool withRotation = true> auto bitFieldInsert(uint32_t result, uint32_t insert, uint32_t offset, uint32_t width) -> uint32_t;
+    auto bitFieldFind(uint32_t data, uint32_t offset, uint32_t width) -> uint32_t;
     template<uint8_t Inst, uint8_t Size, bool SingleShift = false> auto shifter(uint32_t data, int shift) -> uint32_t;
     
     template<uint8_t Inst> auto singleShifter(uint32_t data) -> uint32_t {
@@ -469,7 +484,7 @@ private:
     template<Engine E, uint8_t Mode, uint8_t Size> auto addressExceptionMoveEA(uint32_t ea) -> void;
     auto group0Exception(const std::exception& exc) -> void;
     template<Engine E> auto group0Exception(const std::exception& exc) -> void;
-    template<Engine E> auto group0Exception(uint32_t vector, uint32_t adr, uint32_t _pc, uint8_t flags) -> void;
+    template<Engine E> auto group0Exception(uint32_t vector, uint32_t adr, uint32_t _pc, unsigned Flags) -> void;
 
     template<Engine E> auto resetRoutine() -> void;
     auto resetRoutine() -> void;
@@ -492,6 +507,8 @@ private:
     template<uint8_t Inst> auto cyclesMul(uint16_t data) -> void;
     template<uint8_t Inst> auto cyclesDiv(uint32_t dividend, uint16_t divisor) -> int;
 
+    auto setChk2UndefinedFlags(int32_t lower, int32_t upper, int32_t value) -> void;
+
     template<uint8_t Mode> constexpr static auto isRegisterMode() -> bool { return Mode == AddressRegisterDirect || Mode == DataRegisterDirect; }
     template<uint8_t Mode> constexpr static auto isDirectMode() -> bool { return isRegisterMode<Mode>() || Mode == Immediate; }
     template<uint8_t Mode> constexpr static auto isAbsMode() -> bool { return Mode == AbsoluteShort || Mode == AbsoluteLong; }
@@ -505,6 +522,10 @@ private:
     auto loadTrace(Emulator::HistoryEntry<uint16_t>& entry) -> void;
 
     auto invalidateCache() -> void;
+
+    template<bool withRotation = true> auto bfMask(unsigned width, unsigned offset) -> uint32_t;
+    template<bool withRotation = true> auto bfShiftLeft(uint32_t data, unsigned offset) -> uint32_t;
+    template<bool withRotation = true> auto bfShiftRight(uint32_t data, unsigned offset) -> uint32_t;
 };
 
 }

@@ -75,11 +75,18 @@ template<uint8_t Size> auto M68Core::readRegA(int reg) -> uint32_t {
     return clip<Size>( regsA[reg] );
 }
 
+template<uint8_t Size> auto M68Core::readRegR( int reg ) -> uint32_t {
+    if (reg & 8)
+        return readRegA<Size>(i & 7);
+
+    return readRegD<Size>(i);
+}
+
 auto M68Core::writeRegA(int reg, uint32_t data) -> void {
     regsA[reg] = data;
 }
 
-template<M68Core::Engine E, uint8_t Flags> auto M68Core::fullPrefetch() -> void {
+template<M68Core::Engine E, unsigned Flags> auto M68Core::fullPrefetch() -> void {
     firstPrefetch<E>();
     prefetch<E, Flags>();
 }
@@ -91,7 +98,7 @@ template<M68Core::Engine E> auto M68Core::firstPrefetch() -> void {
         irc = read<E, Word, FC_PRG>(pc);
 }
 
-template<M68Core::Engine E, uint8_t Flags> auto M68Core::prefetch() -> void {
+template<M68Core::Engine E, unsigned Flags> auto M68Core::prefetch() -> void {
     ird = irc;
     pcEdge = pc;
     pc += 2;
@@ -102,16 +109,18 @@ template<M68Core::Engine E, uint8_t Flags> auto M68Core::prefetch() -> void {
         irc = read<E, Word, Flags OR_FC_PRG>(pc);
 }
 
-template<M68Core::Engine E, uint8_t Flags> auto M68Core::readExtensionWord() -> void {
+template<M68Core::Engine E, unsigned Flags> auto M68Core::readExtensionWord() -> void {
     pc += 2;
 
     if (E == Engine::M68020)
-        irc = cachedPrefetch<Flags OR_FC_PRG>( pc );
+        irc = cachedPrefetch<Flags | ExtPrefetch OR_FC_PRG>( pc );
     else
         irc = read<E, Word, Flags OR_FC_PRG>(pc);
 }
 
-template<uint8_t Flags> auto M68Core::cachedPrefetch(uint32_t adr) -> uint16_t {
+template<unsigned Flags> auto M68Core::cachedPrefetch(uint32_t adr) -> uint16_t {
+    prefetchBusCycles = 0;
+
     if (control & WatchPoint) {
         if (watchPoints.check( pc, Word, true ))
             DEBUG_POINT_REACHED(WatchPoint, watchPoints, pc);
@@ -120,9 +129,8 @@ template<uint8_t Flags> auto M68Core::cachedPrefetch(uint32_t adr) -> uint16_t {
     if constexpr(Flags & SampleIPL)
         sampleInterrupt();
 
-    SYNC(2);
-
-    // full prefetch invalidates cache holding register
+    // full prefetch invalidates cache holding register.
+    // even without the cache enabled, BUS is accessed only for every second prefetch if the port width allows 32-bit accesses.
     if ((Flags & FirstPrefetch) || ((adr & 2) == 0) ) {
         unsigned idx = (adr & 0xfc) >> 2;
 
@@ -135,17 +143,18 @@ template<uint8_t Flags> auto M68Core::cachedPrefetch(uint32_t adr) -> uint16_t {
         } else {
             uint32_t addrAligned = adr & ~3; // full prefetch from odd word wastes a BUS cycle in case of 16 bit port size
 
+            SYNC(2);
             switch (PORT_SIZE(addrAligned)) {
                 default:
                 case 4:
                     cahr = READ_LONG_PRG(addrAligned);
-                    overlap = 3;
+                    prefetchBusCycles = 3;
                     break;
                 case 2:
                     cahr = READ_WORD_PRG(addrAligned) << 16;
                     SYNC(3);
                     cahr |= READ_WORD_PRG(addrAligned + 2);
-                    overlap = 6;
+                    prefetchBusCycles = 6;
                     break;
                 case 1:
                     cahr = READ_BYTE_PRG(addrAligned) << 24;
@@ -155,7 +164,7 @@ template<uint8_t Flags> auto M68Core::cachedPrefetch(uint32_t adr) -> uint16_t {
                     cahr |= READ_BYTE_PRG(addrAligned + 2) << 8;
                     SYNC(3);
                     cahr |= READ_BYTE_PRG(addrAligned + 3);
-                    overlap = 12;
+                    prefetchBusCycles = 12;
                     break;
             }
 
@@ -187,7 +196,7 @@ auto M68Core::peek(uint32_t adr) -> uint16_t {
     return PEEK_WORD(adr & 0xffffff);
 }
 
-template<M68Core::Engine E, uint8_t Size, uint8_t Flags> auto M68Core::read(uint32_t adr) -> uint32_t {
+template<M68Core::Engine E, uint8_t Size, unsigned Flags> auto M68Core::read(uint32_t adr) -> uint32_t {
     uint32_t result;
 
     if (control & WatchPoint) {
@@ -247,28 +256,28 @@ template<M68Core::Engine E, uint8_t Size, uint8_t Flags> auto M68Core::read(uint
     return result;
 }
 
-template<uint8_t Flags> inline auto M68Core::_readByte(uint32_t addr) -> uint8_t {
+template<unsigned Flags> inline auto M68Core::_readByte(uint32_t addr) -> uint8_t {
     if constexpr (!!(Flags & PRG))
         return READ_BYTE_PRG(addr);
 
     return READ_BYTE(addr);
 }
 
-template<uint8_t Flags> inline auto M68Core::_readWord(uint32_t addr) -> uint16_t {
+template<unsigned Flags> inline auto M68Core::_readWord(uint32_t addr) -> uint16_t {
     if constexpr (!!(Flags & PRG))
         return READ_WORD_PRG(addr);
 
     return READ_WORD(addr);
 }
 
-template<uint8_t Flags> inline auto M68Core::_readLong(uint32_t addr) -> uint32_t {
+template<unsigned Flags> inline auto M68Core::_readLong(uint32_t addr) -> uint32_t {
     if constexpr (!!(Flags & PRG))
         return READ_LONG_PRG(addr);
 
     return READ_LONG(addr);
 }
 
-template<uint8_t Flags> auto M68Core::readWordDS(uint32_t adr) -> uint16_t {
+template<unsigned Flags> auto M68Core::readWordDS(uint32_t adr) -> uint16_t {
     uint16_t result;
     auto ps = PORT_SIZE(adr);
 
@@ -284,7 +293,7 @@ template<uint8_t Flags> auto M68Core::readWordDS(uint32_t adr) -> uint16_t {
     return result;
 }
 
-template<uint8_t Flags> auto M68Core::readLongDS(uint32_t adr) -> uint32_t {
+template<unsigned Flags> auto M68Core::readLongDS(uint32_t adr) -> uint32_t {
     uint32_t result;
     auto ps = PORT_SIZE(adr);
 
@@ -330,7 +339,7 @@ template<uint8_t Flags> auto M68Core::readLongDS(uint32_t adr) -> uint32_t {
     return result;
 }
 
-template<M68Core::Engine E, uint8_t Size, uint8_t Flags> auto M68Core::write(uint32_t adr, uint32_t data) -> void {
+template<M68Core::Engine E, uint8_t Size, unsigned Flags> auto M68Core::write(uint32_t adr, uint32_t data) -> void {
 
     if (control & (WatchPointWrite | ModifiedCode) ) {
         modifiedCode.checkAndSet( adr, Size );
@@ -387,7 +396,7 @@ template<M68Core::Engine E, uint8_t Size, uint8_t Flags> auto M68Core::write(uin
     SYNC(2);
 }
 
-template<uint8_t Flags> auto M68Core::writeWordDS(uint32_t adr, uint16_t data) -> void {
+template<unsigned Flags> auto M68Core::writeWordDS(uint32_t adr, uint16_t data) -> void {
     auto ps = PORT_SIZE(adr);
 
     if ( ((ps == 2) && (adr & 1)) || ((ps == 4) && ((adr & 3) == 3)) || (ps == 1) ) {
@@ -401,7 +410,7 @@ template<uint8_t Flags> auto M68Core::writeWordDS(uint32_t adr, uint16_t data) -
     SYNC(1);
 }
 
-template<uint8_t Flags> auto M68Core::writeLongDS(uint32_t adr, uint32_t data) -> void {
+template<unsigned Flags> auto M68Core::writeLongDS(uint32_t adr, uint32_t data) -> void {
     uint32_t result;
     auto ps = PORT_SIZE(adr);
 
@@ -449,7 +458,7 @@ template<uint8_t Flags> auto M68Core::writeLongDS(uint32_t adr, uint32_t data) -
     if constexpr(Flags & SampleIPL) sampleInterrupt();
 }
 
-template<M68Core::Engine E, uint8_t Mode, uint8_t Size, uint8_t Flags> auto M68Core::readEA(int reg, uint32_t& ea) -> uint32_t {
+template<M68Core::Engine E, uint8_t Mode, uint8_t Size, unsigned Flags> auto M68Core::readEA(int reg, uint32_t& ea) -> uint32_t {
     ea = calcEA<E, Mode, Size, Flags>(reg);
     
     if constexpr (Mode == DataRegisterDirect)
@@ -471,7 +480,7 @@ template<M68Core::Engine E, uint8_t Mode, uint8_t Size, uint8_t Flags> auto M68C
     return read<E, Size, Flags OR_FC_EA_PRG>(ea);
 }
 
-template<M68Core::Engine E, uint8_t Mode, uint8_t Size, uint8_t Flags> auto M68Core::writeEA(uint32_t ea, uint32_t data) -> void {
+template<M68Core::Engine E, uint8_t Mode, uint8_t Size, unsigned Flags> auto M68Core::writeEA(uint32_t ea, uint32_t data) -> void {
     if constexpr(Mode == DataRegisterDirect)
         writeRegD<Size>(ea, data);
     else if constexpr(Mode == AddressRegisterDirect)
@@ -480,7 +489,7 @@ template<M68Core::Engine E, uint8_t Mode, uint8_t Size, uint8_t Flags> auto M68C
         write<E, Size, Flags>(ea, data);
 }
 
-template<M68Core::Engine E, uint8_t Mode, uint8_t Size, uint8_t Flags> auto M68Core::calcEA(int reg) -> uint32_t {
+template<M68Core::Engine E, uint8_t Mode, uint8_t Size, unsigned Flags> auto M68Core::calcEA(int reg) -> uint32_t {
     uint32_t adr;
     
     switch(Mode) {
@@ -504,6 +513,9 @@ template<M68Core::Engine E, uint8_t Mode, uint8_t Size, uint8_t Flags> auto M68C
         case AddressRegisterIndirectWithDisplacement:
             adr = readRegA( reg ) + (int16_t)irc;
             if constexpr((Flags & SkipExtension) == 0) readExtensionWord<E>();
+            if constexpr (E == Engine::M68020) {
+                if (!prefetchBusCycles) SYNC(2);
+            }
             return adr;
             
         case AddressRegisterIndirectWithIndex: {
@@ -533,6 +545,9 @@ template<M68Core::Engine E, uint8_t Mode, uint8_t Size, uint8_t Flags> auto M68C
         case ProgramCounterIndirectWithDisplacement:
             adr = pc + (int16_t)irc;
             if constexpr((Flags & SkipExtension) == 0) readExtensionWord<E>();
+            if constexpr (E == Engine::M68020) {
+                if (!prefetchBusCycles) SYNC(2);
+            }
             return adr;
             
         case ProgramCounterIndirectWithIndex: {
@@ -555,16 +570,20 @@ template<M68Core::Engine E, uint8_t Mode, uint8_t Size, uint8_t Flags> auto M68C
             } else {
                 adr = irc << 16;
                 readExtensionWord<E>();
-                if constexpr (E == Engine::M68020)
-                    SYNC(2);
+                if constexpr (E == Engine::M68020) {
+                    if (!prefetchBusCycles) SYNC(2);
+                }
                 adr |= irc;
             }
             readExtensionWord<E>();
+            if constexpr (E == Engine::M68020) {
+                if (!prefetchBusCycles) SYNC(2);
+            }
             return adr;
     }
 }
 
-template <M68Core::Engine E, uint8_t Flags, bool Scale> auto M68Core::indirectIndexBrief(uint32_t B) -> uint32_t {
+template <M68Core::Engine E, unsigned Flags, bool Scale> auto M68Core::indirectIndexBrief(uint32_t B) -> uint32_t {
     int index = (irc >> 12) & 7;
     uint32_t dispReg = (irc & 0x8000) ? readRegA( index ) : readRegD( index );
     auto d = static_cast<int8_t>(irc);
@@ -581,7 +600,7 @@ template <M68Core::Engine E, uint8_t Flags, bool Scale> auto M68Core::indirectIn
     return static_cast<int64_t>(B) + xn + static_cast<int64_t>(d);
 }
 
-template <M68Core::Engine E, uint8_t Flags> auto M68Core::indirectIndexFull(uint32_t B) -> uint32_t {
+template <M68Core::Engine E, unsigned Flags> auto M68Core::indirectIndexFull(uint32_t B) -> uint32_t {
     uint32_t addr;
     uint32_t xn = 0;
     uint32_t baseD = 0;

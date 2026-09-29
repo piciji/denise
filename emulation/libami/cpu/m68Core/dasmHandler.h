@@ -42,6 +42,8 @@ struct DasmHandler {
 
     auto sep() -> DasmHandler&;
 
+    auto col() -> DasmHandler&;
+
     auto dn( uint8_t i ) -> DasmHandler&;
 
     auto an( uint8_t i ) -> DasmHandler&;
@@ -61,6 +63,10 @@ struct DasmHandler {
     auto hex24( uint32_t val ) -> DasmHandler&;
 
     auto hexS( int32_t val ) -> DasmHandler&;
+
+    auto bitField(unsigned of, unsigned wi, bool oReg, bool bReg) -> DasmHandler&;
+
+    auto rnBrackets( uint8_t i ) -> DasmHandler&;
 
     template<bool asAn = false>
     static auto regList( unsigned list, std::string& s ) -> void;

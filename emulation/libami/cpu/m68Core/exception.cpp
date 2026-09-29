@@ -26,9 +26,8 @@ template<M68Core::Engine E> auto M68Core::trapException(uint8_t vector) -> void 
         if (formatExc)
             pc -= 2;
 
-        write<E, Word>(sp + 4, pc & 0xffff);
         write<E, Word>(sp + 0, SR);
-        write<E, Word>(sp + 2, (pc >> 16) & 0xffff);
+        write<E, Long>(sp + 2, pc);
 
     } else {
         if (misaligned(sp))
@@ -221,7 +220,7 @@ template<M68Core::Engine E, uint8_t Mode, uint8_t Size> auto M68Core::addressExc
 
 template<M68Core::Engine E, uint8_t Mode, uint8_t Size> auto M68Core::addressExceptionMoveEA(uint32_t ea) -> void {
     uint32_t _pc = pc;
-    uint8_t flags = SF_DATA;
+    unsigned flags = SF_DATA;
 
     if constexpr(Mode < AddressRegisterIndirectWithPreDecrement)
         _pc += 2;
@@ -240,7 +239,7 @@ template<M68Core::Engine E, uint8_t Mode, uint8_t Size> auto M68Core::addressExc
 }
 
 auto M68Core::setBusError(uint32_t addr, bool read, bool prg) -> void {
-    uint8_t flags = prg ? SF_PRG : SF_DATA;
+    unsigned flags = prg ? SF_PRG : SF_DATA;
     if (read)
         flags |= SF_READ;
     if (group != 2)
@@ -270,7 +269,7 @@ template<M68Core::Engine E> auto M68Core::group0Exception(const std::exception& 
     }
 }
 
-template<M68Core::Engine E> auto M68Core::group0Exception(uint32_t vector, uint32_t adr, uint32_t _pc, uint8_t flags) -> void {
+template<M68Core::Engine E> auto M68Core::group0Exception(uint32_t vector, uint32_t adr, uint32_t _pc, unsigned flags) -> void {
     group = 0;
     // misalignment is recognized during BUS cycle, UDS and LDS are never asserted.
     // AS line is asserted and in case of a "Write", data is put on data BUS.

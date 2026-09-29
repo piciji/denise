@@ -94,6 +94,30 @@ auto M68Core::dasmImmBit( uint16_t opcode, uint32_t& adr, DasmHandler& d ) -> vo
 }
 
 template<uint8_t Inst, uint8_t Mode, uint8_t Size>
+auto M68Core::dasmBitField(uint16_t opcode, uint32_t& adr, DasmHandler& d) -> void {
+    d.Ins( Inst ).tab();
+    uint16_t ext = peekInc<Word>( adr, d );
+    unsigned of = (ext >> 6) & 0x1f;
+    unsigned wi = ext & 0x1f;
+
+    if (Inst == Bfins)
+        d.dn( (ext >> 12) & 7 ).sep();
+
+    prepareEaForDasm<Mode, Size>( adr, opcode & 7, d );
+    d.ea();
+
+    d.bitField(of, wi == 0 ? 32 : 0, !!(ext & 0x800), !!(ext & 0x20));
+
+    if (Inst == Bfextu || Inst == Bfexts || Inst == Bfffo)
+        d.sep().dn( (ext >> 12) & 7 );
+}
+
+template<uint8_t Inst, uint8_t Mode, uint8_t Size>
+auto M68Core::dasmBitFieldEA(uint16_t opcode, uint32_t& adr, DasmHandler& d) -> void {
+    dasmBitField<Inst, Mode, Size>(opcode, adr, d);
+}
+
+template<uint8_t Inst, uint8_t Mode, uint8_t Size>
 auto M68Core::dasmClr( uint16_t opcode, uint32_t& adr, DasmHandler& d ) -> void {
     prepareEaForDasm<Mode, Size>( adr, opcode & 7, d );
     d.Ins( Inst ).si( Size ).tab().ea();
@@ -355,6 +379,18 @@ auto M68Core::dasmChk( uint16_t opcode, uint32_t& adr, DasmHandler& d ) -> void 
 }
 
 template<uint8_t Inst, uint8_t Mode, uint8_t Size>
+auto M68Core::dasmChk2( uint16_t opcode, uint32_t& adr, DasmHandler& d ) -> void {
+    uint16_t ext = peekInc<Word>( adr, d );
+    prepareEaForDasm<Mode, Size>( adr, opcode & 7, d );
+
+    if (ext & 0x800) {
+        d.Ins( Inst ).si( Size ).tab().ea().sep().rn( (opcode >> 12) & 0xf );
+    } else {
+        d.Ins( Cmp2 ).si( Size ).tab().ea().sep().rn( (opcode >> 12) & 0xf );
+    }
+}
+
+template<uint8_t Inst, uint8_t Mode, uint8_t Size>
 auto M68Core::dasmMoveFromSr( uint16_t opcode, uint32_t& adr, DasmHandler& d ) -> void {
     prepareEaForDasm<Mode, Size>( adr, opcode & 7, d );
     d.Ins( Inst ).si( Size ).tab().sr().sep().ea();
@@ -464,6 +500,31 @@ auto M68Core::dasmMovepEa( uint16_t opcode, uint32_t& adr, DasmHandler& d ) -> v
     d.Ins( Inst ).si( Size ).tab();
     prepareEaForDasm<AddressRegisterIndirectWithDisplacement, Size>( adr, opcode & 7, d );
     d.dn( (opcode >> 9) & 7 ).sep().ea();
+}
+
+template<uint8_t Inst, uint8_t Size>
+auto M68Core::dasmBkpt( uint16_t opcode, uint32_t& adr, DasmHandler& d ) -> void {
+    d.Ins( Inst ).tab().immU( opcode & 7 );
+}
+
+template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68Core::dasmCas(uint16_t opcode, uint32_t& adr, DasmHandler& d) -> void {
+    uint16_t ext = peekInc<Word>( adr, d );
+    prepareEaForDasm<AddressRegisterIndirectWithDisplacement, Size>( adr, opcode & 7, d );
+    d.Ins( Inst ).si( Size ).tab().dn(ext & 7).sep().dn( (ext >> 6) & 7 ).sep().ea();
+}
+
+template<uint8_t Inst, uint8_t Size> auto M68Core::dasmCas2(uint16_t opcode, uint32_t& adr, DasmHandler& d) -> void {
+    uint16_t ext = peekInc<Word>( adr, d );
+    int dc1 = ext & 7;
+    int du1 = (ext >> 6) & 7;
+    int rn1 = (ext >> 12) & 15;
+    ext = peekInc<Word>( adr, d );
+    int dc2 = ext & 7;
+    int du2 = (ext >> 6) & 7;
+    int rn2 = (ext >> 12) & 15;
+
+    d.Ins( Inst ).si( Size ).tab().dn(dc1).col().dn(dc2).sep().dn(du1).col().dn(du2).sep();
+    d.rnBrackets( rn1 ).col().rnBrackets( rn2 );
 }
 
 }

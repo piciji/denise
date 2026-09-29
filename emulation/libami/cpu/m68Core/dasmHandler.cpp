@@ -22,7 +22,9 @@ auto DasmHandler::mnemonic(uint8_t inst) -> const char* {
         "bsr","jmp", "jsr", "link", "unlk","tas", "tst",
         "lea", "pea", "movem", "chk", "exg", "ext", "nop", "trap", "trapv",
         "reset", "rte", "rtr", "rts", "stop", "swap",
-        "Illegal", "LineA", "LineF"
+        "Illegal", "LineA", "LineF",
+        "bfchg", "bfset", "bfclr", "bftst", "bfexts", "bfextu", "bfffo", "bfins",
+        "chk2", "cmp2", "bkpt", "cas", "cas2",
     };
 
     return mnemonics[ inst ];
@@ -115,6 +117,11 @@ auto DasmHandler::sep() -> DasmHandler& {
     return *this;
 }
 
+auto DasmHandler::col() -> DasmHandler& {
+    str.append(":");
+    return *this;
+}
+
 auto DasmHandler::dn( uint8_t i ) -> DasmHandler& {
     str.append("D" + std::to_string(i));
     return *this;
@@ -122,6 +129,13 @@ auto DasmHandler::dn( uint8_t i ) -> DasmHandler& {
 
 auto DasmHandler::an( uint8_t i ) -> DasmHandler& {
     str.append("A" + std::to_string(i));
+    return *this;
+}
+
+auto DasmHandler::rnBrackets( uint8_t i ) -> DasmHandler& {
+    str.append("(");
+    rn(i);
+    str.append(")");
     return *this;
 }
 
@@ -183,6 +197,15 @@ auto DasmHandler::hex24( uint32_t val ) -> DasmHandler& {
 auto DasmHandler::addComment() -> DasmHandler& {
     if (comment)
         str.append( comment->str );
+    return *this;
+}
+
+auto DasmHandler::bitField(unsigned of, unsigned wi, bool oReg, bool bReg) -> DasmHandler& {
+    str.append( " {" );
+    oReg ? (void)dn(of & 7) : (void)str.append( std::to_string( of ) );
+    str.append( ":" );
+    bReg ? (void)dn(wi & 7) : (void)str.append( std::to_string( wi ) );
+    str.append( "}" );
     return *this;
 }
 

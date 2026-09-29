@@ -172,7 +172,7 @@ auto M68Core::reset() -> void { // highest prioritized group 0 routine
     cacr = 0;
     caar = 0;
     cahr = 0;
-    overlap = 0;
+    prefetchBusCycles = 0;
     group = 2;
     invalidateCache();
 
@@ -333,6 +333,71 @@ template<uint8_t Inst> auto M68Core::cyclesDiv(uint32_t dividend, uint16_t divis
     }
 
     return 0;
+}
+
+auto M68Core::setChk2UndefinedFlags(int32_t lower, int32_t upper, int32_t value) -> void {
+    // from UAE
+    n = v = false;
+
+    if (value == lower || value == upper)
+        return;
+
+    if (lower < 0 && upper >= 0) {
+        if (value < lower)
+            n = true;
+        if (value >= 0 && value < upper)
+            n = true;
+
+        if (value >= 0 && (static_cast<int64_t>(lower) - value >= 0)) {
+            v = true;
+            n = false;
+            if (value > upper)
+                n = true;
+        }
+    } else if (lower >= 0 && upper < 0) {
+        if (value >= 0)
+            n = true;
+        if (value > upper)
+            n = true;
+        if (value > lower && (static_cast<int64_t>(upper) - value >= 0)) {
+            v = true;
+            n = false;
+        }
+    } else if (lower >= 0 && upper >= 0 && lower > upper) {
+        if (value > upper && value < lower)
+            n = true;
+        if (value < 0 && (static_cast<int64_t>(lower) - value < 0))
+            v = true;
+        if (value < 0 && (static_cast<int64_t>(lower) - value >= 0))
+            n = true;
+    } else if (lower >= 0 && upper >= 0 && lower <= upper) {
+        if (value >= 0 && value < lower)
+            n = true;
+        if (value > upper)
+            n = true;
+        if (value < 0 && (static_cast<int64_t>(upper) - value < 0)) {
+            n = true;
+            v = true;
+        }
+    } else if (lower < 0 && upper < 0 && lower > upper) {
+        if (value >= 0)
+            n = true;
+        if (value > upper && value < lower)
+            n = true;
+        if (value >= 0 && (static_cast<int64_t>(value) - lower < 0)) {
+            n = false;
+            v = true;
+        }
+    } else if (lower < 0 && upper < 0 && lower <= upper) {
+        if (value < lower)
+            n = true;
+        if (value < 0 && value > upper)
+            n = true;
+        if (value >= 0 && (static_cast<int64_t>(value) - lower < 0)) {
+            n = true;
+            v = true;
+        }
+    }
 }
 
 template<uint8_t Mode, uint8_t destMode, uint8_t Size> auto M68Core::setMoveCCWhenAddressError(uint32_t data) -> void {
@@ -531,10 +596,9 @@ auto M68Core::setEngine( Engine engine ) -> void {
 }
 
 auto M68Core::syncSequencer(unsigned cycles) -> void {
-    if (overlap) {
-        if (cycles > overlap)
-            SYNC( cycles - overlap );
-        overlap = 0;
+    if (prefetchBusCycles) {
+        if (cycles > prefetchBusCycles)
+            SYNC( cycles - prefetchBusCycles );
     } else
         SYNC( cycles );
 }
@@ -543,6 +607,25 @@ auto M68Core::invalidateCache() -> void {
     for (auto& cache : cacheEntries) {
         cache.valid = false;
     }
+}
+
+template<bool withRotation> inline auto M68Core::bfMask(unsigned width, unsigned offset) -> uint32_t {
+    uint32_t mask = 0xffffffff << (32 - width);
+    return bfShiftRight<withRotation>( mask, offset );
+}
+
+template<bool withRotation> inline auto M68Core::bfShiftLeft(uint32_t data, unsigned offset) -> uint32_t {
+    if constexpr (withRotation)
+        return (data << offset) | (data >> (32U - offset));
+
+    return data << offset;
+}
+
+template<bool withRotation> inline auto M68Core::bfShiftRight(uint32_t data, unsigned offset) -> uint32_t {
+    if constexpr (withRotation)
+        return (data >> offset) | (data << (32U - offset));
+
+    return data >> offset;
 }
 
 }

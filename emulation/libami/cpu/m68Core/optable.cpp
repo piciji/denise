@@ -174,6 +174,41 @@ template<M68Core::Engine E> auto M68Core::build() -> void {
     _EA_( o, 0, ImmBit, Btst, ADR_TYPICAL | PCD | PCI, Byte )
     _EA_( o, 0, ImmBit, Btst, DR, Long )
 
+    if (E >= Engine::M68020) {
+        o = parse("1110 1010 11-- ----");
+        _EA_( o, 0, BitFieldEA, Bfchg, AI | AID | AII | AS | AL, Long )
+        _EA_( o, 0, BitField, Bfchg, DR, Long )
+
+        o = parse( "1110 1100 11-- ----");
+        _EA_( o, 0, BitFieldEA, Bfclr, AI | AID | AII | AS | AL, Long )
+        _EA_( o, 0, BitField, Bfclr, DR, Long )
+
+        o = parse( "1110 1110 11-- ----");
+        _EA_( o, 0, BitFieldEA, Bfset, AI | AID | AII | AS | AL, Long )
+        _EA_( o, 0, BitField, Bfset, DR, Long )
+
+        o = parse( "1110 1111 11-- ----");
+        _EA_( o, 0, BitFieldEA, Bfins, AI | AID | AII | AS | AL, Long )
+        _EA_( o, 0, BitField, Bfins, DR, Long )
+
+        // with PCD and PCI
+        o = parse( "1110 1001 11-- ----");
+        _EA_( o, 0, BitFieldEA, Bfextu, AI | AID | AII | AS | AL | PCD | PCI, Long )
+        _EA_( o, 0, BitField, Bfextu, DR, Long )
+
+        o = parse( "1110 1011 11-- ----");
+        _EA_( o, 0, BitFieldEA, Bfexts, AI | AID | AII | AS | AL | PCD | PCI, Long )
+        _EA_( o, 0, BitField, Bfexts, DR, Long )
+
+        o = parse( "1110 1101 11-- ----");
+        _EA_( o, 0, BitFieldEA, Bfffo, AI | AID | AII | AS | AL | PCD | PCI, Long )
+        _EA_( o, 0, BitField, Bfffo, DR, Long )
+
+        o = parse( "1110 1000 11-- ----");
+        _EA_( o, 0, BitFieldEA, Bftst, AI | AID | AII | AS | AL | PCD | PCI, Long )
+        _EA_( o, 0, BitField, Bftst, DR, Long )
+    }
+
     // clr
     o = parse("0100 0010 ss-- ----");
     _EA_( o, S6, Clr, Clr, ADR_TYPICAL | DR, BWL )
@@ -517,6 +552,17 @@ template<M68Core::Engine E> auto M68Core::build() -> void {
     o = parse("0100 ---1 10-- ----");
     _EA_( o, SO, Chk, Chk, ADR_FULL | DR, Word )
 
+    if (E >= Engine::M68020) {
+        o = parse("0000 0000 11-- ----");
+        _EA_( o, 0, Chk2, Chk2, AI | AID | AII | AS | AL | PCD | PCI, Byte )
+
+        o = parse("0000 0010 11-- ----");
+        _EA_( o, 0, Chk2, Chk2, AI | AID | AII | AS | AL | PCD | PCI, Word )
+
+        o = parse("0000 0100 11-- ----");
+        _EA_( o, 0, Chk2, Chk2, AI | AID | AII | AS | AL | PCD | PCI, Long )
+    }
+
     // move from sr
     o = parse("0100 0000 11-- ----");
     _EA_( o, 0, MoveFromSr, Move, ADR_TYPICAL | DR, Word )
@@ -617,6 +663,26 @@ template<M68Core::Engine E> auto M68Core::build() -> void {
     o = parse("0000 ---1 1s00 1---");
     _B_( o | (0 << 6), SO, MovepEa, Movep, Word )
     _B_( o | (1 << 6), SO, MovepEa, Movep, Long )
+
+    if (E >= Engine::M68020) {
+        o = parse("0100 1000 0100 1---");
+        _B_( o, 0, Bkpt, Bkpt, Word )
+
+        o = parse("0000 1010 11-- ----");
+        _EA_( o, 0, Cas, Cas, ADR_TYPICAL, Byte )
+
+        o = parse("0000 1100 11-- ----");
+        _EA_( o, 0, Cas, Cas, ADR_TYPICAL, Word )
+
+        o = parse("0000 1110 11-- ----");
+        _EA_( o, 0, Cas, Cas, ADR_TYPICAL, Long )
+
+        o = parse("0000 1100 1111 1100");
+        _bind(o, Cas2, Cas2, Word)
+
+        o = parse("0000 1110 1111 1100");
+        _bind(o, Cas2, Cas2, Long)
+    }
 
     for (int i = 0; i < 0x1000; i++) {
         opTable[(0xa << 12) | i] = &M68Core::lineA<E>;
