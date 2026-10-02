@@ -425,26 +425,62 @@ template<uint8_t Inst> auto M68Core::sr(uint16_t data) -> void {
 
 template<uint8_t Inst> auto M68Core::testCondition() -> bool {
     switch( Inst ) {
-        case Dbt: case Bra: case St:    return true;
-        case Dbf: case Sf:              return false;
-        case Dbhi: case Bhi: case Shi:  return !c & !z;
-        case Dbls: case Bls: case Sls:  return c | z;
-        case Dbcc: case Bcc: case Scc:  return !c;
-        case Dbcs: case Bcs: case Scs:  return c;
-        case Dbne: case Bne: case Sne:  return !z;
-        case Dbeq: case Beq: case Seq:  return z;
-        case Dbvc: case Bvc: case Svc:  return !v;
-        case Dbvs: case Bvs: case Svs:  return v;
-        case Dbpl: case Bpl: case Spl:  return !n;
-        case Dbmi: case Bmi: case Smi:  return n;
-        case Dbge: case Bge: case Sge:  return n == v;
-        case Dblt: case Blt: case Slt:  return n != v;
-        case Dbgt: case Bgt: case Sgt:  return n == v && !z;
-        case Dble: case Ble: case Sle:  return n != v || z;
+        case Trapt:  case  Dbt: case Bra: case St:   return true;
+        case Trapf:  case  Dbf:           case Sf:   return false;
+        case Traphi: case Dbhi: case Bhi: case Shi:  return !c & !z;
+        case Trapls: case Dbls: case Bls: case Sls:  return c | z;
+        case Trapcc: case Dbcc: case Bcc: case Scc:  return !c;
+        case Trapcs: case Dbcs: case Bcs: case Scs:  return c;
+        case Trapne: case Dbne: case Bne: case Sne:  return !z;
+        case Trapeq: case Dbeq: case Beq: case Seq:  return z;
+        case Trapvc: case Dbvc: case Bvc: case Svc:  return !v;
+        case Trapvs: case Dbvs: case Bvs: case Svs:  return v;
+        case Trappl: case Dbpl: case Bpl: case Spl:  return !n;
+        case Trapmi: case Dbmi: case Bmi: case Smi:  return n;
+        case Trapge: case Dbge: case Bge: case Sge:  return n == v;
+        case Traplt: case Dblt: case Blt: case Slt:  return n != v;
+        case Trapgt: case Dbgt: case Bgt: case Sgt:  return n == v && !z;
+        case Traple: case Dble: case Ble: case Sle:  return n != v || z;
         default:
             break;
     }
     return false; // unreachable
+}
+
+template<bool quadWord> auto M68Core::mullu(uint32_t src, uint32_t dest) -> uint64_t {
+    uint64_t result = static_cast<uint64_t>(src) * static_cast<uint64_t>(dest);
+
+    if constexpr (quadWord) {
+        v = c = false;
+        n = negative<Long>(result >> 32);
+        z = result == 0;
+    } else {
+        v = (result >> 32) != 0;
+        c = false;
+        n = negative<Long>(result);
+        z = zero<Long>(result);
+    }
+
+    return result;
+}
+
+template<bool quadWord> auto M68Core::mulls(uint32_t src, uint32_t dest) -> uint64_t {
+    auto result = static_cast<uint64_t>(
+        static_cast<int64_t>(static_cast<int32_t>(src)) * static_cast<int64_t>(static_cast<int32_t>(dest))
+    );
+
+    if constexpr (quadWord) {
+        v = c = false;
+        n = negative<Long>(result >> 32);
+        z = result == 0;
+    } else {
+        v = result != static_cast<uint64_t>(static_cast<int32_t>(result));
+        c = false;
+        n = negative<Long>(result);
+        z = zero<Long>(result);
+    }
+
+    return result;
 }
 
 template<uint8_t Size> auto M68Core::defaultFlags(uint32_t data) -> void {

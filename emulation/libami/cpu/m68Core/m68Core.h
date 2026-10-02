@@ -75,7 +75,9 @@ protected:
         Reset, Rte, Rtr, Rts, _Stop, Swap,
         Illegal, LineA, LineF,
         Bfchg, Bfset, Bfclr, Bftst, Bfexts, Bfextu, Bfffo, Bfins,
-        Chk2, Cmp2, Bkpt, Cas, Cas2
+        Chk2, Cmp2, Bkpt, Cas, Cas2, Extb, Pack, Unpk, Rtd,
+        Trapt, Trapf, Traphi, Trapls, Trapcc, Trapcs, Trapne, Trapeq,
+        Trapvc, Trapvs, Trappl, Trapmi, Trapge, Traplt, Trapgt, Traple,
     };
 
     enum {  None = 0, SampleIPL = 1, SkipExtension = 2, TasCycle = 4,
@@ -384,7 +386,9 @@ private:
     OP_DECLARE_EA(ArithmeticA)
     OP_DECLARE_EA(Cmpa)
     OP_DECLARE_EA(Mul)
+    OP_DECLARE_EA(Mull)
     OP_DECLARE_EA(Div)
+    OP_DECLARE_EA(Divl)
 
     OP_DECLARE_EA(Move)
     OP_DECLARE_EA(MoveDataRegisterDirect)
@@ -424,11 +428,13 @@ private:
     OP_DECLARE(ExgAxAy)
     OP_DECLARE(ExgAxDy)
     OP_DECLARE(Ext)
+    OP_DECLARE(Extb)
     OP_DECLARE(Link)
     OP_DECLARE(MoveUspAn)
     OP_DECLARE(MoveAnUsp)
     OP_DECLARE(Swap)
     OP_DECLARE(Trap)
+    OP_DECLARE(Trapcc)
     OP_DECLARE(Unlink)
     OP_DECLARE(MovepReg)
     OP_DECLARE(MovepEa)
@@ -437,12 +443,18 @@ private:
     OP_DECLARE_EA(Cas)
     OP_DECLARE(Cas2)
 
+    OP_DECLARE(PackDn)
+    OP_DECLARE(PackPd)
+    OP_DECLARE(UnpackDn)
+    OP_DECLARE(UnpackPd)
+
     #undef OP_DECLARE_EA
     #undef OP_DECLARE
 
     template<Engine E> auto opTrapv(uint16_t opcode) -> void;
     template<Engine E> auto opNop(uint16_t opcode) -> void;
     template<Engine E> auto opReset(uint16_t opcode) -> void;
+    template<Engine E> auto opRtd(uint16_t opcode) -> void;
     template<Engine E> auto opRte(uint16_t opcode) -> void;
     template<Engine E> auto opRtr(uint16_t opcode) -> void;
     template<Engine E> auto opRts(uint16_t opcode) -> void;
@@ -451,6 +463,7 @@ private:
     auto dasmTrapv(uint16_t opcode, uint32_t& adr, DasmHandler& d) -> void;
     auto dasmNop(uint16_t opcode, uint32_t& adr, DasmHandler& d) -> void;
     auto dasmReset(uint16_t opcode, uint32_t& adr, DasmHandler& d) -> void;
+    auto dasmRtd(uint16_t opcode, uint32_t& adr, DasmHandler& d) -> void;
     auto dasmRte(uint16_t opcode, uint32_t& adr, DasmHandler& d) -> void;
     auto dasmRtr(uint16_t opcode, uint32_t& adr, DasmHandler& d) -> void;
     auto dasmRts(uint16_t opcode, uint32_t& adr, DasmHandler& d) -> void;
@@ -474,6 +487,9 @@ private:
     template<typename T, typename TSign, uint8_t Inst, uint8_t Size> auto arithmeticT(uint32_t src, uint32_t dest) -> uint32_t;
     template<uint8_t Inst> auto bcd(uint32_t src, uint32_t dest) -> uint8_t;
     template<uint8_t Inst> auto testCondition() -> bool;
+
+    template<bool quadWord> auto mullu(uint32_t src, uint32_t dest) -> uint64_t;
+    template<bool quadWord> auto mulls(uint32_t src, uint32_t dest) -> uint64_t;
     
     template<uint8_t Size> auto applyRoxRange(int& shift) -> void;
     template<uint8_t Size> auto defaultFlags(uint32_t data) -> void;
@@ -508,6 +524,7 @@ private:
     template<uint8_t Inst> auto cyclesDiv(uint32_t dividend, uint16_t divisor) -> int;
 
     auto setChk2UndefinedFlags(int32_t lower, int32_t upper, int32_t value) -> void;
+    auto setDivslUndefinedFlags(uint8_t size, int64_t dividend, int32_t divisor) -> void;
 
     template<uint8_t Mode> constexpr static auto isRegisterMode() -> bool { return Mode == AddressRegisterDirect || Mode == DataRegisterDirect; }
     template<uint8_t Mode> constexpr static auto isDirectMode() -> bool { return isRegisterMode<Mode>() || Mode == Immediate; }

@@ -429,6 +429,11 @@ auto M68Core::dasmExt( uint16_t opcode, uint32_t& adr, DasmHandler& d ) -> void 
 }
 
 template<uint8_t Inst, uint8_t Size>
+auto M68Core::dasmExtb( uint16_t opcode, uint32_t& adr, DasmHandler& d ) -> void {
+    d.Ins( Inst ).si( Size ).tab().dn( opcode & 7 );
+}
+
+template<uint8_t Inst, uint8_t Size>
 auto M68Core::dasmMoveUspAn( uint16_t opcode, uint32_t& adr, DasmHandler& d ) -> void {
     d.Ins( Inst ).tab().usp().sep().an( opcode & 7 );
 }
@@ -444,6 +449,11 @@ auto M68Core::dasmNop( uint16_t opcode, uint32_t& adr, DasmHandler& d ) -> void 
 
 auto M68Core::dasmReset( uint16_t opcode, uint32_t& adr, DasmHandler& d ) -> void {
     d.Ins( Reset );
+}
+
+auto M68Core::dasmRtd( uint16_t opcode, uint32_t& adr, DasmHandler& d ) -> void {
+    uint32_t ext = peekInc<Word>( adr, d );
+    d.Ins( Rtd ).tab().immS( sign<Word>( ext ) );
 }
 
 auto M68Core::dasmRte( uint16_t opcode, uint32_t& adr, DasmHandler& d ) -> void {
@@ -525,6 +535,84 @@ template<uint8_t Inst, uint8_t Size> auto M68Core::dasmCas2(uint16_t opcode, uin
 
     d.Ins( Inst ).si( Size ).tab().dn(dc1).col().dn(dc2).sep().dn(du1).col().dn(du2).sep();
     d.rnBrackets( rn1 ).col().rnBrackets( rn2 );
+}
+
+template<uint8_t Inst, uint8_t Size> auto M68Core::dasmPackDn(uint16_t opcode, uint32_t& adr, DasmHandler& d) -> void {
+    uint16_t ext = peekInc<Word>( adr, d );
+    d.Ins( Inst ).tab().dn(opcode & 7).sep().dn((opcode >> 9) & 7).immU( ext );
+}
+
+template<uint8_t Inst, uint8_t Size> auto M68Core::dasmPackPd(uint16_t opcode, uint32_t& adr, DasmHandler& d) -> void {
+    uint16_t ext = peekInc<Word>( adr, d );
+    prepareEaForDasm<AddressRegisterIndirectWithDisplacement, Size>( adr, opcode & 7, d );
+    d.Ins( Inst ).tab().ea().sep();
+
+    prepareEaForDasm<AddressRegisterIndirectWithDisplacement, Size>( adr, (opcode >> 9) & 7, d );
+    d.ea().immU( ext );
+}
+
+template<uint8_t Inst, uint8_t Size> auto M68Core::dasmUnpackDn(uint16_t opcode, uint32_t& adr, DasmHandler& d) -> void {
+    uint16_t ext = peekInc<Word>( adr, d );
+    d.Ins( Inst ).tab().dn(opcode & 7).sep().dn((opcode >> 9) & 7).immU( ext );
+}
+
+template<uint8_t Inst, uint8_t Size> auto M68Core::dasmUnpackPd(uint16_t opcode, uint32_t& adr, DasmHandler& d) -> void {
+    uint16_t ext = peekInc<Word>( adr, d );
+    prepareEaForDasm<AddressRegisterIndirectWithDisplacement, Size>( adr, opcode & 7, d );
+    d.Ins( Inst ).tab().ea().sep();
+
+    prepareEaForDasm<AddressRegisterIndirectWithDisplacement, Size>( adr, (opcode >> 9) & 7, d );
+    d.ea().immU( ext );
+}
+
+template<uint8_t Inst, uint8_t Size> auto M68Core::dasmTrapcc(uint16_t opcode, uint32_t& adr, DasmHandler& d) -> void {
+    uint16_t ext;
+
+    switch (Size) {
+        case Byte:
+            d.Ins( Inst ).tab();
+            break;
+        case Word:
+            ext = peekInc<Word>( adr, d );
+            d.Ins( Inst ).tab().immU( ext );
+            break;
+        case Long:
+            ext = peekInc<Long>( adr, d );
+            d.Ins( Inst ).tab().immU( ext );
+            break;
+    }
+}
+
+template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68Core::dasmMull(uint16_t opcode, uint32_t& adr, DasmHandler& d) -> void {
+    uint16_t ext = peekInc<Word>( adr, d );
+    prepareEaForDasm<Mode, Size>( adr, opcode & 7, d );
+
+    d.Ins( ext & 0x800 ? Muls : Mulu ).si(Size).tab().ea().sep();
+
+    if (ext & 0x400)
+        d.dn(ext & 7).col();
+
+    d.dn((ext >> 12) & 7);
+}
+
+template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68Core::dasmDivl(uint16_t opcode, uint32_t& adr, DasmHandler& d) -> void {
+    uint16_t ext = peekInc<Word>( adr, d );
+    int dr = irc & 7;
+    int dq = (irc >> 12) & 7;
+    prepareEaForDasm<Mode, Size>( adr, opcode & 7, d );
+
+    d.Ins( ext & 0x800 ? Divs : Divu );
+
+    if (ext & 0x400)
+        d.si(Size).tab().ea().sep().dn(dr).col().dn(dq);
+    else {
+        if (dr == dq)
+            d.si(Size).tab().ea().sep().dn(dr);
+        else {
+            d.str.append( "l" );
+            d.si(Size).tab().ea().sep().dn(dr).col().dn(dq);
+        }
+    }
 }
 
 }

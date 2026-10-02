@@ -319,6 +319,12 @@ template<M68Core::Engine E> auto M68Core::build() -> void {
     o = parse("1100 ---1 11-- ----");
     _EA_( o, SO, Mul, Muls, ADR_FULL | DR, Word )
 
+    if constexpr (E >= Engine::M68020) {
+        // mull
+        o = parse("0100 1100 00-- ----");
+        _EA_( o, 0, Mull, Mulu, ADR_FULL | DR, Long )
+    }
+
     // divu
     o = parse("1000 ---0 11-- ----");
     _EA_( o, SO, Div, Divu, ADR_FULL | DR, Word )
@@ -326,6 +332,12 @@ template<M68Core::Engine E> auto M68Core::build() -> void {
     // divs
     o = parse("1000 ---1 11-- ----");
     _EA_( o, SO, Div, Divs, ADR_FULL | DR, Word )
+
+    if constexpr (E >= Engine::M68020) {
+        // divl
+        o = parse("0100 1100 01-- ----");
+        _EA_( o, 0, Divl, Divu, ADR_FULL | DR, Long )
+    }
     
     // move
     o = parse("00ss ---0 00-- ----");
@@ -436,6 +448,24 @@ template<M68Core::Engine E> auto M68Core::build() -> void {
     _bind(o | 0xd00, Bcc, Blt, Word)
     _bind(o | 0xe00, Bcc, Bgt, Word)
     _bind(o | 0xf00, Bcc, Ble, Word)
+
+    if constexpr (E == Engine::M68020) {
+        _bind(o | 0x0ff, Bcc, Bra, Long)               // bra
+        _bind(o | 0x2ff, Bcc, Bhi, Long)
+        _bind(o | 0x3ff, Bcc, Bls, Long)
+        _bind(o | 0x4ff, Bcc, Bcc, Long)
+        _bind(o | 0x5ff, Bcc, Bcs, Long)
+        _bind(o | 0x6ff, Bcc, Bne, Long)
+        _bind(o | 0x7ff, Bcc, Beq, Long)
+        _bind(o | 0x8ff, Bcc, Bvc, Long)
+        _bind(o | 0x9ff, Bcc, Bvs, Long)
+        _bind(o | 0xaff, Bcc, Bpl, Long)
+        _bind(o | 0xbff, Bcc, Bmi, Long)
+        _bind(o | 0xcff, Bcc, Bge, Long)
+        _bind(o | 0xdff, Bcc, Blt, Long)
+        _bind(o | 0xeff, Bcc, Bgt, Long)
+        _bind(o | 0xfff, Bcc, Ble, Long)
+    }
 
     // bsr
     o = parse("0110 0001 ---- ----");
@@ -592,6 +622,11 @@ template<M68Core::Engine E> auto M68Core::build() -> void {
     _B_( o | (2 << 6), 0, Ext, Ext, Word )
     _B_( o | (3 << 6), 0, Ext, Ext, Long )
 
+    if (E >= Engine::M68020) {
+        o = parse("0100 1001 --00 0---");
+        _B_( o | (3 << 6), 0, Extb, Extb, Long )
+    }
+
     // link
     o = parse("0100 1110 0101 0---");
     _B_( o, 0, Link, Link, Word )
@@ -612,6 +647,14 @@ template<M68Core::Engine E> auto M68Core::build() -> void {
     opTable[o] = &M68Core::opReset<E>;
     dasmTable[o] = &M68Core::dasmReset;
     mnemonics[o] = DasmHandler::mnemonic( Reset );
+
+    // rtd
+    if (E >= Engine::M68020) {
+        o = parse("0100 1110 0111 0100");
+        opTable[o] = &M68Core::opRtd<E>;
+        dasmTable[o] = &M68Core::dasmRtd;
+        mnemonics[o] = DasmHandler::mnemonic( Rtd );
+    }
 
     // rte
     o = parse("0100 1110 0111 0011");
@@ -650,6 +693,62 @@ template<M68Core::Engine E> auto M68Core::build() -> void {
     opTable[o] = &M68Core::opTrapv<E>;
     mnemonics[o] = DasmHandler::mnemonic( Trapv );
 
+    if (E >= Engine::M68020) {
+        o = parse("0101 ---- 1111 1100");
+        _bind( o | 0x000, Trapcc, Trapt, Byte )
+        _bind( o | 0x100, Trapcc, Trapf, Byte )
+        _bind( o | 0x200, Trapcc, Traphi, Byte )
+        _bind( o | 0x300, Trapcc, Trapls, Byte )
+        _bind( o | 0x400, Trapcc, Trapcc, Byte )
+        _bind( o | 0x500, Trapcc, Trapcs, Byte )
+        _bind( o | 0x600, Trapcc, Trapne, Byte )
+        _bind( o | 0x700, Trapcc, Trapeq, Byte )
+        _bind( o | 0x800, Trapcc, Trapvc, Byte )
+        _bind( o | 0x900, Trapcc, Trapvs, Byte )
+        _bind( o | 0xa00, Trapcc, Trappl, Byte )
+        _bind( o | 0xb00, Trapcc, Trapmi, Byte )
+        _bind( o | 0xc00, Trapcc, Trapge, Byte )
+        _bind( o | 0xd00, Trapcc, Traplt, Byte )
+        _bind( o | 0xe00, Trapcc, Trapgt, Byte )
+        _bind( o | 0xf00, Trapcc, Traple, Byte )
+
+        o = parse("0101 ---- 1111 1010");
+        _bind( o | 0x000, Trapcc, Trapt, Word )
+        _bind( o | 0x100, Trapcc, Trapf, Word )
+        _bind( o | 0x200, Trapcc, Traphi, Word )
+        _bind( o | 0x300, Trapcc, Trapls, Word )
+        _bind( o | 0x400, Trapcc, Trapcc, Word )
+        _bind( o | 0x500, Trapcc, Trapcs, Word )
+        _bind( o | 0x600, Trapcc, Trapne, Word )
+        _bind( o | 0x700, Trapcc, Trapeq, Word )
+        _bind( o | 0x800, Trapcc, Trapvc, Word )
+        _bind( o | 0x900, Trapcc, Trapvs, Word )
+        _bind( o | 0xa00, Trapcc, Trappl, Word )
+        _bind( o | 0xb00, Trapcc, Trapmi, Word )
+        _bind( o | 0xc00, Trapcc, Trapge, Word )
+        _bind( o | 0xd00, Trapcc, Traplt, Word )
+        _bind( o | 0xe00, Trapcc, Trapgt, Word )
+        _bind( o | 0xf00, Trapcc, Traple, Word )
+
+        o = parse("0101 ---- 1111 1011");
+        _bind( o | 0x000, Trapcc, Trapt, Long )
+        _bind( o | 0x100, Trapcc, Trapf, Long )
+        _bind( o | 0x200, Trapcc, Traphi, Long )
+        _bind( o | 0x300, Trapcc, Trapls, Long )
+        _bind( o | 0x400, Trapcc, Trapcc, Long )
+        _bind( o | 0x500, Trapcc, Trapcs, Long )
+        _bind( o | 0x600, Trapcc, Trapne, Long )
+        _bind( o | 0x700, Trapcc, Trapeq, Long )
+        _bind( o | 0x800, Trapcc, Trapvc, Long )
+        _bind( o | 0x900, Trapcc, Trapvs, Long )
+        _bind( o | 0xa00, Trapcc, Trappl, Long )
+        _bind( o | 0xb00, Trapcc, Trapmi, Long )
+        _bind( o | 0xc00, Trapcc, Trapge, Long )
+        _bind( o | 0xd00, Trapcc, Traplt, Long )
+        _bind( o | 0xe00, Trapcc, Trapgt, Long )
+        _bind( o | 0xf00, Trapcc, Traple, Long )
+    }
+
     // unlink
     o = parse("0100 1110 0101 1---");
     _B_( o, 0, Unlink, Unlk, Long )
@@ -682,6 +781,18 @@ template<M68Core::Engine E> auto M68Core::build() -> void {
 
         o = parse("0000 1110 1111 1100");
         _bind(o, Cas2, Cas2, Long)
+
+        o = parse("1000 ---1 0100 0---");
+        _B_( o, SO, PackDn, Pack, Word )
+
+        o = parse("1000 ---1 0100 1---");
+        _B_( o, SO, PackPd, Pack, Word )
+
+        o = parse("1000 ---1 1000 0---");
+        _B_( o, SO, UnpackDn, Unpk, Word )
+
+        o = parse("1000 ---1 1000 1---");
+        _B_( o, SO, UnpackPd, Unpk, Word )
     }
 
     for (int i = 0; i < 0x1000; i++) {

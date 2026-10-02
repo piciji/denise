@@ -15,9 +15,8 @@ template<M68Core::Engine E> auto M68Core::trapException(uint8_t vector) -> void 
     if (E >= Engine::M68020) {
         t0 = false;
         if (vector < 32 && !formatExc) {
-            sp -= 4;
+            sp -= 12;
             write<E, Long>(sp + 8, pcEdge);
-            sp -= 8;
             write<E, Word>(sp + 6, 0x2000 | vector << 2);
         } else { // Trap / Format
             sp -= 8;
@@ -92,8 +91,14 @@ template<M68Core::Engine E> auto M68Core::group1Exception(uint8_t vector) -> voi
     
     if (E >= Engine::M68020) {
         t0 = false;
-        sp -= 8;
-        write<E, Word>(sp + 6, vector << 2);
+        if (vector == 9) { // trace
+            sp -= 12;
+            write<E, Long>(sp + 8, pcEdge);
+            write<E, Word>(sp + 6, 0x2000 | vector << 2);
+        } else {
+            sp -= 8;
+            write<E, Word>(sp + 6, vector << 2);
+        }
         write<E, Word>(sp + 4, pc & 0xffff);
         write<E, Word>(sp + 0, SR);
         write<E, Word>(sp + 2, (pc >> 16) & 0xffff);
@@ -355,6 +360,9 @@ template<M68Core::Engine E> auto M68Core::executeAt(uint32_t adr) -> void { // 1
     firstPrefetch<E>();
     SYNC(2);
     prefetch<E, SampleIPL>();
+    if constexpr (E == Engine::M68020) {
+        SYNC(2);
+    }
     group = 2; // default
 }
 

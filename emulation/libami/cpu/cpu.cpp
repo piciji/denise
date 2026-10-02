@@ -191,6 +191,16 @@ auto Cpu::mnemonic() -> const char* {
     if (control & IRQ)
         return intrMnemonics[1];
 
+    if (engine == Engine::M68020) {
+        if ((ird & 0xf9c0) == 0xc0) { // CHK2 / CMP2
+            return M68FAMILY::DasmHandler::mnemonic( irc & 0x800 ? Chk2 : Cmp2 );
+        } if ((ird & 0xffc0) == 0x4c00) { // Mullu / Mulls
+            return M68FAMILY::DasmHandler::mnemonic( irc & 0x800 ? Muls : Mulu );
+        } if ((ird & 0xffc0) == 0x4c40) { // Divul / Divsl
+            return M68FAMILY::DasmHandler::mnemonic( irc & 0x800 ? Divs : Divu );
+        }
+    }
+
     return mnemonics[ird];
 }
 

@@ -400,6 +400,41 @@ auto M68Core::setChk2UndefinedFlags(int32_t lower, int32_t upper, int32_t value)
     }
 }
 
+auto M68Core::setDivslUndefinedFlags(uint8_t size, int64_t dividend, int32_t divisor) -> void {
+    // from UAE
+    auto a32 = static_cast<int32_t>(dividend);
+    bool neg64 = dividend < 0;
+    bool neg32 = a32 < 0;
+
+    if (size == Long) {
+        int32_t ahigh = dividend >> 32;
+        if (ahigh == 0) {
+            z = true;
+            n = false;
+        } else if (ahigh < 0 && divisor < 0 && ahigh > divisor) {
+            z = false;
+            n = false;
+        } else {
+            if (a32 == 0) {
+                z = true;
+                n = false;
+            } else {
+                z = false;
+                n = neg32 ^ neg64;
+            }
+        }
+    } else {
+        if (a32 == 0) {
+            z = true;
+            n = false;
+        } else {
+            n = neg32;
+            z = false;
+        }
+    }
+    c = false;
+}
+
 template<uint8_t Mode, uint8_t destMode, uint8_t Size> auto M68Core::setMoveCCWhenAddressError(uint32_t data) -> void {
     if constexpr(Size == Word) {
         if (isRegisterMode<Mode>() || (destMode != DataRegisterDirect))
