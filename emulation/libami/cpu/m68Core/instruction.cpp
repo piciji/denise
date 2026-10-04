@@ -1761,16 +1761,30 @@ template<M68Core::Engine E, uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68Co
                 data += (reg == 7 && Size == Byte) ? 2 : Size;
         }
 
-        writeEA<E, Mode, Size>(ea, data);
+        write<E, Size, SF_DFC>(ea, data);
 
     } else {
-        uint32_t result = readEA<E, Mode, Size>( reg, ea );
+        uint32_t result = readEA<E, Mode, Size, SF_SFC>( reg, ea );
 
         writeRegR(rn, result);
-
     }
 
     prefetch<E, SampleIPL>();
+}
+
+template<M68Core::Engine E, uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68Core::opMoveCcr(uint16_t opcode) -> void {
+    int reg = opcode & 7;
+    uint32_t ea = calcEA<E, Mode, Size>( reg );
+
+    if constexpr (Mode == AddressRegisterIndirectWithPreDecrement)
+        writeRegA(reg, ea);
+
+    if constexpr (Mode == AddressRegisterIndirectWithPostIncrement)
+        writeRegA(reg, ea + ((reg == 7 && Size == Byte) ? 2 : Size));
+
+    prefetch<E, SampleIPL>();
+
+    writeEA<E, Mode, Size>(ea, getCCR());
 }
 
 }

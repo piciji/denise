@@ -1,17 +1,10 @@
 
 #include "m68Core.h"
 
-#ifdef FC_SUPPORT
 #define FC_EA_PRG (isPcMode<Mode>() ? PRG : 0)
 #define OR_FC_EA_PRG | FC_EA_PRG
 #define FC_PRG PRG
 #define OR_FC_PRG | PRG
-#else
-#define FC_EA_PRG 0
-#define OR_FC_EA_PRG
-#define FC_PRG 0
-#define OR_FC_PRG
-#endif
 
 namespace M68FAMILY {
 
@@ -127,6 +120,7 @@ template<M68Core::Engine E, unsigned Flags> auto M68Core::readExtensionWord() ->
 
 template<unsigned Flags> auto M68Core::cachedPrefetch(uint32_t adr) -> uint16_t {
     prefetchBusCycles = 0;
+    fc = SF_PRG;
 
     if (control & WatchPoint) {
         if (watchPoints.check( pc, Word, true ))
@@ -154,23 +148,23 @@ template<unsigned Flags> auto M68Core::cachedPrefetch(uint32_t adr) -> uint16_t 
             switch (PORT_SIZE(addrAligned)) {
                 default:
                 case 4:
-                    cahr = READ_LONG_PRG(addrAligned);
+                    cahr = READ_LONG(addrAligned);
                     prefetchBusCycles = 3;
                     break;
                 case 2:
-                    cahr = READ_WORD_PRG(addrAligned) << 16;
+                    cahr = READ_WORD(addrAligned) << 16;
                     SYNC(3);
-                    cahr |= READ_WORD_PRG(addrAligned + 2);
+                    cahr |= READ_WORD(addrAligned + 2);
                     prefetchBusCycles = 6;
                     break;
                 case 1:
-                    cahr = READ_BYTE_PRG(addrAligned) << 24;
+                    cahr = READ_BYTE(addrAligned) << 24;
                     SYNC(3);
-                    cahr |= READ_BYTE_PRG(addrAligned + 1) << 16;
+                    cahr |= READ_BYTE(addrAligned + 1) << 16;
                     SYNC(3);
-                    cahr |= READ_BYTE_PRG(addrAligned + 2) << 8;
+                    cahr |= READ_BYTE(addrAligned + 2) << 8;
                     SYNC(3);
-                    cahr |= READ_BYTE_PRG(addrAligned + 3);
+                    cahr |= READ_BYTE(addrAligned + 3);
                     prefetchBusCycles = 12;
                     break;
             }
@@ -206,6 +200,11 @@ auto M68Core::peek(uint32_t adr) -> uint16_t {
 template<M68Core::Engine E, uint8_t Size, unsigned Flags> auto M68Core::read(uint32_t adr) -> uint32_t {
     uint32_t result;
 
+    if constexpr (Flags & SF_SFC)
+        fc = SF_SFC;
+    else
+        fc = (Flags & PRG) ? SF_PRG : SF_DATA;
+
     if (control & WatchPoint) {
         if (watchPoints.check( adr, Size, true ))
             DEBUG_POINT_REACHED(WatchPoint, watchPoints, adr);
@@ -217,11 +216,7 @@ template<M68Core::Engine E, uint8_t Size, unsigned Flags> auto M68Core::read(uin
         if constexpr (E == Engine::M68020)
             return readLongDS<Flags>( adr );
 
-        if constexpr (!!(Flags & PRG)) {
-            result = READ_WORD_PRG(adr) << 16;
-            SYNC(4);
-            result |= READ_WORD_PRG(adr + 2);
-        } else if constexpr (!!(Flags & Reverse)) { // only addx.l and subx.l
+        if constexpr (!!(Flags & Reverse)) { // only addx.l and subx.l
             result = READ_WORD(adr + 2);
             SYNC(4);
             result |= READ_WORD(adr) << 16;
@@ -246,7 +241,7 @@ template<M68Core::Engine E, uint8_t Size, unsigned Flags> auto M68Core::read(uin
         #endif
 
         if constexpr (Size == Byte) {
-            result = _readByte<Flags>(adr);
+            result = READ_BYTE(adr);
             if constexpr (E == Engine::M68020) {
                 SYNC(1);
                 return result;
@@ -256,32 +251,11 @@ template<M68Core::Engine E, uint8_t Size, unsigned Flags> auto M68Core::read(uin
             if constexpr (E == Engine::M68020)
                 return readWordDS<Flags>( adr );
 
-            result = _readWord<Flags>(adr);
+            result = READ_WORD(adr);
         }
     }
     SYNC(2);
     return result;
-}
-
-template<unsigned Flags> inline auto M68Core::_readByte(uint32_t addr) -> uint8_t {
-    if constexpr (!!(Flags & PRG))
-        return READ_BYTE_PRG(addr);
-
-    return READ_BYTE(addr);
-}
-
-template<unsigned Flags> inline auto M68Core::_readWord(uint32_t addr) -> uint16_t {
-    if constexpr (!!(Flags & PRG))
-        return READ_WORD_PRG(addr);
-
-    return READ_WORD(addr);
-}
-
-template<unsigned Flags> inline auto M68Core::_readLong(uint32_t addr) -> uint32_t {
-    if constexpr (!!(Flags & PRG))
-        return READ_LONG_PRG(addr);
-
-    return READ_LONG(addr);
 }
 
 template<unsigned Flags> auto M68Core::readWordDS(uint32_t adr) -> uint16_t {
@@ -289,12 +263,12 @@ template<unsigned Flags> auto M68Core::readWordDS(uint32_t adr) -> uint16_t {
     auto ps = PORT_SIZE(adr);
 
     if ( ((ps == 2) && (adr & 1)) || ((ps == 4) && ((adr & 3) == 3)) || (ps == 1) ) {
-        result = _readByte<Flags>(adr) << 8;
+        result = READ_BYTE(adr) << 8;
         SYNC(3);
         if constexpr(Flags & SampleIPL) sampleInterrupt();
-        result |= _readByte<Flags>(adr + 1);
+        result |= READ_BYTE(adr + 1);
     } else
-        result = _readWord<Flags>(adr);
+        result = READ_WORD(adr);
 
     SYNC(1);
     return result;
@@ -306,40 +280,40 @@ template<unsigned Flags> auto M68Core::readLongDS(uint32_t adr) -> uint32_t {
 
     if (ps == 4) {
         if ((adr & 3) == 0) {
-            result = _readLong<Flags>(adr);
+            result = READ_LONG(adr);
         } else if ((adr & 3) == 2) {
-            result = _readWord<Flags>(adr) << 16;
+            result = READ_WORD(adr) << 16;
             SYNC(3);
-            result |= _readWord<Flags>(adr + 2);
+            result |= READ_WORD(adr + 2);
         } else if ((adr & 3) == 1) {
-            result = _readLong<Flags>(adr & ~1) << 8;
+            result = READ_LONG(adr & ~1) << 8;
             SYNC(3);
-            result |= _readByte<Flags>(adr + 3);
+            result |= READ_BYTE(adr + 3);
         } else {
-            result = _readByte<Flags>(adr) << 24;
+            result = READ_BYTE(adr) << 24;
             SYNC(3);
-            result |= _readLong<Flags>(adr + 1) >> 8;
+            result |= READ_LONG(adr + 1) >> 8;
         }
     } else if (ps == 2) {
         if (adr & 1) {
-            result = _readByte<Flags>(adr) << 24;
+            result = READ_BYTE(adr) << 24;
             SYNC(3);
-            result |= _readWord<Flags>(adr + 1) << 8;
+            result |= READ_WORD(adr + 1) << 8;
             SYNC(3);
-            result |= _readByte<Flags>(adr + 3);
+            result |= READ_BYTE(adr + 3);
         } else {
-            result = _readWord<Flags>(adr) << 16;
+            result = READ_WORD(adr) << 16;
             SYNC(3);
-            result |= _readWord<Flags>(adr + 2);
+            result |= READ_WORD(adr + 2);
         }
     } else {
-        result = _readByte<Flags>(adr) << 24;
+        result = READ_BYTE(adr) << 24;
         SYNC(3);
-        result |= _readByte<Flags>(adr + 1) << 16;
+        result |= READ_BYTE(adr + 1) << 16;
         SYNC(3);
-        result |= _readByte<Flags>(adr + 2) << 8;
+        result |= READ_BYTE(adr + 2) << 8;
         SYNC(3);
-        result |= _readByte<Flags>(adr + 3);
+        result |= READ_BYTE(adr + 3);
     }
 
     SYNC(1);
@@ -347,6 +321,10 @@ template<unsigned Flags> auto M68Core::readLongDS(uint32_t adr) -> uint32_t {
 }
 
 template<M68Core::Engine E, uint8_t Size, unsigned Flags> auto M68Core::write(uint32_t adr, uint32_t data) -> void {
+    if constexpr (Flags & SF_DFC)
+        fc = SF_DFC;
+    else
+        fc = (Flags & PRG) ? SF_PRG : SF_DATA;
 
     if (control & (WatchPointWrite | ModifiedCode) ) {
         modifiedCode.checkAndSet( adr, Size );

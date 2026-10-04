@@ -625,4 +625,20 @@ template<uint8_t Inst, uint8_t Size> auto M68Core::dasmMovecRxRc(uint16_t opcode
     d.Ins( Inst ).tab().rn(ext >> 12).sep().rc(ext & 0xfff);
 }
 
+template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68Core::dasmMoves(uint16_t opcode, uint32_t& adr, DasmHandler& d) -> void {
+    uint16_t ext = peekInc<Word>( adr, d );
+    prepareEaForDasm<Mode, Size>( adr, opcode & 7, d );
+    int reg = ext >> 12;
+
+    if (ext & 0x800)
+        d.Ins( Inst ).si(Size).tab().rn( reg ).sep().ea();
+    else
+        d.Ins( Inst ).si(Size).tab().ea().sep().rn( reg );
+}
+
+template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68Core::dasmMoveCcr(uint16_t opcode, uint32_t& adr, DasmHandler& d) -> void {
+    prepareEaForDasm<Mode, Size>( adr, opcode & 7, d );
+    d.Ins(Inst).si( Size ).tab().ccr().sep().ea();
+}
+
 }

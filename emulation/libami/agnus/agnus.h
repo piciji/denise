@@ -343,13 +343,11 @@ struct Agnus {
 
     auto portSize(uint32_t adr) -> unsigned;
     auto readByte(uint32_t adr) -> uint8_t;
-    auto readBytePRG(uint32_t adr) -> uint8_t;
-    template<bool logDma, bool prg> auto readByte(uint32_t adr) -> uint8_t;
+    template<bool logDma> auto readByte(uint32_t adr) -> uint8_t;
     auto writeByte(uint32_t adr, uint8_t value) -> void;
     template<bool logDma> auto writeByte(uint32_t adr, uint8_t value) -> void;
     auto readWord(uint32_t adr) -> uint16_t;
-    auto readWordPRG(uint32_t adr) -> uint16_t;
-    template<bool logDma, bool prg> auto readWord(uint32_t adr) -> uint16_t;
+    template<bool logDma> auto readWord(uint32_t adr) -> uint16_t;
     auto peekWord(uint32_t adr) -> uint16_t;
     auto writeWord(uint32_t adr, uint16_t value) -> void;
     auto editWord(uint32_t adr, uint16_t value) -> void;
@@ -357,8 +355,7 @@ struct Agnus {
     auto memoryDump(uint8_t bank, uint16_t* dump) -> void;
 
     auto readLong(uint32_t adr) -> uint32_t;
-    auto readLongPRG(uint32_t adr) -> uint32_t;
-    template<bool logDma, bool prg> auto readLong(uint32_t adr) -> uint32_t;
+    template<bool logDma> auto readLong(uint32_t adr) -> uint32_t;
     auto writeLong(uint32_t adr, uint32_t data) -> void;
     template<bool logDma> auto writeLong(uint32_t adr, uint32_t value) -> void;
 
@@ -551,7 +548,7 @@ struct Agnus {
     auto getCopperDump(unsigned addrFrom, unsigned addrTo) -> uint8_t*;
     auto logNextOpcode() -> void;
     auto resetDebuggerDma() -> void;
-    template<bool _write, bool _word, bool _prg> auto memoryAcceesMnemonic() -> const char*;
+    template<bool _write, uint8_t Size> auto memoryAcceesMnemonic() -> const char*;
 };
 
 }

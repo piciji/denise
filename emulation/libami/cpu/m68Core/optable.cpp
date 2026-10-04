@@ -388,6 +388,9 @@ template<M68Core::Engine E> auto M68Core::build() -> void {
 
         o = parse("0000 1110 ss-- ----");
         _EA_( o, S6, Moves, Moves, ADR_TYPICAL, BWL )
+
+        o = parse("0100 0010 11-- ----");
+        _EA_( o, 0, MoveCcr, MoveCcr, ADR_TYPICAL | DR, Word )
     }
     
     // addi

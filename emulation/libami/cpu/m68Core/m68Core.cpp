@@ -21,21 +21,11 @@
 #define DEBUG_POINT_REACHED REF_CALL debugPointReached
 #define PORT_SIZE           REF_CALL portSize
 
-#ifdef FC_SUPPORT
-#define READ_LONG_PRG   REF_CALL readLongPRG
-#define READ_WORD_PRG   REF_CALL readWordPRG
-#define READ_BYTE_PRG   REF_CALL readBytePRG
-#else
-#define READ_LONG_PRG   READ_LONG
-#define READ_WORD_PRG   READ_WORD
-#define READ_BYTE_PRG   READ_BYTE
-#endif
-
-#define SYNC            REF_CALL sync
-#define IACK_CYCLE      REF_CALL iackCycle
-#define RESET_OUT       REF_CALL resetOut
-#define TAS_CYCLE_BEGIN REF_CALL tasCycleBegin
-#define TAS_CYCLE_END   REF_CALL tasCycleEnd
+#define SYNC                REF_CALL sync
+#define IACK_CYCLE          REF_CALL iackCycle
+#define RESET_OUT           REF_CALL resetOut
+#define TAS_CYCLE_BEGIN     REF_CALL tasCycleBegin
+#define TAS_CYCLE_END       REF_CALL tasCycleEnd
 
 #include "memory.cpp"
 #include "optable.cpp"
@@ -225,6 +215,16 @@ auto M68Core::setSR(uint16_t data) -> void {
         setMasterSP( (data >> 12) & 1 );
         t0 = (data >> 14) & 1;
     }
+}
+
+auto M68Core::getFc() -> uint8_t {
+    if (fc & (SF_SFC | SF_DFC)) {
+        if (fc & SF_SFC)
+            return sfc;
+        return dfc;
+    }
+
+    return fc | (s ? SF_S : 0);
 }
 
 inline auto M68Core::sampleInterrupt() -> void {

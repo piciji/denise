@@ -1098,20 +1098,25 @@ auto Agnus::logNextOpcode() -> void {
     dmaLogger.hilight = DebuggerDmaHilight::Opcode;
 }
 
-template<bool _write, bool _word, bool _prg> auto Agnus::memoryAcceesMnemonic() -> const char* {
+template<bool _write, uint8_t Size> auto Agnus::memoryAcceesMnemonic() -> const char* {
     static const char* mnemonics[] {
-        "R-B-P", "R-B-D", "R-W-P", "R-W-D", "W-B-D", "W-W-D"
+        "R-W-P", "R-W-D", "R-L-P", "R-L-D", "R-B-P", "R-B-D",
+        "W-W-P", "W-W-D", "W-L-P", "W-L-D", "W-B-P", "W-B-D"
     };
 
-    if constexpr (_write) {
-        return _word ? mnemonics[5] : mnemonics[4];
-    }
+    auto fc = cpu.getFc();
+    int i = _write ? 6 : 0;
 
-    if constexpr (_prg) {
-        return _word ? mnemonics[2] : mnemonics[0];
-    }
+    if constexpr (Size == 1) {}
+    else if constexpr (Size == 2)
+        i += 2;
+    else
+        i += 4;
 
-    return _word ? mnemonics[3] : mnemonics[1];
+    if ((fc & 2) == 0)
+        i += 1;
+
+    return mnemonics[i];
 }
 
 auto Agnus::oneTimeDebuggerAction() -> void {

@@ -8,7 +8,6 @@
 #include "../../../tools/watcher.h"
 
 // Explanations are below
-#define FC_SUPPORT
 // #define TAS_SPINLOCK
 
 // a reference can be passed as an alternative to virtual methods. Modern compilers "should" be able to devirtualize.
@@ -78,14 +77,14 @@ protected:
         Chk2, Cmp2, Bkpt, Cas, Cas2, Extb, Pack, Unpk, Rtd,
         Trapt, Trapf, Traphi, Trapls, Trapcc, Trapcs, Trapne, Trapeq,
         Trapvc, Trapvs, Trappl, Trapmi, Trapge, Traplt, Trapgt, Traple,
-        Movec, Moves,
+        Movec, Moves, MoveCcr,
     };
 
     enum {  None = 0, SampleIPL = 1, SkipExtension = 2, TasCycle = 4,
             PRG = 8, ConcurrentAdrCalc = 0x10 /* happens while prefetching */, Reverse = 0x20,
-            FirstPrefetch = 0x40, ExtPrefetch = 0x80 };
+            SF_DFC = 0x40, SF_SFC = 0x80, FirstPrefetch = 0x100, ExtPrefetch = 0x200 };
 
-    enum { SF_DATA = 1, SF_PRG = 2, SF_EXC = 8, SF_READ = 16 };
+    enum { SF_DATA = 1, SF_PRG = 2, SF_S = 4, SF_EXC = 8, SF_READ = 0x10 };
 
 public:
     enum { Byte = 1, Word = 2, Long = 4, BWL = 7, WL = 6, BW = 3 };
@@ -149,6 +148,7 @@ protected:
 
     uint8_t dfc;
     uint8_t sfc;
+    uint8_t fc;
 
     struct CacheEntry {
         uint32_t data;
@@ -192,7 +192,6 @@ public:
     auto setInterrupt( uint8_t level ) -> void;
     auto reset() -> void;
     auto power() -> void;
-    auto getFC2() -> bool { return s; }
     auto isHalted() -> bool { return !!(control & Halt); }
     auto setHalt() -> void; // I/O - could be halted from external device
     auto getCCR() -> uint8_t;
@@ -218,6 +217,14 @@ public:
     // use this to calculate the needed wait states by terminating a BUS cycle with VPA line
     template<uint8_t phaseShift = 0> auto internalWaitCyclesBasedOnEClock(int eCyclePos) -> uint8_t;
     template<uint8_t phaseShift = 0> auto internalWaitCyclesBasedOnMainClockCycles(int clockCycles) -> uint8_t;
+
+    // function codes: optional, when periphery needs to distinguish between data (FC0) and program (FC1) access.
+    // like BERR line, function code lines are only wired to expansions port for Amiga 500.
+    // IACK cycle (FC0, FC1 raised at same time) is detectable by overriding "IackCycle"
+    // FC2 is always high during IACK cycle (because CPU have to switch to supervisor before)
+    // during a "Write" cycle FC1 (program) should never(?) be active, because there is no write for PC addressing modes. (exception: DFC)
+    // function codes will be updated during first half clock cycle (1/8 of BUS cycle)
+    auto getFc() -> uint8_t;
     
 protected:
 #ifndef REF
@@ -277,17 +284,6 @@ protected:
     // vector is fixed by CPU.
     // return SPURIOUS;
 
-    // function codes: optional, when periphery needs to distinguish between data (FC0) and program (FC1) access.
-    // like BERR line, function code lines are only wired to expansions port for Amiga.
-    // IACK cycle (FC0, FC1 raised at same time) is detectable by overriding "IackCycle"
-    // FC2 is always high during IACK cycle (because CPU have to switch to supervisor before)
-    // during a "Write" cycle FC1 (program) should never(?) be active, because there is no write for PC addressing modes.
-    // function codes will be updated during first half clock cycle (1/8 of BUS cycle)
-    // works like "readByte" / "readWord" but hints periphery that FC1 is asserted
-    virtual auto readBytePRG(uint32_t adr) -> uint8_t { return 0; }
-    virtual auto readWordPRG(uint32_t adr) -> uint16_t { return 0; }
-    virtual auto readLongPRG(uint32_t adr) -> uint32_t { return 0; }
-
     // address strobe (AS) line remains asserted after read cycle of TAS, so read and following write are indivisible,
     // just like one single BUS cycle. when using multiple CPU's at the same BUS override following methods to
     // set up a spinlock. simply it tells you the state of AS line.
@@ -340,10 +336,6 @@ private:
     template<Engine E, uint8_t Mode, uint8_t Size, unsigned Flags = None> auto readEA(int reg, uint32_t& ea) -> uint32_t;
     template<Engine E, uint8_t Mode, uint8_t Size, unsigned Flags = None> auto writeEA(uint32_t ea, uint32_t data) -> void;
     template<uint8_t Mode, uint8_t Size> auto prepareEaForDasm(uint32_t& adr, uint8_t reg, DasmHandler& d) -> void;
-
-    template<unsigned Flags> auto _readByte(uint32_t addr) -> uint8_t;
-    template<unsigned Flags> auto _readWord(uint32_t addr) -> uint16_t;
-    template<unsigned Flags> auto _readLong(uint32_t addr) -> uint32_t;
 
     template<unsigned Flags> auto readWordDS(uint32_t adr) -> uint16_t;
     template<unsigned Flags> auto readLongDS(uint32_t adr) -> uint32_t;
@@ -429,6 +421,7 @@ private:
     OP_DECLARE_EA(MoveFromSr)
     OP_DECLARE_EA(MoveToSr)
     OP_DECLARE_EA(MoveToCcr)
+    OP_DECLARE_EA(MoveCcr)
     OP_DECLARE(ExgDxDy)
     OP_DECLARE(ExgAxAy)
     OP_DECLARE(ExgAxDy)
