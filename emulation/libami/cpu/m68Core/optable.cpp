@@ -256,6 +256,11 @@ template<M68Core::Engine E> auto M68Core::build() -> void {
     o = parse("0100 1010 ss-- ----");
     _EA_( o, S6, Tst, Tst, ADR_TYPICAL | DR, BWL )
 
+    if constexpr(E == Engine::M68020) {
+        _EA_( o, S6, Tst, Tst, PCD | PCI | IM, Byte )
+        _EA_( o, S6, Tst, Tst, PCD | PCI | IM | AR, WL )
+    }
+
     // add
     o = parse("1101 ---0 ss-- ----");
     _EA_( o, S6 | SO, Arithmetic, Add, ADR_FULL | DR, Byte )
@@ -375,6 +380,15 @@ template<M68Core::Engine E> auto M68Core::build() -> void {
     // movea
     o = parse("00ss ---0 01-- ----");
     _EA_( o, S12 | SO, MoveA, Movea, ADR_FULL | AR | DR, WL )
+
+    if constexpr (E == Engine::M68020) {
+        o = parse("0100 1110 0111 101-");
+        _bind(o | 0, MovecRcRx, Movec, Long)
+        _bind(o | 1, MovecRxRc, Movec, Long)
+
+        o = parse("0000 1110 ss-- ----");
+        _EA_( o, S6, Moves, Moves, ADR_TYPICAL, BWL )
+    }
     
     // addi
     o = parse("0000 0110 ss-- ----");
@@ -387,6 +401,9 @@ template<M68Core::Engine E> auto M68Core::build() -> void {
     // cmpi
     o = parse("0000 1100 ss-- ----");
     _EA_( o, S6, ArithmeticI, Cmpi, ADR_TYPICAL | DR, BWL )
+
+    if constexpr (E == Engine::M68020)
+        _EA_( o, S6, ArithmeticI, Cmpi,  PCD | PCI, BWL )
     
     // eori
     o = parse("0000 1010 ss-- ----");
@@ -472,6 +489,10 @@ template<M68Core::Engine E> auto M68Core::build() -> void {
     _B_( o, O_256, Bsr, Bsr, Byte )
     // override a displacement of zero with "Word"
     _bind(o, Bsr, Bsr, Word)
+
+    if constexpr (E == Engine::M68020) {
+        _bind(o | 0xff, Bsr, Bsr, Long)
+    }
     
     // dbcc
     o = parse("0101 ---- 1100 1---");
@@ -582,6 +603,11 @@ template<M68Core::Engine E> auto M68Core::build() -> void {
     o = parse("0100 ---1 10-- ----");
     _EA_( o, SO, Chk, Chk, ADR_FULL | DR, Word )
 
+    if constexpr (E == Engine::M68020) {
+        o = parse("0100 ---1 00-- ----");
+        _EA_( o, SO, Chk, Chk, ADR_FULL | DR, Long )
+    }
+
     if (E >= Engine::M68020) {
         o = parse("0000 0000 11-- ----");
         _EA_( o, 0, Chk2, Chk2, AI | AID | AII | AS | AL | PCD | PCI, Byte )
@@ -630,6 +656,11 @@ template<M68Core::Engine E> auto M68Core::build() -> void {
     // link
     o = parse("0100 1110 0101 0---");
     _B_( o, 0, Link, Link, Word )
+
+    if constexpr (E == Engine::M68020) {
+        o = parse("0100 1000 0000 1---");
+        _B_( o, 0, Link, Link, Long )
+    }
 
     // move to usp
     o = parse("0100 1110 0110 ----");

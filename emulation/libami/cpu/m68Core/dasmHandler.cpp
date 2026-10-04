@@ -28,6 +28,7 @@ auto DasmHandler::mnemonic(uint8_t inst) -> const char* {
         "chk2", "cmp2", "bkpt", "cas", "cas2", "extb", "pack", "unpk",
         "trapt", "trapf", "traphi", "trapls", "trapcc", "trapcs", "trapne", "trapeq",
         "trapvc", "trapvs", "trappl", "trapmi", "trapge", "traplt", "trapgt", "traple",
+        "movec",
     };
 
     return mnemonics[ inst ];
@@ -209,6 +210,21 @@ auto DasmHandler::bitField(unsigned of, unsigned wi, bool oReg, bool bReg) -> Da
     str.append( ":" );
     bReg ? (void)dn(wi & 7) : (void)str.append( std::to_string( wi ) );
     str.append( "}" );
+    return *this;
+}
+
+auto DasmHandler::rc(uint16_t ctl) -> DasmHandler& {
+    switch (ctl) {
+        case 0: str.append("sfc"); break;
+        case 1: str.append("dfc"); break;
+        case 2: str.append("cacr"); break;
+        case 0x800: str.append("usp"); break;
+        case 0x801: str.append("vbr"); break;
+        case 0x802: str.append("caar"); break;
+        case 0x803: str.append("msp"); break;
+        case 0x804: str.append("isp"); break;
+        default: str.append("invalid"); break;
+    }
     return *this;
 }
 

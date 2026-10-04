@@ -78,6 +78,7 @@ protected:
         Chk2, Cmp2, Bkpt, Cas, Cas2, Extb, Pack, Unpk, Rtd,
         Trapt, Trapf, Traphi, Trapls, Trapcc, Trapcs, Trapne, Trapeq,
         Trapvc, Trapvs, Trappl, Trapmi, Trapge, Traplt, Trapgt, Traple,
+        Movec, Moves,
     };
 
     enum {  None = 0, SampleIPL = 1, SkipExtension = 2, TasCycle = 4,
@@ -145,6 +146,9 @@ protected:
 
     uint32_t cacr;
     uint32_t caar;
+
+    uint8_t dfc;
+    uint8_t sfc;
 
     struct CacheEntry {
         uint32_t data;
@@ -319,6 +323,7 @@ private:
     template<uint8_t Size = Long> inline auto readRegA(int reg) -> uint32_t;
     inline auto writeRegA(int reg, uint32_t data) -> void;
     template<uint8_t Size = Long> auto readRegR( int reg ) -> uint32_t;
+    template<uint8_t Size = Long> auto writeRegR( int reg, uint32_t val ) -> void;
 
     template<Engine E, uint8_t Size, unsigned Flags = 0> auto read(uint32_t adr) -> uint32_t;
     template<Engine E, uint8_t Size, unsigned Flags = 0> auto write(uint32_t adr, uint32_t data) -> void;
@@ -448,6 +453,10 @@ private:
     OP_DECLARE(UnpackDn)
     OP_DECLARE(UnpackPd)
 
+    OP_DECLARE(MovecRcRx)
+    OP_DECLARE(MovecRxRc)
+    OP_DECLARE_EA(Moves)
+
     #undef OP_DECLARE_EA
     #undef OP_DECLARE
 
@@ -525,6 +534,7 @@ private:
 
     auto setChk2UndefinedFlags(int32_t lower, int32_t upper, int32_t value) -> void;
     auto setDivslUndefinedFlags(uint8_t size, int64_t dividend, int32_t divisor) -> void;
+    template<uint8_t Size> auto setChkUndefinedFlags(int32_t src, int32_t dst) -> void;
 
     template<uint8_t Mode> constexpr static auto isRegisterMode() -> bool { return Mode == AddressRegisterDirect || Mode == DataRegisterDirect; }
     template<uint8_t Mode> constexpr static auto isDirectMode() -> bool { return isRegisterMode<Mode>() || Mode == Immediate; }
@@ -539,6 +549,7 @@ private:
     auto loadTrace(Emulator::HistoryEntry<uint16_t>& entry) -> void;
 
     auto invalidateCache() -> void;
+    auto setCacr(uint32_t value) -> void;
 
     template<bool withRotation = true> auto bfMask(unsigned width, unsigned offset) -> uint32_t;
     template<bool withRotation = true> auto bfShiftLeft(uint32_t data, unsigned offset) -> uint32_t;

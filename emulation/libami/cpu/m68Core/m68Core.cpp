@@ -400,6 +400,36 @@ auto M68Core::setChk2UndefinedFlags(int32_t lower, int32_t upper, int32_t value)
     }
 }
 
+template<uint8_t Size> auto M68Core::setChkUndefinedFlags(int32_t src, int32_t dst) -> void {
+    // from UAE
+    c = z = n = v = false;
+
+    if (dst == 0)
+        z = true;
+
+    if (dst < 0 || dst > src) {
+
+        if constexpr (Size == Word) {
+            int flgs = int16_t(dst) < 0;
+            int flgo = int16_t(src) < 0;
+            int16_t val = int16_t(int64_t(src) - int64_t(dst));
+            int flgn = val < 0;
+            v = (flgs ^ flgo) & (flgn ^ flgo);
+        } else {
+            int flgs = dst < 0;
+            int flgo = src < 0;
+            int32_t val = int32_t(int64_t(src) - int64_t(dst));
+            int flgn = val < 0;
+            v = (flgs ^ flgo) & (flgn ^ flgo);
+        }
+        if (dst < 0) {
+            c = dst > src || src >= 0;
+        } else {
+            c = src >= 0;
+        }
+    }
+}
+
 auto M68Core::setDivslUndefinedFlags(uint8_t size, int64_t dividend, int32_t divisor) -> void {
     // from UAE
     auto a32 = static_cast<int32_t>(dividend);
@@ -661,6 +691,17 @@ template<bool withRotation> inline auto M68Core::bfShiftRight(uint32_t data, uns
         return (data >> offset) | (data << (32U - offset));
 
     return data >> offset;
+}
+
+auto M68Core::setCacr(uint32_t value) -> void {
+    if (value & 8)
+        invalidateCache();
+    else if (value & 4) {
+        unsigned idx = (caar & 0xfc) >> 2;
+        cacheEntries[idx].valid = false;
+    }
+
+    cacr = value & 3;
 }
 
 }

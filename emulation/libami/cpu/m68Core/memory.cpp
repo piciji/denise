@@ -75,6 +75,10 @@ template<uint8_t Size> auto M68Core::readRegA(int reg) -> uint32_t {
     return clip<Size>( regsA[reg] );
 }
 
+auto M68Core::writeRegA(int reg, uint32_t data) -> void {
+    regsA[reg] = data;
+}
+
 template<uint8_t Size> auto M68Core::readRegR( int reg ) -> uint32_t {
     if (reg & 8)
         return readRegA<Size>(i & 7);
@@ -82,8 +86,11 @@ template<uint8_t Size> auto M68Core::readRegR( int reg ) -> uint32_t {
     return readRegD<Size>(i);
 }
 
-auto M68Core::writeRegA(int reg, uint32_t data) -> void {
-    regsA[reg] = data;
+template<uint8_t Size> auto M68Core::writeRegR( int reg, uint32_t val ) -> void {
+    if (reg & 8)
+        writeRegA(i & 7, sign<Size>(val));
+    else
+        writeRegD<Size>(i, val);
 }
 
 template<M68Core::Engine E, unsigned Flags> auto M68Core::fullPrefetch() -> void {

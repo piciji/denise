@@ -68,6 +68,8 @@ struct DasmHandler {
 
     auto rnBrackets( uint8_t i ) -> DasmHandler&;
 
+    auto rc(uint16_t ctl) -> DasmHandler&;
+
     template<bool asAn = false>
     static auto regList( unsigned list, std::string& s ) -> void;
 

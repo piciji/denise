@@ -892,10 +892,19 @@ template<M68Core::Engine E, uint8_t Inst, uint8_t Size> auto M68Core::opBsr(uint
     if (E < Engine::M68020 && misaligned<Long>(sp))
         throw AddressError(sp, pc,SF_DATA);
 
-    write<E, Long, Reverse>( sp, Size == Word ? (pc + 2) : pc); // stack PC of next opcode
-    appendStepOut( Size == Word ? (pc + 2) : pc );
 
-    pc += (Size == Word) ? (int16_t)irc : (int8_t)(opcode & 0xff);
+    uint32_t disp = Size == Byte ? static_cast<uint8_t>(opcode) : irc;
+
+    if constexpr (Size == Long) {
+        readExtensionWord<E>();
+        disp = disp << 16 | irc;
+    }
+
+    write<E, Long, Reverse>( sp, (Size == Word || Size == Long) ? (pc + 2) : pc); // stack PC of next opcode
+    appendStepOut( (Size == Word || Size == Long) ? (pc + 2) : pc );
+
+    pc += sign<Size>(disp);
+
     if (misaligned<Long>(pc))
         throw AddressError(pc, pc,SF_READ | SF_PRG); // stack new PC two times
 
@@ -1210,18 +1219,21 @@ template<M68Core::Engine E, uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68Co
 
     uint32_t dataD = readRegD<Word>(reg);
 
-    z = zero<Word>( dataD );
-    v = c = n = false;
+    if constexpr (E == Engine::M68000 ) {
+        z = zero<Word>( dataD );
+        v = c = n = false;
+    } else
+        setChkUndefinedFlags<Size>(sign<Size>(result), sign<Size>(dataD));
 
     SYNC(4);
-    if ( (int16_t)dataD > (int16_t)result) {
+    if ( sign<Size>(dataD) > sign<Size>(result)) {
         SYNC(4);
-        n = negative<Word>(dataD); // z, n flag changes happen not here, but later in exception routine
+        n = negative<Size>(dataD); // z, n flag changes happen not here, but later in exception routine
         return trapException<E>( 6 );
     }
 
     SYNC(2);
-    if ((int16_t)dataD < 0) {
+    if (sign<Size>(dataD) < 0) {
         SYNC(4);
         n = true;
         return trapException<E>( 6 );
@@ -1540,8 +1552,13 @@ template<M68Core::Engine E> auto M68Core::opTrapv(uint16_t opcode) -> void {
 }
 
 template<M68Core::Engine E, uint8_t Inst, uint8_t Size> auto M68Core::opLink(uint16_t opcode) -> void {
-    int16_t displacement = (int16_t)irc;
+    uint32_t displacement = irc;
     readExtensionWord<E>();
+    if constexpr (Size == Long) {
+        displacement = displacement << 16 | irc;
+        readExtensionWord<E>();
+    }
+
     uint32_t _regA = readRegA(opcode & 7);
     uint32_t sp = regsA[7];
     sp -= 4;
@@ -1552,7 +1569,7 @@ template<M68Core::Engine E, uint8_t Inst, uint8_t Size> auto M68Core::opLink(uin
 
     sampleInterrupt();
     write<E, Long, Reverse>(sp, _regA);
-    regsA[7] = sp + displacement; // happens 1.5 CPU cycles after "long write"
+    regsA[7] = sp + sign<Size>(displacement); // happens 1.5 CPU cycles after "long write"
     prefetch<E>();
 }
 
@@ -1660,6 +1677,100 @@ template<M68Core::Engine E, uint8_t Inst, uint8_t Size> auto M68Core::opUnpackPd
     ea = calcEA<E, AddressRegisterIndirectWithPreDecrement, Word, ConcurrentAdrCalc>(reg);
     writeRegA(reg, ea);
     write<E, Word>(ea, dest);
+}
+
+template<M68Core::Engine E, uint8_t Inst, uint8_t Size> auto M68Core::opMovecRcRx(uint16_t opcode) -> void {
+    if (!s)
+        return privilegeException<E>();
+
+    uint8_t rn = (irc >> 12) & 0xf;
+    uint16_t ctl = irc & 0xfff;
+    readExtensionWord<E>();
+
+    switch (ctl) {
+        case 0: writeRegR( rn, sfc ); break;
+        case 1: writeRegR( rn, dfc ); break;
+        case 2: writeRegR( rn, cacr ); break;
+        case 0x800: writeRegR( rn, usp ); break;
+        case 0x801: writeRegR( rn, vbr ); break;
+        case 0x802: writeRegR( rn, caar ); break;
+        case 0x803: writeRegR( rn, m ? regsA[7] : msp ); break;
+        case 0x804: writeRegR( rn, m ? ssp : regsA[7] ); break;
+        default:
+            illegal<E>(opcode);
+            break;
+    }
+
+    prefetch<E, SampleIPL>();
+}
+
+template<M68Core::Engine E, uint8_t Inst, uint8_t Size> auto M68Core::opMovecRxRc(uint16_t opcode) -> void {
+    if (!s)
+        return privilegeException<E>();
+
+    uint8_t rn = (irc >> 12) & 0xf;
+    uint16_t ctl = irc & 0xfff;
+    readExtensionWord<E>();
+
+    uint32_t value = readRegR( rn );
+
+    switch (ctl) {
+        case 0: sfc = value & 7; break;
+        case 1: dfc = value & 7; break;
+        case 2: setCacr(value); break;
+        case 0x800: usp = value; break;
+        case 0x801: vbr = value; break;
+        case 0x802: caar = value; break;
+        case 0x803: (m ? regsA[7] : msp) = value; break;
+        case 0x804: (m ? ssp : regsA[7]) = value; break;
+        default:
+            illegal<E>(opcode);
+            break;
+    }
+
+    prefetch<E, SampleIPL>();
+}
+
+template<M68Core::Engine E, uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68Core::opMoves(uint16_t opcode) -> void {
+    uint32_t ea;
+    if (!s)
+        return privilegeException<E>();
+
+    int reg = opcode & 7;
+    uint16_t ext = irc;
+    int rn = ext >> 12;
+
+    readExtensionWord<E>();
+
+    if (ext & 0x800) {
+        uint32_t data = readRegR<Size>( rn );
+
+        ea = calcEA<E, Mode, Size>( reg );
+
+        if constexpr (Mode == AddressRegisterIndirectWithPreDecrement) {
+            writeRegA(reg, ea);
+
+            if (rn == (reg | 8))
+                data -= (reg == 7 && Size == Byte) ? 2 : Size;
+
+        }
+        if constexpr (Mode == AddressRegisterIndirectWithPostIncrement) {
+            writeRegA(reg, ea + ((reg == 7 && Size == Byte) ? 2 : Size));
+
+            if (rn == (reg | 8))
+                data += (reg == 7 && Size == Byte) ? 2 : Size;
+        }
+
+        writeEA<E, Mode, Size>(ea, data);
+
+    } else {
+        uint32_t result = readEA<E, Mode, Size>( reg, ea );
+
+        writeRegR(rn, result);
+
+    }
+
+    prefetch<E, SampleIPL>();
 }
 
 }
