@@ -28,7 +28,7 @@ auto DasmHandler::mnemonic(uint8_t inst) -> const char* {
         "chk2", "cmp2", "bkpt", "cas", "cas2", "extb", "pack", "unpk",
         "trapt", "trapf", "traphi", "trapls", "trapcc", "trapcs", "trapne", "trapeq",
         "trapvc", "trapvs", "trappl", "trapmi", "trapge", "traplt", "trapgt", "traple",
-        "movec",
+        "movec", "moves", "move ccr",
     };
 
     return mnemonics[ inst ];

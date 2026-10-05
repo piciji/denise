@@ -7,12 +7,7 @@
 #include "dasmHandler.h"
 #include "../../../tools/watcher.h"
 
-// Explanations are below
-// #define TAS_SPINLOCK
-
-// a reference can be passed as an alternative to virtual methods. Modern compilers "should" be able to devirtualize.
-// depending on Compiler, a reference could be faster
-
+// a reference can be passed as an alternative to virtual methods.
 #define REF Agnus
 #define REF_NS LIBAMI   // optional
 #define REF_TYPE struct // or class
@@ -80,7 +75,7 @@ protected:
         Movec, Moves, MoveCcr,
     };
 
-    enum {  None = 0, SampleIPL = 1, SkipExtension = 2, TasCycle = 4,
+    enum {  None = 0, SampleIPL = 1, SkipExtension = 2,
             PRG = 8, ConcurrentAdrCalc = 0x10 /* happens while prefetching */, Reverse = 0x20,
             SF_DFC = 0x40, SF_SFC = 0x80, FirstPrefetch = 0x100, ExtPrefetch = 0x200 };
 
@@ -157,10 +152,9 @@ protected:
     };
     CacheEntry cacheEntries[64];
 
-    // independent of instruction cache
     uint32_t cahr; // cache holding register
 
-    unsigned prefetchBusCycles;
+    int busCycles;
 
     Emulator::WatchPoints watchPoints = Emulator::WatchPoints();
     Emulator::WatchPoints watchPointsWrite = Emulator::WatchPoints();
@@ -219,36 +213,16 @@ public:
     template<uint8_t phaseShift = 0> auto internalWaitCyclesBasedOnMainClockCycles(int clockCycles) -> uint8_t;
 
     // function codes: optional, when periphery needs to distinguish between data (FC0) and program (FC1) access.
-    // like BERR line, function code lines are only wired to expansions port for Amiga 500.
-    // IACK cycle (FC0, FC1 raised at same time) is detectable by overriding "IackCycle"
-    // FC2 is always high during IACK cycle (because CPU have to switch to supervisor before)
-    // during a "Write" cycle FC1 (program) should never(?) be active, because there is no write for PC addressing modes. (exception: DFC)
-    // function codes will be updated during first half clock cycle (1/8 of BUS cycle)
     auto getFc() -> uint8_t;
     
 protected:
 #ifndef REF
     // reset line is bi-directional
     virtual auto resetOut() -> void {}
-    // sync to external devices in reasonable steps (until possible wait states could happen)
-    // don't process any wait states in this method, because simply you have no hint if it is an internal cycle or not.
-    // internal cycles can't be prolonged with wait states, only third CPU cycle of BUS cycle.
+    // sync to external devices in reasonable steps
+    // internal cycles will not be prolonged with wait states, only BUS cycles
     virtual auto sync(unsigned cycles) -> void {}
     // methods to handle BUS cycles and wait states
-    // each BUS cycle is terminated with DTACK, VPA or BERR line.
-    // if it's not terminated until half of third cycle (S4) within BUS cycle, wait states will be added. (full CPU cycles)
-    // DTACK: normal operation
-    // BERR: BUS error (currently not emulated, except for IACK cycle)
-    // VPA: compatibility to slow 6800 periphery, based on E-Clock (1/10 of main clock)
-    // In addition to external wait states by not terminating the cycle in time,
-    // for VPA there are internal wait states that cannot be avoided. The amount of cycles depends on the state of E-Clock.
-    // for performance reasons, there is no extra method to handle the termination. so you need to take extra care for VPA termination.
-    // use this helper function "internalWaitCyclesBasedOnEClock" to get amount of wait cycles. keep track of E-Clock position in derived class by yourself.
-    // Note:
-    // On real 68000 hardware the E-Clock initial phase at power up is non deterministic.
-    // The clock is not affected by hardware reset. That means that the phase of the clock after non power up reset depends on
-    // what was the phase before the reset and the number of cycles of the reset pulse.
-    // after each cold start the phase of E-Clock could be different.
     virtual auto readByte(uint32_t adr) -> uint8_t = 0;
     virtual auto readWord(uint32_t adr) -> uint16_t = 0;
     virtual auto readLong(uint32_t adr) -> uint32_t = 0;
@@ -257,42 +231,18 @@ protected:
     virtual auto writeWord(uint32_t adr, uint16_t data) -> void = 0;
     virtual auto writeLong(uint32_t adr, uint32_t data) -> void = 0;
 
-    // BUS cycle to fetch the Interrupt vector.
-    // in contrast to the BUS cycle operations above, this one returns the termination type.
-
-    // for slower 6800 peripheral devices (like CIA, PIA) respond with VPA, which uses auto-vectored interrupts.
-    // is synchronized to E-Clock and generates wait states internally. use helper "internalWaitCyclesBasedOnEClock"
-    // BUS cycle needs between 10 - 19 clocks, depends on timing, when peripheral device raises VPA and the internal state of E-Clock.
-    // if the BUS cycle is terminated too late, externally caused waiting cycles are added.
-    // vector is fixed by CPU.
-    // return AUTO_VECTOR;
-
-    // respond with DTACK (like a normal 68000 cycle), which uses user-vectored interrupts
-    // external device puts vector on data BUS after analyzing interrupt level from A1 - A3.
-    // vector = 24 + level; // e.g. Amiga (often confused with auto-vectored interrupts because the same vectors are used.)
-    // return USER_VECTOR;
-
-    // uninitialized vector (technically a user-vectored interrupt)
-    // 15 is a Motorola convention, a recommendation to the interrupt controllers if the peripheral has not been initialized with an appropriate vector.
-    // external device puts vector on Data BUS.
-    virtual auto iackCycle(uint8_t level, uint8_t& vector) -> int {
-        vector = 15;
-        return USER_VECTOR;
-    }
-
-    // respond with BERR (BUS error)
-    // vector is fixed by CPU.
-    // return SPURIOUS;
-
-    // address strobe (AS) line remains asserted after read cycle of TAS, so read and following write are indivisible,
-    // just like one single BUS cycle. when using multiple CPU's at the same BUS override following methods to
-    // set up a spinlock. simply it tells you the state of AS line.
-    // note: don't rely on TAS for Amiga, because DMA accesses don't respect AS line of CPU
-    virtual auto tasCycleBegin() -> void {}
-    virtual auto tasCycleEnd() -> void {}
+    // BUS cycle to fetch the Interrupt vector with following return types:
+    // USER_VECTOR: e.g. Amiga, external device place vector on data BUS
+    // AUTO_VECTOR: for slower 6800 peripheral devices (like CIA)
+    // SPURIOUS: respond with BERR (BUS error)
+    // UNINITIALIZED: default
+    //
+    // NOTE: vector reference is needed for USER_VECTOR only
+    virtual auto iackCycle(uint8_t level, uint8_t& vector) -> int { return UNINITIALIZED; }
 
     virtual auto debugPointReached(int source, Emulator::WatchPoints& wp, unsigned addr) -> void {}
 
+    // 68020 CPU may trigger additional BUS cycles to access a 32 bit value from 8 or 16 bit port
     virtual auto portSize(uint32_t adr) -> unsigned { return 4; }
 #endif
 

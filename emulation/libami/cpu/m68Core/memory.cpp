@@ -119,7 +119,7 @@ template<M68Core::Engine E, unsigned Flags> auto M68Core::readExtensionWord() ->
 }
 
 template<unsigned Flags> auto M68Core::cachedPrefetch(uint32_t adr) -> uint16_t {
-    prefetchBusCycles = 0;
+    busCycles = 0;
     fc = SF_PRG;
 
     if (control & WatchPoint) {
@@ -149,13 +149,13 @@ template<unsigned Flags> auto M68Core::cachedPrefetch(uint32_t adr) -> uint16_t 
                 default:
                 case 4:
                     cahr = READ_LONG(addrAligned);
-                    prefetchBusCycles = 3;
+                    busCycles = 3;
                     break;
                 case 2:
                     cahr = READ_WORD(addrAligned) << 16;
                     SYNC(3);
                     cahr |= READ_WORD(addrAligned + 2);
-                    prefetchBusCycles = 6;
+                    busCycles = 6;
                     break;
                 case 1:
                     cahr = READ_BYTE(addrAligned) << 24;
@@ -165,7 +165,7 @@ template<unsigned Flags> auto M68Core::cachedPrefetch(uint32_t adr) -> uint16_t 
                     cahr |= READ_BYTE(addrAligned + 2) << 8;
                     SYNC(3);
                     cahr |= READ_BYTE(addrAligned + 3);
-                    prefetchBusCycles = 12;
+                    busCycles = 12;
                     break;
             }
 
@@ -234,11 +234,6 @@ template<M68Core::Engine E, uint8_t Size, unsigned Flags> auto M68Core::read(uin
             sampleInterrupt();
 
         SYNC(2);
-
-        #ifdef TAS_SPINLOCK
-        if constexpr (!!(Flags & TasCycle))
-            TAS_CYCLE_BEGIN();
-        #endif
 
         if constexpr (Size == Byte) {
             result = READ_BYTE(adr);
@@ -499,7 +494,7 @@ template<M68Core::Engine E, uint8_t Mode, uint8_t Size, unsigned Flags> auto M68
             adr = readRegA( reg ) + (int16_t)irc;
             if constexpr((Flags & SkipExtension) == 0) readExtensionWord<E>();
             if constexpr (E == Engine::M68020) {
-                if (!prefetchBusCycles) SYNC(2);
+                if (!busCycles) SYNC(2);
             }
             return adr;
             
@@ -531,7 +526,7 @@ template<M68Core::Engine E, uint8_t Mode, uint8_t Size, unsigned Flags> auto M68
             adr = pc + (int16_t)irc;
             if constexpr((Flags & SkipExtension) == 0) readExtensionWord<E>();
             if constexpr (E == Engine::M68020) {
-                if (!prefetchBusCycles) SYNC(2);
+                if (!busCycles) SYNC(2);
             }
             return adr;
             
@@ -556,13 +551,13 @@ template<M68Core::Engine E, uint8_t Mode, uint8_t Size, unsigned Flags> auto M68
                 adr = irc << 16;
                 readExtensionWord<E>();
                 if constexpr (E == Engine::M68020) {
-                    if (!prefetchBusCycles) SYNC(2);
+                    if (!busCycles) SYNC(2);
                 }
                 adr |= irc;
             }
             readExtensionWord<E>();
             if constexpr (E == Engine::M68020) {
-                if (!prefetchBusCycles) SYNC(2);
+                if (!busCycles) SYNC(2);
             }
             return adr;
     }

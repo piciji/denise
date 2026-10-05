@@ -175,6 +175,7 @@ template<M68Core::Engine E> auto M68Core::build() -> void {
     _EA_( o, 0, ImmBit, Btst, DR, Long )
 
     if (E >= Engine::M68020) {
+        // bit field
         o = parse("1110 1010 11-- ----");
         _EA_( o, 0, BitFieldEA, Bfchg, AI | AID | AII | AS | AL, Long )
         _EA_( o, 0, BitField, Bfchg, DR, Long )
@@ -256,7 +257,7 @@ template<M68Core::Engine E> auto M68Core::build() -> void {
     o = parse("0100 1010 ss-- ----");
     _EA_( o, S6, Tst, Tst, ADR_TYPICAL | DR, BWL )
 
-    if constexpr(E == Engine::M68020) {
+    if constexpr(E >= Engine::M68020) {
         _EA_( o, S6, Tst, Tst, PCD | PCI | IM, Byte )
         _EA_( o, S6, Tst, Tst, PCD | PCI | IM | AR, WL )
     }
@@ -381,14 +382,17 @@ template<M68Core::Engine E> auto M68Core::build() -> void {
     o = parse("00ss ---0 01-- ----");
     _EA_( o, S12 | SO, MoveA, Movea, ADR_FULL | AR | DR, WL )
 
-    if constexpr (E == Engine::M68020) {
+    if constexpr (E >= Engine::M68020) {
+        // movec
         o = parse("0100 1110 0111 101-");
         _bind(o | 0, MovecRcRx, Movec, Long)
         _bind(o | 1, MovecRxRc, Movec, Long)
 
+        // moves
         o = parse("0000 1110 ss-- ----");
         _EA_( o, S6, Moves, Moves, ADR_TYPICAL, BWL )
 
+        // move from ccr
         o = parse("0100 0010 11-- ----");
         _EA_( o, 0, MoveCcr, MoveCcr, ADR_TYPICAL | DR, Word )
     }
@@ -405,8 +409,8 @@ template<M68Core::Engine E> auto M68Core::build() -> void {
     o = parse("0000 1100 ss-- ----");
     _EA_( o, S6, ArithmeticI, Cmpi, ADR_TYPICAL | DR, BWL )
 
-    if constexpr (E == Engine::M68020)
-        _EA_( o, S6, ArithmeticI, Cmpi,  PCD | PCI, BWL )
+    if constexpr (E >= Engine::M68020)
+        _EA_( o, S6, ArithmeticI, Cmpi, PCD | PCI, BWL )
     
     // eori
     o = parse("0000 1010 ss-- ----");
@@ -469,7 +473,7 @@ template<M68Core::Engine E> auto M68Core::build() -> void {
     _bind(o | 0xe00, Bcc, Bgt, Word)
     _bind(o | 0xf00, Bcc, Ble, Word)
 
-    if constexpr (E == Engine::M68020) {
+    if constexpr (E >= Engine::M68020) {
         _bind(o | 0x0ff, Bcc, Bra, Long)               // bra
         _bind(o | 0x2ff, Bcc, Bhi, Long)
         _bind(o | 0x3ff, Bcc, Bls, Long)
@@ -493,7 +497,8 @@ template<M68Core::Engine E> auto M68Core::build() -> void {
     // override a displacement of zero with "Word"
     _bind(o, Bsr, Bsr, Word)
 
-    if constexpr (E == Engine::M68020) {
+    if constexpr (E >= Engine::M68020) {
+        // override a displacement of $ff with "Long"
         _bind(o | 0xff, Bsr, Bsr, Long)
     }
     
@@ -606,12 +611,11 @@ template<M68Core::Engine E> auto M68Core::build() -> void {
     o = parse("0100 ---1 10-- ----");
     _EA_( o, SO, Chk, Chk, ADR_FULL | DR, Word )
 
-    if constexpr (E == Engine::M68020) {
+    if constexpr (E >= Engine::M68020) {
         o = parse("0100 ---1 00-- ----");
         _EA_( o, SO, Chk, Chk, ADR_FULL | DR, Long )
-    }
 
-    if (E >= Engine::M68020) {
+        // chk2
         o = parse("0000 0000 11-- ----");
         _EA_( o, 0, Chk2, Chk2, AI | AID | AII | AS | AL | PCD | PCI, Byte )
 
@@ -652,6 +656,7 @@ template<M68Core::Engine E> auto M68Core::build() -> void {
     _B_( o | (3 << 6), 0, Ext, Ext, Long )
 
     if (E >= Engine::M68020) {
+        // extb
         o = parse("0100 1001 --00 0---");
         _B_( o | (3 << 6), 0, Extb, Extb, Long )
     }
@@ -660,7 +665,7 @@ template<M68Core::Engine E> auto M68Core::build() -> void {
     o = parse("0100 1110 0101 0---");
     _B_( o, 0, Link, Link, Word )
 
-    if constexpr (E == Engine::M68020) {
+    if constexpr (E >= Engine::M68020) {
         o = parse("0100 1000 0000 1---");
         _B_( o, 0, Link, Link, Long )
     }
@@ -728,6 +733,7 @@ template<M68Core::Engine E> auto M68Core::build() -> void {
     mnemonics[o] = DasmHandler::mnemonic( Trapv );
 
     if (E >= Engine::M68020) {
+        // trapcc
         o = parse("0101 ---- 1111 1100");
         _bind( o | 0x000, Trapcc, Trapt, Byte )
         _bind( o | 0x100, Trapcc, Trapf, Byte )
@@ -798,9 +804,11 @@ template<M68Core::Engine E> auto M68Core::build() -> void {
     _B_( o | (1 << 6), SO, MovepEa, Movep, Long )
 
     if (E >= Engine::M68020) {
+        // bkpt
         o = parse("0100 1000 0100 1---");
         _B_( o, 0, Bkpt, Bkpt, Word )
 
+        // cas
         o = parse("0000 1010 11-- ----");
         _EA_( o, 0, Cas, Cas, ADR_TYPICAL, Byte )
 
@@ -810,18 +818,21 @@ template<M68Core::Engine E> auto M68Core::build() -> void {
         o = parse("0000 1110 11-- ----");
         _EA_( o, 0, Cas, Cas, ADR_TYPICAL, Long )
 
+        // cas2
         o = parse("0000 1100 1111 1100");
         _bind(o, Cas2, Cas2, Word)
 
         o = parse("0000 1110 1111 1100");
         _bind(o, Cas2, Cas2, Long)
 
+        // pack
         o = parse("1000 ---1 0100 0---");
         _B_( o, SO, PackDn, Pack, Word )
 
         o = parse("1000 ---1 0100 1---");
         _B_( o, SO, PackPd, Pack, Word )
 
+        // unpack
         o = parse("1000 ---1 1000 0---");
         _B_( o, SO, UnpackDn, Unpk, Word )
 

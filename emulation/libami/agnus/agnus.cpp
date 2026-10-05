@@ -794,7 +794,7 @@ auto Agnus::sync(unsigned cycles) -> void {
 
 auto Agnus::iackCycle(uint8_t level, uint8_t& vector) -> int {
     vector = 24 + level;
-    return 0;
+    return M68FAMILY::M68Core::USER_VECTOR;
 }
 
 auto Agnus::setRefPtr(uint16_t value) -> void {

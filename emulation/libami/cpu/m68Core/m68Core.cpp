@@ -24,8 +24,6 @@
 #define SYNC                REF_CALL sync
 #define IACK_CYCLE          REF_CALL iackCycle
 #define RESET_OUT           REF_CALL resetOut
-#define TAS_CYCLE_BEGIN     REF_CALL tasCycleBegin
-#define TAS_CYCLE_END       REF_CALL tasCycleEnd
 
 #include "memory.cpp"
 #include "optable.cpp"
@@ -162,7 +160,10 @@ auto M68Core::reset() -> void { // highest prioritized group 0 routine
     cacr = 0;
     caar = 0;
     cahr = 0;
-    prefetchBusCycles = 0;
+    fc = 0;
+    sfc = 0;
+    dfc = 0;
+    busCycles = 0;
     group = 2;
     invalidateCache();
 
@@ -661,9 +662,9 @@ auto M68Core::setEngine( Engine engine ) -> void {
 }
 
 auto M68Core::syncSequencer(unsigned cycles) -> void {
-    if (prefetchBusCycles) {
-        if (cycles > prefetchBusCycles)
-            SYNC( cycles - prefetchBusCycles );
+    if (busCycles) {
+        if (cycles > busCycles)
+            SYNC( cycles - busCycles );
     } else
         SYNC( cycles );
 }
