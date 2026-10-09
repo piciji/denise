@@ -109,14 +109,7 @@ auto Agnus::setRas() -> void {
 }
 
 auto Agnus::power(bool softReset, bool resetInstruction) -> void {
-    overclock.cycles = 0;
-    overclock.speedInternal = overclock.speed;
-    if (cpu.getEngine() == M68FAMILY::M68Core::Engine::M68020) {
-        if (!overclock.speed)
-            overclock.speedInternal = 2;
-
-        overclock.speedInternal <<= 1;
-    }
+    prepareOverclock();
 
     debugger.oneTimeAction = Interface::DebuggerAction::None;
     unsigned resetDelay = hasActiveEvent<EVENT_KBD>() ? getEventDelay<EVENT_KBD>() : 0;
@@ -366,16 +359,91 @@ auto Agnus::addDmaLogEntry() -> void {
     peekDmaWatcher(dmaLogger);
 }
 
-template<bool logDma> inline auto Agnus::sync(unsigned cycles) -> void {
-    if (overclock.speedInternal) {
-        overclock.cycles += cycles;
+auto Agnus::prepareOverclock() -> void {
+    auto& o = overclock;
 
-        while (overclock.cycles >= overclock.speedInternal) {
+    o.cycles = 0;
+    o.speedInternal = o.speed;
+    if (cpu.getEngine() == M68FAMILY::M68Core::Engine::M68020) {
+        if (!o.speed)
+            o.speedInternal = 2;
+
+        o.speedInternal <<= 1;
+    }
+
+    o.romWaitStates = 0;
+    o.fastWaitStates = 0;
+    o.eClockShifter = 0;
+
+    if (!o.speedInternal) // A500 stock speed has a values of 0 (means: 2), A1200 stock speed has a value of 4
+        return;
+
+    o.eClockShifter = o.speedInternal >> 2;
+
+    auto engine = cpu.getEngine();
+
+    // fast mem  ~60 ns
+    // rom      ~150 ns (A1200), ~150 - 250 ns (A500)
+    //
+    //  7.09 = ~140.97 ns / cycle
+    // 14.19 = ~ 70.48 ns / cycle
+    // 28.38 = ~ 35.24 ns / cycle
+    // 56.75 = ~ 17.62 ns / cycle
+    //113.50 = ~  8.81 ns / cycle
+
+    if (engine == M68FAMILY::M68Core::Engine::M68000) {
+        // has 2 minimum cycles for BUS access, add wait cycles if not enough
+        switch (o.speedInternal) {
+            case 4: // 14.19 MHz
+                o.romWaitStates = 1;
+                break;
+            case 8: // 28.38 MHz
+                o.romWaitStates = 3;
+                break;
+            case 16: // 56.75 MHz
+                o.fastWaitStates = 2;
+                o.romWaitStates = 7;
+                break;
+            case 32: // not supported
+                break;
+        }
+
+    } else if (engine == M68FAMILY::M68Core::Engine::M68020) {
+        // has 1 minimum cycle for BUS access, add wait cycles if not enough
+        switch (o.speedInternal) {
+            case 4: // 14.19 MHz
+                o.romWaitStates = 2;
+                break;
+            case 8: // 28.38 MHz
+                o.fastWaitStates = 1;
+                o.romWaitStates = 4;
+                break;
+            case 16: // 56.75 MHz
+                o.fastWaitStates = 3;
+                o.romWaitStates = 8;
+                break;
+            case 32: // 113.5 MHz
+                o.fastWaitStates = 6;
+                o.romWaitStates = 14;
+                break;
+        }
+    }
+
+    //fprintf( stdout, "fast %i, rom %i, eclock %i\n", o.fastWaitStates, o.romWaitStates, o.eClockShifter );
+}
+
+template<bool logDma> inline auto Agnus::sync(unsigned cycles) -> void {
+    auto& o = overclock;
+
+    if (o.speedInternal) {
+        o.cycles += cycles;
+
+        while (o.cycles >= o.speedInternal) {
             if constexpr (logDma) {
                 checkDmaStops();
             }
             dmaCycle();
-            overclock.cycles -= overclock.speedInternal;
+            o.cycles -= o.speedInternal;
 
             if constexpr (logDma) {
                 addDmaLogEntry();

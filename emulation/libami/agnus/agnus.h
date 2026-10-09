@@ -170,6 +170,9 @@ struct Agnus {
         unsigned speed; // user requested
         unsigned speedInternal;
         unsigned cycles;
+        unsigned romWaitStates;
+        unsigned fastWaitStates;
+        unsigned eClockShifter;
     } overclock;
 
     enum DmaLog : int { DmaLogNone = 0, DmaLogBus = 1, DmaLogView = 2, DmaLogBlitter = 4, DmaLogCycle = 8 };
@@ -549,6 +552,8 @@ struct Agnus {
     auto logNextOpcode() -> void;
     auto resetDebuggerDma() -> void;
     template<bool _write, uint8_t Size> auto memoryAcceesMnemonic() -> const char*;
+
+    auto prepareOverclock() -> void;
 };
 
 }

@@ -484,7 +484,9 @@ template<M68Core::Engine E, uint8_t Mode, uint8_t Size, unsigned Flags> auto M68
             return readRegA( reg );
             
         case AddressRegisterIndirectWithPreDecrement:
-            if constexpr((Flags & ConcurrentAdrCalc) == 0) SYNC(2);
+            if constexpr (E == Engine::M68000) {
+                if constexpr((Flags & ConcurrentAdrCalc) == 0) SYNC(2);
+            }
             adr = readRegA( reg );
             
             adr -= (Size == Byte && reg == 7) ? 2 : Size;
@@ -492,9 +494,10 @@ template<M68Core::Engine E, uint8_t Mode, uint8_t Size, unsigned Flags> auto M68
             
         case AddressRegisterIndirectWithDisplacement:
             adr = readRegA( reg ) + (int16_t)irc;
-            if constexpr((Flags & SkipExtension) == 0) readExtensionWord<E>();
-            if constexpr (E == Engine::M68020) {
-                if (!busCycles) SYNC(2);
+            if constexpr((Flags & SkipExtension) == 0) {
+                readExtensionWord<E>();
+                if constexpr (E == Engine::M68020)
+                    if (!busCycles) SYNC(2);
             }
             return adr;
             
@@ -517,6 +520,7 @@ template<M68Core::Engine E, uint8_t Mode, uint8_t Size, unsigned Flags> auto M68
             
         case AbsoluteLong:
             adr = irc << 16;
+            // 68020 jmp/jsr probably skip this too, because of not emulated 3 stage pipeline
             readExtensionWord<E>();
             adr |= irc;
             if constexpr((Flags & SkipExtension) == 0) readExtensionWord<E>();
@@ -524,9 +528,10 @@ template<M68Core::Engine E, uint8_t Mode, uint8_t Size, unsigned Flags> auto M68
             
         case ProgramCounterIndirectWithDisplacement:
             adr = pc + (int16_t)irc;
-            if constexpr((Flags & SkipExtension) == 0) readExtensionWord<E>();
-            if constexpr (E == Engine::M68020) {
-                if (!busCycles) SYNC(2);
+            if constexpr((Flags & SkipExtension) == 0) {
+                readExtensionWord<E>();
+                if constexpr (E == Engine::M68020)
+                    if (!busCycles) SYNC(2);
             }
             return adr;
             
@@ -556,9 +561,6 @@ template<M68Core::Engine E, uint8_t Mode, uint8_t Size, unsigned Flags> auto M68
                 adr |= irc;
             }
             readExtensionWord<E>();
-            if constexpr (E == Engine::M68020) {
-                if (!busCycles) SYNC(2);
-            }
             return adr;
     }
 }
@@ -597,16 +599,32 @@ template <M68Core::Engine E, unsigned Flags> auto M68Core::indirectIndexFull(uin
         xn = ((irc & 0x800) ? dispReg : static_cast<int16_t>(dispReg)) << scale;
     }
 
-    int bdSize = (irc >> 4) & 3;
-    int odSize = irc & 3;
+    const int bdSize = (irc >> 4) & 3;
+    const int odSize = irc & 3;
 
-    readExtensionWord<E>();
+    if constexpr(!!(Flags & SkipExtension)) {
+        if ((bdSize | odSize) & 2) {
+            readExtensionWord<E>();
 
-    if (bdSize & 2)
-        baseD = fetchDisplacement<E>(bdSize & 1);
+            if (bdSize & 2) {
+                if (odSize & 2)
+                    baseD = fetchDisplacement<E, 0>(bdSize & 1);
+                else
+                    baseD = fetchDisplacement<E, SkipExtension>(bdSize & 1);
+            }
 
-    if (odSize & 2)
-        outerD = fetchDisplacement<E>(odSize & 1);
+            if (odSize & 2)
+                outerD = fetchDisplacement<E, SkipExtension>(odSize & 1);
+        }
+    } else {
+        readExtensionWord<E>();
+
+        if (bdSize & 2)
+            baseD = fetchDisplacement<E, 0>(bdSize & 1);
+
+        if (odSize & 2)
+            outerD = fetchDisplacement<E, 0>(odSize & 1);
+    }
 
     if (iis & 4)
         addr = read<E, Long, Flags>(B + baseD) + xn + outerD;
@@ -618,16 +636,21 @@ template <M68Core::Engine E, unsigned Flags> auto M68Core::indirectIndexFull(uin
     return addr;
 }
 
-template <M68Core::Engine E> auto M68Core::fetchDisplacement(bool longDis) -> uint32_t {
+template <M68Core::Engine E, unsigned Flags> auto M68Core::fetchDisplacement(bool longDis) -> uint32_t {
     uint32_t dis = irc;
-    readExtensionWord<E>();
-    SYNC(2);
+
     if (longDis) {
-        SYNC(2);
-        dis = dis << 16 | irc;
         readExtensionWord<E>();
-    } else
-        dis = static_cast<int16_t>(static_cast<uint16_t>(dis));
+        SYNC(4);
+        dis = dis << 16 | irc;
+        if constexpr((Flags & SkipExtension) == 0)
+            readExtensionWord<E>();
+    } else {
+        if constexpr((Flags & SkipExtension) == 0)
+            readExtensionWord<E>();
+        SYNC(2);
+        dis = sign<Word>(static_cast<uint16_t>(dis));
+    }
 
     return dis;
 }

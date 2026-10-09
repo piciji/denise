@@ -2,7 +2,7 @@
 #include "agnus.h"
 #include "../../tools/memory.h"
 
-#define eCyclePosition  10 - ((eClockCycle - clock) << 1)
+#define eCyclePosition (10 - ((eClockCycle - clock) << 1))
 
 namespace LIBAMI {
 
@@ -37,7 +37,7 @@ auto Agnus::portSize(uint32_t adr) -> unsigned {
         case CHIP_MEM:
         case KICK_ROM:
         case EXT_ROM:
-            return aga() ? 4 : 2; // real 32 bit access on Chip MEM in A500 is not possible
+            return aga() ? 4 : 2; // real 32 bit access on A500 memory chips is not possible
         case FAST_MEM:
             return 4;
         default:
@@ -50,6 +50,7 @@ auto Agnus::readByte(uint32_t adr) -> uint8_t {
 }
 
 template<bool logDma> inline auto Agnus::readByte(uint32_t adr) -> uint8_t {
+    auto& o = overclock;
     adr &= 0xffffff;
     uint8_t _map = mapper[adr >> 16];
     uint8_t res;
@@ -71,7 +72,7 @@ template<bool logDma> inline auto Agnus::readByte(uint32_t adr) -> uint8_t {
             LOG_DMA(res, false, false)
             break;
         case MMIO_CIA: {
-            sync( cpu.internalWaitCyclesBasedOnEClock<2>( eCyclePosition ) );
+            sync<logDma>( cpu.internalWaitCyclesBasedOnEClock<2>( eCyclePosition ) << o.eClockShifter );
             uint8_t reg = (adr >> 8) & 0xf;
             switch(adr & 0x3000) {
                 default:
@@ -90,10 +91,16 @@ template<bool logDma> inline auto Agnus::readByte(uint32_t adr) -> uint8_t {
             LOG_DMA(res, false, L_BYTE)
             break;
         case FAST_MEM:
+            if (o.fastWaitStates)
+                sync<logDma>(o.fastWaitStates);
+
             res = *(fastMem + (adr - fastMemExpansion.baseAdr));
             LOG_DMA_CPU(res, false, L_BYTE)
             break;
         case KICK_ROM:
+            if (o.romWaitStates)
+                sync<logDma>(o.romWaitStates);
+
             res = *(kickRom + (adr & kickRomMask));
             LOG_DMA_CPU(res, false, L_BYTE)
             break;
@@ -102,10 +109,16 @@ template<bool logDma> inline auto Agnus::readByte(uint32_t adr) -> uint8_t {
             LOG_DMA_CPU(res, false, L_BYTE)
             break;
         case EXT_ROM:
+            if (o.romWaitStates)
+                sync<logDma>(o.romWaitStates);
+
             res = *(extRom + (adr & extRomMask));
             LOG_DMA_CPU(res, false, L_BYTE)
             break;
         case WOM:
+            if (o.romWaitStates)
+                sync<logDma>(o.romWaitStates);
+
             res = *(wom + (adr & 0x3ffff));
             LOG_DMA_CPU(res, false, L_BYTE)
             break;
@@ -250,6 +263,7 @@ auto Agnus::readLong(uint32_t adr) -> uint32_t {
 template<bool logDma> inline auto Agnus::readLong(uint32_t adr) -> uint32_t {
     adr &= 0xffffff;
     uint8_t _map = mapper[adr >> 16];
+    auto& o = overclock;
     uint32_t res;
 
     switch( _map ) {
@@ -261,16 +275,22 @@ template<bool logDma> inline auto Agnus::readLong(uint32_t adr) -> uint32_t {
             return res;
         }
         case FAST_MEM: {
+            if (o.fastWaitStates)
+                sync<logDma>(o.fastWaitStates);
             res = _swapLong(*(uint32_t*)(fastMem + (adr - fastMemExpansion.baseAdr)));
             LOG_DMA_CPU( res, false, L_LONG )
             return res;
         }
         case KICK_ROM: {
+            if (o.romWaitStates)
+                sync<logDma>(o.romWaitStates);
             res = _swapLong(*(uint32_t*)(kickRom + (adr & kickRomMask)));
             LOG_DMA_CPU( res, false, L_LONG )
             return res;
         }
         case EXT_ROM: {
+            if (o.romWaitStates)
+                sync<logDma>(o.romWaitStates);
             res = _swapLong(*(uint32_t*)(extRom + (adr & extRomMask)));
             LOG_DMA_CPU( res, false, L_LONG )
             return res;
@@ -289,6 +309,7 @@ auto Agnus::readWord(uint32_t adr) -> uint16_t {
 template<bool logDma> inline auto Agnus::readWord(uint32_t adr) -> uint16_t {
     adr &= 0xffffff;
     uint8_t _map = mapper[adr >> 16];
+    auto& o = overclock;
     // 68k is big endian, modern architecture is little endian
     switch( _map ) {
         case CHIP_MEM:
@@ -306,7 +327,7 @@ template<bool logDma> inline auto Agnus::readWord(uint32_t adr) -> uint16_t {
             // Gary assert VPA but don't see A12/A13. It only sees the upper address bits and knows when in general CIA area.
             // hence Gary asserts VPA, even if no CIA is selected at all ... "case 0x3000" in switch/case below.
             // same applies to CIA writes.
-            sync( cpu.internalWaitCyclesBasedOnEClock<2>( eCyclePosition ) );
+            sync<logDma>( cpu.internalWaitCyclesBasedOnEClock<2>( eCyclePosition ) << o.eClockShifter );
             uint8_t reg = (adr >> 8) & 0xf;
             uint16_t res;
 
@@ -326,11 +347,15 @@ template<bool logDma> inline auto Agnus::readWord(uint32_t adr) -> uint16_t {
             LOG_DMA(dataBus, false, L_WORD)
             break;
         case FAST_MEM: {
+            if (o.fastWaitStates)
+                sync<logDma>(o.fastWaitStates);
             uint16_t res = _swapWord(*(uint16_t*)(fastMem + (adr - fastMemExpansion.baseAdr)));
             LOG_DMA_CPU( res, false, L_WORD )
             return res;
         }
         case KICK_ROM: {
+            if (o.romWaitStates)
+                sync<logDma>(o.romWaitStates);
             uint16_t res = _swapWord(*(uint16_t*)(kickRom + (adr & kickRomMask)));
             LOG_DMA_CPU( res, false, L_WORD )
             return res;
@@ -341,11 +366,15 @@ template<bool logDma> inline auto Agnus::readWord(uint32_t adr) -> uint16_t {
             return res;
         }
         case EXT_ROM: {
+            if (o.romWaitStates)
+                sync<logDma>(o.romWaitStates);
             uint16_t res = _swapWord(*(uint16_t*)(extRom + (adr & extRomMask)));
             LOG_DMA_CPU( res, false, L_WORD )
             return res;
         }
         case WOM: {
+            if (o.romWaitStates)
+                sync<logDma>(o.romWaitStates);
             uint16_t res = _swapWord(*(uint16_t*)(wom + (adr & 0x3ffff)));
             LOG_DMA_CPU( res, false, L_WORD )
             return res;
@@ -381,6 +410,7 @@ auto Agnus::writeByte(uint32_t adr, uint8_t value) -> void {
 template<bool logDma> inline auto Agnus::writeByte(uint32_t adr, uint8_t value) -> void {
     adr &= 0xffffff;
     uint8_t _map = mapper[adr >> 16];
+    auto& o = overclock;
 
     switch( _map ) {
         case CHIP_MEM:
@@ -400,7 +430,7 @@ template<bool logDma> inline auto Agnus::writeByte(uint32_t adr, uint8_t value) 
             LOG_DMA(value, true, L_BYTE)
             break;
         case MMIO_CIA: {
-            sync( cpu.internalWaitCyclesBasedOnEClock<2>( eCyclePosition ) );
+            sync<logDma>( cpu.internalWaitCyclesBasedOnEClock<2>( eCyclePosition ) << o.eClockShifter );
             uint8_t reg = (adr >> 8) & 0xf;
             if ((adr & 0x1000) == 0)
                 cia1.write( reg, value );
@@ -420,6 +450,8 @@ template<bool logDma> inline auto Agnus::writeByte(uint32_t adr, uint8_t value) 
             LOG_DMA(value, true, false)
             break;
         case FAST_MEM:
+            if (o.fastWaitStates)
+                sync<logDma>(o.fastWaitStates);
             adr -= fastMemExpansion.baseAdr;
             if (memState)
                 memState->trackers[TRACKER_FAST].remember(adr & ~1);
@@ -427,6 +459,8 @@ template<bool logDma> inline auto Agnus::writeByte(uint32_t adr, uint8_t value) 
             LOG_DMA_CPU( value, true, L_BYTE )
             break;
         case KICK_ROM:
+            if (o.romWaitStates)
+                sync<logDma>(o.romWaitStates);
             if ( (model == OCS_A1000) && !womLock)
                 lockWom();
             LOG_DMA_CPU( value, true, L_BYTE )
@@ -436,9 +470,13 @@ template<bool logDma> inline auto Agnus::writeByte(uint32_t adr, uint8_t value) 
             LOG_DMA_CPU( value, true, L_BYTE )
             break;
         case EXT_ROM:
+            if (o.romWaitStates)
+                sync<logDma>(o.romWaitStates);
             LOG_DMA_CPU( value, true, L_BYTE )
             break;
         case WOM:
+            if (o.romWaitStates)
+                sync<logDma>(o.romWaitStates);
             if (!womLock) *(wom + (adr & 0x3ffff)) = value;
             LOG_DMA_CPU( value, true, L_BYTE )
             break;
@@ -464,6 +502,7 @@ auto Agnus::writeWord(uint32_t adr, uint16_t value) -> void {
 template<bool logDma> inline auto Agnus::writeWord(uint32_t adr, uint16_t value) -> void {
     adr &= 0xffffff;
     uint8_t _map = mapper[adr >> 16];
+    auto& o = overclock;
 
     switch( _map ) {
         case CHIP_MEM:
@@ -483,7 +522,7 @@ template<bool logDma> inline auto Agnus::writeWord(uint32_t adr, uint16_t value)
             LOG_DMA(value, true, L_WORD)
             break;
         case MMIO_CIA: {
-            sync( cpu.internalWaitCyclesBasedOnEClock<2>( eCyclePosition ) );
+            sync<logDma>( cpu.internalWaitCyclesBasedOnEClock<2>( eCyclePosition ) << o.eClockShifter );
             uint8_t reg = (adr >> 8) & 0xf;
             if ((adr & 0x1000) == 0)
                 cia1.write( reg, (uint8_t)value );
@@ -501,6 +540,8 @@ template<bool logDma> inline auto Agnus::writeWord(uint32_t adr, uint16_t value)
             LOG_DMA(value, true, L_WORD)
             break;
         case FAST_MEM:
+            if (o.fastWaitStates)
+                sync<logDma>(o.fastWaitStates);
             adr -= fastMemExpansion.baseAdr;
             if (memState)
                 memState->trackers[TRACKER_FAST].remember(adr);
@@ -508,6 +549,8 @@ template<bool logDma> inline auto Agnus::writeWord(uint32_t adr, uint16_t value)
             LOG_DMA_CPU( value, true, L_WORD )
             break;
         case KICK_ROM:
+            if (o.romWaitStates)
+                sync<logDma>(o.romWaitStates);
             if ( (model == OCS_A1000) && !womLock)
                 lockWom();
             LOG_DMA_CPU( value, true, L_WORD )
@@ -517,9 +560,13 @@ template<bool logDma> inline auto Agnus::writeWord(uint32_t adr, uint16_t value)
             LOG_DMA_CPU( value, true, L_WORD )
             break;
         case EXT_ROM:
+            if (o.romWaitStates)
+                sync<logDma>(o.romWaitStates);
             LOG_DMA_CPU( value, true, L_WORD )
             break;
         case WOM:
+            if (o.romWaitStates)
+                sync<logDma>(o.romWaitStates);
             if (!womLock) *(uint16_t*)(wom + (adr & 0x3ffff)) = _swapWord(value);
             LOG_DMA_CPU( value, true, L_WORD )
             break;
@@ -545,6 +592,7 @@ auto Agnus::writeLong(uint32_t adr, uint32_t value) -> void {
 template<bool logDma> inline auto Agnus::writeLong(uint32_t adr, uint32_t value) -> void {
     adr &= 0xffffff;
     uint8_t _map = mapper[adr >> 16];
+    auto& o = overclock;
 
     switch( _map ) {
         case CHIP_MEM:
@@ -560,6 +608,8 @@ template<bool logDma> inline auto Agnus::writeLong(uint32_t adr, uint32_t value)
             LOG_DMA(value, true, L_LONG)
             break;
         case FAST_MEM:
+            if (o.fastWaitStates)
+                sync<logDma>(o.fastWaitStates);
             adr -= fastMemExpansion.baseAdr;
             if (memState) {
                 memState->trackers[TRACKER_FAST].remember(adr);
@@ -569,11 +619,15 @@ template<bool logDma> inline auto Agnus::writeLong(uint32_t adr, uint32_t value)
             LOG_DMA_CPU( value, true, L_LONG )
             break;
         case KICK_ROM:
+            if (o.romWaitStates)
+                sync<logDma>(o.romWaitStates);
             if ( (model == OCS_A1000) && !womLock)
                 lockWom();
             LOG_DMA_CPU( value, true, L_LONG )
             break;
         case EXT_ROM:
+            if (o.romWaitStates)
+                sync<logDma>(o.romWaitStates);
             LOG_DMA_CPU( value, true, L_LONG )
             break;
     }

@@ -174,6 +174,9 @@ auto Agnus::serialize(Emulator::Serializer& s, bool light) -> void {
 
         s.integer(overclock.speed);
         s.integer(overclock.speedInternal);
+        s.integer(overclock.romWaitStates);
+        s.integer(overclock.fastWaitStates);
+        s.integer(overclock.eClockShifter);
     } else {
         s.array(&mapper[0], 8);
         s.array(&mapper[0xf8], 4);

@@ -261,7 +261,7 @@ private:
 
     template <Engine E, unsigned Flags, bool Scale = false> auto indirectIndexBrief(uint32_t B) -> uint32_t;
     template <Engine E, unsigned Flags> auto indirectIndexFull(uint32_t B) -> uint32_t;
-    template <Engine E> auto fetchDisplacement(bool longDis) -> uint32_t;
+    template <Engine E, unsigned Flags> auto fetchDisplacement(bool longDis) -> uint32_t;
 
     template<uint8_t Size = Long> inline auto readRegD(int reg) -> uint32_t;
     template<uint8_t Size = Long> inline auto writeRegD(int reg, uint32_t data) -> void;
