@@ -730,6 +730,7 @@ template<M68Core::Engine E> auto M68Core::build() -> void {
     // trapv
     o = parse("0100 1110 0111 0110");
     opTable[o] = &M68Core::opTrapv<E>;
+    dasmTable[o] = &M68Core::dasmTrapv;
     mnemonics[o] = DasmHandler::mnemonic( Trapv );
 
     if (E >= Engine::M68020) {

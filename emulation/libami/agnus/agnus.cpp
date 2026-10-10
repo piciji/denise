@@ -392,6 +392,7 @@ auto Agnus::prepareOverclock() -> void {
     //113.50 = ~  8.81 ns / cycle
 
     if (engine == M68FAMILY::M68Core::Engine::M68000) {
+        // BUS cycle: 2 cycles to put address + 2 access cycles
         // has 2 minimum cycles for BUS access, add wait cycles if not enough
         switch (o.speedInternal) {
             case 4: // 14.19 MHz
@@ -409,10 +410,11 @@ auto Agnus::prepareOverclock() -> void {
         }
 
     } else if (engine == M68FAMILY::M68Core::Engine::M68020) {
+        // BUS cycle: 2 cycles to put address + 1 access cycles
         // has 1 minimum cycle for BUS access, add wait cycles if not enough
         switch (o.speedInternal) {
             case 4: // 14.19 MHz
-                o.romWaitStates = 2;
+                o.romWaitStates = 2; // stock A1200 can not access ROM without wait states
                 break;
             case 8: // 28.38 MHz
                 o.fastWaitStates = 1;
