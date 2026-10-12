@@ -224,6 +224,7 @@ auto Cpu::serialize(Emulator::Serializer& s) -> void {
     s.array(regsD);
     s.array(regsA);
     s.integer(pc);
+    s.integer(pcEdge);
     s.integer(usp);
     s.integer(ssp);
     s.integer(irc);
@@ -238,6 +239,32 @@ auto Cpu::serialize(Emulator::Serializer& s) -> void {
     s.integer(iplPins);
     s.integer(iplSample);
     s.integer(control);
+    s.integer(fc);
+
+    s.integer( reinterpret_cast<uint8_t&>(engine) );
+
+    if (engine == Engine::M68020) {
+        s.integer(cacr);
+        s.integer(caar);
+        s.integer(cahr);
+
+        s.integer(busCycles);
+
+        s.integer(dfc);
+        s.integer(sfc);
+
+        s.integer(vbr);
+        s.integer(msp);
+
+        s.integer(m);
+        s.integer(t0);
+
+        for (auto& c : cacheEntries) {
+            s.integer( c.data );
+            s.integer( c.tag );
+            s.integer( c.valid );
+        }
+    }
 }
 
 }

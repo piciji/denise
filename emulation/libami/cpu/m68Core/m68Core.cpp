@@ -63,11 +63,13 @@ auto M68Core::process() -> void {
             return;
         }
 
-        if ((control & Trace) && !(control & Stop))
+        if ((control & Trace) && !(control & Stop)) {
             // trace happens if it was enabled at beginning of an instruction.
             // hence instruction which enabled tracing will not be traced.
             // stop instruction can not schedule trace mode, but an already scheduled trace prevent "stop" at all.
             control |= TraceScheduled;
+            pcTrace = pcEdge;
+        }
 
         if (control & IRQ) {
             IRQException();
@@ -164,7 +166,7 @@ auto M68Core::reset() -> void { // highest prioritized group 0 routine
     sfc = 0;
     dfc = 0;
     busCycles = 0;
-    group = 2;
+    vbr = 0;
     invalidateCache();
 
     control = ResetRoutine; // emulation begins, when reset line is de-asserted
@@ -225,7 +227,7 @@ auto M68Core::getFc() -> uint8_t {
         return dfc;
     }
 
-    return fc | (s ? SF_S : 0);
+    return (fc & 3) | (s ? SF_S : 0);
 }
 
 inline auto M68Core::sampleInterrupt() -> void {

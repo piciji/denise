@@ -2,9 +2,6 @@
 #include "m68Core.h"
 
 #define FC_EA_PRG (isPcMode<Mode>() ? PRG : 0)
-#define OR_FC_EA_PRG | FC_EA_PRG
-#define FC_PRG PRG
-#define OR_FC_PRG | PRG
 
 namespace M68FAMILY {
 
@@ -74,16 +71,16 @@ auto M68Core::writeRegA(int reg, uint32_t data) -> void {
 
 template<uint8_t Size> auto M68Core::readRegR( int reg ) -> uint32_t {
     if (reg & 8)
-        return readRegA<Size>(i & 7);
+        return readRegA<Size>(reg & 7);
 
-    return readRegD<Size>(i);
+    return readRegD<Size>(reg);
 }
 
 template<uint8_t Size> auto M68Core::writeRegR( int reg, uint32_t val ) -> void {
     if (reg & 8)
-        writeRegA(i & 7, sign<Size>(val));
+        writeRegA(reg & 7, sign<Size>(val));
     else
-        writeRegD<Size>(i, val);
+        writeRegD<Size>(reg, val);
 }
 
 template<M68Core::Engine E, unsigned Flags> auto M68Core::fullPrefetch() -> void {
@@ -91,11 +88,11 @@ template<M68Core::Engine E, unsigned Flags> auto M68Core::fullPrefetch() -> void
     prefetch<E, Flags>();
 }
 
-template<M68Core::Engine E> auto M68Core::firstPrefetch() -> void {
-    if (E == Engine::M68020)
-        irc = cachedPrefetch<FirstPrefetch OR_FC_PRG >( pc );
-    else
-        irc = read<E, Word, FC_PRG>(pc);
+template<M68Core::Engine E, unsigned Flags> auto M68Core::firstPrefetch() -> void {
+     if (E == Engine::M68020)
+        irc = cachedPrefetch<Flags | FirstPrefetch | PRG >( pc );
+     else
+        irc = read<E, Word, Flags | PRG>(pc);
 }
 
 template<M68Core::Engine E, unsigned Flags> auto M68Core::prefetch() -> void {
@@ -103,24 +100,27 @@ template<M68Core::Engine E, unsigned Flags> auto M68Core::prefetch() -> void {
     pcEdge = pc;
     pc += 2;
 
-    if (E == Engine::M68020)
-        irc = cachedPrefetch<Flags OR_FC_PRG>( pc );
-    else
-        irc = read<E, Word, Flags OR_FC_PRG>(pc);
+     if (E == Engine::M68020)
+        irc = cachedPrefetch<Flags | PRG>( pc );
+     else
+        irc = read<E, Word, Flags | PRG>(pc);
 }
 
 template<M68Core::Engine E, unsigned Flags> auto M68Core::readExtensionWord() -> void {
     pc += 2;
 
     if (E == Engine::M68020)
-        irc = cachedPrefetch<Flags | ExtPrefetch OR_FC_PRG>( pc );
+        irc = cachedPrefetch<Flags | ExtPrefetch | PRG>( pc );
     else
-        irc = read<E, Word, Flags OR_FC_PRG>(pc);
+        irc = read<E, Word, Flags | PRG>(pc);
 }
 
 template<unsigned Flags> auto M68Core::cachedPrefetch(uint32_t adr) -> uint16_t {
     busCycles = 0;
     fc = SF_PRG;
+
+    if constexpr (Flags & EXC)
+        fc |= SF_EXC;
 
     if (control & WatchPoint) {
         if (watchPoints.check( pc, Word, true ))
@@ -200,10 +200,13 @@ auto M68Core::peek(uint32_t adr) -> uint16_t {
 template<M68Core::Engine E, uint8_t Size, unsigned Flags> auto M68Core::read(uint32_t adr) -> uint32_t {
     uint32_t result;
 
-    if constexpr (Flags & SF_SFC)
+    if constexpr (Flags & SFC)
         fc = SF_SFC;
     else
         fc = (Flags & PRG) ? SF_PRG : SF_DATA;
+
+    if constexpr (Flags & EXC)
+        fc |= SF_EXC;
 
     if (control & WatchPoint) {
         if (watchPoints.check( adr, Size, true ))
@@ -316,10 +319,13 @@ template<unsigned Flags> auto M68Core::readLongDS(uint32_t adr) -> uint32_t {
 }
 
 template<M68Core::Engine E, uint8_t Size, unsigned Flags> auto M68Core::write(uint32_t adr, uint32_t data) -> void {
-    if constexpr (Flags & SF_DFC)
+    if constexpr (Flags & DFC)
         fc = SF_DFC;
     else
         fc = (Flags & PRG) ? SF_PRG : SF_DATA;
+
+    if constexpr (Flags & EXC)
+        fc |= SF_EXC;
 
     if (control & (WatchPointWrite | ModifiedCode) ) {
         modifiedCode.checkAndSet( adr, Size );
@@ -457,7 +463,7 @@ template<M68Core::Engine E, uint8_t Mode, uint8_t Size, unsigned Flags> auto M68
     if constexpr (Mode == AddressRegisterIndirectWithPostIncrement)
         writeRegA(reg, ea + ((reg == 7 && Size == Byte) ? 2 : Size));
 
-    return read<E, Size, Flags OR_FC_EA_PRG>(ea);
+    return read<E, Size, Flags | FC_EA_PRG>(ea);
 }
 
 template<M68Core::Engine E, uint8_t Mode, uint8_t Size, unsigned Flags> auto M68Core::writeEA(uint32_t ea, uint32_t data) -> void {
@@ -467,6 +473,18 @@ template<M68Core::Engine E, uint8_t Mode, uint8_t Size, unsigned Flags> auto M68
         writeRegA(ea, data);
     else
         write<E, Size, Flags>(ea, data);
+}
+
+template<M68Core::Engine E, uint8_t Mode, uint8_t Size, unsigned Flags> auto M68Core::calcEaUpdatePrePost(int reg) -> uint32_t {
+    uint32_t ea = calcEA<E, Mode, Size>(reg);
+
+    if constexpr (Mode == AddressRegisterIndirectWithPreDecrement)
+        writeRegA(reg, ea);
+
+    if constexpr (Mode == AddressRegisterIndirectWithPostIncrement)
+        writeRegA(reg, ea + ((reg == 7 && Size == Byte) ? 2 : Size));
+
+    return ea;
 }
 
 template<M68Core::Engine E, uint8_t Mode, uint8_t Size, unsigned Flags> auto M68Core::calcEA(int reg) -> uint32_t {
@@ -496,8 +514,9 @@ template<M68Core::Engine E, uint8_t Mode, uint8_t Size, unsigned Flags> auto M68
             adr = readRegA( reg ) + (int16_t)irc;
             if constexpr((Flags & SkipExtension) == 0) {
                 readExtensionWord<E>();
-                if constexpr (E == Engine::M68020)
+                if constexpr (E == Engine::M68020) {
                     if (!busCycles) SYNC(2);
+                }
             }
             return adr;
             
@@ -520,7 +539,6 @@ template<M68Core::Engine E, uint8_t Mode, uint8_t Size, unsigned Flags> auto M68
             
         case AbsoluteLong:
             adr = irc << 16;
-            // 68020 jmp/jsr probably skip this too, because of not emulated 3 stage pipeline
             readExtensionWord<E>();
             adr |= irc;
             if constexpr((Flags & SkipExtension) == 0) readExtensionWord<E>();
@@ -530,8 +548,9 @@ template<M68Core::Engine E, uint8_t Mode, uint8_t Size, unsigned Flags> auto M68
             adr = pc + (int16_t)irc;
             if constexpr((Flags & SkipExtension) == 0) {
                 readExtensionWord<E>();
-                if constexpr (E == Engine::M68020)
+                if constexpr (E == Engine::M68020) {
                     if (!busCycles) SYNC(2);
+                }
             }
             return adr;
             

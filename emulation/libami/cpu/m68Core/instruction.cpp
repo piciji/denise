@@ -302,7 +302,7 @@ template<M68Core::Engine E, uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68Co
 template<M68Core::Engine E, uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68Core::opClr(uint16_t opcode) -> void {
     uint32_t ea;
     if constexpr (E == Engine::M68020)
-        ea = calcEA<E, Mode, Size>( opcode & 7 );
+        ea = calcEaUpdatePrePost<E, Mode, Size>( opcode & 7 );
     else
         readEA<E, Mode, Size>(opcode & 7, ea); // dummy read
     
@@ -348,7 +348,7 @@ template<M68Core::Engine E, uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68Co
 template<M68Core::Engine E, uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68Core::opScc(uint16_t opcode) -> void {
     uint32_t result, ea;
     if constexpr (E == Engine::M68020)
-        ea = calcEA<E, Mode, Size>( opcode & 7 );
+        ea = calcEaUpdatePrePost<E, Mode, Size>( opcode & 7 );
     else
         readEA<E, Mode, Byte>(opcode & 7, ea);
 
@@ -727,7 +727,7 @@ template<M68Core::Engine E, uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68Co
     divisor = readEA<E, Mode, Size>(opcode & 7, ea);
 
     if (mode & 1)
-        dividend = readRegD(dr) << 32 | readRegD(dq);
+        dividend = (uint64_t)readRegD(dr) << 32 | readRegD(dq);
     else
         dividend = readRegD(dq);
 
@@ -762,13 +762,20 @@ template<M68Core::Engine E, uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68Co
             c = false;
             n = negative<Long>(quotient);
             z = zero<Long>(quotient);
+
             writeRegD( dr, remainder );
             writeRegD( dq, quotient );
         }
 
         syncSequencer( 79 - 2 );
     } else {
-        auto _dividend = static_cast<int64_t>(dividend);
+        int64_t _dividend;
+
+        if (mode & 1) {
+            _dividend = static_cast<int64_t>(dividend);
+        } else 
+            _dividend = static_cast<int64_t>(static_cast<int32_t>(dividend));
+
         auto _divisor = static_cast<int64_t>(static_cast<int32_t>(divisor));
 
         int64_t quotient = _dividend / _divisor;
@@ -786,6 +793,7 @@ template<M68Core::Engine E, uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68Co
             c = false;
             n = negative<Long>(quotient);
             z = zero<Long>(quotient);
+
             writeRegD( dr, remainder );
             writeRegD( dq, quotient );
         }
@@ -948,7 +956,7 @@ template<M68Core::Engine E, uint8_t Inst, uint8_t Mode, uint8_t Size> inline aut
                 || ( Inst == AddressRegisterIndirectWithDisplacement && isDirectMode<Mode>() )
                 || ( Inst == AddressRegisterIndirectWithIndex && isDirectMode<Mode>() )
                 || ( Inst == AbsoluteLong && !isDirectMode<Mode>() )
-        ) // check results in "iplLatches"
+        )
             write<E, Size, SampleIPL | Reverse>(ea, result);
         else
             write<E, Size, Reverse>(ea, result);
@@ -1421,7 +1429,7 @@ template<M68Core::Engine E, uint8_t Inst, uint8_t Size> auto M68Core::opArithmet
 
     if constexpr (E == Engine::M68020) {
         write<E, Size>( ea, result );
-        prefetch<E>();
+        prefetch<E, SampleIPL>();
         if constexpr (Inst == Abcd || Inst == Sbcd)
             syncSequencer( 7 );
         else
@@ -1580,13 +1588,7 @@ template<M68Core::Engine E, uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68Co
 
         int reg = opcode & 7;
 
-        ea = calcEA<E, Mode, Size>(reg);
-
-        if constexpr (Mode == AddressRegisterIndirectWithPreDecrement)
-            writeRegA(reg, ea);
-
-        if constexpr (Mode == AddressRegisterIndirectWithPostIncrement)
-            writeRegA(reg, ea + ((reg == 7 && Size == Byte) ? 2 : Size));
+        ea = calcEaUpdatePrePost<E, Mode, Size>(reg);
 
         prefetch<E, SampleIPL>();
 
@@ -1732,7 +1734,7 @@ template<M68Core::Engine E> auto M68Core::opRte(uint16_t opcode) -> void {
     // 68000: SP and status will be updated during second micro cycle of third BUS cycle.
     sp += 6;
 
-    if (E >= Engine::M68020) {
+    if constexpr (E >= Engine::M68020) {
         SYNC(6);
         uint16_t format = read<E, Word>(sp) >> 12; sp += 2;
         switch (format) {
@@ -1879,7 +1881,7 @@ template<M68Core::Engine E, uint8_t Inst, uint8_t Size> auto M68Core::opTrapcc(u
 
 template<M68Core::Engine E> auto M68Core::opTrapv(uint16_t opcode) -> void {
     if (v) {
-        read<E, Word, FC_PRG>(pc); // doesn't update irc
+        read<E, Word, PRG>(pc); // doesn't update irc
         trapException<E>( 7 );
     } else
         prefetch<E, SampleIPL>();
@@ -2109,10 +2111,10 @@ template<M68Core::Engine E, uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68Co
                 data += (reg == 7 && Size == Byte) ? 2 : Size;
         }
 
-        write<E, Size, SF_DFC>(ea, data);
+        write<E, Size, DFC>(ea, data);
 
     } else {
-        uint32_t result = readEA<E, Mode, Size, SF_SFC>( reg, ea );
+        uint32_t result = readEA<E, Mode, Size, SFC>( reg, ea );
 
         writeRegR(rn, result);
     }
@@ -2124,13 +2126,7 @@ template<M68Core::Engine E, uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68Co
 
 template<M68Core::Engine E, uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68Core::opMoveCcr(uint16_t opcode) -> void {
     int reg = opcode & 7;
-    uint32_t ea = calcEA<E, Mode, Size>( reg );
-
-    if constexpr (Mode == AddressRegisterIndirectWithPreDecrement)
-        writeRegA(reg, ea);
-
-    if constexpr (Mode == AddressRegisterIndirectWithPostIncrement)
-        writeRegA(reg, ea + ((reg == 7 && Size == Byte) ? 2 : Size));
+    uint32_t ea = calcEaUpdatePrePost<E, Mode, Size>( reg );
 
     prefetch<E, SampleIPL>();
 

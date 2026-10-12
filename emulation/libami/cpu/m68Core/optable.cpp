@@ -174,7 +174,7 @@ template<M68Core::Engine E> auto M68Core::build() -> void {
     _EA_( o, 0, ImmBit, Btst, ADR_TYPICAL | PCD | PCI, Byte )
     _EA_( o, 0, ImmBit, Btst, DR, Long )
 
-    if (E >= Engine::M68020) {
+    if constexpr (E >= Engine::M68020) {
         // bit field
         o = parse("1110 1010 11-- ----");
         _EA_( o, 0, BitFieldEA, Bfchg, AI | AID | AII | AS | AL, Long )
@@ -655,7 +655,7 @@ template<M68Core::Engine E> auto M68Core::build() -> void {
     _B_( o | (2 << 6), 0, Ext, Ext, Word )
     _B_( o | (3 << 6), 0, Ext, Ext, Long )
 
-    if (E >= Engine::M68020) {
+    if constexpr (E >= Engine::M68020) {
         // extb
         o = parse("0100 1001 --00 0---");
         _B_( o | (3 << 6), 0, Extb, Extb, Long )
@@ -688,7 +688,7 @@ template<M68Core::Engine E> auto M68Core::build() -> void {
     mnemonics[o] = DasmHandler::mnemonic( Reset );
 
     // rtd
-    if (E >= Engine::M68020) {
+    if constexpr (E >= Engine::M68020) {
         o = parse("0100 1110 0111 0100");
         opTable[o] = &M68Core::opRtd<E>;
         dasmTable[o] = &M68Core::dasmRtd;
@@ -733,7 +733,7 @@ template<M68Core::Engine E> auto M68Core::build() -> void {
     dasmTable[o] = &M68Core::dasmTrapv;
     mnemonics[o] = DasmHandler::mnemonic( Trapv );
 
-    if (E >= Engine::M68020) {
+    if constexpr (E >= Engine::M68020) {
         // trapcc
         o = parse("0101 ---- 1111 1100");
         _bind( o | 0x000, Trapcc, Trapt, Byte )
@@ -804,7 +804,7 @@ template<M68Core::Engine E> auto M68Core::build() -> void {
     _B_( o | (0 << 6), SO, MovepEa, Movep, Word )
     _B_( o | (1 << 6), SO, MovepEa, Movep, Long )
 
-    if (E >= Engine::M68020) {
+    if constexpr (E >= Engine::M68020) {
         // bkpt
         o = parse("0100 1000 0100 1---");
         _B_( o, 0, Bkpt, Bkpt, Word )

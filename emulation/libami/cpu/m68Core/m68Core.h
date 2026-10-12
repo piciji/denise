@@ -75,11 +75,11 @@ protected:
         Movec, Moves, MoveCcr,
     };
 
-    enum {  None = 0, SampleIPL = 1, SkipExtension = 2,
+    enum {  None = 0, SampleIPL = 1, SkipExtension = 2, EXC = 4,
             PRG = 8, ConcurrentAdrCalc = 0x10 /* happens while prefetching */, Reverse = 0x20,
-            SF_DFC = 0x40, SF_SFC = 0x80, FirstPrefetch = 0x100, ExtPrefetch = 0x200 };
+            DFC = 0x40, SFC = 0x80, FirstPrefetch = 0x100, ExtPrefetch = 0x200, UpdatePrePost = 0x400 };
 
-    enum { SF_DATA = 1, SF_PRG = 2, SF_S = 4, SF_EXC = 8, SF_READ = 0x10 };
+    enum { SF_DATA = 1, SF_PRG = 2, SF_S = 4, SF_EXC = 8, SF_READ = 0x10, SF_DFC = 0x40, SF_SFC = 0x80 };
 
 public:
     enum { Byte = 1, Word = 2, Long = 4, BWL = 7, WL = 6, BW = 3 };
@@ -111,6 +111,7 @@ protected:
     uint32_t regsA[8];
     uint32_t pc;
     uint32_t pcEdge;
+    uint32_t pcTrace;
 
     uint32_t usp;
     uint32_t ssp;
@@ -131,7 +132,6 @@ protected:
     bool m;
     bool t0;
     uint32_t vbr;
-    uint8_t group;
 
     uint8_t iplPins;
     uint8_t iplSample;
@@ -140,6 +140,7 @@ protected:
 
     uint32_t cacr;
     uint32_t caar;
+    uint32_t cahr; // cache holding register
 
     uint8_t dfc;
     uint8_t sfc;
@@ -151,8 +152,6 @@ protected:
         bool valid;
     };
     CacheEntry cacheEntries[64];
-
-    uint32_t cahr; // cache holding register
 
     int busCycles;
 
@@ -196,7 +195,7 @@ public:
      * which leaves status flags with intermediate values. (not emulated)
      * for Amiga 500/600, BERR is wired to expansions port. Amiga 1200 and Atari can cause BUS errors directly.
      */
-    auto setBusError(uint32_t addr, bool read, bool prg) -> void;
+    auto setBusError(uint32_t addr, bool read) -> void;
 
     auto debuggerStepOver(bool subroutineOnly) -> void;
     auto debuggerStepInto() -> void;
@@ -271,9 +270,9 @@ private:
     template<uint8_t Size = Long> auto readRegR( int reg ) -> uint32_t;
     template<uint8_t Size = Long> auto writeRegR( int reg, uint32_t val ) -> void;
 
-    template<Engine E, uint8_t Size, unsigned Flags = 0> auto read(uint32_t adr) -> uint32_t;
-    template<Engine E, uint8_t Size, unsigned Flags = 0> auto write(uint32_t adr, uint32_t data) -> void;
-    template<Engine E>  auto firstPrefetch() -> void;
+    template<Engine E, uint8_t Size, unsigned Flags = None> auto read(uint32_t adr) -> uint32_t;
+    template<Engine E, uint8_t Size, unsigned Flags = None> auto write(uint32_t adr, uint32_t data) -> void;
+    template<Engine E, unsigned Flags = None>  auto firstPrefetch() -> void;
     template<Engine E, unsigned Flags = None> inline auto prefetch() -> void;
     template<unsigned Flags> auto cachedPrefetch(uint32_t adr) -> uint16_t;
     template<Engine E, unsigned Flags = None> auto fullPrefetch() -> void;
@@ -283,6 +282,7 @@ private:
     template<uint8_t Size> auto peekInc(uint32_t& adr, DasmHandler& d) -> uint32_t;
     
     template<Engine E, uint8_t Mode, uint8_t Size, unsigned Flags = None> auto calcEA(int reg) -> uint32_t;
+    template<Engine E, uint8_t Mode, uint8_t Size, unsigned Flags = None> auto calcEaUpdatePrePost(int reg) -> uint32_t;
     template<Engine E, uint8_t Mode, uint8_t Size, unsigned Flags = None> auto readEA(int reg, uint32_t& ea) -> uint32_t;
     template<Engine E, uint8_t Mode, uint8_t Size, unsigned Flags = None> auto writeEA(uint32_t ea, uint32_t data) -> void;
     template<uint8_t Mode, uint8_t Size> auto prepareEaForDasm(uint32_t& adr, uint8_t reg, DasmHandler& d) -> void;
@@ -447,7 +447,7 @@ private:
     template<uint8_t Size> auto defaultFlags(uint32_t data) -> void;
     template<uint8_t Mode, uint8_t destMode, uint8_t Size> auto setMoveCCWhenAddressError(uint32_t data) -> void;
 
-    template<Engine E> auto executeAt(uint32_t adr) -> void;
+    template<Engine E, unsigned Flags = None> auto executeAt(uint32_t adr) -> void;
     template<Engine E, uint8_t Mode, uint8_t Size> auto addressExceptionEA(uint32_t ea) -> void;
     template<Engine E, uint8_t Mode, uint8_t Size> auto addressExceptionMoveEA(uint32_t ea) -> void;
     auto group0Exception(const std::exception& exc) -> void;
@@ -493,6 +493,7 @@ private:
 
     auto invalidateCache() -> void;
     auto setCacr(uint32_t value) -> void;
+    auto checkT0() -> void;
 
     template<bool withRotation = true> auto bfMask(unsigned width, unsigned offset) -> uint32_t;
     template<bool withRotation = true> auto bfShiftLeft(uint32_t data, unsigned offset) -> uint32_t;
