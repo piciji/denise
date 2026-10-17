@@ -246,7 +246,7 @@ inline auto M68Core::sampleInterrupt() -> void {
 
 auto M68Core::setInterrupt( uint8_t level ) -> void {
     // 1 - 6 are level sensitive
-    // 7 is edge sensitive, but a mask change can re-trigger it without having to change the PIN state (wtf)
+    // 7 is edge sensitive, but a mask change can re-trigger it without having to change the PIN state
     level &= 7;
     if (iplPins == level)
         return;
@@ -351,7 +351,7 @@ auto M68Core::setChk2UndefinedFlags(int32_t lower, int32_t upper, int32_t value)
         if (value >= 0 && value < upper)
             n = true;
 
-        if (value >= 0 && (static_cast<int64_t>(lower) - value >= 0)) {
+        if (value >= 0 && (static_cast<int32_t>((uint32_t)lower - (uint32_t)value) >= 0)) {
             v = true;
             n = false;
             if (value > upper)
@@ -362,23 +362,23 @@ auto M68Core::setChk2UndefinedFlags(int32_t lower, int32_t upper, int32_t value)
             n = true;
         if (value > upper)
             n = true;
-        if (value > lower && (static_cast<int64_t>(upper) - value >= 0)) {
+        if (value > lower && (static_cast<int32_t>((uint32_t)upper - (uint32_t)value) >= 0)) {
             v = true;
             n = false;
         }
     } else if (lower >= 0 && upper >= 0 && lower > upper) {
         if (value > upper && value < lower)
             n = true;
-        if (value < 0 && (static_cast<int64_t>(lower) - value < 0))
+        if (value < 0 && (static_cast<int32_t>((uint32_t)lower - (uint32_t)value) < 0))
             v = true;
-        if (value < 0 && (static_cast<int64_t>(lower) - value >= 0))
+        if (value < 0 && (static_cast<int32_t>((uint32_t)lower - (uint32_t)value) >= 0))
             n = true;
     } else if (lower >= 0 && upper >= 0 && lower <= upper) {
         if (value >= 0 && value < lower)
             n = true;
         if (value > upper)
             n = true;
-        if (value < 0 && (static_cast<int64_t>(upper) - value < 0)) {
+        if (value < 0 && (static_cast<int32_t>((uint32_t)upper - (uint32_t)value) < 0)) {
             n = true;
             v = true;
         }
@@ -387,7 +387,7 @@ auto M68Core::setChk2UndefinedFlags(int32_t lower, int32_t upper, int32_t value)
             n = true;
         if (value > upper && value < lower)
             n = true;
-        if (value >= 0 && (static_cast<int64_t>(value) - lower < 0)) {
+        if (value >= 0 && (static_cast<int32_t>((uint32_t)value - (uint32_t)lower) < 0)) {
             n = false;
             v = true;
         }
@@ -396,7 +396,7 @@ auto M68Core::setChk2UndefinedFlags(int32_t lower, int32_t upper, int32_t value)
             n = true;
         if (value < 0 && value > upper)
             n = true;
-        if (value >= 0 && (static_cast<int64_t>(value) - lower < 0)) {
+        if (value >= 0 && (static_cast<int32_t>((uint32_t)value - (uint32_t)lower) < 0)) {
             n = true;
             v = true;
         }
@@ -405,10 +405,12 @@ auto M68Core::setChk2UndefinedFlags(int32_t lower, int32_t upper, int32_t value)
 
 template<uint8_t Size> auto M68Core::setChkUndefinedFlags(int32_t src, int32_t dst) -> void {
     // from UAE
-    c = z = n = v = false;
+    c = z = v = false;
 
     if (dst == 0)
         z = true;
+
+    n = dst < 0;
 
     if (dst < 0 || dst > src) {
 

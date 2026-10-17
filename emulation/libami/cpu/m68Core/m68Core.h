@@ -400,6 +400,9 @@ private:
     OP_DECLARE(MovecRxRc)
     OP_DECLARE_EA(Moves)
 
+    OP_DECLARE_EA(CpSave)
+    OP_DECLARE_EA(CpRestore)
+
     #undef OP_DECLARE_EA
     #undef OP_DECLARE
 
@@ -437,7 +440,7 @@ private:
 
     template<uint8_t Inst, uint8_t Size> auto arithmetic(uint32_t src, uint32_t dest) -> uint32_t;
     template<typename T, typename TSign, uint8_t Inst, uint8_t Size> auto arithmeticT(uint32_t src, uint32_t dest) -> uint32_t;
-    template<uint8_t Inst> auto bcd(uint32_t src, uint32_t dest) -> uint8_t;
+    template<Engine E, uint8_t Inst> auto bcd(uint32_t src, uint32_t dest) -> uint8_t;
     template<uint8_t Inst> auto testCondition() -> bool;
 
     template<bool quadWord> auto mullu(uint32_t src, uint32_t dest) -> uint64_t;
@@ -447,7 +450,7 @@ private:
     template<uint8_t Size> auto defaultFlags(uint32_t data) -> void;
     template<uint8_t Mode, uint8_t destMode, uint8_t Size> auto setMoveCCWhenAddressError(uint32_t data) -> void;
 
-    template<Engine E, unsigned Flags = None> auto executeAt(uint32_t adr) -> void;
+    template<Engine E, unsigned Flags = None> auto executeAt(uint32_t nr) -> void;
     template<Engine E, uint8_t Mode, uint8_t Size> auto addressExceptionEA(uint32_t ea) -> void;
     template<Engine E, uint8_t Mode, uint8_t Size> auto addressExceptionMoveEA(uint32_t ea) -> void;
     auto group0Exception(const std::exception& exc) -> void;
@@ -463,6 +466,7 @@ private:
     template<Engine E> auto trapException(uint8_t vector) -> void;
     auto privilegeException() -> void;
     template<Engine E> auto privilegeException() -> void;
+    template<Engine E> auto formatException() -> void;
     template<Engine E> auto illegal(uint16_t opcode) -> void;
     template<Engine E> auto lineF(uint16_t opcode) -> void;
     template<Engine E> auto lineA(uint16_t opcode) -> void;

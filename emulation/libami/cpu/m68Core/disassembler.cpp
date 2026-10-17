@@ -641,4 +641,12 @@ template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68Core::dasmMoveCcr(uin
     d.Ins(Inst).si( Size ).tab().ccr().sep().ea();
 }
 
+template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68Core::dasmCpRestore(uint16_t opcode, uint32_t& adr, DasmHandler& d) -> void {
+    dasmIllegal(opcode, adr, d);
+}
+
+template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68Core::dasmCpSave(uint16_t opcode, uint32_t& adr, DasmHandler& d) -> void {
+    dasmIllegal(opcode, adr, d);
+}
+
 }

@@ -158,8 +158,9 @@ template<M68Core::Engine E, uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68Co
     int ofField = (irc >> 6) & 0x1f;
     unsigned wiField = irc & 0x1f;
 
-    unsigned width = (irc & 0x20) ? regsD[wiField & 7] : wiField;
-    width = width == 0 ? 32 : (width & 0x1f);
+    unsigned width = (irc & 0x20) ? (regsD[wiField & 7] & 0x1f) : wiField;
+    if (width == 0)
+        width = 32;
 
     unsigned _offset = (irc & 0x800) ? regsD[ofField & 7] : ofField;
 
@@ -187,15 +188,15 @@ template<M68Core::Engine E, uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68Co
         case Bfset:
             result = bitField<Inst>(result, offset, bfMask<false>( width, offset ));
             syncSequencer( 10 );
-            writeEA<E, Inst, Size>( ea, result );
+            write<E, Size>( ea, result );
 
             if (shift > 32) {
                 result = read<E, Byte, FC_EA_PRG>(ea + 4);
                 SYNC( 2 );
                 auto mask = static_cast<uint8_t>(0xff << (40 - shift));
-                if constexpr (Inst == Bfchg) writeEA<E, Inst, Byte>(ea + 4, result ^ mask);
-                if constexpr (Inst == Bfset) writeEA<E, Inst, Byte>(ea + 4, result | mask);
-                if constexpr (Inst == Bfclr) writeEA<E, Inst, Byte>(ea + 4, result & ~mask);
+                if constexpr (Inst == Bfchg) write<E, Byte>(ea + 4, result ^ mask);
+                if constexpr (Inst == Bfset) write<E, Byte>(ea + 4, result | mask);
+                if constexpr (Inst == Bfclr) write<E, Byte>(ea + 4, result & ~mask);
                 z &= zero<Byte>(result & mask);
             }
 
@@ -235,13 +236,13 @@ template<M68Core::Engine E, uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68Co
         case Bfins:
             result = bitFieldInsert<false>(result, readRegD<Size>( reg ), offset, width);
             syncSequencer( 9 );
-            writeEA<E, Inst, Size>( ea, result );
+            write<E, Size>( ea, result );
 
             if (shift > 32) {
                 result = read<E, Byte, FC_EA_PRG>(ea + 4);
                 uint8_t insert = readRegD<Byte>( reg ) << (40 - shift);
                 auto mask = static_cast<uint8_t>(0xff << (40 - shift));
-                writeEA<E, Inst, Byte>(ea + 4, (result & ~mask) | insert);
+                write<E, Byte>(ea + 4, (result & ~mask) | insert);
                 z &= zero<Byte>(insert);
             }
             break;
@@ -283,12 +284,12 @@ template<M68Core::Engine E, uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68Co
         case Bfextu:
         case Bfexts:
             result = bitFieldExtract<Inst>( bfShiftLeft( result, offset ), width);
-            writeRegD<Size>(regEA, result);
+            writeRegD<Size>(reg, result);
             syncSequencer(8 - 2);
             break;
         case Bfffo:
             result = bitFieldFind( bfShiftLeft( result, offset ), _offset, width);
-            writeRegD<Size>(regEA, result);
+            writeRegD<Size>(reg, result);
             syncSequencer(18 - 2);
             break;
         case Bfins:
@@ -321,7 +322,7 @@ template<M68Core::Engine E, uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68Co
     uint32_t result, ea;
     result = readEA<E, Mode, Byte>(opcode & 7, ea);
 
-    result = bcd<Sbcd>(result, 0);
+    result = bcd<E, Sbcd>(result, 0);
     prefetch<E, SampleIPL>();
 
     if constexpr (E == Engine::M68020)
@@ -632,6 +633,8 @@ template<M68Core::Engine E, uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68Co
             z = true;
         }
         SYNC( (E == Engine::M68020) ? 5 : 8);
+        if constexpr (E >= Engine::M68020)
+            checkT0();
         trapException<E>(5);
         return;
     }
@@ -689,7 +692,7 @@ template<M68Core::Engine E, uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68Co
         if (overflow) {
             v = true;
             if constexpr(Inst == Divu) {
-                n = negative<Long>(dividend);
+                if (negative<Long>(dividend)) n = true;
             } else {
                 n = c = z = false;
                 auto uDividend = uint32_t(std::abs((int32_t)dividend));
@@ -742,6 +745,7 @@ template<M68Core::Engine E, uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68Co
             z = static_cast<int32_t>(dividend) == 0;
         }
         SYNC( 5);
+        checkT0();
         trapException<E>(5);
         return;
     }
@@ -1058,20 +1062,24 @@ template<M68Core::Engine E, uint8_t Inst, uint8_t Size> auto M68Core::opBcc(uint
 
     if (testCondition<Inst>()) {
         uint32_t disp = Size == Byte ? (uint8_t)opcode : irc;
+        uint32_t newPC;
 
         if constexpr (Size == Long) {
+            newPC = pc;
             readExtensionWord<E>();
             disp = disp << 16 | irc;
-        }
-        
-        uint32_t newPC = pc + sign<Size>(disp);
+            newPC = static_cast<int64_t>(newPC) + static_cast<int64_t>(sign<Size>( disp ));
+        } else
+            newPC = pc + sign<Size>(disp);
 
         if (misaligned<Long>(newPC))
-            throw AddressError(newPC, pc, SF_READ | SF_PRG);
+            throw AddressError(newPC, E >= Engine::M68020 ? pcEdge : pc, SF_READ | SF_PRG);
 
         pc = newPC;
-        if constexpr (E == Engine::M68020)
+        if constexpr (E >= Engine::M68020) {
+            checkT0();
             SYNC(2);
+        }
 
         fullPrefetch<E, SampleIPL>();
     } else {
@@ -1096,22 +1104,28 @@ template<M68Core::Engine E, uint8_t Inst, uint8_t Size> auto M68Core::opBsr(uint
     if (E < Engine::M68020 && misaligned<Long>(sp))
         throw AddressError(sp, pc,SF_DATA);
 
-
     uint32_t disp = Size == Byte ? static_cast<uint8_t>(opcode) : irc;
+    uint32_t newPC;
 
     if constexpr (Size == Long) {
+        newPC = pc;
         readExtensionWord<E>();
         if (!busCycles) SYNC(2);
         disp = disp << 16 | irc;
-    }
+        newPC = static_cast<int64_t>(newPC) + static_cast<int64_t>(sign<Size>( disp ));
+    } else
+        newPC = pc + sign<Size>(disp);
 
     write<E, Long, Reverse>( sp, (Size == Word || Size == Long) ? (pc + 2) : pc); // stack PC of next opcode
     appendStepOut( (Size == Word || Size == Long) ? (pc + 2) : pc );
 
-    pc += sign<Size>(disp);
+    pc = newPC;
+
+    if constexpr (E >= Engine::M68020)
+        checkT0();
 
     if (misaligned<Long>(pc))
-        throw AddressError(pc, pc,SF_READ | SF_PRG); // stack new PC two times
+        throw AddressError(pc, E >= Engine::M68020 ? pcEdge : pc,SF_READ | SF_PRG); // stack new PC two times
 
     fullPrefetch<E, SampleIPL>();
 }
@@ -1121,21 +1135,28 @@ template<M68Core::Engine E, uint8_t Inst, uint8_t Size> auto M68Core::opDbcc(uin
     int reg = opcode & 7;
     uint32_t memPC = pc;
 
-    if constexpr (E >= Engine::M68020) {
-        if (t0) control |= TraceScheduled;
-    }
-    
     if (!testCondition<Inst>()) {
         pc = memPC + (int16_t)irc;
 
-        if (misaligned<Long>(pc))
-            throw AddressError(pc, pc + 2,SF_READ | SF_PRG);
+        uint16_t word = readRegD<Word>(reg);
+
+        if (E >= Engine::M68020 ) {
+            writeRegD<Word>( reg, word - 1);
+
+            if (misaligned<Long>(pc))
+                throw AddressError(pc, pc,SF_READ | SF_PRG);
+        } else {
+            if (misaligned<Long>(pc))
+                throw AddressError(pc, pc + 2,SF_READ | SF_PRG);
+
+            writeRegD<Word>( reg, word - 1);
+        }
 
         firstPrefetch<E>(); // assumes branch is taken, hence prefetch from new PC. (in order to speed up most likely case)
-        uint16_t word = readRegD<Word>(reg);
-        writeRegD<Word>( reg, word - 1);
         
         if (word) { // while prefetching, CPU finds out if branch is really taken
+            if constexpr (E >= Engine::M68020)
+                checkT0();
             prefetch<E, SampleIPL>();
             return;
         }
@@ -1162,8 +1183,13 @@ template<M68Core::Engine E, uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68Co
         if constexpr(Mode == AbsoluteShort || isDisplacementMode<Mode>())   SYNC(2);
     }
 
-    if (misaligned<Long>(adr))
+    if (misaligned<Long>(adr)) {
+        if constexpr (E >= Engine::M68020) {
+            if constexpr (isIndexMode<Mode>()) _pc = pc + 4;
+        }
+
         throw AddressError(adr, _pc, SF_READ | SF_PRG);
+    }
 
     pc = adr;
     firstPrefetch<E>();
@@ -1171,14 +1197,14 @@ template<M68Core::Engine E, uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68Co
         // real one prefetches 3 words, e.g. 32 bit port size and no cache would result in 2 bus cycles
         if (!busCycles) SYNC(3);
     }
-    prefetch<E, SampleIPL>();
+    if constexpr (E >= Engine::M68020)
+        checkT0();
 
-    if constexpr (E >= Engine::M68020) {
-        if (t0) control |= TraceScheduled;
-    }
+    prefetch<E, SampleIPL>();
 }
 
 template<M68Core::Engine E, uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68Core::opJsr(uint16_t opcode) -> void {
+    uint32_t _pc = pc;
     uint32_t adr = calcEA<E, Mode, Long, SkipExtension>(opcode & 7);
 
     if constexpr (E == Engine::M68020) {
@@ -1193,12 +1219,20 @@ template<M68Core::Engine E, uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68Co
     
     if constexpr(isAbsMode<Mode>())
         pc += 2;
-    
-    if (misaligned<Long>(adr))
-        throw AddressError(adr, pc, SF_READ | SF_PRG);
 
     uint32_t& sp = regsA[7];
-    sp -= 4;
+
+    if constexpr (E >= Engine::M68020) {
+        sp -= 4;
+
+        if (misaligned<Long>(adr))
+            throw AddressError(adr, adr, SF_READ | SF_PRG);
+    } else {
+        if (misaligned<Long>(adr))
+            throw AddressError(adr, pc, SF_READ | SF_PRG);
+
+        sp -= 4;
+    }
     
     if constexpr(isDisplacementMode<Mode>() || isIndexMode<Mode>())
         pc += 2;
@@ -1215,11 +1249,9 @@ template<M68Core::Engine E, uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68Co
     
     write<E, Long, Reverse>(sp, pcNextInstruction);
     appendStepOut( pcNextInstruction );
+    if constexpr (E >= Engine::M68020)
+        checkT0();
     prefetch<E, SampleIPL>();
-
-    if constexpr (E >= Engine::M68020) {
-        if (t0) control |= TraceScheduled;
-    }
 }
 
 template<M68Core::Engine E, uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68Core::opLea(uint16_t opcode) -> void {
@@ -1313,33 +1345,31 @@ template<M68Core::Engine E, uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68Co
 template<M68Core::Engine E, uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68Core::opMovemToEa(uint16_t opcode) -> void {
     uint16_t mask = irc;
     readExtensionWord<E>();
+    int reg = opcode & 7;
 
     if constexpr(Mode == AddressRegisterIndirectWithPreDecrement) {
-        uint32_t ea = readRegA(opcode & 7);
+        uint32_t ea = readRegA(reg);
         if (E < Engine::M68020 && mask && misaligned<Long>(ea))
             throw AddressError(ea - 2, pc + 2, SF_DATA);
 
-        if (mask & (1 << 0)) { ea -= Size; write<E, Size>(ea, regsA[7] ); }
-        if (mask & (1 << 1)) { ea -= Size; write<E, Size>(ea, regsA[6] ); }
-        if (mask & (1 << 2)) { ea -= Size; write<E, Size>(ea, regsA[5] ); }
-        if (mask & (1 << 3)) { ea -= Size; write<E, Size>(ea, regsA[4] ); }
-        if (mask & (1 << 4)) { ea -= Size; write<E, Size>(ea, regsA[3] ); }
-        if (mask & (1 << 5)) { ea -= Size; write<E, Size>(ea, regsA[2] ); }
-        if (mask & (1 << 6)) { ea -= Size; write<E, Size>(ea, regsA[1] ); }
-        if (mask & (1 << 7)) { ea -= Size; write<E, Size>(ea, regsA[0] ); }
+        for (int r = 15; r >= 0; r-- ) {
+            if (mask & (0x8000 >> r)) {
+                ea -= Size;
 
-        if (mask & (1 << 8)) { ea -= Size; write<E, Size>(ea, regsD[7] ); }
-        if (mask & (1 << 9)) { ea -= Size; write<E, Size>(ea, regsD[6] ); }
-        if (mask & (1 << 10)) { ea -= Size; write<E, Size>(ea, regsD[5] ); }
-        if (mask & (1 << 11)) { ea -= Size; write<E, Size>(ea, regsD[4] ); }
-        if (mask & (1 << 12)) { ea -= Size; write<E, Size>(ea, regsD[3] ); }
-        if (mask & (1 << 13)) { ea -= Size; write<E, Size>(ea, regsD[2] ); }
-        if (mask & (1 << 14)) { ea -= Size; write<E, Size>(ea, regsD[1] ); }
-        if (mask & (1 << 15)) { ea -= Size; write<E, Size>(ea, regsD[0] ); }
+                if constexpr (E == Engine::M68020)
+                    writeRegA( reg, ea );
 
-        writeRegA( opcode & 7, ea );
+                if (r & 8)
+                    write<E, Size>(ea, regsA[r & 7] );
+                else
+                    write<E, Size>(ea, regsD[r] );
+            }
+        }
+
+        if constexpr (E < Engine::M68020)
+            writeRegA( reg, ea );
     } else {
-        uint32_t ea = calcEA<E, Mode, Size>(opcode & 7);
+        uint32_t ea = calcEA<E, Mode, Size>(reg);
         if (E < Engine::M68020 && mask && misaligned<Long>(ea))
             throw AddressError(ea, pc + 2, SF_DATA);
 
@@ -1388,7 +1418,7 @@ template<M68Core::Engine E, uint8_t Inst, uint8_t Size> auto M68Core::opArithmet
     else
         SYNC(2);
 
-    writeRegD<Size>( destReg, bcd<Inst>(readRegD<Size>( opcode & 7 ), readRegD<Size>( destReg ) ) );
+    writeRegD<Size>( destReg, bcd<E, Inst>(readRegD<Size>( opcode & 7 ), readRegD<Size>( destReg ) ) );
 }
 
 template<M68Core::Engine E, uint8_t Inst, uint8_t Size> auto M68Core::opArithmeticXEa(uint16_t opcode) -> void {
@@ -1423,7 +1453,7 @@ template<M68Core::Engine E, uint8_t Inst, uint8_t Size> auto M68Core::opArithmet
     else                        dest = read<E, Size, Reverse>(ea);
 
     if constexpr(Inst == Abcd || Inst == Sbcd)
-        result = bcd<Inst>(result, dest );
+        result = bcd<E, Inst>(result, dest );
     else
         result = arithmetic<Inst, Size>(result, dest );
 
@@ -1476,6 +1506,7 @@ template<M68Core::Engine E, uint8_t Inst, uint8_t Size> auto M68Core::opCcr(uint
 
     if constexpr (E == Engine::M68020) {
         ccr<Inst>( data );
+        checkT0();
         prefetch<E, SampleIPL>();
         syncSequencer( 12 );
     } else {
@@ -1493,6 +1524,7 @@ template<M68Core::Engine E, uint8_t Inst, uint8_t Size> auto M68Core::opSr(uint1
     readExtensionWord<E>();
 
     if constexpr (E == Engine::M68020) {
+        checkT0();
         sr<Inst>( data );
         prefetch<E, SampleIPL>();
         syncSequencer( 12 );
@@ -1508,7 +1540,7 @@ template<M68Core::Engine E, uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68Co
     int reg = (opcode >> 9) & 7;
     result = readEA<E, Mode, Size>(opcode & 7, ea);
 
-    uint32_t dataD = readRegD<Word>(reg);
+    uint32_t dataD = readRegD<Size>(reg);
 
     if constexpr (E == Engine::M68000 ) {
         z = zero<Word>( dataD );
@@ -1520,6 +1552,8 @@ template<M68Core::Engine E, uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68Co
     if ( sign<Size>(dataD) > sign<Size>(result)) {
         SYNC(4);
         n = negative<Size>(dataD); // z, n flag changes happen not here, but later in exception routine
+        if constexpr (E >= Engine::M68020 )
+            checkT0();
         return trapException<E>( 6 );
     }
 
@@ -1527,6 +1561,8 @@ template<M68Core::Engine E, uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68Co
     if (sign<Size>(dataD) < 0) {
         SYNC(4);
         n = true;
+        if constexpr (E >= Engine::M68020 )
+            checkT0();
         return trapException<E>( 6 );
     }
     
@@ -1558,12 +1594,17 @@ template<M68Core::Engine E, uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68Co
     int32_t boundL = sign<Size>(result);
     int32_t boundU = sign<Size>(result2);
 
-    if (boundL <= boundU)
-        c = value < boundL || value > boundU;
-    else
-        c = value < boundL && value > boundU;
+    if (value == boundL || value == boundU) {
+        z = true;
+        c = false;
+    } else {
+        z = false;
 
-    z = value == boundL || value == boundU;
+        if (boundL <= boundU)
+            c = value < boundL || value > boundU;
+        else
+            c = value < boundL && value > boundU;
+    }
 
     setChk2UndefinedFlags(boundL, boundU, value);
 
@@ -1571,6 +1612,7 @@ template<M68Core::Engine E, uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68Co
 
     if (useExc && c) {
         SYNC(6);
+        checkT0();
         trapException<E>(6);
     } else {
         prefetch<E, SampleIPL>();
@@ -1611,6 +1653,8 @@ template<M68Core::Engine E, uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68Co
     result = readEA<E, Mode, Size>(opcode & 7, ea);
 
     SYNC(E == Engine::M68020 ? 8 : 4);
+    if constexpr (E >= Engine::M68020)
+        checkT0();
     setSR( result );
     fullPrefetch<E, SampleIPL>();
 }
@@ -1726,50 +1770,76 @@ template<M68Core::Engine E> auto M68Core::opRte(uint16_t opcode) -> void {
         return privilegeException<E>();
 
     uint32_t& sp = regsA[7];
-    if (E < Engine::M68020 && misaligned<Long>(sp))
-        throw AddressError(sp, pc, SF_READ | SF_DATA); // always leads to halted state after 20 cycles
-
-    uint16_t newSr = read<E, Word>( sp );
-    uint32_t newPc = read<E, Long>( sp + 2 );
-    // 68000: SP and status will be updated during second micro cycle of third BUS cycle.
-    sp += 6;
+    uint16_t newSr;
+    uint32_t newPc;
 
     if constexpr (E >= Engine::M68020) {
         SYNC(6);
-        uint16_t format = read<E, Word>(sp) >> 12; sp += 2;
-        switch (format) {
-            case 0:
+        while (true) {
+            uint8_t format = read<E, Word>(sp + 6) >> 12;
+
+            if (format == 0) {
+                newSr = read<E, Word>( sp );
+                newPc = read<E, Long>( sp + 2 );
+                sp += 8;
                 break;
-            case 1:
+            } if (format == 1) {
+                newSr = read<E, Word>( sp );
+                (void)read<E, Long>( sp + 2 );
+                sp += 8;
                 setSR( newSr );
-                newSr = read<E, Word>( sp ); sp += 2;
-                newPc = read<E, Long>( sp ); sp += 4;
-                (void)read<E, Word>(sp); sp += 2;
+                continue;
+            } if (format == 2) {
+                newSr = read<E, Word>( sp );
+                newPc = read<E, Long>( sp + 2 );
+                sp += 8 + 4;
                 break;
-            case 2:
+            } if (format == 9) { // copro
+                newSr = read<E, Word>( sp );
+                newPc = read<E, Long>( sp + 2 );
+                sp += 8 + 12;
+                break;
+            } if (format == 0xa) {
+                newSr = read<E, Word>( sp );
+                newPc = read<E, Long>( sp + 2 );
+                sp += 8;
+                (void)read<E, Word>(sp); sp += 2;
+                (void)read<E, Word>(sp); sp += 2;
+                (void)read<E, Word>(sp); sp += 2;
+                (void)read<E, Word>(sp); sp += 2;
+                (void)read<E, Long>(sp); sp += 4;
+                (void)read<E, Long>(sp); sp += 4;
+                (void)read<E, Long>(sp); sp += 4;
                 (void)read<E, Long>(sp); sp += 4;
                 break;
-            case 0xa:
-                (void)read<E, Word>(sp); sp += 2;
-                (void)read<E, Word>(sp); sp += 2;
-                (void)read<E, Word>(sp); sp += 2;
-                (void)read<E, Word>(sp); sp += 2;
-                (void)read<E, Long>(sp); sp += 4;
-                (void)read<E, Long>(sp); sp += 4;
-                (void)read<E, Long>(sp); sp += 4;
-                (void)read<E, Long>(sp); sp += 4;
+            } if (format == 0xb) {
+                newSr = read<E, Word>( sp );
+                newPc = read<E, Long>( sp + 2 );
+                sp += 8 + 84;
                 break;
-            default:
-                trapException<E>(14);
-                return;
+            }
+
+            return formatException<E>();
         }
+        checkT0();
+    } else {
+
+        if (misaligned<Long>(sp))
+            throw AddressError(sp, pc, SF_READ | SF_DATA); // always leads to halted state after 20 cycles
+
+        newSr = read<E, Word>( sp );
+        newPc = read<E, Long>( sp + 2 );
+        // 68000: SP and status will be updated during second micro cycle of third BUS cycle.
+        sp += 6;
     }
 
     setSR( newSr );
 
     if (misaligned<Long>(newPc))
-        throw AddressError(newPc, pc, SF_READ | SF_PRG);
+        throw AddressError(newPc, E >= Engine::M68020 ? pcEdge : pc, SF_READ | SF_PRG);
+
     if(!stepOuts.empty()) stepOuts.pop_back();
+
     pc = newPc;
     fullPrefetch<E, SampleIPL>();
 }
@@ -1785,6 +1855,7 @@ template<M68Core::Engine E> auto M68Core::opRtd(uint16_t opcode) -> void {
 
     pc = newPc;
     SYNC(9);
+    checkT0();
     fullPrefetch<E, SampleIPL>();
 }
 
@@ -1804,8 +1875,10 @@ template<M68Core::Engine E> auto M68Core::opRtr(uint16_t opcode) -> void {
 
     if(!stepOuts.empty()) stepOuts.pop_back();
     pc = newPc;
-    if constexpr (E == Engine::M68020)
+    if constexpr (E >= Engine::M68020) {
         SYNC(6);
+        checkT0();
+    }
     fullPrefetch<E, SampleIPL>();
 }
 
@@ -1820,12 +1893,14 @@ template<M68Core::Engine E> auto M68Core::opRts(uint16_t opcode) -> void {
     if (misaligned<Long>(newPc))
         // after stacking current PC, new PC is copied to PC and stacked as fault address.
         // for simplicity, that is not emulated and not needed either, because PC is updated from vector a few cycles later.
-        throw AddressError(newPc, pc, SF_READ | SF_PRG);
+        throw AddressError(newPc, E >= Engine::M68020 ? pcEdge : pc, SF_READ | SF_PRG);
 
     if(!stepOuts.empty()) stepOuts.pop_back();
     pc = newPc;
-    if constexpr (E == Engine::M68020)
+    if constexpr (E >= Engine::M68020) {
         SYNC(6);
+        checkT0();
+    }
     fullPrefetch<E, SampleIPL>();
 }
 
@@ -1855,6 +1930,8 @@ template<M68Core::Engine E, uint8_t Inst, uint8_t Size> auto M68Core::opSwap(uin
 
 template<M68Core::Engine E, uint8_t Inst, uint8_t Size> auto M68Core::opTrap(uint16_t opcode) -> void {
     SYNC(4);
+    if constexpr (E >= Engine::M68020)
+        checkT0();
     trapException<E>( (opcode & 0xf) + 32 );
 }
 
@@ -1871,6 +1948,7 @@ template<M68Core::Engine E, uint8_t Inst, uint8_t Size> auto M68Core::opTrapcc(u
 
     if (testCondition<Inst>()) {
         SYNC(5);
+        checkT0();
         trapException<E>( 7 );
         return;
     }
@@ -1882,6 +1960,8 @@ template<M68Core::Engine E, uint8_t Inst, uint8_t Size> auto M68Core::opTrapcc(u
 template<M68Core::Engine E> auto M68Core::opTrapv(uint16_t opcode) -> void {
     if (v) {
         read<E, Word, PRG>(pc); // doesn't update irc
+        if constexpr (E >= Engine::M68020)
+            checkT0();
         trapException<E>( 7 );
     } else
         prefetch<E, SampleIPL>();
@@ -2029,7 +2109,6 @@ template<M68Core::Engine E, uint8_t Inst, uint8_t Size> auto M68Core::opMovecRcR
 
     uint8_t rn = (irc >> 12) & 0xf;
     uint16_t ctl = irc & 0xfff;
-    readExtensionWord<E>();
     if (!busCycles)
         SYNC(1);
 
@@ -2044,9 +2123,10 @@ template<M68Core::Engine E, uint8_t Inst, uint8_t Size> auto M68Core::opMovecRcR
         case 0x804: writeRegR( rn, m ? ssp : regsA[7] ); break;
         default:
             illegal<E>(opcode);
-            break;
+            return;
     }
 
+    readExtensionWord<E>();
     prefetch<E, SampleIPL>();
     syncSequencer( 2 );
 }
@@ -2057,7 +2137,7 @@ template<M68Core::Engine E, uint8_t Inst, uint8_t Size> auto M68Core::opMovecRxR
 
     uint8_t rn = (irc >> 12) & 0xf;
     uint16_t ctl = irc & 0xfff;
-    readExtensionWord<E>();
+
     if (!busCycles)
         SYNC(1);
 
@@ -2074,9 +2154,10 @@ template<M68Core::Engine E, uint8_t Inst, uint8_t Size> auto M68Core::opMovecRxR
         case 0x804: (m ? ssp : regsA[7]) = value; break;
         default:
             illegal<E>(opcode);
-            break;
+            return;
     }
     SYNC(6);
+    readExtensionWord<E>();
     prefetch<E, SampleIPL>();
     syncSequencer( 2 );
 }
@@ -2116,7 +2197,7 @@ template<M68Core::Engine E, uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68Co
     } else {
         uint32_t result = readEA<E, Mode, Size, SFC>( reg, ea );
 
-        writeRegR(rn, result);
+        writeRegR<Size>(rn, result);
     }
 
     prefetch<E, SampleIPL>();
@@ -2133,6 +2214,20 @@ template<M68Core::Engine E, uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68Co
     syncSequencer( 3 );
 
     writeEA<E, Mode, Size>(ea, getCCR());
+}
+
+template<M68Core::Engine E, uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68Core::opCpSave(uint16_t opcode) -> void {
+    if (!s)
+        privilegeException<E>();
+    else
+        lineF<E>(opcode);
+}
+
+template<M68Core::Engine E, uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68Core::opCpRestore(uint16_t opcode) -> void {
+    if (!s)
+        privilegeException<E>();
+    else
+        lineF<E>(opcode);
 }
 
 }

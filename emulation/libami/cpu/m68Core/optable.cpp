@@ -850,6 +850,14 @@ template<M68Core::Engine E> auto M68Core::build() -> void {
         mnemonics[(0xf << 12) | i] = DasmHandler::mnemonic( LineF );
     }
 
+    if constexpr (E >= Engine::M68020) {
+        o = parse("1111 ---1 01-- ----");
+        _EA_( o, SO, CpRestore, Illegal, AI | AIPI | AID | AII | AS | AL | PCD | PCI, Long )
+
+        o = parse("1111 ---1 00-- ----");
+        _EA_( o, SO, CpSave, Illegal, AI | AIPD | AID | AII | AS | AL, Long )
+    }
+
     stepOuts.reserve(64);
 }
 

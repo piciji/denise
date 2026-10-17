@@ -179,7 +179,7 @@ template<uint8_t Inst, uint8_t Size, bool SingleShift> auto M68Core::shifter(uin
     return clip<Size>(data);
 }
 
-template<uint8_t Inst> auto M68Core::bcd(uint32_t src, uint32_t dest) -> uint8_t {
+template<M68Core::Engine E, uint8_t Inst> auto M68Core::bcd(uint32_t src, uint32_t dest) -> uint8_t {
     uint16_t result;
 
     switch (Inst) {
@@ -191,7 +191,10 @@ template<uint8_t Inst> auto M68Core::bcd(uint32_t src, uint32_t dest) -> uint8_t
             if (resLo > 9) result += 6;
             x = c = (result & 0x3F0) > 0x90;
             if (c) result += 0x60;
-            v = ( ((tmp_result & 0x80) == 0) && ((result & 0x80) == 0x80) );
+            if constexpr (E == Engine::M68020)
+                v = false;
+            else
+                v = ( ((tmp_result & 0x80) == 0) && ((result & 0x80) == 0x80) );
         } break;
 
         case Sbcd: {
@@ -206,7 +209,10 @@ template<uint8_t Inst> auto M68Core::bcd(uint32_t src, uint32_t dest) -> uint8_t
             }
             if (((dest - src - x) & 0x100) > 0xff) result -= 0x60;
             c = x = ( (dest - src - bcd - x) & 0x300) > 0xff;
-            v = ( ((tmp_result & 0x80) == 0x80) && ((result & 0x80) == 0) );
+            if constexpr (E == Engine::M68020)
+                v = false;
+            else
+                v = ( ((tmp_result & 0x80) == 0x80) && ((result & 0x80) == 0) );
         } break;
     }
 
@@ -344,8 +350,9 @@ template<uint8_t Inst> auto M68Core::bitField(uint32_t data, uint32_t offset, ui
             break;
         default:
         case Bftst:
+            result = 0;
             n = negative<Long>(data << offset);
-            z = zero<Long>(data & mask);
+            z = zero<Long>(data & mask);            
             break;
     }
 

@@ -8,24 +8,24 @@ namespace M68FAMILY {
 template<M68Core::Engine E> auto M68Core::trapException(uint8_t vector) -> void {
     uint16_t SR = getSR();
     setSuperVisor();
-    bool formatExc = vector == 14;
 
     control &= ~(Stop | Trace); // a scheduled trace exception still happens directly afterwards
     uint32_t& sp = regsA[7];
 
     if (E >= Engine::M68020) {
         t0 = false;
-        if (vector < 32 && !formatExc) {
+
+        if (vector < 32) {
             sp -= 12;
             write<E, Long>(sp + 8, pcEdge);
             write<E, Word>(sp + 6, 0x2000 | vector << 2);
-        } else { // Trap / Format
+        } else { // Trap
             sp -= 8;
             write<E, Word>(sp + 6, vector << 2);
         }
 
         write<E, Word>(sp + 0, SR);
-        write<E, Long>(sp + 2, formatExc ? pcEdge : pc);
+        write<E, Long>(sp + 2, pc);
 
     } else {
         if (misaligned(sp))
@@ -37,7 +37,7 @@ template<M68Core::Engine E> auto M68Core::trapException(uint8_t vector) -> void 
         write<E, Word>(sp + 2, (pc >> 16) & 0xffff);
     }
     appendStepOut( pc );
-    executeAt<E>( vector << 2 );
+    executeAt<E>( vector );
 }
 
 template<M68Core::Engine E> auto M68Core::illegal(uint16_t opcode) -> void {
@@ -67,6 +67,10 @@ template<M68Core::Engine E> auto M68Core::privilegeException() -> void {
     group1Exception<E>( 8 );
 }
 
+template<M68Core::Engine E> auto M68Core::formatException() -> void {
+    group1Exception<E>( 14 );
+}
+
 auto M68Core::traceException() -> void {
     try {
         if (engine == Engine::M68000)
@@ -81,7 +85,7 @@ auto M68Core::traceException() -> void {
 template<M68Core::Engine E> auto M68Core::group1Exception(uint8_t vector) -> void {
     uint16_t SR = getSR();
     setSuperVisor();
-    pc = pcEdge;
+    pc -= 2;
 
     control &= ~(Stop | Trace | TraceScheduled);
     SYNC(4);
@@ -112,7 +116,7 @@ template<M68Core::Engine E> auto M68Core::group1Exception(uint8_t vector) -> voi
     }
 
     appendStepOut( pc );
-    executeAt<E, EXC>( vector << 2 );
+    executeAt<E, EXC>( vector );
 }
 
 auto M68Core::IRQException() -> void {
@@ -131,17 +135,16 @@ template<M68Core::Engine E> auto M68Core::IRQException() -> void { // a group 1 
     setSuperVisor();
     i = iplSample;
 
-    pc = pcEdge;
+    pc -= 2;
 
     control &= ~(IRQ | Stop | Trace | TraceScheduled);
     SYNC(6);
     uint32_t& sp = regsA[7];
-    uint16_t vectorAdr;
 
     if (E >= Engine::M68020) {
         t0 = false;
         ird = (uint16_t)getInterruptVector( iplSample & 7 );
-        vectorAdr = ird << 2;
+        uint16_t vectorAdr = ird << 2;
 
         int rounds = m ? 2 : 1;
         while (rounds--) {
@@ -163,7 +166,6 @@ template<M68Core::Engine E> auto M68Core::IRQException() -> void { // a group 1 
 
         write<E, Word, EXC>(sp - 2, pc & 0xffff);
         ird = (uint16_t)getInterruptVector( iplSample & 7 );
-        vectorAdr = ird << 2;
         SYNC(4); // justify vector (2 shift operations)
         sp -= 6;
         write<E, Word, EXC>(sp + 0, SR);
@@ -171,7 +173,7 @@ template<M68Core::Engine E> auto M68Core::IRQException() -> void { // a group 1 
     }
 
     appendStepOut( pc );
-    executeAt<E, EXC>( vectorAdr & 0xfff );
+    executeAt<E, EXC>( ird );
 
     // when IPL sample state changes, another IRQ service routine could be processed without a single instruction in between.
     // this also applies for a possible address exception which not causing a double fault.
@@ -285,17 +287,35 @@ template<M68Core::Engine E> auto M68Core::group0Exception(uint32_t vector, uint3
         sp -= 4; write<E, Long, EXC>(sp, 0);
         sp -= 4; write<E, Long, EXC>(sp, 0);
         sp -= 4; write<E, Long, EXC>(sp, 0);
+        sp -= 4; write<E, Long, EXC>(sp, 0);
+        sp -= 4; write<E, Long, EXC>(sp, 0);
+        sp -= 4; write<E, Long, EXC>(sp, 0);
+        sp -= 4; write<E, Long, EXC>(sp, 0);
+        sp -= 4; write<E, Long, EXC>(sp, 0);
+        sp -= 4; write<E, Long, EXC>(sp, 0);
 
+        sp -= 4; write<E, Long, EXC>(sp, 0);
+        sp -= 4; write<E, Long, EXC>(sp, 0);
+
+        sp -= 4; write<E, Long, EXC>(sp, 0);
+        sp -= 4; write<E, Long, EXC>(sp, 0);
+        sp -= 4; write<E, Long, EXC>(sp, 0);
+        sp -= 4; write<E, Long, EXC>(sp, 0);
+        sp -= 4; write<E, Long, EXC>(sp, 0);
+        sp -= 4; write<E, Long, EXC>(sp, 0);
+
+        sp -= 4; write<E, Long, EXC>(sp, 0);
+
+        // A / B
         sp -= 4; write<E, Long, EXC>(sp, adr);
 
-        sp -= 2; write<E, Word, EXC>(sp, 0);
-        sp -= 2; write<E, Word, EXC>(sp, 0);
+        sp -= 4; write<E, Long, EXC>(sp, 0);
 
         sp -= 2; write<E, Word, EXC>(sp, ssw);
 
         sp -= 2; write<E, Word, EXC>(sp, 0);
 
-        sp -= 2; write<E, Word, EXC>(sp, 0xa000 | vector << 2);
+        sp -= 2; write<E, Word, EXC>(sp, 0xb000 | vector << 2);
 
         sp -= 4; write<E, Long, EXC>(sp, _pc);
         sp -= 2; write<E, Word, EXC>(sp, SR);
@@ -318,23 +338,25 @@ template<M68Core::Engine E> auto M68Core::group0Exception(uint32_t vector, uint3
     }
 
     appendStepOut( pc );
-    executeAt<E, EXC>(vector << 2);
+    executeAt<E, EXC>(vector);
 }
 
-template<M68Core::Engine E, unsigned Flags> auto M68Core::executeAt(uint32_t adr) -> void { // 18 cycles
-    if ((control & ExceptionPoint) && exceptionPoints.check( adr >> 2, true )) {
-        DEBUG_POINT_REACHED(ExceptionPoint, exceptionPoints, adr >> 2);
+template<M68Core::Engine E, unsigned Flags> auto M68Core::executeAt(uint32_t nr) -> void { // 18 cycles
+    if ((control & ExceptionPoint) && exceptionPoints.check( nr, true )) {
+        DEBUG_POINT_REACHED(ExceptionPoint, exceptionPoints, nr);
     }
+    uint32_t _addr;
 
-    uint32_t _addr = adr;
     if constexpr (E >= Engine::M68020)
-        _addr = (vbr & ~0x1) + adr;
+        _addr = vbr + nr * 4;
+    else
+        _addr = nr << 2;
 
-    uint32_t oldPc = pc;
     pc = read<E, Long, Flags>(_addr);
     
-    if (misaligned<Long>(pc))
-        throw AddressError(pc, E == Engine::M68020 ? oldPc : adr, SF_READ | SF_PRG | (Flags & EXC ? SF_EXC : 0));
+    if (misaligned<Long>(pc)) {
+        throw AddressError(pc, nr << 2, SF_READ | SF_PRG | (Flags & EXC ? SF_EXC : 0));
+    }
 
     firstPrefetch<E, Flags>();
     SYNC(2);
