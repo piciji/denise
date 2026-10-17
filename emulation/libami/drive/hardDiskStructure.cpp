@@ -650,7 +650,7 @@ auto HardDiskStructure::buildHdfFromBinaries(const std::string& name, std::vecto
         return true;
     };
 
-    unsigned _size = 1 * 1024 * 1024;
+    unsigned _size = 2 * 1024 * 1024;
     for (auto& item : files) {
         if (!item.isGroup)
             _size += item.data.size;
