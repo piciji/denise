@@ -863,8 +863,13 @@ auto Agnus::sync(unsigned cycles) -> void {
 }
 
 auto Agnus::iackCycle(uint8_t level, uint8_t& vector) -> int {
-    vector = 24 + level;
-    return M68FAMILY::M68Core::USER_VECTOR;
+    if (kickRom && (model & (OCS | ECS))) {
+        // interrupt acknowledge cycle sets bits A4 - A23 on address BUS
+        vector = *(kickRom + ((0xfffff1 | (level << 1) ) & kickRomMask));
+        return M68FAMILY::M68Core::USER_VECTOR;
+    }
+    // switches A1000 to user vector when WOM is locked ?
+    return M68FAMILY::M68Core::AUTO_VECTOR;
 }
 
 auto Agnus::setRefPtr(uint16_t value) -> void {
