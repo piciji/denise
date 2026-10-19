@@ -408,6 +408,7 @@ auto Agnus::prepareOverclock() -> void {
             case 32: // not supported
                 break;
         }
+        o.syncAgnus = o.speedInternal - 2; // minimum access cycle is 2 CPU clocks
 
     } else if (engine == M68FAMILY::M68Core::Engine::M68020) {
         // BUS cycle: 2 cycles to put address + 1 access cycles
@@ -429,13 +430,17 @@ auto Agnus::prepareOverclock() -> void {
                 o.romWaitStates = 14;
                 break;
         }
+        o.syncAgnus = o.speedInternal - 1; // minimum access cycle is 1 CPU clock
     }
+
+    // for maximum speed there are no fastram wait states for overclocked CPU's
+    // can be reactivated in "memory.cpp"
 
     //fprintf( stdout, "fast %i, rom %i, eclock %i\n", o.fastWaitStates, o.romWaitStates, o.eClockShifter );
 }
 
 template<bool logDma> inline auto Agnus::sync(unsigned cycles) -> void {
-    auto& o = overclock;
+#define o overclock
 
     if (o.speedInternal) {
         o.cycles += cycles;
@@ -467,11 +472,14 @@ template<bool logDma> inline auto Agnus::sync(unsigned cycles) -> void {
             }
         }
     }
+#undef o
 }
 
 template<bool logDma> inline auto Agnus::addWaitstatesToCPU() -> void {
-    if (overclock.speedInternal) {
-        if (overclock.cycles) {
+#define o overclock
+
+    if (o.speedInternal) {
+        if (o.cycles) {
             if constexpr (logDma) {
                 checkDmaStops();
             }
@@ -485,7 +493,7 @@ template<bool logDma> inline auto Agnus::addWaitstatesToCPU() -> void {
         }
 
         // access BUS (clock stretch to stock speed)
-        overclock.cycles = overclock.speedInternal - 2;
+        o.cycles = o.syncAgnus;
     }
 
     while (busUsage != BUS_FREE) {
@@ -507,6 +515,7 @@ template<bool logDma> inline auto Agnus::addWaitstatesToCPU() -> void {
     // to find out if BUS is free for a possible read/write
     countWaitCycles = 1;
     busUsage = BUS_USAGE_CPU;
+#undef o
 }
 
 auto Agnus::updateVCounter() -> void {

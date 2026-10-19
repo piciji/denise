@@ -9,7 +9,7 @@ auto DasmHandler::mnemonic(uint8_t inst) -> const char* {
         "bchg", "bset", "bclr", "btst",
         "sub", "subx", "add", "addx", "not", "cmp", "and", "or", "eor", "abcd", "sbcd",
         "adda", "suba", "cmpa",
-        "mulu", "muls","divu", "divs",
+        "mulu", "muls", "divu", "divs",
         "clr", "nbcd", "neg", "negx", "move", "movea",
         "st", "sf", "shi", "sls", "scc", "scs", "sne", "seq",
         "svc", "svs", "spl", "smi", "sge", "slt", "sgt", "sle",
@@ -23,7 +23,8 @@ auto DasmHandler::mnemonic(uint8_t inst) -> const char* {
         "lea", "pea", "movem", "chk", "exg", "ext", "nop", "trap", "trapv",
         "reset", "rte", "rtr", "rts", "stop", "swap",
         "Illegal", "LineA", "LineF",
-
+        // 68020
+        "mullu", "mulls", "divul", "divsl",
         "bfchg", "bfset", "bfclr", "bftst", "bfexts", "bfextu", "bfffo", "bfins",
         "chk2", "cmp2", "bkpt", "cas", "cas2", "extb", "pack", "unpk",
         "trapt", "trapf", "traphi", "trapls", "trapcc", "trapcs", "trapne", "trapeq",

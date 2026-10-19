@@ -91,8 +91,8 @@ template<bool logDma> inline auto Agnus::readByte(uint32_t adr) -> uint8_t {
             LOG_DMA(res, false, L_BYTE)
             break;
         case FAST_MEM:
-            if (o.fastWaitStates)
-                sync<logDma>(o.fastWaitStates);
+            //if (o.fastWaitStates)
+              //  sync<logDma>(o.fastWaitStates);
 
             res = *(fastMem + (adr - fastMemExpansion.baseAdr));
             LOG_DMA_CPU(res, false, L_BYTE)
@@ -275,8 +275,8 @@ template<bool logDma> inline auto Agnus::readLong(uint32_t adr) -> uint32_t {
             return res;
         }
         case FAST_MEM: {
-            if (o.fastWaitStates)
-                sync<logDma>(o.fastWaitStates);
+            //if (o.fastWaitStates)
+              //  sync<logDma>(o.fastWaitStates);
             res = _swapLong(*(uint32_t*)(fastMem + (adr - fastMemExpansion.baseAdr)));
             LOG_DMA_CPU( res, false, L_LONG )
             return res;
@@ -347,8 +347,8 @@ template<bool logDma> inline auto Agnus::readWord(uint32_t adr) -> uint16_t {
             LOG_DMA(dataBus, false, L_WORD)
             break;
         case FAST_MEM: {
-            if (o.fastWaitStates)
-                sync<logDma>(o.fastWaitStates);
+            //if (o.fastWaitStates)
+              //  sync<logDma>(o.fastWaitStates);
             uint16_t res = _swapWord(*(uint16_t*)(fastMem + (adr - fastMemExpansion.baseAdr)));
             LOG_DMA_CPU( res, false, L_WORD )
             return res;
@@ -450,8 +450,8 @@ template<bool logDma> inline auto Agnus::writeByte(uint32_t adr, uint8_t value) 
             LOG_DMA(value, true, false)
             break;
         case FAST_MEM:
-            if (o.fastWaitStates)
-                sync<logDma>(o.fastWaitStates);
+            //if (o.fastWaitStates)
+              //  sync<logDma>(o.fastWaitStates);
             adr -= fastMemExpansion.baseAdr;
             if (memState)
                 memState->trackers[TRACKER_FAST].remember(adr & ~1);
@@ -540,8 +540,8 @@ template<bool logDma> inline auto Agnus::writeWord(uint32_t adr, uint16_t value)
             LOG_DMA(value, true, L_WORD)
             break;
         case FAST_MEM:
-            if (o.fastWaitStates)
-                sync<logDma>(o.fastWaitStates);
+            //if (o.fastWaitStates)
+              //  sync<logDma>(o.fastWaitStates);
             adr -= fastMemExpansion.baseAdr;
             if (memState)
                 memState->trackers[TRACKER_FAST].remember(adr);
@@ -608,8 +608,8 @@ template<bool logDma> inline auto Agnus::writeLong(uint32_t adr, uint32_t value)
             LOG_DMA(value, true, L_LONG)
             break;
         case FAST_MEM:
-            if (o.fastWaitStates)
-                sync<logDma>(o.fastWaitStates);
+            // if (o.fastWaitStates)
+               // sync<logDma>(o.fastWaitStates);
             adr -= fastMemExpansion.baseAdr;
             if (memState) {
                 memState->trackers[TRACKER_FAST].remember(adr);

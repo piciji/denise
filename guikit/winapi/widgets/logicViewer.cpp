@@ -426,10 +426,10 @@ auto pLogicViewer::buildDmaSlot(Gdiplus::Graphics& g, LogicState& logicState, RE
         setBox(rc, (int)LogicState::Offset::Data2);
         if (logicState.hilight == LogicState::Hilight::Write) {
             SetTextColor(drawDC, HI_LOGIC_WRITE);
-            drawRectRounded(g, &path, rc, String::convertToHex(logicState.data2), 10, logicState.active);
+            drawRectRounded(g, &path, rc, String::convertToHex(logicState.data2), 5, logicState.active);
             setTextColor( logicState );
         } else
-            drawRectRounded(g, &path, rc, String::convertToHex(logicState.data2), 10, logicState.active);
+            drawRectRounded(g, &path, rc, String::convertToHex(logicState.data2), 5, logicState.active);
     }
 
     int i = 0;

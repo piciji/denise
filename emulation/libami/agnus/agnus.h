@@ -172,6 +172,7 @@ struct Agnus {
         unsigned cycles;
         unsigned romWaitStates;
         unsigned fastWaitStates;
+        unsigned syncAgnus;
         unsigned eClockShifter;
     } overclock;
 

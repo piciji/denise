@@ -68,6 +68,8 @@ protected:
         Lea, Pea, Movem, Chk, Exg, Ext, Nop, Trap, Trapv,
         Reset, Rte, Rtr, Rts, _Stop, Swap,
         Illegal, LineA, LineF,
+        // 68020
+        Mullu, Mulls, Divul, Divsl,
         Bfchg, Bfset, Bfclr, Bftst, Bfexts, Bfextu, Bfffo, Bfins,
         Chk2, Cmp2, Bkpt, Cas, Cas2, Extb, Pack, Unpk, Rtd,
         Trapt, Trapf, Traphi, Trapls, Trapcc, Trapcs, Trapne, Trapeq,
