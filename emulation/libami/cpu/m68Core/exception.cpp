@@ -358,12 +358,7 @@ template<M68Core::Engine E, unsigned Flags> auto M68Core::executeAt(uint32_t nr)
         throw AddressError(pc, nr << 2, SF_READ | SF_PRG | (Flags & EXC ? SF_EXC : 0));
     }
 
-    firstPrefetch<E, Flags>();
-    SYNC(2);
-    prefetch<E, Flags | SampleIPL>();
-    if constexpr (E == Engine::M68020) {
-        SYNC(2);
-    }
+    fullPrefetch<E, Flags | SampleIPL | DelayPrefetch>();
 }
 
 auto M68Core::resetRoutine() -> void {
@@ -385,9 +380,7 @@ template<M68Core::Engine E> auto M68Core::resetRoutine() -> void { // highest pr
         return setHalt();
     }
 
-    firstPrefetch<E>();
-    SYNC(2);
-    prefetch<E, SampleIPL>();
+    fullPrefetch<E, SampleIPL | DelayPrefetch>();
 }
 
 auto M68Core::setSuperVisor(bool state) -> void {

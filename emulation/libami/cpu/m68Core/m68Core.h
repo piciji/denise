@@ -79,7 +79,8 @@ protected:
 
     enum {  None = 0, SampleIPL = 1, SkipExtension = 2, EXC = 4,
             PRG = 8, ConcurrentAdrCalc = 0x10 /* happens while prefetching */, Reverse = 0x20,
-            DFC = 0x40, SFC = 0x80, FirstPrefetch = 0x100, ExtPrefetch = 0x200, UpdatePrePost = 0x400 };
+            DFC = 0x40, SFC = 0x80, FirstPrefetch = 0x100, DelayPrefetch = 0x200, UpdatePrePost = 0x400
+    };
 
     enum { SF_DATA = 1, SF_PRG = 2, SF_S = 4, SF_EXC = 8, SF_READ = 0x10, SF_DFC = 0x40, SF_SFC = 0x80 };
 
@@ -119,8 +120,9 @@ protected:
     uint32_t ssp;
     uint32_t msp;
 
-    uint16_t irc;
-    uint16_t ird;
+    uint16_t stageB;
+    uint16_t irc; // stage C
+    uint16_t ird; // stage D
 
     bool c;
     bool v;
@@ -262,7 +264,8 @@ private:
 
     template <Engine E, unsigned Flags, bool Scale = false> auto indirectIndexBrief(uint32_t B) -> uint32_t;
     template <Engine E, unsigned Flags> auto indirectIndexFull(uint32_t B) -> uint32_t;
-    template <Engine E, unsigned Flags> auto fetchDisplacement(bool longDis) -> uint32_t;
+    template <Engine E> auto fetchDisplacement(bool longDis) -> uint32_t;
+    template <Engine E> auto fetchDisplacementSkipped(bool longDis, int& extWords) -> uint32_t;
 
     template<uint8_t Size = Long> inline auto readRegD(int reg) -> uint32_t;
     template<uint8_t Size = Long> inline auto writeRegD(int reg, uint32_t data) -> void;
@@ -275,6 +278,7 @@ private:
     template<Engine E, uint8_t Size, unsigned Flags = None> auto read(uint32_t adr) -> uint32_t;
     template<Engine E, uint8_t Size, unsigned Flags = None> auto write(uint32_t adr, uint32_t data) -> void;
     template<Engine E, unsigned Flags = None>  auto firstPrefetch() -> void;
+    template<Engine E, unsigned Flags = None> auto secondPrefetch() -> void;
     template<Engine E, unsigned Flags = None> inline auto prefetch() -> void;
     template<unsigned Flags> auto cachedPrefetch(uint32_t adr) -> uint16_t;
     template<Engine E, unsigned Flags = None> auto fullPrefetch() -> void;
@@ -500,6 +504,7 @@ private:
     auto invalidateCache() -> void;
     auto setCacr(uint32_t value) -> void;
     auto checkT0() -> void;
+    auto incPc() -> void { pc += 2; }
 
     template<bool withRotation = true> auto bfMask(unsigned width, unsigned offset) -> uint32_t;
     template<bool withRotation = true> auto bfShiftLeft(uint32_t data, unsigned offset) -> uint32_t;

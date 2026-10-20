@@ -247,6 +247,7 @@ auto Cpu::serialize(Emulator::Serializer& s) -> void {
         s.integer(cacr);
         s.integer(caar);
         s.integer(cahr);
+        s.integer(stageB);
 
         s.integer(busCycles);
 
