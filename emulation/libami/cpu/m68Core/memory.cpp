@@ -161,30 +161,35 @@ template<unsigned Flags> auto M68Core::cachedPrefetch(uint32_t adr) -> uint16_t 
             cahr = entry.data;
 
         } else {
-            uint32_t addrAligned = adr & ~3; // full prefetch from odd word wastes a BUS cycle in case of 16 bit port size
+            // first prefetch from odd word wastes a BUS cycle in case of 16 bit port size
+            uint32_t addrAligned = adr & ~3;
 
             SYNC(2);
             switch (PORT_SIZE(addrAligned)) {
                 default:
                 case 4:
-                    cahr = READ_LONG(addrAligned);
                     busCycles = 3;
+                    cahr = READ_LONG(addrAligned);
                     break;
                 case 2:
-                    cahr = READ_WORD(addrAligned) << 16;
-                    SYNC(3);
-                    cahr |= READ_WORD(addrAligned + 2);
                     busCycles = 6;
+                    cahr = READ_WORD(addrAligned) << 16;
+                    if constexpr(Flags & SampleIPL) { SYNC(1); sampleInterrupt(); SYNC(2); }
+                    else SYNC(3);
+                    cahr |= READ_WORD(addrAligned + 2);
                     break;
                 case 1:
-                    cahr = READ_BYTE(addrAligned) << 24;
-                    SYNC(3);
-                    cahr |= READ_BYTE(addrAligned + 1) << 16;
-                    SYNC(3);
-                    cahr |= READ_BYTE(addrAligned + 2) << 8;
-                    SYNC(3);
-                    cahr |= READ_BYTE(addrAligned + 3);
                     busCycles = 12;
+                    cahr = READ_BYTE(addrAligned) << 24;
+                    if constexpr(Flags & SampleIPL) { SYNC(1); sampleInterrupt(); SYNC(2); }
+                    else SYNC(3);
+                    cahr |= READ_BYTE(addrAligned + 1) << 16;
+                    if constexpr(Flags & SampleIPL) { SYNC(1); sampleInterrupt(); SYNC(2); }
+                    else SYNC(3);
+                    cahr |= READ_BYTE(addrAligned + 2) << 8;
+                    if constexpr(Flags & SampleIPL) { SYNC(1); sampleInterrupt(); SYNC(2); }
+                    else SYNC(3);
+                    cahr |= READ_BYTE(addrAligned + 3);
                     break;
             }
 
@@ -249,7 +254,7 @@ template<M68Core::Engine E, uint8_t Size, unsigned Flags> auto M68Core::read(uin
         }
     } else {
         // analyzed from fx68k, the sample point happens a half micro cycle (= one clock cycle) before.
-        // for simplicity and performance reasons we check it now. the emulator always adds full micro cycles.
+        // for simplicity and performance reasons we check it now. the 68000 always adds full micro cycles.
         // this way periphery can distinguish between first and second clock cycle within last micro cycle and
         // delay interrupts if happened in second clock cycle.
         if constexpr(Flags & SampleIPL)
@@ -258,11 +263,10 @@ template<M68Core::Engine E, uint8_t Size, unsigned Flags> auto M68Core::read(uin
         SYNC(2);
 
         if constexpr (Size == Byte) {
+            if constexpr (E == Engine::M68020)
+                return readByteDS<Flags>( adr );
+
             result = READ_BYTE(adr);
-            if constexpr (E == Engine::M68020) {
-                SYNC(1);
-                return result;
-            }
 
         } else { // Word
             if constexpr (E == Engine::M68020)
@@ -275,17 +279,24 @@ template<M68Core::Engine E, uint8_t Size, unsigned Flags> auto M68Core::read(uin
     return result;
 }
 
+template<unsigned Flags> auto M68Core::readByteDS(uint32_t adr) -> uint8_t {
+    uint8_t result = READ_BYTE(adr);
+    SYNC(1);
+    return result;
+}
+
 template<unsigned Flags> auto M68Core::readWordDS(uint32_t adr) -> uint16_t {
     uint16_t result;
     auto ps = PORT_SIZE(adr);
 
     if ( ((ps == 2) && (adr & 1)) || ((ps == 4) && ((adr & 3) == 3)) || (ps == 1) ) {
         result = READ_BYTE(adr) << 8;
-        SYNC(3);
-        if constexpr(Flags & SampleIPL) sampleInterrupt();
+        if constexpr(Flags & SampleIPL) { SYNC(1); sampleInterrupt(); SYNC(2); }
+        else SYNC(3);
         result |= READ_BYTE(adr + 1);
-    } else
+    } else {
         result = READ_WORD(adr);
+    }
 
     SYNC(1);
     return result;
@@ -356,12 +367,12 @@ template<M68Core::Engine E, uint8_t Size, unsigned Flags> auto M68Core::write(ui
     }
 
     if constexpr (Size == Long) {
-        SYNC(2);
         if constexpr (E == Engine::M68020) {
             writeLongDS<Flags>( adr, data );
             return;
         }
 
+        SYNC(2);
         if (Flags & Reverse) {
             WRITE_WORD(adr, data >> 16);
             SYNC(2);
@@ -382,16 +393,15 @@ template<M68Core::Engine E, uint8_t Size, unsigned Flags> auto M68Core::write(ui
 
         SYNC(2);
         if constexpr (Size == Byte) {
-            WRITE_BYTE(adr, data);
-
             if constexpr (E == Engine::M68020) {
-                SYNC(1);
+                writeByteDS<Flags>(adr, data);
                 return;
             }
+
+            WRITE_BYTE(adr, data);
         } else {
             if constexpr (E == Engine::M68020) {
                 writeWordDS<Flags>(adr, data);
-                SYNC(1);
                 return;
             }
 
@@ -401,66 +411,84 @@ template<M68Core::Engine E, uint8_t Size, unsigned Flags> auto M68Core::write(ui
     SYNC(2);
 }
 
+template<unsigned Flags> auto M68Core::writeByteDS(uint32_t adr, uint8_t data) -> void {
+    WRITE_BYTE(adr, data);
+    SYNC(1);
+}
+
 template<unsigned Flags> auto M68Core::writeWordDS(uint32_t adr, uint16_t data) -> void {
     auto ps = PORT_SIZE(adr);
 
     if ( ((ps == 2) && (adr & 1)) || ((ps == 4) && ((adr & 3) == 3)) || (ps == 1) ) {
         WRITE_BYTE(adr, data >> 8);
-        SYNC(3);
-        if constexpr(Flags & SampleIPL) sampleInterrupt();
+        if constexpr(Flags & SampleIPL) { SYNC(1); sampleInterrupt(); SYNC(2); }
+        else SYNC(3);
         WRITE_BYTE(adr + 1, data & 0xff);
-    } else
+    } else {
         WRITE_WORD(adr, data);
+    }
 
     SYNC(1);
 }
 
 template<unsigned Flags> auto M68Core::writeLongDS(uint32_t adr, uint32_t data) -> void {
-    uint32_t result;
     auto ps = PORT_SIZE(adr);
+
+    if constexpr (Flags & SampleIPL)
+        sampleInterrupt();
+
+    SYNC(2);
 
     if (ps == 4) {
         if ((adr & 3) == 0) {
             WRITE_LONG(adr, data);
         } else if ((adr & 3) == 2) {
             WRITE_WORD(adr, data >> 16);
-            SYNC(3);
+            if constexpr(Flags & SampleIPL) { SYNC(1); sampleInterrupt(); SYNC(2); }
+            else SYNC(3);
             WRITE_WORD(adr + 2, data);
         } else if ((adr & 3) == 1) {
             // CPU writes 3 bytes in one BUS cycle, can Amiga handle this directly ?
             WRITE_LONG(adr, data);
-            SYNC(3);
+            if constexpr(Flags & SampleIPL) { SYNC(1); sampleInterrupt(); SYNC(2); }
+            else SYNC(3);
             WRITE_BYTE(adr + 3, data);
         } else {
             WRITE_BYTE(adr, data >> 24);
-            SYNC(3);
+            if constexpr(Flags & SampleIPL) { SYNC(1); sampleInterrupt(); SYNC(2); }
+            else SYNC(3);
             // CPU writes 3 bytes in one BUS cycle, can Amiga handle this directly ?
             WRITE_LONG(adr, data);
         }
     } else if (ps == 2) {
         if (adr & 1) {
             WRITE_BYTE(adr, data >> 24);
-            SYNC(3);
+            if constexpr(Flags & SampleIPL) { SYNC(1); sampleInterrupt(); SYNC(2); }
+            else SYNC(3);
             WRITE_WORD(adr + 1, data >> 8);
-            SYNC(3);
+            if constexpr(Flags & SampleIPL) { SYNC(1); sampleInterrupt(); SYNC(2); }
+            else SYNC(3);
             WRITE_BYTE(adr + 3, data);
         } else {
             WRITE_WORD(adr, data >> 16);
-            SYNC(3);
+            if constexpr(Flags & SampleIPL) { SYNC(1); sampleInterrupt(); SYNC(2); }
+            else SYNC(3);
             WRITE_WORD(adr + 2, data);
         }
     } else {
         WRITE_BYTE(adr, data >> 24);
-        SYNC(3);
+        if constexpr(Flags & SampleIPL) { SYNC(1); sampleInterrupt(); SYNC(2); }
+        else SYNC(3);
         WRITE_BYTE(adr + 1, data >> 16);
-        SYNC(3);
+        if constexpr(Flags & SampleIPL) { SYNC(1); sampleInterrupt(); SYNC(2); }
+        else SYNC(3);
         WRITE_BYTE(adr + 2, data >> 8);
-        SYNC(3);
+        if constexpr(Flags & SampleIPL) { SYNC(1); sampleInterrupt(); SYNC(2); }
+        else SYNC(3);
         WRITE_BYTE(adr + 3, data);
     }
 
     SYNC(1);
-    if constexpr(Flags & SampleIPL) sampleInterrupt();
 }
 
 template<M68Core::Engine E, uint8_t Mode, uint8_t Size, unsigned Flags> auto M68Core::readEA(int reg, uint32_t& ea) -> uint32_t {

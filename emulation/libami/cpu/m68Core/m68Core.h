@@ -189,10 +189,11 @@ public:
     auto setInterrupt( uint8_t level ) -> void;
     auto reset() -> void;
     auto power() -> void;
-    auto isHalted() -> bool { return !!(control & Halt); }
+    auto isHalted() const -> bool { return !!(control & Halt); }
     auto setHalt() -> void; // I/O - could be halted from external device
     auto getCCR() -> uint8_t;
     auto getSR() -> uint16_t;
+    auto addWaitStates(unsigned cycles) -> void { busCycles += (int)cycles; }
 
     /* external devices can raise BERR (BUS error) as a result of unwanted memory access.
      * prefetching often takes place at the same time as ALU operations,
@@ -293,8 +294,10 @@ private:
     template<Engine E, uint8_t Mode, uint8_t Size, unsigned Flags = None> auto writeEA(uint32_t ea, uint32_t data) -> void;
     template<uint8_t Mode, uint8_t Size> auto prepareEaForDasm(uint32_t& adr, uint8_t reg, DasmHandler& d) -> void;
 
+    template<unsigned Flags> auto readByteDS(uint32_t adr) -> uint8_t;
     template<unsigned Flags> auto readWordDS(uint32_t adr) -> uint16_t;
     template<unsigned Flags> auto readLongDS(uint32_t adr) -> uint32_t;
+    template<unsigned Flags> auto writeByteDS(uint32_t adr, uint8_t data) -> void;
     template<unsigned Flags> auto writeWordDS(uint32_t adr, uint16_t data) -> void;
     template<unsigned Flags> auto writeLongDS(uint32_t adr, uint32_t data) -> void;
 

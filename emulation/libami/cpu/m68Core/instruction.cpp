@@ -2011,13 +2011,19 @@ template<M68Core::Engine E, uint8_t Inst, uint8_t Size> auto M68Core::opLink(uin
 }
 
 template<M68Core::Engine E, uint8_t Inst, uint8_t Size> auto M68Core::opUnlink(uint16_t opcode) -> void {
+    uint32_t data;
     uint32_t& sp = regsA[7];
     uint32_t newSP = readRegA<Long>(opcode & 7);
     if (E < Engine::M68020 && misaligned<Long>(newSP))
         throw AddressError(newSP, pc + 2, SF_READ | SF_DATA);
 
-    uint32_t data = read<E, Word>( newSP & 0xffffff ) << 16;
-    data |= read<E, Word, SampleIPL>( (newSP + 2) & 0xffffff );
+    if constexpr (E >= Engine::M68020) {
+        sampleInterrupt();
+        data = read<E, Long>( newSP & 0xffffff );
+    } else {
+        data = read<E, Word>( newSP & 0xffffff ) << 16;
+        data |= read<E, Word, SampleIPL>( (newSP + 2) & 0xffffff );
+    }
 
     sp = newSP + 4; // happens after first micro cycle of prefetch. when using register 7, this step happens too (visible in fx68k)
     writeRegA( opcode & 7, data ); // when using register 7, previous step is useless
