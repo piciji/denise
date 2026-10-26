@@ -109,7 +109,8 @@ auto Agnus::setRas() -> void {
 }
 
 auto Agnus::power(bool softReset, bool resetInstruction) -> void {
-    overclock.cycles = 0;
+    prepareOverclock();
+
     debugger.oneTimeAction = Interface::DebuggerAction::None;
     unsigned resetDelay = hasActiveEvent<EVENT_KBD>() ? getEventDelay<EVENT_KBD>() : 0;
     clearEvents();
@@ -358,9 +359,127 @@ auto Agnus::addDmaLogEntry() -> void {
     peekDmaWatcher(dmaLogger);
 }
 
+auto Agnus::prepareOverclock() -> void {
+    auto& o = overclock;
+
+    o.cycles = 0;
+    o.speedInternal = o.speed;
+    if (cpu.getEngine() == M68FAMILY::M68Core::Engine::M68020) {
+        if (!o.speed)
+            o.speedInternal = 2;
+
+        o.speedInternal <<= 1;
+    }
+
+    o.romWaitStates = 0;
+    o.fastWaitStates = 0;
+    o.eClockShifter = 0;
+
+    if (!o.speedInternal) // A500 stock speed has a values of 0 (means: 2), A1200 stock speed has a value of 4
+        return;
+
+    o.eClockShifter = o.speedInternal >> 2;
+
+    auto engine = cpu.getEngine();
+
+    // fast mem  ~60 ns
+    // rom      ~150 ns (A1200), ~150 - 250 ns (A500)
+    //
+    //  7.09 = ~140.97 ns / cycle
+    // 14.19 = ~ 70.48 ns / cycle
+    // 28.38 = ~ 35.24 ns / cycle
+    // 56.75 = ~ 17.62 ns / cycle
+    //113.50 = ~  8.81 ns / cycle
+
+    if (engine == M68FAMILY::M68Core::Engine::M68000) {
+        // BUS cycle: 2 cycles to put address + 2 access cycles
+        // has 2 minimum cycles for BUS access, add wait cycles if not enough
+        switch (o.speedInternal) {
+            case 4: // 14.19 MHz
+                o.romWaitStates = 1;
+                break;
+            case 8: // 28.38 MHz
+                o.romWaitStates = 3;
+                break;
+            case 16: // 56.75 MHz
+                o.fastWaitStates = 2;
+                o.romWaitStates = 7;
+                break;
+            case 32: // not supported
+                break;
+        }
+        o.syncAgnus = o.speedInternal - 2; // minimum access cycle is 2 CPU clocks
+
+    } else if (engine == M68FAMILY::M68Core::Engine::M68020) {
+        // BUS cycle: 2 cycles to put address + 1 access cycles
+        // has 1 minimum cycle for BUS access, add wait cycles if not enough
+        switch (o.speedInternal) {
+            case 4: // 14.19 MHz
+                o.romWaitStates = 2; // stock A1200 can not access ROM without wait states
+                break;
+            case 8: // 28.38 MHz
+                o.fastWaitStates = 1;
+                o.romWaitStates = 4;
+                break;
+            case 16: // 56.75 MHz
+                o.fastWaitStates = 3;
+                o.romWaitStates = 8;
+                break;
+            case 32: // 113.5 MHz
+                o.fastWaitStates = 6;
+                o.romWaitStates = 14;
+                break;
+        }
+        o.syncAgnus = o.speedInternal - 1; // minimum access cycle is 1 CPU clock
+    }
+
+    // for maximum speed there are no fastram wait states for overclocked CPU's
+    // can be reactivated in "memory.cpp"
+
+    //fprintf( stdout, "fast %i, rom %i, eclock %i\n", o.fastWaitStates, o.romWaitStates, o.eClockShifter );
+}
+
+template<bool logDma> inline auto Agnus::sync(unsigned cycles) -> void {
+#define o overclock
+
+    if (o.speedInternal) {
+        o.cycles += cycles;
+
+        while (o.cycles >= o.speedInternal) {
+            if constexpr (logDma) {
+                checkDmaStops();
+            }
+            dmaCycle();
+            o.cycles -= o.speedInternal;
+
+            if constexpr (logDma) {
+                addDmaLogEntry();
+            }
+        }
+
+    } else {
+        // triggers DMA cycle following current CPU micro cycle.
+        // means it is always a DMA cycle ahead of CPU to find out if next cycle is usable for CPU
+        while( cycles ) {
+            if constexpr (logDma) {
+                checkDmaStops();
+            }
+            dmaCycle();
+            cycles -= 2;
+
+            if constexpr (logDma) {
+                addDmaLogEntry();
+            }
+        }
+    }
+#undef o
+}
+
 template<bool logDma> inline auto Agnus::addWaitstatesToCPU() -> void {
-    if (overclock.speed) {
-        if (overclock.cycles) {
+#define o overclock
+
+    if (o.speedInternal) {
+        if (o.cycles) {
             if constexpr (logDma) {
                 checkDmaStops();
             }
@@ -374,7 +493,7 @@ template<bool logDma> inline auto Agnus::addWaitstatesToCPU() -> void {
         }
 
         // access BUS (clock stretch to stock speed)
-        overclock.cycles = overclock.speed - 2;
+        o.cycles = o.syncAgnus;
     }
 
     while (busUsage != BUS_FREE) {
@@ -396,6 +515,7 @@ template<bool logDma> inline auto Agnus::addWaitstatesToCPU() -> void {
     // to find out if BUS is free for a possible read/write
     countWaitCycles = 1;
     busUsage = BUS_USAGE_CPU;
+#undef o
 }
 
 auto Agnus::updateVCounter() -> void {
@@ -751,42 +871,14 @@ auto Agnus::sync(unsigned cycles) -> void {
     debugger.dmaLog ? sync<true>(cycles) : sync<false>(cycles);
 }
 
-template<bool logDma> inline auto Agnus::sync(unsigned cycles) -> void {
-    if (overclock.speed) {
-        overclock.cycles += cycles;
-
-        while (overclock.cycles >= overclock.speed) {
-            if constexpr (logDma) {
-                checkDmaStops();
-            }
-            dmaCycle();
-            overclock.cycles -= overclock.speed;
-
-            if constexpr (logDma) {
-                addDmaLogEntry();
-            }
-        }
-
-    } else {
-        // triggers DMA cycle following current CPU micro cycle.
-        // means it is always a DMA cycle ahead of CPU to find out if next cycle is usable for CPU
-        while( cycles ) {
-            if constexpr (logDma) {
-                checkDmaStops();
-            }
-            dmaCycle();
-            cycles -= 2;
-
-            if constexpr (logDma) {
-                addDmaLogEntry();
-            }
-        }
-    }
-}
-
 auto Agnus::iackCycle(uint8_t level, uint8_t& vector) -> int {
-    vector = 24 + level;
-    return 0;
+    if (kickRom && (model & (OCS | ECS))) {
+        // interrupt acknowledge cycle sets bits A4 - A23 on address BUS
+        vector = *(kickRom + ((0xfffff1 | (level << 1) ) & kickRomMask));
+        return M68FAMILY::M68Core::USER_VECTOR;
+    }
+    // switches A1000 to user vector when WOM is locked ?
+    return M68FAMILY::M68Core::AUTO_VECTOR;
 }
 
 auto Agnus::setRefPtr(uint16_t value) -> void {
@@ -1056,11 +1148,11 @@ auto Agnus::debugPointReached(int source, Emulator::WatchPoints& wp, unsigned ad
     Emulator::Interface::DebuggerAction action;
 
     switch (source) {
-        case M68FAMILY::M68000::WatchPoint: action = DebuggerAction::Watchpoint; break;
-        case M68FAMILY::M68000::WatchPointWrite: action = DebuggerAction::WatchpointWrite; break;
-        case M68FAMILY::M68000::ExceptionPoint: action = DebuggerAction::ExceptionPoint; break;
-        case M68FAMILY::M68000::BreakPoint: action = DebuggerAction::Breakpoint; break;
-        case M68FAMILY::M68000::SoftStop: action = DebuggerAction::Softstop; break;
+        case M68FAMILY::M68Core::WatchPoint: action = DebuggerAction::Watchpoint; break;
+        case M68FAMILY::M68Core::WatchPointWrite: action = DebuggerAction::WatchpointWrite; break;
+        case M68FAMILY::M68Core::ExceptionPoint: action = DebuggerAction::ExceptionPoint; break;
+        case M68FAMILY::M68Core::BreakPoint: action = DebuggerAction::Breakpoint; break;
+        case M68FAMILY::M68Core::SoftStop: action = DebuggerAction::Softstop; break;
         default: return;
     }
 
@@ -1090,20 +1182,25 @@ auto Agnus::logNextOpcode() -> void {
     dmaLogger.hilight = DebuggerDmaHilight::Opcode;
 }
 
-template<bool _write, bool _word, bool _prg> auto Agnus::memoryAcceesMnemonic() -> const char* {
+template<bool _write, uint8_t Size> auto Agnus::memoryAcceesMnemonic() -> const char* {
     static const char* mnemonics[] {
-        "R-B-P", "R-B-D", "R-W-P", "R-W-D", "W-B-D", "W-W-D"
+        "R-W-P", "R-W-D", "R-L-P", "R-L-D", "R-B-P", "R-B-D",
+        "W-W-P", "W-W-D", "W-L-P", "W-L-D", "W-B-P", "W-B-D"
     };
 
-    if constexpr (_write) {
-        return _word ? mnemonics[5] : mnemonics[4];
-    }
+    auto fc = cpu.getFc();
+    int i = _write ? 6 : 0;
 
-    if constexpr (_prg) {
-        return _word ? mnemonics[2] : mnemonics[0];
-    }
+    if constexpr (Size == 1) {}
+    else if constexpr (Size == 2)
+        i += 2;
+    else
+        i += 4;
 
-    return _word ? mnemonics[3] : mnemonics[1];
+    if ((fc & 2) == 0)
+        i += 1;
+
+    return mnemonics[i];
 }
 
 auto Agnus::oneTimeDebuggerAction() -> void {

@@ -7,7 +7,7 @@
 
 namespace LIBAMI {
 
-const std::string Interface::Version = "246";
+const std::string Interface::Version = "248";
 
 Interface::Interface() : Emulator::Interface( "Amiga" ) {
 
@@ -32,7 +32,10 @@ auto Interface::prepareFirmware() -> void {
 }
 
 auto Interface::prepareModels() -> void {
-    models.push_back({ModelIdSystem, "Amiga", Model::Type::Radio, Model::Purpose::SubModels, 1, {0, 3}, {"A1000", "A500/A2000 (Full OCS)", "A500 (ECS Agnus, OCS Denise)", "A500+/A600 (Full ECS)"} });
+    models.push_back({ModelIdSystem, "Amiga", Model::Type::Radio, Model::Purpose::SubModels, 1, {0, 3},
+{"A1000", "A500/A2000 (Full OCS)", "A500 (ECS Agnus, OCS Denise)", "A500+/A600 (Full ECS)"} });
+    models.push_back({ModelIdCpu, "CPU", Model::Type::Radio, Model::Purpose::Cpu, 0, {0, 1},
+{"68000", "68020" }});
     models.push_back({ModelIdSampleFetch, "Sample Interval", Model::Type::Radio, Model::Purpose::AudioResampler, 1, {0, 2}, {"Highest", "High", "Medium"}});
     models.push_back({ModelIdAudioFilter, "PAULA Filter", Model::Type::Radio, Model::Purpose::AudioSettings, 0, {0, 6}, {"Auto", "Off (A500)", "Software (A500)", "On (A500)", "Off (A1200)", "Software (A1200)", "On (A1200)"}});
     models.push_back({ModelIdRegion, "Region", Model::Type::Radio, Model::Purpose::GraphicChip, 0, {0, 1}, { "PAL", "NTSC" }});
@@ -53,6 +56,7 @@ auto Interface::prepareModels() -> void {
     models.push_back({ModelIdJoyportDongle, "Joyport Dongle", Model::Type::Combo, Model::Purpose::Misc, 0, {0,5}, {"None", "RoboCop 3", "Cricket Captain", "Leader Board", "Rugby Coach", "Striker Manager"}});
     models.push_back({ModelIdSerialPlugin, "Serial Plugin", Model::Type::Combo, Model::Purpose::Misc, 0, {0,3}, {"None", "Loopback", "Loopback VA", "B.A.T. II"}});
     models.push_back({ModelIdHardDrivesBuiltInSlower, "Slower Built-In HDD", Model::Type::Switch, Model::Purpose::Misc, 0 });
+
 }
 
 auto Interface::prepareMedia() -> void {
@@ -562,6 +566,9 @@ auto Interface::setModelValue(unsigned modelId, int value) -> void {
         case ModelIdHardDrivesBuiltInSlower:
             system->setHDDAsync(!!value);
             break;
+        case ModelIdCpu:
+            system->cpu.setEngine( static_cast<M68FAMILY::M68Core::Engine>(value) );
+            break;
     }
 }
 
@@ -586,6 +593,7 @@ auto Interface::getModelValue(unsigned modelId) -> int {
         case ModelIdJoyportDongle:                  return system->getDongle();
         case ModelIdOverclock:                      return (int)system->getOverclock();
         case ModelIdHardDrivesBuiltInSlower:        return (int)system->getHDDAsync();
+        case ModelIdCpu:                            return (int)system->cpu.getEngine();
     }
 
     return 0;

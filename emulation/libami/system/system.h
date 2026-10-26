@@ -4,7 +4,7 @@
 #include <cstdint>
 #include "../input/input.h"
 #include "../../cia/new/cia.h"
-#include "../cpu/m68000.h"
+#include "../cpu/cpu.h"
 //#include "../altCpu/cpu.h"
 #include "../agnus/agnus.h"
 #include "../video/denise.h"

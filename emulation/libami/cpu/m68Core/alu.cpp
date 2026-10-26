@@ -1,9 +1,9 @@
 
-#include "m68000.h"
+#include "m68Core.h"
 
 namespace M68FAMILY {
 
-template<uint8_t Inst, uint8_t Size, bool SingleShift> auto M68000::shifter(uint32_t data, int shift) -> uint32_t {
+template<uint8_t Inst, uint8_t Size, bool SingleShift> auto M68Core::shifter(uint32_t data, int shift) -> uint32_t {
     switch(Inst) {
         case Asl: {
             if constexpr(SingleShift) {
@@ -179,7 +179,7 @@ template<uint8_t Inst, uint8_t Size, bool SingleShift> auto M68000::shifter(uint
     return clip<Size>(data);
 }
 
-template<uint8_t Inst> auto M68000::bcd(uint32_t src, uint32_t dest) -> uint8_t {
+template<M68Core::Engine E, uint8_t Inst> auto M68Core::bcd(uint32_t src, uint32_t dest) -> uint8_t {
     uint16_t result;
 
     switch (Inst) {
@@ -191,7 +191,10 @@ template<uint8_t Inst> auto M68000::bcd(uint32_t src, uint32_t dest) -> uint8_t 
             if (resLo > 9) result += 6;
             x = c = (result & 0x3F0) > 0x90;
             if (c) result += 0x60;
-            v = ( ((tmp_result & 0x80) == 0) && ((result & 0x80) == 0x80) );
+            if constexpr (E == Engine::M68020)
+                v = false;
+            else
+                v = ( ((tmp_result & 0x80) == 0) && ((result & 0x80) == 0x80) );
         } break;
 
         case Sbcd: {
@@ -206,7 +209,10 @@ template<uint8_t Inst> auto M68000::bcd(uint32_t src, uint32_t dest) -> uint8_t 
             }
             if (((dest - src - x) & 0x100) > 0xff) result -= 0x60;
             c = x = ( (dest - src - bcd - x) & 0x300) > 0xff;
-            v = ( ((tmp_result & 0x80) == 0x80) && ((result & 0x80) == 0) );
+            if constexpr (E == Engine::M68020)
+                v = false;
+            else
+                v = ( ((tmp_result & 0x80) == 0x80) && ((result & 0x80) == 0) );
         } break;
     }
 
@@ -216,7 +222,7 @@ template<uint8_t Inst> auto M68000::bcd(uint32_t src, uint32_t dest) -> uint8_t 
     return result;
 }
 
-template<uint8_t Inst, uint8_t Size> auto M68000::arithmetic(uint32_t src, uint32_t dest) -> uint32_t {
+template<uint8_t Inst, uint8_t Size> auto M68Core::arithmetic(uint32_t src, uint32_t dest) -> uint32_t {
     if constexpr ((Size == Long) && ((Inst == Add) || (Inst == Addx) || (Inst == Sub) || (Inst == Subx)
         || (Inst == Cmp) || (Inst == Cmpi) || (Inst == Neg) || (Inst == Negx) || (Inst == Addi) || (Inst == Subi)|| (Inst == Addq) || (Inst == Subq)))
         return arithmeticT<uint64_t, int64_t, Inst, Size>(src, dest);
@@ -224,7 +230,7 @@ template<uint8_t Inst, uint8_t Size> auto M68000::arithmetic(uint32_t src, uint3
         return arithmeticT<uint32_t, int32_t, Inst, Size>(src, dest);
 }
 
-template<typename T, typename TSign, uint8_t Inst, uint8_t Size> auto M68000::arithmeticT(uint32_t src, uint32_t dest) -> uint32_t {
+template<typename T, typename TSign, uint8_t Inst, uint8_t Size> auto M68Core::arithmeticT(uint32_t src, uint32_t dest) -> uint32_t {
     T result;
 
     switch (Inst) {
@@ -306,7 +312,7 @@ template<typename T, typename TSign, uint8_t Inst, uint8_t Size> auto M68000::ar
     return result;
 }
 
-template<uint8_t Inst> auto M68000::bit(uint32_t data, int bit) -> uint32_t {
+template<uint8_t Inst> auto M68Core::bit(uint32_t data, int bit) -> uint32_t {
     z = 1 ^ ((data >> bit) & 1);
 
     switch (Inst) {
@@ -321,7 +327,94 @@ template<uint8_t Inst> auto M68000::bit(uint32_t data, int bit) -> uint32_t {
     }
 }
 
-template<uint8_t Inst> auto M68000::ccr(uint8_t data) -> void {
+template<uint8_t Inst> auto M68Core::bitField(uint32_t data, uint32_t offset, uint32_t mask) -> uint32_t {
+    uint32_t result;
+    v = false;
+    c = false;
+
+    switch (Inst) {
+        case Bfchg:
+            result = data ^ mask;
+            n = negative<Long>(data << offset);
+            z = zero<Long>(data & mask);
+            break;
+        case Bfset:
+            result = data | mask;
+            n = negative<Long>(data << offset);
+            z = zero<Long>(data & mask);
+            break;
+        case Bfclr:
+            result = data & ~mask;
+            n = negative<Long>(data << offset);
+            z = zero<Long>(data & mask);
+            break;
+        default:
+        case Bftst:
+            result = 0;
+            n = negative<Long>(data << offset);
+            z = zero<Long>(data & mask);            
+            break;
+    }
+
+    return result;
+}
+
+template<uint8_t Inst> auto M68Core::bitFieldExtract(uint32_t data,  uint32_t width) -> uint32_t {
+    uint32_t result;
+    v = false;
+    c = false;
+
+    switch (Inst) {
+        case Bfexts:
+            result = sign<Long>(data) >> (32u - width);
+            n = negative<Long>(data);
+            z = zero<Long>(result);
+            break;
+        case Bfextu:
+            result = data >> (32u - width);
+            n = negative<Long>(data);
+            z = zero<Long>(result);
+            break;
+        default:
+            break;
+    }
+
+    return result;
+}
+
+auto M68Core::bitFieldFind(uint32_t data, uint32_t offset, uint32_t width) -> uint32_t {
+    v = false;
+    c = false;
+
+    uint32_t result = offset;
+
+    n = negative<Long>(data);
+    data >>= 32 - width;
+    z = zero<Long>(data);
+
+    uint32_t mask = 1 << (width - 1);
+    while (mask) {
+        if (data & mask)
+            break;
+        mask >>= 1;
+        result++;
+    }
+
+    return result;
+}
+
+template<bool withRotation> auto M68Core::bitFieldInsert(uint32_t result, uint32_t insert, uint32_t offset, uint32_t width) -> uint32_t {
+    insert <<= (32 - width);
+    v = false;
+    c = false;
+
+    n = negative<Long>(insert);
+    z = zero<Long>(insert);
+
+    return (result & ~bfMask<withRotation>( width, offset )) | bfShiftRight<withRotation>( insert, offset );
+}
+
+template<uint8_t Inst> auto M68Core::ccr(uint8_t data) -> void {
     switch(Inst) {
         case And:	setCCR( getCCR() & data ); break;
         case Or:	setCCR( getCCR() | data ); break;
@@ -329,7 +422,7 @@ template<uint8_t Inst> auto M68000::ccr(uint8_t data) -> void {
     }
 }
 
-template<uint8_t Inst> auto M68000::sr(uint16_t data) -> void {
+template<uint8_t Inst> auto M68Core::sr(uint16_t data) -> void {
     switch(Inst) {
         case And:	setSR( getSR() & data ); break;
         case Or:	setSR( getSR() | data ); break;
@@ -337,37 +430,73 @@ template<uint8_t Inst> auto M68000::sr(uint16_t data) -> void {
     }
 }
 
-template<uint8_t Inst> auto M68000::testCondition() -> bool {
+template<uint8_t Inst> auto M68Core::testCondition() -> bool {
     switch( Inst ) {
-        case Dbt: case Bra: case St:    return true;
-        case Dbf: case Sf:              return false;
-        case Dbhi: case Bhi: case Shi:  return !c & !z;
-        case Dbls: case Bls: case Sls:  return c | z;
-        case Dbcc: case Bcc: case Scc:  return !c;
-        case Dbcs: case Bcs: case Scs:  return c;
-        case Dbne: case Bne: case Sne:  return !z;
-        case Dbeq: case Beq: case Seq:  return z;
-        case Dbvc: case Bvc: case Svc:  return !v;
-        case Dbvs: case Bvs: case Svs:  return v;
-        case Dbpl: case Bpl: case Spl:  return !n;
-        case Dbmi: case Bmi: case Smi:  return n;
-        case Dbge: case Bge: case Sge:  return n == v;
-        case Dblt: case Blt: case Slt:  return n != v;
-        case Dbgt: case Bgt: case Sgt:  return n == v && !z;
-        case Dble: case Ble: case Sle:  return n != v || z;
+        case Trapt:  case  Dbt: case Bra: case St:   return true;
+        case Trapf:  case  Dbf:           case Sf:   return false;
+        case Traphi: case Dbhi: case Bhi: case Shi:  return !c & !z;
+        case Trapls: case Dbls: case Bls: case Sls:  return c | z;
+        case Trapcc: case Dbcc: case Bcc: case Scc:  return !c;
+        case Trapcs: case Dbcs: case Bcs: case Scs:  return c;
+        case Trapne: case Dbne: case Bne: case Sne:  return !z;
+        case Trapeq: case Dbeq: case Beq: case Seq:  return z;
+        case Trapvc: case Dbvc: case Bvc: case Svc:  return !v;
+        case Trapvs: case Dbvs: case Bvs: case Svs:  return v;
+        case Trappl: case Dbpl: case Bpl: case Spl:  return !n;
+        case Trapmi: case Dbmi: case Bmi: case Smi:  return n;
+        case Trapge: case Dbge: case Bge: case Sge:  return n == v;
+        case Traplt: case Dblt: case Blt: case Slt:  return n != v;
+        case Trapgt: case Dbgt: case Bgt: case Sgt:  return n == v && !z;
+        case Traple: case Dble: case Ble: case Sle:  return n != v || z;
         default:
             break;
     }
     return false; // unreachable
 }
 
-template<uint8_t Size> auto M68000::defaultFlags(uint32_t data) -> void {
+template<bool quadWord> auto M68Core::mullu(uint32_t src, uint32_t dest) -> uint64_t {
+    uint64_t result = static_cast<uint64_t>(src) * static_cast<uint64_t>(dest);
+
+    if constexpr (quadWord) {
+        v = c = false;
+        n = negative<Long>(result >> 32);
+        z = result == 0;
+    } else {
+        v = (result >> 32) != 0;
+        c = false;
+        n = negative<Long>(result);
+        z = zero<Long>(result);
+    }
+
+    return result;
+}
+
+template<bool quadWord> auto M68Core::mulls(uint32_t src, uint32_t dest) -> uint64_t {
+    auto result = static_cast<uint64_t>(
+        static_cast<int64_t>(static_cast<int32_t>(src)) * static_cast<int64_t>(static_cast<int32_t>(dest))
+    );
+
+    if constexpr (quadWord) {
+        v = c = false;
+        n = negative<Long>(result >> 32);
+        z = result == 0;
+    } else {
+        v = result != static_cast<uint64_t>(static_cast<int32_t>(result));
+        c = false;
+        n = negative<Long>(result);
+        z = zero<Long>(result);
+    }
+
+    return result;
+}
+
+template<uint8_t Size> auto M68Core::defaultFlags(uint32_t data) -> void {
     v = c = false;
     n = negative<Size>(data);
     z = zero<Size>(data);
 }
 
-template<uint8_t Size> auto M68000::applyRoxRange(int& shift) -> void {
+template<uint8_t Size> auto M68Core::applyRoxRange(int& shift) -> void {
     switch(Size) {
         case Byte:
             if (shift >= 36) shift -= 36;

@@ -1,12 +1,12 @@
 
-#include "m68000.h"
+#include "m68Core.h"
 
 enum { S6 = 6, S8 = 8, S12 = 12, SO /* second operand */ = 1 << 4, O_16 = 2 << 4, O_256 = 4 << 4 };
 enum { DR = 1, AR = 2, AI = 4, AIPI = 8, AIPD = 16, AID = 32, AII = 64, AS = 128, AL = 256, PCD = 512, PCI = 1024, IM = 2048,
         ADR_TYPICAL = AI | AIPI | AIPD | AID | AII | AS | AL, ADR_FULL = ADR_TYPICAL | PCD | PCI | IM };
 
-#define _bindEA(id, F, I, M, S) { opTable[id] = &M68000::op##F<I, M, S>; dasmTable[id] = &M68000::dasm##F<I, M, S>; mnemonics[id] = DasmHandler::mnemonic( I ); }
-#define _bind(id, F, I, S) { opTable[id] = &M68000::op##F<I, S>; dasmTable[id] = &M68000::dasm##F<I, S>; mnemonics[id] = DasmHandler::mnemonic( I ); }
+#define _bindEA(id, F, I, M, S) { opTable[id] = &M68Core::op##F<E, I, M, S>; dasmTable[id] = &M68Core::dasm##F<I, M, S>; mnemonics[id] = DasmHandler::mnemonic( I ); }
+#define _bind(id, F, I, S) { opTable[id] = &M68Core::op##F<E, I, S>; dasmTable[id] = &M68Core::dasm##F<I, S>; mnemonics[id] = DasmHandler::mnemonic( I ); }
 
 #define _M_( op, F, I, M, S ) { \
     for (int j = 0; j < 8; j++) { \
@@ -50,16 +50,20 @@ enum { DR = 1, AR = 2, AI = 4, AIPI = 8, AIPD = 16, AID = 32, AII = 64, AS = 128
 
 namespace M68FAMILY {
 
-auto M68000::parse(const char* s, uint16_t sum) -> uint16_t {
+auto M68Core::parse(const char* s, uint16_t sum) -> uint16_t {
 
     return  *s == '1' ? parse(s + 1, (sum << 1) + 1) :
             *s == ' ' ? parse(s + 1, sum) :
             *s ? parse(s + 1, sum << 1) : sum;
 }
 
-auto M68000::build() -> void {
+template<M68Core::Engine E> auto M68Core::build() -> void {
     uint16_t o;
-    dasmTable = new OpDasm[0x10000];
+    for( int i = 0; i < 0x10000; i ++ ) {
+        opTable[i] = &M68Core::illegal<E>;
+        dasmTable[i] = &M68Core::dasmIllegal;
+        mnemonics[i] = DasmHandler::mnemonic( Illegal );
+    }
 
     //shift/rotate immediate
     o = parse("1110 ---1 ss00 0---");
@@ -170,6 +174,42 @@ auto M68000::build() -> void {
     _EA_( o, 0, ImmBit, Btst, ADR_TYPICAL | PCD | PCI, Byte )
     _EA_( o, 0, ImmBit, Btst, DR, Long )
 
+    if constexpr (E >= Engine::M68020) {
+        // bit field
+        o = parse("1110 1010 11-- ----");
+        _EA_( o, 0, BitFieldEA, Bfchg, AI | AID | AII | AS | AL, Long )
+        _EA_( o, 0, BitField, Bfchg, DR, Long )
+
+        o = parse( "1110 1100 11-- ----");
+        _EA_( o, 0, BitFieldEA, Bfclr, AI | AID | AII | AS | AL, Long )
+        _EA_( o, 0, BitField, Bfclr, DR, Long )
+
+        o = parse( "1110 1110 11-- ----");
+        _EA_( o, 0, BitFieldEA, Bfset, AI | AID | AII | AS | AL, Long )
+        _EA_( o, 0, BitField, Bfset, DR, Long )
+
+        o = parse( "1110 1111 11-- ----");
+        _EA_( o, 0, BitFieldEA, Bfins, AI | AID | AII | AS | AL, Long )
+        _EA_( o, 0, BitField, Bfins, DR, Long )
+
+        // with PCD and PCI
+        o = parse( "1110 1001 11-- ----");
+        _EA_( o, 0, BitFieldEA, Bfextu, AI | AID | AII | AS | AL | PCD | PCI, Long )
+        _EA_( o, 0, BitField, Bfextu, DR, Long )
+
+        o = parse( "1110 1011 11-- ----");
+        _EA_( o, 0, BitFieldEA, Bfexts, AI | AID | AII | AS | AL | PCD | PCI, Long )
+        _EA_( o, 0, BitField, Bfexts, DR, Long )
+
+        o = parse( "1110 1101 11-- ----");
+        _EA_( o, 0, BitFieldEA, Bfffo, AI | AID | AII | AS | AL | PCD | PCI, Long )
+        _EA_( o, 0, BitField, Bfffo, DR, Long )
+
+        o = parse( "1110 1000 11-- ----");
+        _EA_( o, 0, BitFieldEA, Bftst, AI | AID | AII | AS | AL | PCD | PCI, Long )
+        _EA_( o, 0, BitField, Bftst, DR, Long )
+    }
+
     // clr
     o = parse("0100 0010 ss-- ----");
     _EA_( o, S6, Clr, Clr, ADR_TYPICAL | DR, BWL )
@@ -216,6 +256,11 @@ auto M68000::build() -> void {
     // tst
     o = parse("0100 1010 ss-- ----");
     _EA_( o, S6, Tst, Tst, ADR_TYPICAL | DR, BWL )
+
+    if constexpr(E >= Engine::M68020) {
+        _EA_( o, S6, Tst, Tst, PCD | PCI | IM, Byte )
+        _EA_( o, S6, Tst, Tst, PCD | PCI | IM | AR, WL )
+    }
 
     // add
     o = parse("1101 ---0 ss-- ----");
@@ -280,6 +325,12 @@ auto M68000::build() -> void {
     o = parse("1100 ---1 11-- ----");
     _EA_( o, SO, Mul, Muls, ADR_FULL | DR, Word )
 
+    if constexpr (E >= Engine::M68020) {
+        // mull
+        o = parse("0100 1100 00-- ----");
+        _EA_( o, 0, Mull, Mulu, ADR_FULL | DR, Long )
+    }
+
     // divu
     o = parse("1000 ---0 11-- ----");
     _EA_( o, SO, Div, Divu, ADR_FULL | DR, Word )
@@ -287,6 +338,12 @@ auto M68000::build() -> void {
     // divs
     o = parse("1000 ---1 11-- ----");
     _EA_( o, SO, Div, Divs, ADR_FULL | DR, Word )
+
+    if constexpr (E >= Engine::M68020) {
+        // divl
+        o = parse("0100 1100 01-- ----");
+        _EA_( o, 0, Divl, Divu, ADR_FULL | DR, Long )
+    }
     
     // move
     o = parse("00ss ---0 00-- ----");
@@ -324,6 +381,21 @@ auto M68000::build() -> void {
     // movea
     o = parse("00ss ---0 01-- ----");
     _EA_( o, S12 | SO, MoveA, Movea, ADR_FULL | AR | DR, WL )
+
+    if constexpr (E >= Engine::M68020) {
+        // movec
+        o = parse("0100 1110 0111 101-");
+        _bind(o | 0, MovecRcRx, Movec, Long)
+        _bind(o | 1, MovecRxRc, Movec, Long)
+
+        // moves
+        o = parse("0000 1110 ss-- ----");
+        _EA_( o, S6, Moves, Moves, ADR_TYPICAL, BWL )
+
+        // move from ccr
+        o = parse("0100 0010 11-- ----");
+        _EA_( o, 0, MoveCcr, MoveCcr, ADR_TYPICAL | DR, Word )
+    }
     
     // addi
     o = parse("0000 0110 ss-- ----");
@@ -336,6 +408,9 @@ auto M68000::build() -> void {
     // cmpi
     o = parse("0000 1100 ss-- ----");
     _EA_( o, S6, ArithmeticI, Cmpi, ADR_TYPICAL | DR, BWL )
+
+    if constexpr (E >= Engine::M68020)
+        _EA_( o, S6, ArithmeticI, Cmpi, PCD | PCI, BWL )
     
     // eori
     o = parse("0000 1010 ss-- ----");
@@ -398,11 +473,34 @@ auto M68000::build() -> void {
     _bind(o | 0xe00, Bcc, Bgt, Word)
     _bind(o | 0xf00, Bcc, Ble, Word)
 
+    if constexpr (E >= Engine::M68020) {
+        _bind(o | 0x0ff, Bcc, Bra, Long)               // bra
+        _bind(o | 0x2ff, Bcc, Bhi, Long)
+        _bind(o | 0x3ff, Bcc, Bls, Long)
+        _bind(o | 0x4ff, Bcc, Bcc, Long)
+        _bind(o | 0x5ff, Bcc, Bcs, Long)
+        _bind(o | 0x6ff, Bcc, Bne, Long)
+        _bind(o | 0x7ff, Bcc, Beq, Long)
+        _bind(o | 0x8ff, Bcc, Bvc, Long)
+        _bind(o | 0x9ff, Bcc, Bvs, Long)
+        _bind(o | 0xaff, Bcc, Bpl, Long)
+        _bind(o | 0xbff, Bcc, Bmi, Long)
+        _bind(o | 0xcff, Bcc, Bge, Long)
+        _bind(o | 0xdff, Bcc, Blt, Long)
+        _bind(o | 0xeff, Bcc, Bgt, Long)
+        _bind(o | 0xfff, Bcc, Ble, Long)
+    }
+
     // bsr
     o = parse("0110 0001 ---- ----");
     _B_( o, O_256, Bsr, Bsr, Byte )
     // override a displacement of zero with "Word"
     _bind(o, Bsr, Bsr, Word)
+
+    if constexpr (E >= Engine::M68020) {
+        // override a displacement of $ff with "Long"
+        _bind(o | 0xff, Bsr, Bsr, Long)
+    }
     
     // dbcc
     o = parse("0101 ---- 1100 1---");
@@ -513,6 +611,21 @@ auto M68000::build() -> void {
     o = parse("0100 ---1 10-- ----");
     _EA_( o, SO, Chk, Chk, ADR_FULL | DR, Word )
 
+    if constexpr (E >= Engine::M68020) {
+        o = parse("0100 ---1 00-- ----");
+        _EA_( o, SO, Chk, Chk, ADR_FULL | DR, Long )
+
+        // chk2
+        o = parse("0000 0000 11-- ----");
+        _EA_( o, 0, Chk2, Chk2, AI | AID | AII | AS | AL | PCD | PCI, Byte )
+
+        o = parse("0000 0010 11-- ----");
+        _EA_( o, 0, Chk2, Chk2, AI | AID | AII | AS | AL | PCD | PCI, Word )
+
+        o = parse("0000 0100 11-- ----");
+        _EA_( o, 0, Chk2, Chk2, AI | AID | AII | AS | AL | PCD | PCI, Long )
+    }
+
     // move from sr
     o = parse("0100 0000 11-- ----");
     _EA_( o, 0, MoveFromSr, Move, ADR_TYPICAL | DR, Word )
@@ -542,9 +655,20 @@ auto M68000::build() -> void {
     _B_( o | (2 << 6), 0, Ext, Ext, Word )
     _B_( o | (3 << 6), 0, Ext, Ext, Long )
 
+    if constexpr (E >= Engine::M68020) {
+        // extb
+        o = parse("0100 1001 --00 0---");
+        _B_( o | (3 << 6), 0, Extb, Extb, Long )
+    }
+
     // link
     o = parse("0100 1110 0101 0---");
     _B_( o, 0, Link, Link, Word )
+
+    if constexpr (E >= Engine::M68020) {
+        o = parse("0100 1000 0000 1---");
+        _B_( o, 0, Link, Link, Long )
+    }
 
     // move to usp
     o = parse("0100 1110 0110 ----");
@@ -553,38 +677,46 @@ auto M68000::build() -> void {
 
     // nop
     o = parse("0100 1110 0111 0001");
-    opTable[o] = &M68000::opNop;
-    dasmTable[o] = &M68000::dasmNop;
+    opTable[o] = &M68Core::opNop<E>;
+    dasmTable[o] = &M68Core::dasmNop;
     mnemonics[o] = DasmHandler::mnemonic( Nop );
 
     // reset
     o = parse("0100 1110 0111 0000");
-    opTable[o] = &M68000::opReset;
-    dasmTable[o] = &M68000::dasmReset;
+    opTable[o] = &M68Core::opReset<E>;
+    dasmTable[o] = &M68Core::dasmReset;
     mnemonics[o] = DasmHandler::mnemonic( Reset );
+
+    // rtd
+    if constexpr (E >= Engine::M68020) {
+        o = parse("0100 1110 0111 0100");
+        opTable[o] = &M68Core::opRtd<E>;
+        dasmTable[o] = &M68Core::dasmRtd;
+        mnemonics[o] = DasmHandler::mnemonic( Rtd );
+    }
 
     // rte
     o = parse("0100 1110 0111 0011");
-    opTable[o] = &M68000::opRte;
-    dasmTable[o] = &M68000::dasmRte;
+    opTable[o] = &M68Core::opRte<E>;
+    dasmTable[o] = &M68Core::dasmRte;
     mnemonics[o] = DasmHandler::mnemonic( Rte );
 
     // rtr
     o = parse("0100 1110 0111 0111");
-    opTable[o] = &M68000::opRtr;
-    dasmTable[o] = &M68000::dasmRtr;
+    opTable[o] = &M68Core::opRtr<E>;
+    dasmTable[o] = &M68Core::dasmRtr;
     mnemonics[o] = DasmHandler::mnemonic( Rtr );
 
     // rts
     o = parse("0100 1110 0111 0101");
-    opTable[o] = &M68000::opRts;
-    dasmTable[o] = &M68000::dasmRts;
+    opTable[o] = &M68Core::opRts<E>;
+    dasmTable[o] = &M68Core::dasmRts;
     mnemonics[o] = DasmHandler::mnemonic( Rts );
 
     // stop
     o = parse("0100 1110 0111 0010");
-    opTable[o] = &M68000::opStop;
-    dasmTable[o] = &M68000::dasmStop;
+    opTable[o] = &M68Core::opStop<E>;
+    dasmTable[o] = &M68Core::dasmStop;
     mnemonics[o] = DasmHandler::mnemonic( _Stop );
 
     // swap
@@ -597,8 +729,66 @@ auto M68000::build() -> void {
 
     // trapv
     o = parse("0100 1110 0111 0110");
-    opTable[o] = &M68000::opTrapv;
+    opTable[o] = &M68Core::opTrapv<E>;
+    dasmTable[o] = &M68Core::dasmTrapv;
     mnemonics[o] = DasmHandler::mnemonic( Trapv );
+
+    if constexpr (E >= Engine::M68020) {
+        // trapcc
+        o = parse("0101 ---- 1111 1100");
+        _bind( o | 0x000, Trapcc, Trapt, Byte )
+        _bind( o | 0x100, Trapcc, Trapf, Byte )
+        _bind( o | 0x200, Trapcc, Traphi, Byte )
+        _bind( o | 0x300, Trapcc, Trapls, Byte )
+        _bind( o | 0x400, Trapcc, Trapcc, Byte )
+        _bind( o | 0x500, Trapcc, Trapcs, Byte )
+        _bind( o | 0x600, Trapcc, Trapne, Byte )
+        _bind( o | 0x700, Trapcc, Trapeq, Byte )
+        _bind( o | 0x800, Trapcc, Trapvc, Byte )
+        _bind( o | 0x900, Trapcc, Trapvs, Byte )
+        _bind( o | 0xa00, Trapcc, Trappl, Byte )
+        _bind( o | 0xb00, Trapcc, Trapmi, Byte )
+        _bind( o | 0xc00, Trapcc, Trapge, Byte )
+        _bind( o | 0xd00, Trapcc, Traplt, Byte )
+        _bind( o | 0xe00, Trapcc, Trapgt, Byte )
+        _bind( o | 0xf00, Trapcc, Traple, Byte )
+
+        o = parse("0101 ---- 1111 1010");
+        _bind( o | 0x000, Trapcc, Trapt, Word )
+        _bind( o | 0x100, Trapcc, Trapf, Word )
+        _bind( o | 0x200, Trapcc, Traphi, Word )
+        _bind( o | 0x300, Trapcc, Trapls, Word )
+        _bind( o | 0x400, Trapcc, Trapcc, Word )
+        _bind( o | 0x500, Trapcc, Trapcs, Word )
+        _bind( o | 0x600, Trapcc, Trapne, Word )
+        _bind( o | 0x700, Trapcc, Trapeq, Word )
+        _bind( o | 0x800, Trapcc, Trapvc, Word )
+        _bind( o | 0x900, Trapcc, Trapvs, Word )
+        _bind( o | 0xa00, Trapcc, Trappl, Word )
+        _bind( o | 0xb00, Trapcc, Trapmi, Word )
+        _bind( o | 0xc00, Trapcc, Trapge, Word )
+        _bind( o | 0xd00, Trapcc, Traplt, Word )
+        _bind( o | 0xe00, Trapcc, Trapgt, Word )
+        _bind( o | 0xf00, Trapcc, Traple, Word )
+
+        o = parse("0101 ---- 1111 1011");
+        _bind( o | 0x000, Trapcc, Trapt, Long )
+        _bind( o | 0x100, Trapcc, Trapf, Long )
+        _bind( o | 0x200, Trapcc, Traphi, Long )
+        _bind( o | 0x300, Trapcc, Trapls, Long )
+        _bind( o | 0x400, Trapcc, Trapcc, Long )
+        _bind( o | 0x500, Trapcc, Trapcs, Long )
+        _bind( o | 0x600, Trapcc, Trapne, Long )
+        _bind( o | 0x700, Trapcc, Trapeq, Long )
+        _bind( o | 0x800, Trapcc, Trapvc, Long )
+        _bind( o | 0x900, Trapcc, Trapvs, Long )
+        _bind( o | 0xa00, Trapcc, Trappl, Long )
+        _bind( o | 0xb00, Trapcc, Trapmi, Long )
+        _bind( o | 0xc00, Trapcc, Trapge, Long )
+        _bind( o | 0xd00, Trapcc, Traplt, Long )
+        _bind( o | 0xe00, Trapcc, Trapgt, Long )
+        _bind( o | 0xf00, Trapcc, Traple, Long )
+    }
 
     // unlink
     o = parse("0100 1110 0101 1---");
@@ -614,27 +804,58 @@ auto M68000::build() -> void {
     _B_( o | (0 << 6), SO, MovepEa, Movep, Word )
     _B_( o | (1 << 6), SO, MovepEa, Movep, Long )
 
+    if constexpr (E >= Engine::M68020) {
+        // bkpt
+        o = parse("0100 1000 0100 1---");
+        _B_( o, 0, Bkpt, Bkpt, Word )
+
+        // cas
+        o = parse("0000 1010 11-- ----");
+        _EA_( o, 0, Cas, Cas, ADR_TYPICAL, Byte )
+
+        o = parse("0000 1100 11-- ----");
+        _EA_( o, 0, Cas, Cas, ADR_TYPICAL, Word )
+
+        o = parse("0000 1110 11-- ----");
+        _EA_( o, 0, Cas, Cas, ADR_TYPICAL, Long )
+
+        // cas2
+        o = parse("0000 1100 1111 1100");
+        _bind(o, Cas2, Cas2, Word)
+
+        o = parse("0000 1110 1111 1100");
+        _bind(o, Cas2, Cas2, Long)
+
+        // pack
+        o = parse("1000 ---1 0100 0---");
+        _B_( o, SO, PackDn, Pack, Word )
+
+        o = parse("1000 ---1 0100 1---");
+        _B_( o, SO, PackPd, Pack, Word )
+
+        // unpack
+        o = parse("1000 ---1 1000 0---");
+        _B_( o, SO, UnpackDn, Unpk, Word )
+
+        o = parse("1000 ---1 1000 1---");
+        _B_( o, SO, UnpackPd, Unpk, Word )
+    }
+
     for (int i = 0; i < 0x1000; i++) {
-        opTable[(0xa << 12) | i] = &M68000::lineA;
-        opTable[(0xf << 12) | i] = &M68000::lineF;
-        dasmTable[(0xa << 12) | i] = &M68000::dasmLineA;
-        dasmTable[(0xf << 12) | i] = &M68000::dasmLineF;
+        opTable[(0xa << 12) | i] = &M68Core::lineA<E>;
+        opTable[(0xf << 12) | i] = &M68Core::lineF<E>;
+        dasmTable[(0xa << 12) | i] = &M68Core::dasmLineA;
+        dasmTable[(0xf << 12) | i] = &M68Core::dasmLineF;
         mnemonics[(0xa << 12) | i] = DasmHandler::mnemonic( LineA );
         mnemonics[(0xf << 12) | i] = DasmHandler::mnemonic( LineF );
     }
 
-    mulCycleLookup = new uint8_t[0x10000];
-    mulCycleLookup[0] = 34;
+    if constexpr (E >= Engine::M68020) {
+        o = parse("1111 ---1 01-- ----");
+        _EA_( o, SO, CpRestore, Illegal, AI | AIPI | AID | AII | AS | AL | PCD | PCI, Long )
 
-    for( int i = 0; i < 0x10000; i ++ ) {
-        mulCycleLookup[i] = ((i & 1) << 1) + mulCycleLookup[i / 2];
-
-        if (!opTable[i]) {
-            // note: initialized with zero in header file
-            opTable[i] = &M68000::illegal;
-            dasmTable[i] = &M68000::dasmIllegal;
-            mnemonics[i] = DasmHandler::mnemonic( Illegal );
-        }
+        o = parse("1111 ---1 00-- ----");
+        _EA_( o, SO, CpSave, Illegal, AI | AIPD | AID | AII | AS | AL, Long )
     }
 
     stepOuts.reserve(64);

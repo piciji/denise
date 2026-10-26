@@ -1,12 +1,12 @@
 
-#include "m68000.h"
+#include "cpu.h"
 #include "../agnus/agnus.h"
 #include "../../tools/serializer.h"
 #include "../system/debuggerSnapshot.h"
 
 namespace LIBAMI {
 
-Cpu::Cpu(Agnus& agnus) : M68FAMILY::M68000(agnus) {
+Cpu::Cpu(Agnus& agnus) : M68FAMILY::M68Core(agnus) {
 
     watchPoints.callback = [this](bool state) { this->flagDebugAction( WatchPoint, state ); };
     watchPointsWrite.callback = [this](bool state) { this->flagDebugAction( WatchPointWrite, state ); };
@@ -191,6 +191,16 @@ auto Cpu::mnemonic() -> const char* {
     if (control & IRQ)
         return intrMnemonics[1];
 
+    if (engine == Engine::M68020) {
+        if ((ird & 0xf9c0) == 0xc0) { // CHK2 / CMP2
+            return M68FAMILY::DasmHandler::mnemonic( irc & 0x800 ? Chk2 : Cmp2 );
+        } if ((ird & 0xffc0) == 0x4c00) { // Mullu / Mulls
+            return M68FAMILY::DasmHandler::mnemonic( irc & 0x800 ? Mulls : Mullu );
+        } if ((ird & 0xffc0) == 0x4c40) { // Divul / Divsl
+            return M68FAMILY::DasmHandler::mnemonic( irc & 0x800 ? Divsl : Divul );
+        }
+    }
+
     return mnemonics[ird];
 }
 
@@ -214,6 +224,7 @@ auto Cpu::serialize(Emulator::Serializer& s) -> void {
     s.array(regsD);
     s.array(regsA);
     s.integer(pc);
+    s.integer(pcEdge);
     s.integer(usp);
     s.integer(ssp);
     s.integer(irc);
@@ -228,6 +239,33 @@ auto Cpu::serialize(Emulator::Serializer& s) -> void {
     s.integer(iplPins);
     s.integer(iplSample);
     s.integer(control);
+    s.integer(fc);
+
+    s.integer( reinterpret_cast<uint8_t&>(engine) );
+
+    if (engine == Engine::M68020) {
+        s.integer(cacr);
+        s.integer(caar);
+        s.integer(cahr);
+        s.integer(stageB);
+
+        s.integer(busCycles);
+
+        s.integer(dfc);
+        s.integer(sfc);
+
+        s.integer(vbr);
+        s.integer(msp);
+
+        s.integer(m);
+        s.integer(t0);
+
+        for (auto& c : cacheEntries) {
+            s.integer( c.data );
+            s.integer( c.tag );
+            s.integer( c.valid );
+        }
+    }
 }
 
 }

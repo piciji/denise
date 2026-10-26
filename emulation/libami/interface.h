@@ -34,6 +34,7 @@ struct Interface : Emulator::Interface  {
         ModelIdOverclock,
         ModelIdHardDrivesConnected,
         ModelIdHardDrivesBuiltInSlower,
+        ModelIdCpu,
     };
 
     enum MediaGroupId {

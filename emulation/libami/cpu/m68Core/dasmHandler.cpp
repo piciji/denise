@@ -1,5 +1,5 @@
 #include "dasmHandler.h"
-#include "m68000.h"
+#include "m68Core.h"
 
 namespace M68FAMILY {
 
@@ -9,7 +9,7 @@ auto DasmHandler::mnemonic(uint8_t inst) -> const char* {
         "bchg", "bset", "bclr", "btst",
         "sub", "subx", "add", "addx", "not", "cmp", "and", "or", "eor", "abcd", "sbcd",
         "adda", "suba", "cmpa",
-        "mulu", "muls","divu", "divs",
+        "mulu", "muls", "divu", "divs",
         "clr", "nbcd", "neg", "negx", "move", "movea",
         "st", "sf", "shi", "sls", "scc", "scs", "sne", "seq",
         "svc", "svs", "spl", "smi", "sge", "slt", "sgt", "sle",
@@ -22,7 +22,14 @@ auto DasmHandler::mnemonic(uint8_t inst) -> const char* {
         "bsr","jmp", "jsr", "link", "unlk","tas", "tst",
         "lea", "pea", "movem", "chk", "exg", "ext", "nop", "trap", "trapv",
         "reset", "rte", "rtr", "rts", "stop", "swap",
-        "Illegal", "LineA", "LineF"
+        "Illegal", "LineA", "LineF",
+        // 68020
+        "mullu", "mulls", "divul", "divsl",
+        "bfchg", "bfset", "bfclr", "bftst", "bfexts", "bfextu", "bfffo", "bfins",
+        "chk2", "cmp2", "bkpt", "cas", "cas2", "extb", "pack", "unpk",
+        "trapt", "trapf", "traphi", "trapls", "trapcc", "trapcs", "trapne", "trapeq",
+        "trapvc", "trapvs", "trappl", "trapmi", "trapge", "traplt", "trapgt", "traple",
+        "movec", "moves", "move ccr",
     };
 
     return mnemonics[ inst ];
@@ -88,12 +95,18 @@ auto DasmHandler::usp() -> DasmHandler {
 }
 
 auto DasmHandler::si( uint8_t size ) -> DasmHandler& {
-    size == M68000::Byte ? str.append(".b") : (size == M68000::Word ? str.append(".w") : str.append(".l"));
+    size == M68Core::Byte ? str.append(".b") : (size == M68Core::Word ? str.append(".w") : str.append(".l"));
     return *this;
 }
 
 auto DasmHandler::sis( uint8_t size ) -> DasmHandler& {
-    size == M68000::Byte ? str.append(".s") : (size == M68000::Word ? str.append(".w") : str.append(".l"));
+    size == M68Core::Byte ? str.append(".s") : (size == M68Core::Word ? str.append(".w") : str.append(".l"));
+    return *this;
+}
+
+auto DasmHandler::scale( uint8_t size ) -> DasmHandler& {
+    if (size)
+        str.append( "*" + std::to_string( 1 << size ) );
     return *this;
 }
 
@@ -109,6 +122,11 @@ auto DasmHandler::sep() -> DasmHandler& {
     return *this;
 }
 
+auto DasmHandler::col() -> DasmHandler& {
+    str.append(":");
+    return *this;
+}
+
 auto DasmHandler::dn( uint8_t i ) -> DasmHandler& {
     str.append("D" + std::to_string(i));
     return *this;
@@ -116,6 +134,13 @@ auto DasmHandler::dn( uint8_t i ) -> DasmHandler& {
 
 auto DasmHandler::an( uint8_t i ) -> DasmHandler& {
     str.append("A" + std::to_string(i));
+    return *this;
+}
+
+auto DasmHandler::rnBrackets( uint8_t i ) -> DasmHandler& {
+    str.append("(");
+    rn(i);
+    str.append(")");
     return *this;
 }
 
@@ -180,42 +205,65 @@ auto DasmHandler::addComment() -> DasmHandler& {
     return *this;
 }
 
+auto DasmHandler::bitField(unsigned of, unsigned wi, bool oReg, bool bReg) -> DasmHandler& {
+    str.append( " {" );
+    oReg ? (void)dn(of & 7) : (void)str.append( std::to_string( of ) );
+    str.append( ":" );
+    bReg ? (void)dn(wi & 7) : (void)str.append( std::to_string( wi ) );
+    str.append( "}" );
+    return *this;
+}
+
+auto DasmHandler::rc(uint16_t ctl) -> DasmHandler& {
+    switch (ctl) {
+        case 0: str.append("sfc"); break;
+        case 1: str.append("dfc"); break;
+        case 2: str.append("cacr"); break;
+        case 0x800: str.append("usp"); break;
+        case 0x801: str.append("vbr"); break;
+        case 0x802: str.append("caar"); break;
+        case 0x803: str.append("msp"); break;
+        case 0x804: str.append("isp"); break;
+        default: str.append("invalid"); break;
+    }
+    return *this;
+}
+
 auto DasmHandler::ea() -> DasmHandler& {
     switch (mode) {
-        case M68000::DataRegisterDirect:
+        case M68Core::DataRegisterDirect:
             return dn(reg);
-        case M68000::AddressRegisterDirect:
+        case M68Core::AddressRegisterDirect:
             return an(reg);
-        case M68000::AddressRegisterIndirect:
+        case M68Core::AddressRegisterIndirect:
             str.append("(A" + std::to_string(reg) + ")");
             break;
-        case M68000::AddressRegisterIndirectWithPostIncrement:
+        case M68Core::AddressRegisterIndirectWithPostIncrement:
             str.append("(A" + std::to_string(reg) + ")+");
             break;
-        case M68000::AddressRegisterIndirectWithPreDecrement:
+        case M68Core::AddressRegisterIndirectWithPreDecrement:
             str.append("-(A" + std::to_string(reg) + ")");
             break;
-        case M68000::AddressRegisterIndirectWithDisplacement:
+        case M68Core::AddressRegisterIndirectWithDisplacement:
             str.append("(");
             hexS(static_cast<int16_t>(ext));
             str.append(",A" + std::to_string(reg) + ")");
             break;
-        case M68000::AddressRegisterIndirectWithIndex:
-            str.append("(");
-            hexS(static_cast<int8_t>(ext & 0xff));
-            str.append(",A" + std::to_string(reg) + ",");
-            rn(ext >> 12);
-            str.append(ext & 0x800 ? ".l)" : ".w)");
+        case M68Core::AddressRegisterIndirectWithIndex:
+            if (ext & 0x100)
+                indirectIndexFull("A" + std::to_string(reg));
+            else
+                indirectIndexBrief("A" + std::to_string(reg));
             break;
-        case M68000::AbsoluteShort:
+        case M68Core::AbsoluteShort:
             hex(ext);
-            si(M68000::Word);
+            si(M68Core::Word);
             break;
-        case M68000::AbsoluteLong:
+        case M68Core::AbsoluteLong:
             hex(ext);
-            si(M68000::Long);
+            si(M68Core::Long);
             break;
-        case M68000::ProgramCounterIndirectWithDisplacement:
+        case M68Core::ProgramCounterIndirectWithDisplacement:
             str.append("(");
             hexS(static_cast<int16_t>(ext));
             str.append(",PC)");
@@ -225,14 +273,13 @@ auto DasmHandler::ea() -> DasmHandler& {
             comment->hex( pc + 2 + static_cast<int16_t>(ext) );
             comment->str.append(")");
             break;
-        case M68000::ProgramCounterIndirectWithIndex:
-            str.append("(");
-            hexS(static_cast<int8_t>(ext & 0xff));
-            str.append(",PC,");
-            rn(ext >> 12);
-            str.append(ext & 0x800 ? ".l)" : ".w)");
+        case M68Core::ProgramCounterIndirectWithIndex:
+            if (ext & 0x100)
+                indirectIndexFull("PC");
+            else
+                indirectIndexBrief("PC");
             break;
-        case M68000::Immediate:
+        case M68Core::Immediate:
             immU(ext);
             break;
         default:
@@ -240,6 +287,79 @@ auto DasmHandler::ea() -> DasmHandler& {
     }
 
     return *this;
+}
+
+auto DasmHandler::indirectIndexBrief(const std::string& B) -> void {
+    str.append("(");
+    hexS(static_cast<int8_t>(ext & 0xff));
+    str.append("," + B + ",");
+    rn(ext >> 12);
+    si(ext & 0x800 ? M68Core::Long : M68Core::Word);
+    scale( (ext >> 9) & 3 );
+    str.append(")");
+}
+
+auto DasmHandler::indirectIndexFull(const std::string& B) -> void {
+    uint8_t iis = ext & 7;
+
+    str.append("(");
+    if (iis & 4) {
+        str.append("["); baseDisplacement(); baseRegister( B ); str.append("]");
+        indexRegister();
+        outerDisplacement();
+    } else if (iis & 3) {
+        str.append("["); baseDisplacement(); baseRegister( B ); indexRegister(); str.append("]");
+        outerDisplacement();
+    } else {
+        baseDisplacement();
+        baseRegister( B );
+        indexRegister();
+    }
+    str.append(")");
+}
+
+auto DasmHandler::baseRegister(const std::string& B) -> void {
+    sep();
+
+    if ((ext & 0x80) == 0)
+        str.append( B );
+    else if (mode ==  M68Core::ProgramCounterIndirectWithIndex)
+        str.append( "ZPC" );
+    else
+        str.append( "0" );
+}
+
+auto DasmHandler::indexRegister() -> void {
+    if (ext & 0x40)
+        return;
+
+    sep();
+    rn( ext >> 12 );
+    si( ext & 0x800 ? M68Core::Long : M68Core::Word );
+    scale( (ext >> 9) & 3 );
+}
+
+auto DasmHandler::baseDisplacement() -> void {
+    uint8_t _size = (ext >> 4) & 3;
+
+    if (_size == 3)
+        hex(ext2);
+    else if (_size == 2)
+        hexS(static_cast<int16_t>(ext2));
+    else
+        str.append( "0" );
+}
+
+auto DasmHandler::outerDisplacement() -> void {
+    uint8_t _size = ext & 3;
+
+    sep();
+    if (_size == 3)
+        hex(ext3);
+    else if (_size == 2)
+        hexS(static_cast<int16_t>(ext3));
+    else
+        str.append( "0" );
 }
 
 }

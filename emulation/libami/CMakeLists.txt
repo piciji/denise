@@ -19,13 +19,13 @@ set(headers
         agnus/minterm.cpp
         agnus/register.cpp
         agnus/serialization.cpp
-        cpu/m68000.h
-        cpu/m68000/alu.cpp
-        cpu/m68000/exception.cpp
-        cpu/m68000/instruction.cpp
-        cpu/m68000/m68000.h
-        cpu/m68000/memory.cpp
-        cpu/m68000/optable.cpp
+        cpu/cpu.h
+        cpu/m68Core/alu.cpp
+        cpu/m68Core/exception.cpp
+        cpu/m68Core/instruction.cpp
+        cpu/m68Core/m68Core.h
+        cpu/m68Core/memory.cpp
+        cpu/m68Core/optable.cpp
         drive/dms/dms.h
         drive/ipf/CapsAPI.h
         drive/ipf/CommonTypes.h
@@ -106,9 +106,9 @@ set_source_files_properties(coreAmiga ${headers}
 target_sources(coreAmiga PRIVATE
         interface.cpp
 
-        cpu/m68000/m68000.cpp
-        cpu/m68000/dasmHandler.cpp
-        cpu/m68000.cpp
+        cpu/m68Core/m68Core.cpp
+        cpu/m68Core/dasmHandler.cpp
+        cpu/cpu.cpp
         agnus/agnus.cpp
         agnus/blitter.cpp
         agnus/copper.cpp

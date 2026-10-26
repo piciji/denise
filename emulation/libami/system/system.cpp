@@ -697,8 +697,6 @@ auto System::useRTC() -> bool {
 }
 
 auto System::setOverclock( unsigned factor ) -> void {
-    agnus.overclock.cycles = 0;
-
     switch(factor) {
         case 0: agnus.overclock.speed = 0; break;
         case 1: agnus.overclock.speed = 4; break;
@@ -706,6 +704,7 @@ auto System::setOverclock( unsigned factor ) -> void {
         case 3: agnus.overclock.speed = 16; break;
     }
 
+    agnus.prepareOverclock();
     history.reset();
 }
 

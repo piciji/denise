@@ -227,9 +227,6 @@
     <Filter Include="emulation\libami\cpu">
       <UniqueIdentifier>{cbcded14-13d1-46c7-81ec-5bd3909f84f0}</UniqueIdentifier>
     </Filter>
-    <Filter Include="emulation\libami\cpu\m68000">
-      <UniqueIdentifier>{96692d35-f35a-4c96-8d87-c103aca4f9f8}</UniqueIdentifier>
-    </Filter>
     <Filter Include="emulation\libami\drive">
       <UniqueIdentifier>{b4350c25-42d9-487d-adbd-8e8fdf99dbac}</UniqueIdentifier>
     </Filter>
@@ -352,6 +349,9 @@
     </Filter>
     <Filter Include="emulation\libc64\expansionPort\uci">
       <UniqueIdentifier>{27d00f37-70db-4f0d-8740-614a260bc00a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="emulation\libami\cpu\m68Core">
+      <UniqueIdentifier>{88c7eff4-b2c5-42cd-94a2-1ad1363652a4}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -901,12 +901,6 @@
     <ClInclude Include="..\emulation\libami\agnus\copper.h">
       <Filter>emulation\libami\agnus</Filter>
     </ClInclude>
-    <ClInclude Include="..\emulation\libami\cpu\m68000.h">
-      <Filter>emulation\libami\cpu</Filter>
-    </ClInclude>
-    <ClInclude Include="..\emulation\libami\cpu\m68000\m68000.h">
-      <Filter>emulation\libami\cpu\m68000</Filter>
-    </ClInclude>
     <ClInclude Include="..\emulation\libami\drive\diskDrive.h">
       <Filter>emulation\libami\drive</Filter>
     </ClInclude>
@@ -1177,9 +1171,6 @@
     <ClInclude Include="..\emulation\tools\history.h">
       <Filter>emulation\tools</Filter>
     </ClInclude>
-    <ClInclude Include="..\emulation\libami\cpu\m68000\dasmHandler.h">
-      <Filter>emulation\libami\cpu\m68000</Filter>
-    </ClInclude>
     <ClInclude Include="..\program\debugger\debugger.h">
       <Filter>program\debugger</Filter>
     </ClInclude>
@@ -1431,6 +1422,15 @@
     </ClInclude>
     <ClInclude Include="..\program\video\scVideo.h">
       <Filter>program\video</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libami\cpu\m68Core\dasmHandler.h">
+      <Filter>emulation\libami\cpu\m68Core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libami\cpu\m68Core\m68Core.h">
+      <Filter>emulation\libami\cpu\m68Core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libami\cpu\cpu.h">
+      <Filter>emulation\libami\cpu</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -2082,27 +2082,6 @@
     <ClCompile Include="..\emulation\libami\agnus\serialization.cpp">
       <Filter>emulation\libami\agnus</Filter>
     </ClCompile>
-    <ClCompile Include="..\emulation\libami\cpu\m68000.cpp">
-      <Filter>emulation\libami\cpu</Filter>
-    </ClCompile>
-    <ClCompile Include="..\emulation\libami\cpu\m68000\alu.cpp">
-      <Filter>emulation\libami\cpu\m68000</Filter>
-    </ClCompile>
-    <ClCompile Include="..\emulation\libami\cpu\m68000\exception.cpp">
-      <Filter>emulation\libami\cpu\m68000</Filter>
-    </ClCompile>
-    <ClCompile Include="..\emulation\libami\cpu\m68000\instruction.cpp">
-      <Filter>emulation\libami\cpu\m68000</Filter>
-    </ClCompile>
-    <ClCompile Include="..\emulation\libami\cpu\m68000\m68000.cpp">
-      <Filter>emulation\libami\cpu\m68000</Filter>
-    </ClCompile>
-    <ClCompile Include="..\emulation\libami\cpu\m68000\memory.cpp">
-      <Filter>emulation\libami\cpu\m68000</Filter>
-    </ClCompile>
-    <ClCompile Include="..\emulation\libami\cpu\m68000\optable.cpp">
-      <Filter>emulation\libami\cpu\m68000</Filter>
-    </ClCompile>
     <ClCompile Include="..\emulation\libami\drive\adf.cpp">
       <Filter>emulation\libami\drive</Filter>
     </ClCompile>
@@ -2604,12 +2583,6 @@
     <ClCompile Include="..\program\emuconfig\layouts\presentation.cpp">
       <Filter>program\emuconfig\layouts</Filter>
     </ClCompile>
-    <ClCompile Include="..\emulation\libami\cpu\m68000\dasmHandler.cpp">
-      <Filter>emulation\libami\cpu\m68000</Filter>
-    </ClCompile>
-    <ClCompile Include="..\emulation\libami\cpu\m68000\disassembler.cpp">
-      <Filter>emulation\libami\cpu\m68000</Filter>
-    </ClCompile>
     <ClCompile Include="..\program\debugger\debugger.cpp">
       <Filter>program\debugger</Filter>
     </ClCompile>
@@ -2783,6 +2756,33 @@
     </ClCompile>
     <ClCompile Include="..\program\video\scVideo.cpp">
       <Filter>program\video</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libami\cpu\m68Core\alu.cpp">
+      <Filter>emulation\libami\cpu\m68Core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libami\cpu\m68Core\dasmHandler.cpp">
+      <Filter>emulation\libami\cpu\m68Core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libami\cpu\m68Core\disassembler.cpp">
+      <Filter>emulation\libami\cpu\m68Core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libami\cpu\m68Core\exception.cpp">
+      <Filter>emulation\libami\cpu\m68Core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libami\cpu\m68Core\instruction.cpp">
+      <Filter>emulation\libami\cpu\m68Core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libami\cpu\m68Core\m68Core.cpp">
+      <Filter>emulation\libami\cpu\m68Core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libami\cpu\m68Core\memory.cpp">
+      <Filter>emulation\libami\cpu\m68Core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libami\cpu\m68Core\optable.cpp">
+      <Filter>emulation\libami\cpu\m68Core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libami\cpu\cpu.cpp">
+      <Filter>emulation\libami\cpu</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
