@@ -518,22 +518,21 @@ auto DiskStructure::writeGxx(const MTrack* trackPtr, uint8_t side, unsigned half
             return false;
     }
 
-    // we need to fill the gap between this track and next one with zeros
-    unsigned gapSize = maxTrackLength - trackPtr->size;
-    
-    if (gapSize > 0) {
-        uint8_t* tempGap = new uint8_t[gapSize];
-        std::memset(tempGap, 0, gapSize);
-        
-        unsigned bytesWritten = write( tempGap, gapSize, offset + 2 + trackPtr->size );
-        
-        delete[] tempGap;
-        
-        if (bytesWritten != gapSize)
-            return false;
-    }
-
     if (appendTrack) {
+        unsigned gapSize = maxTrackLength - trackPtr->size;
+
+        if (gapSize > 0) {
+            auto* tempGap = new uint8_t[gapSize];
+            std::memset(tempGap, 0, gapSize);
+
+            unsigned bytesWritten = write( tempGap, gapSize, offset + 2 + trackPtr->size );
+
+            delete[] tempGap;
+
+            if (bytesWritten != gapSize)
+                return false;
+        }
+
         // for a new appended track we need to update the offset in header area
         Emulator::copyIntToBuffer<uint32_t>( &buf[0], offset );
         
