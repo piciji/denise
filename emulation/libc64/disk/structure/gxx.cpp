@@ -362,6 +362,8 @@ auto DiskStructure::parseMfm(MTrack* trackPtr, unsigned offset) -> void {
 
             *ptr++ = crc >> 8;
             *ptr++ = crc & 0xff;
+        } else {
+            dataOffset += 128 << sectorSize;
         }
 
         memset(ptr, 0x4e, 22); ptr += 22;
@@ -379,6 +381,7 @@ auto DiskStructure::writeMfm(const MTrack* trackPtr, unsigned offset) -> bool {
 
     offset += 2;
     unsigned dataOffset = offset + 32 * 5;
+    unsigned dataOffsetNext = dataOffset;
     unsigned sectorSize = 0;
     unsigned sectorCount = 0;
     bool align = false;
@@ -425,6 +428,8 @@ auto DiskStructure::writeMfm(const MTrack* trackPtr, unsigned offset) -> bool {
             offset += 5;
 
             align = true;
+            dataOffset = dataOffsetNext;
+            dataOffsetNext = dataOffset + sectorSize;
             sectorCount++;
 
         } else if (align && isSync && (ptr[i] == 0xf8 || ptr[i] == 0xf9 || ptr[i] == 0xfa || ptr[i] == 0xfb) ) {
@@ -458,8 +463,6 @@ auto DiskStructure::writeMfm(const MTrack* trackPtr, unsigned offset) -> bool {
             buf[0] = error;
             if ( write( &buf[0], 1, offset - 1 ) != 1) // errors
                 return false;
-
-            dataOffset += sectorSize;
         }
 
         isSync = ((trackPtr->mfmSync[i >> 3] & (1 << (i & 7))) != 0);
