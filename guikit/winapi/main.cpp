@@ -702,6 +702,8 @@ auto CALLBACK pWindow::wndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam
                 return true;        			               
             }
             break;
+        case WM_GETDLGCODE:
+            return DLGC_WANTTAB | DLGC_WANTARROWS;
     }
     return pApplication::wndProc(DefWindowProc, hwnd, msg, wparam, lparam);
 }
