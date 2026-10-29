@@ -1,6 +1,9 @@
 
 #pragma once
 
+#include <vector>
+#include <string>
+
 struct FilePool {
 	
 	struct FilePtr {
@@ -90,8 +93,8 @@ struct FilePool {
 		}
 	}
 	
-	FilePool( unsigned slots ) {
-        files.reserve(slots);
+	FilePool( ) {
+        files.reserve(10);
 	}
 	
 	~FilePool() {

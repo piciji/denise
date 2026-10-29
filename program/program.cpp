@@ -111,7 +111,7 @@ Program::Program() {
 	}    
     
 	logger = new Logger;
-	filePool = new FilePool(10);
+	filePool = new FilePool;
 
     fpsChangeTimer.setInterval(500);
     fpsChangeTimer.onFinished = [this]() {
