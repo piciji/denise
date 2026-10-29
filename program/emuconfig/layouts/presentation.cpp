@@ -696,7 +696,7 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
         shader.control.downloadShader.setUri("");
         shader.control.downloadShader.setEnabled(false);
 
-        std::string shaderPath = FileHelper::generatedFolder("shaders");
+        std::string shaderPath = FileHelper::generatedFolder("shaders", FileHelper::FLAG_CREATE);
         shader.progress.bar.setPosition(0);
         shader.progress.label.resetForegroundColor();
         shader.progress.label.setText( trans->getA("shader download") );
