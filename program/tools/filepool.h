@@ -9,9 +9,9 @@ struct FilePool {
 	};
 	
 	std::vector<FilePtr> filePtrs;	
-	std::vector<GUIKIT::File> files;
+	std::vector<GUIKIT::File*> files;
 
-    auto has(std::string ident, GUIKIT::File* file) -> bool {
+    auto has(const std::string& ident, GUIKIT::File* file) -> bool {
         
         FilePtr* filePtr = find( ident );
         
@@ -21,7 +21,7 @@ struct FilePool {
         return filePtr->file == file;
     }
     
-	auto assign(std::string ident, GUIKIT::File* file) -> void {		
+	auto assign(const std::string& ident, GUIKIT::File* file) -> void {
 		FilePtr* filePtr = find( ident );
 		
 		if ( !filePtr )
@@ -30,7 +30,7 @@ struct FilePool {
 			filePtr->file = file;
 	}
 	
-	auto find(std::string ident) -> FilePtr* {
+	auto find(const std::string& ident) -> FilePtr* {
 		for(auto& filePtr : filePtrs)
 			if (filePtr.ident == ident)
 				return &filePtr;
@@ -38,7 +38,7 @@ struct FilePool {
 		return nullptr;
 	}
     
-    auto isAssigned( std::string filePath, std::string ident ) -> bool {
+    auto isAssigned( const std::string& filePath, const std::string& ident ) -> bool {
         
         FilePtr* filePtr = find( ident );
         
@@ -48,24 +48,24 @@ struct FilePool {
         return filePtr->file->getFile() == filePath;
     }
 		
-	auto get(std::string filePath, bool createIfNotExists = true) -> GUIKIT::File* {
+	auto get(const std::string& filePath, bool createIfNotExists = true) -> GUIKIT::File* {
 		GUIKIT::File* assignFile = nullptr;
 		if (filePath.empty()) return nullptr;
 
-		for (auto& file : files) {
-			if (file.getFile() == filePath)
-				return &file;
+		for (auto* file : files) {
+			if (file->getFile() == filePath)
+				return file;
 			
-			if ((assignFile == nullptr) && (file.getFile().empty()))
-				assignFile = &file;
+			if ((assignFile == nullptr) && (file->getFile().empty()))
+				assignFile = file;
 		}
         
         if (!createIfNotExists)
             return nullptr;
         
 		if (!assignFile) {
-			files.push_back({});
-			assignFile = &files.back();
+		    assignFile = new GUIKIT::File;
+			files.push_back(assignFile);
 		}
 		
 		assignFile->setFile(filePath);
@@ -73,31 +73,32 @@ struct FilePool {
 	}
 	   
     auto unloadOrphaned() -> void {
-		for (auto& file : files) {
+		for (auto* file : files) {
 			bool referenceFound = false;
 
 			for(auto& filePtr : filePtrs) {
 				if (!filePtr.file)
                     continue;				
 
-				if (&file == filePtr.file) {
+				if (file == filePtr.file) {
 					referenceFound = true;
 					break;				
 				}
 			}
 			if (!referenceFound)
-				file.unload();
+				file->unload();
 		}
 	}
 	
 	FilePool( unsigned slots ) {
         files.reserve(slots);
-        files.resize(slots, {});
 	}
 	
 	~FilePool() {
-		for (auto& file : files)
-			file.unload();
+		for (auto* file : files)
+		    delete file;
+
+        files.clear();
 	}	
 };
 
