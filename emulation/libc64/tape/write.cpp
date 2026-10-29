@@ -102,7 +102,7 @@ auto Tape::writeBuffer() -> void {
     }
 	// file has increased
     rawSize = curPos;
-    uint8_t* temp = new uint8_t[rawSize];
+    auto* temp = new uint8_t[rawSize];
     std::memcpy(temp, rawData, curPosBefore);
     std::memcpy(temp + curPosBefore, writeData, writeSize);
 

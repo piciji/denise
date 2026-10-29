@@ -359,28 +359,13 @@ auto Tape::unload() -> void {
 
 auto Tape::readHeader() -> bool {
 	
-	if (rawSize < 21)
+	if (rawSize < 21 || !rawData)
 		return false;
 	
-	uint8_t* header;
-	
-	if (rawData)
-		header = rawData;
-	
-	else {		
-		header = new uint8_t[20];
-		
-		if ( read( header, 20, 0 ) != 20 )
-			return false;				
-	}
-	
-	if (std::memcmp(header, "C64-TAPE-RAW", 12))
+	if (std::memcmp(rawData, "C64-TAPE-RAW", 12) != 0)
 		return false;
 			
-	version = header[0xc];
-	
-	if (!rawData)
-		delete[] header;
+	version = rawData[0xc];
 			
 	return true;
 }

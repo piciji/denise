@@ -175,9 +175,7 @@ auto Tape::readForward( uint8_t& byte, unsigned count ) -> bool {
 inline auto Tape::readForward( uint8_t& byte ) -> bool {
     if (!rawData)
         return false;
-
-    // tape image was fully loaded because of compressed file
-    // tape image can't be written in this case
+    
     if (curPos == rawSize)
         return false;
 

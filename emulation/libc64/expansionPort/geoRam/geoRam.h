@@ -8,9 +8,8 @@ namespace LIBC64 {
 struct GeoRam : ExpansionPort {  
 	
 	GeoRam(System* system);
-	~GeoRam();
+	~GeoRam() override;
 
-    System* system;
 	Emulator::Interface::Media* media;
 	unsigned dumpSize = 0;
     uint8_t* dump = nullptr;
@@ -24,31 +23,31 @@ struct GeoRam : ExpansionPort {
 	bool dirty = false;
 	bool writeProtect;
 
-	auto writeIo1( uint16_t addr, uint8_t value ) -> void;
-	auto writeIo2( uint16_t addr, uint8_t value ) -> void;
-	auto readIo1( uint16_t addr ) -> uint8_t;
-    auto peekIo1( uint16_t addr ) -> uint8_t;
+	auto writeIo1( uint16_t addr, uint8_t value ) -> void override;
+	auto writeIo2( uint16_t addr, uint8_t value ) -> void override;
+	auto readIo1( uint16_t addr ) -> uint8_t override;
+    auto peekIo1( uint16_t addr ) -> uint8_t override;
 	auto prepareRam(unsigned size) -> void;
 
-    auto setRamSize(int id) -> void;
-    auto getRamSize() -> int;
+    auto setRamSize(int id) -> void override;
+    auto getRamSize() -> int override;
 	
-	auto isBootable( ) -> bool;
+	auto isBootable( ) -> bool override;
 	
 	auto setRam(  Emulator::Interface::Media* media, uint8_t* dump, unsigned dumpSize ) -> void;
 	auto unsetRam() -> void;
 	auto injectRam( ) -> void;
-	auto reset(bool softReset = false) -> void;
+	auto reset(bool softReset = false) -> void override;
 	
 	auto write() -> void;
 
 	static auto createImage(unsigned& imageSize) -> uint8_t*;
 
-	auto serialize(Emulator::Serializer& s) -> void;
+	auto serialize(Emulator::Serializer& s) -> void override;
 
 	auto setWriteProtect(bool state) -> void;
 	auto isWriteProtected() -> bool;
-    auto getSizeNotConsideredForMemorySerialization() -> unsigned;
+    auto getSizeNotConsideredForMemorySerialization() -> unsigned override;
 
 };
 

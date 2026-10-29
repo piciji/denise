@@ -3,19 +3,17 @@
 
 namespace LIBC64 {  
 
-GeoRam::GeoRam(System* system) : ExpansionPort(system), system(system) {
+GeoRam::GeoRam(System* system) : ExpansionPort(system) {
 	setId( Interface::ExpansionIdGeoRam );
     data = nullptr;
     size = 64 << 10;
 }	
 
 GeoRam::~GeoRam() {
-	if (data)
-		delete[] data;
+    delete[] data;
 }
 
 auto GeoRam::isBootable( ) -> bool {
-    
     return false;
 }
 
