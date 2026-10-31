@@ -94,6 +94,7 @@ template<M68Core::Engine E, unsigned Flags> auto M68Core::fullPrefetch() -> void
         if constexpr (Flags & DelayPrefetch) {
             if (!busCycles) SYNC(2);
         }
+        busCycles = 0;
     } else {
         if constexpr (Flags & DelayPrefetch) SYNC(2);
         prefetch<E, Flags>();
@@ -135,7 +136,6 @@ template<M68Core::Engine E, unsigned Flags> auto M68Core::readExtensionWord() ->
 }
 
 template<unsigned Flags> auto M68Core::cachedPrefetch(uint32_t adr) -> uint16_t {
-    busCycles = 0;
     fc = SF_PRG;
 
     if constexpr (Flags & EXC)
@@ -149,6 +149,9 @@ template<unsigned Flags> auto M68Core::cachedPrefetch(uint32_t adr) -> uint16_t 
     if constexpr(Flags & SampleIPL)
         sampleInterrupt();
 
+    if ((busCycles > 0) && dataAccess == DataAccess::PREFETCH)
+        runsDry = true;
+
     // full prefetch invalidates cache holding register.
     // even without the cache enabled, BUS is accessed only for every second prefetch if the port width allows 32-bit accesses.
     if ((Flags & FirstPrefetch) || ((adr & 2) == 0) ) {
@@ -159,7 +162,7 @@ template<unsigned Flags> auto M68Core::cachedPrefetch(uint32_t adr) -> uint16_t 
 
         if ((cacr & 1) && entry.valid && entry.tag == tag) {
             cahr = entry.data;
-
+            dataAccess = DataAccess::INST_CACHE;
         } else {
             // first prefetch from odd word wastes a BUS cycle in case of 16 bit port size
             uint32_t addrAligned = adr & ~3;
@@ -168,18 +171,18 @@ template<unsigned Flags> auto M68Core::cachedPrefetch(uint32_t adr) -> uint16_t 
             switch (PORT_SIZE(addrAligned)) {
                 default:
                 case 4:
-                    busCycles = 3;
+                    busCycles += 3;
                     cahr = READ_LONG(addrAligned);
                     break;
                 case 2:
-                    busCycles = 6;
+                    busCycles += 6;
                     cahr = READ_WORD(addrAligned) << 16;
                     if constexpr(Flags & SampleIPL) { SYNC(1); sampleInterrupt(); SYNC(2); }
                     else SYNC(3);
                     cahr |= READ_WORD(addrAligned + 2);
                     break;
                 case 1:
-                    busCycles = 12;
+                    busCycles += 12;
                     cahr = READ_BYTE(addrAligned) << 24;
                     if constexpr(Flags & SampleIPL) { SYNC(1); sampleInterrupt(); SYNC(2); }
                     else SYNC(3);
@@ -199,11 +202,13 @@ template<unsigned Flags> auto M68Core::cachedPrefetch(uint32_t adr) -> uint16_t 
                 entry.valid = true;
             }
             SYNC(1);
+            dataAccess = DataAccess::PREFETCH;
         }
 
         return adr & 2 ? cahr & 0xffff : (cahr >> 16) & 0xffff;
     }
 
+    dataAccess = DataAccess::INST_CACHE;
     return cahr & 0xffff;
 }
 
@@ -280,8 +285,10 @@ template<M68Core::Engine E, uint8_t Size, unsigned Flags> auto M68Core::read(uin
 }
 
 template<unsigned Flags> auto M68Core::readByteDS(uint32_t adr) -> uint8_t {
+    busCycles += 3;
     uint8_t result = READ_BYTE(adr);
     SYNC(1);
+    dataAccess = DataAccess::READ;
     return result;
 }
 
@@ -290,15 +297,18 @@ template<unsigned Flags> auto M68Core::readWordDS(uint32_t adr) -> uint16_t {
     auto ps = PORT_SIZE(adr);
 
     if ( ((ps == 2) && (adr & 1)) || ((ps == 4) && ((adr & 3) == 3)) || (ps == 1) ) {
+        busCycles += 6;
         result = READ_BYTE(adr) << 8;
         if constexpr(Flags & SampleIPL) { SYNC(1); sampleInterrupt(); SYNC(2); }
         else SYNC(3);
         result |= READ_BYTE(adr + 1);
     } else {
+        busCycles += 3;
         result = READ_WORD(adr);
     }
 
     SYNC(1);
+    dataAccess = DataAccess::READ;
     return result;
 }
 
@@ -308,33 +318,40 @@ template<unsigned Flags> auto M68Core::readLongDS(uint32_t adr) -> uint32_t {
 
     if (ps == 4) {
         if ((adr & 3) == 0) {
+            busCycles += 3;
             result = READ_LONG(adr);
         } else if ((adr & 3) == 2) {
+            busCycles += 6;
             result = READ_WORD(adr) << 16;
             SYNC(3);
             result |= READ_WORD(adr + 2);
         } else if ((adr & 3) == 1) {
+            busCycles += 6;
             result = READ_LONG(adr & ~1) << 8;
             SYNC(3);
             result |= READ_BYTE(adr + 3);
         } else {
+            busCycles += 6;
             result = READ_BYTE(adr) << 24;
             SYNC(3);
             result |= READ_LONG(adr + 1) >> 8;
         }
     } else if (ps == 2) {
         if (adr & 1) {
+            busCycles += 9;
             result = READ_BYTE(adr) << 24;
             SYNC(3);
             result |= READ_WORD(adr + 1) << 8;
             SYNC(3);
             result |= READ_BYTE(adr + 3);
         } else {
+            busCycles += 6;
             result = READ_WORD(adr) << 16;
             SYNC(3);
             result |= READ_WORD(adr + 2);
         }
     } else {
+        busCycles += 12;
         result = READ_BYTE(adr) << 24;
         SYNC(3);
         result |= READ_BYTE(adr + 1) << 16;
@@ -345,6 +362,7 @@ template<unsigned Flags> auto M68Core::readLongDS(uint32_t adr) -> uint32_t {
     }
 
     SYNC(1);
+    dataAccess = DataAccess::READ;
     return result;
 }
 
@@ -412,23 +430,28 @@ template<M68Core::Engine E, uint8_t Size, unsigned Flags> auto M68Core::write(ui
 }
 
 template<unsigned Flags> auto M68Core::writeByteDS(uint32_t adr, uint8_t data) -> void {
+    busCycles = 3;
     WRITE_BYTE(adr, data);
     SYNC(1);
+    dataAccess = DataAccess::WRITE;
 }
 
 template<unsigned Flags> auto M68Core::writeWordDS(uint32_t adr, uint16_t data) -> void {
     auto ps = PORT_SIZE(adr);
 
     if ( ((ps == 2) && (adr & 1)) || ((ps == 4) && ((adr & 3) == 3)) || (ps == 1) ) {
+        busCycles = 6;
         WRITE_BYTE(adr, data >> 8);
         if constexpr(Flags & SampleIPL) { SYNC(1); sampleInterrupt(); SYNC(2); }
         else SYNC(3);
         WRITE_BYTE(adr + 1, data & 0xff);
     } else {
+        busCycles = 3;
         WRITE_WORD(adr, data);
     }
 
     SYNC(1);
+    dataAccess = DataAccess::WRITE;
 }
 
 template<unsigned Flags> auto M68Core::writeLongDS(uint32_t adr, uint32_t data) -> void {
@@ -441,19 +464,23 @@ template<unsigned Flags> auto M68Core::writeLongDS(uint32_t adr, uint32_t data) 
 
     if (ps == 4) {
         if ((adr & 3) == 0) {
+            busCycles = 3;
             WRITE_LONG(adr, data);
         } else if ((adr & 3) == 2) {
+            busCycles = 6;
             WRITE_WORD(adr, data >> 16);
             if constexpr(Flags & SampleIPL) { SYNC(1); sampleInterrupt(); SYNC(2); }
             else SYNC(3);
             WRITE_WORD(adr + 2, data);
         } else if ((adr & 3) == 1) {
+            busCycles = 6;
             // CPU writes 3 bytes in one BUS cycle, can Amiga handle this directly ?
             WRITE_LONG(adr, data);
             if constexpr(Flags & SampleIPL) { SYNC(1); sampleInterrupt(); SYNC(2); }
             else SYNC(3);
             WRITE_BYTE(adr + 3, data);
         } else {
+            busCycles = 6;
             WRITE_BYTE(adr, data >> 24);
             if constexpr(Flags & SampleIPL) { SYNC(1); sampleInterrupt(); SYNC(2); }
             else SYNC(3);
@@ -462,6 +489,7 @@ template<unsigned Flags> auto M68Core::writeLongDS(uint32_t adr, uint32_t data) 
         }
     } else if (ps == 2) {
         if (adr & 1) {
+            busCycles = 9;
             WRITE_BYTE(adr, data >> 24);
             if constexpr(Flags & SampleIPL) { SYNC(1); sampleInterrupt(); SYNC(2); }
             else SYNC(3);
@@ -470,12 +498,14 @@ template<unsigned Flags> auto M68Core::writeLongDS(uint32_t adr, uint32_t data) 
             else SYNC(3);
             WRITE_BYTE(adr + 3, data);
         } else {
+            busCycles = 6;
             WRITE_WORD(adr, data >> 16);
             if constexpr(Flags & SampleIPL) { SYNC(1); sampleInterrupt(); SYNC(2); }
             else SYNC(3);
             WRITE_WORD(adr + 2, data);
         }
     } else {
+        busCycles = 12;
         WRITE_BYTE(adr, data >> 24);
         if constexpr(Flags & SampleIPL) { SYNC(1); sampleInterrupt(); SYNC(2); }
         else SYNC(3);
@@ -489,6 +519,7 @@ template<unsigned Flags> auto M68Core::writeLongDS(uint32_t adr, uint32_t data) 
     }
 
     SYNC(1);
+    dataAccess = DataAccess::WRITE;
 }
 
 template<M68Core::Engine E, uint8_t Mode, uint8_t Size, unsigned Flags> auto M68Core::readEA(int reg, uint32_t& ea) -> uint32_t {
@@ -540,18 +571,39 @@ template<M68Core::Engine E, uint8_t Mode, uint8_t Size, unsigned Flags> auto M68
     switch(Mode) {
         case DataRegisterDirect:
         case AddressRegisterDirect:
+            if constexpr (E == Engine::M68020) {
+                if constexpr (!!(Flags & ImmEA)) {
+                    busCycles -= 2;
+                }
+            }
             return reg;
             
         case AddressRegisterIndirect:
+            if constexpr (E == Engine::M68020) {
+                busCycles -= 1;
+                syncInternal<ForceIdle>();
+            }
             return readRegA( reg );
             
         case AddressRegisterIndirectWithPostIncrement:
+            if constexpr (E == Engine::M68020) {
+                if constexpr (!!(Flags & ImmEA)) {
+                    busCycles -= 2;
+                    syncInternal();
+                }
+                SYNC(1);
+                idleSequencer();
+            }
             return readRegA( reg );
             
         case AddressRegisterIndirectWithPreDecrement:
             if constexpr (E == Engine::M68000) {
                 if constexpr((Flags & ConcurrentAdrCalc) == 0) SYNC(2);
+            } else if constexpr (E == Engine::M68020) {
+                busCycles -= 2;
+                syncInternal<ForceIdle>();
             }
+
             adr = readRegA( reg );
             
             adr -= (Size == Byte && reg == 7) ? 2 : Size;
@@ -562,28 +614,41 @@ template<M68Core::Engine E, uint8_t Mode, uint8_t Size, unsigned Flags> auto M68
             if constexpr((Flags & SkipExtension) == 0) {
                 readExtensionWord<E>();
                 if constexpr (E == Engine::M68020) {
-                    if (!busCycles) SYNC(2);
+                    if constexpr (!!(Flags & ImmEA))
+                        busCycles -= dataAccess == DataAccess::PREFETCH ? 4 : 2;
+                    else
+                        busCycles -= 2;
+                    syncInternal<ForceIdle>();
                 }
             } else incPc();
 
             return adr;
             
         case AddressRegisterIndirectWithIndex: {
-            SYNC(2);
             if constexpr (E == Engine::M68020) {
                 if (irc & 0x100)
                     adr = indirectIndexFull<E, Flags>( readRegA( reg ) );
                 else
                     adr = indirectIndexBrief<E, Flags, true>( readRegA( reg )) ;
-            } else
+            } else {
+                SYNC(2);
                 adr = indirectIndexBrief<E, Flags>( readRegA( reg ) );
+            }
 
             return adr;
         }
         case AbsoluteShort:
             adr = (int16_t)irc;
-            if constexpr((Flags & SkipExtension) == 0) readExtensionWord<E>();
-            else incPc();
+            if constexpr((Flags & SkipExtension) == 0) {
+                readExtensionWord<E>();
+                if constexpr (E == Engine::M68020) {
+                    if constexpr (!!(Flags & ImmEA))
+                        busCycles -= dataAccess == DataAccess::PREFETCH ? 4 : 2;
+                    else
+                        busCycles -= 1;
+                    syncInternal<ForceIdle>();
+                }
+            } else incPc();
             return adr;
             
         case AbsoluteLong:
@@ -593,9 +658,24 @@ template<M68Core::Engine E, uint8_t Mode, uint8_t Size, unsigned Flags> auto M68
                 incPc();
             } else {
                 readExtensionWord<E>();
+                if constexpr (E == Engine::M68020) {
+                    if constexpr (!!(Flags & ImmEA))
+                        busCycles -= 2;
+
+                    if (dataAccess == DataAccess::PREFETCH)
+                        busCycles -= (Flags & ImmEA) ? 4 : 3;
+                }
                 adr |= irc;
             }
-            if constexpr((Flags & (SkipExtension | DelayPrefetch) ) == 0) readExtensionWord<E>();
+            if constexpr((Flags & (SkipExtension | DelayPrefetch) ) == 0) {
+                readExtensionWord<E>();
+                if constexpr (E == Engine::M68020) {
+                    if (dataAccess == DataAccess::PREFETCH)
+                        busCycles -= (Flags & ImmEA) ? 4 : 3;
+                    busCycles -= 1;
+                    syncInternal<ForceIdle>();
+                }
+            }
             if constexpr(Flags & SkipExtension) incPc();
             return adr;
             
@@ -604,21 +684,26 @@ template<M68Core::Engine E, uint8_t Mode, uint8_t Size, unsigned Flags> auto M68
             if constexpr((Flags & SkipExtension) == 0) {
                 readExtensionWord<E>();
                 if constexpr (E == Engine::M68020) {
-                    if (!busCycles) SYNC(2);
+                    if constexpr (!!(Flags & ImmEA))
+                        busCycles -= dataAccess == DataAccess::PREFETCH ? 4 : 2;
+                    else
+                        busCycles -= 2;
+                    syncInternal<ForceIdle>();
                 }
             } else incPc();
 
             return adr;
             
         case ProgramCounterIndirectWithIndex: {
-            SYNC(2);
             if constexpr (E == Engine::M68020) {
                 if (irc & 0x100)
                     adr = indirectIndexFull<E, Flags>( pc );
                 else
                     adr = indirectIndexBrief<E, Flags, true>( pc );
-            } else
+            } else {
+                SYNC(2);
                 adr = indirectIndexBrief<E, Flags>( pc );
+            }
 
             return adr;
         }
@@ -631,11 +716,17 @@ template<M68Core::Engine E, uint8_t Mode, uint8_t Size, unsigned Flags> auto M68
                 adr = irc << 16;
                 readExtensionWord<E>();
                 if constexpr (E == Engine::M68020) {
-                    if (!busCycles) SYNC(2);
+                    if (dataAccess == DataAccess::PREFETCH)
+                        busCycles -= 1;
                 }
                 adr |= irc;
             }
             readExtensionWord<E>();
+            if constexpr (E == Engine::M68020) {
+                if constexpr(Size != Long) busCycles -= 2;
+                else busCycles -= dataAccess == DataAccess::PREFETCH ? 5 : 4;
+                syncInternal<CheckIfPipeRunsDry>();
+            }
             return adr;
     }
 }
@@ -651,8 +742,17 @@ template <M68Core::Engine E, unsigned Flags, bool Scale> auto M68Core::indirectI
         xn <<= scale;
     }
     
-    if constexpr((Flags & SkipExtension) == 0) readExtensionWord<E>();
-    else incPc();
+    if constexpr((Flags & SkipExtension) == 0) {
+        readExtensionWord<E>();
+
+        if constexpr (E == Engine::M68020) {
+            if constexpr (!!(Flags & ImmEA))
+                busCycles -= (dataAccess == DataAccess::PREFETCH ? 8 : 5);
+            else
+                busCycles -= (dataAccess == DataAccess::PREFETCH ? 5 : 4);
+            syncInternal<ForceIdle>();
+        }
+    } else incPc();
 
     return static_cast<int64_t>(B) + xn + static_cast<int64_t>(d);
 }
@@ -677,6 +777,7 @@ template <M68Core::Engine E, unsigned Flags> auto M68Core::indirectIndexFull(uin
     const int bdSize = (irc >> 4) & 3;
     const int odSize = irc & 3;
 
+    int prefetches = 0;
     if constexpr(!!(Flags & SkipExtension)) {
         int extWords = bdSize == 3 ? 2 : (bdSize == 2 ? 1 : 0);
         extWords += odSize == 3 ? 2 : (odSize == 2 ? 1 : 0);
@@ -691,13 +792,72 @@ template <M68Core::Engine E, unsigned Flags> auto M68Core::indirectIndexFull(uin
 
     } else {
         readExtensionWord<E>();
+        if (dataAccess == DataAccess::PREFETCH) prefetches++;
 
         if (bdSize & 2)
-            baseD = fetchDisplacement<E>(bdSize & 1);
+            baseD = fetchDisplacement<E>(bdSize & 1, prefetches);
 
         if (odSize & 2)
-            outerD = fetchDisplacement<E>(odSize & 1);
+            outerD = fetchDisplacement<E>(odSize & 1, prefetches);
     }
+
+    if constexpr (!!(Flags & ImmEA)) {
+        if (iis) {
+            switch ((bdSize << 2) | odSize) {
+                default:
+                case 4:
+                case 5:
+                case 0:
+                case 1: busCycles -= prefetches ? 10 : 8; break;
+                case 6:
+                case 2: busCycles -= prefetches ? 13 : 10; break;
+                case 7:
+                case 3: busCycles -= prefetches ? 14 : 10; break;
+                case 9:
+                case 8: busCycles -= prefetches ? 13 : 10; break;
+                case 10: busCycles -= prefetches ? 16 : 12; break;
+                case 11: busCycles -= prefetches ? 14 : 10; break;
+                case 13:
+                case 12: busCycles -= prefetches ? 17 : 14; break;
+                case 14: busCycles -= prefetches ? 19 : 16; break;
+                case 15: busCycles -= prefetches ? 21 : 16; break;
+            }
+
+        } else {
+            if (bdSize == 2)        busCycles -= prefetches ? 12 : 8;
+            else if (bdSize == 3)   busCycles -= prefetches ? 16 : 11;
+            else                    busCycles -= prefetches ? 9 : 6;
+        }
+    } else {
+        if (iis) {
+            switch ((bdSize << 2) | odSize) {
+                default:
+                case 4:
+                case 5:
+                case 0:
+                case 1: busCycles -= prefetches ? 7 : 6; break;
+                case 6:
+                case 2: busCycles -= prefetches ? 10 : 8; break;
+                case 7:
+                case 3: busCycles -= prefetches == 2 ? 11 : (prefetches == 1 ? 10 : 8); break;
+                case 9:
+                case 8: busCycles -= prefetches ? 10 : 8; break;
+                case 10: busCycles -= prefetches == 2 ? 13 : (prefetches == 1 ? 12 : 10); break;
+                case 11: busCycles -= prefetches ? 14 : 10; break;
+                case 13:
+                case 12: busCycles -= prefetches ? 14 : 12; break;
+                case 14: busCycles -= prefetches ? 16 : 14; break;
+                case 15: busCycles -= prefetches ? 18 : 14; break;
+            }
+
+        } else {
+            if (bdSize == 2)        busCycles -= prefetches ? 9 : 6;
+            else if (bdSize == 3)   busCycles -= prefetches ? 13 : 10;
+            else                    busCycles -= prefetches ? 6 : 4;
+        }
+    }
+
+    syncInternal<ForceIdle>();
 
     if (iis & 4)
         addr = read<E, Long, Flags>(B + baseD) + xn + outerD;
@@ -709,16 +869,16 @@ template <M68Core::Engine E, unsigned Flags> auto M68Core::indirectIndexFull(uin
     return addr;
 }
 
-template <M68Core::Engine E> auto M68Core::fetchDisplacement(bool longDis) -> uint32_t {
+template <M68Core::Engine E> auto M68Core::fetchDisplacement(bool longDis, int& prefetches) -> uint32_t {
     uint32_t dis = irc;
     readExtensionWord<E>();
+    if (dataAccess == DataAccess::PREFETCH) prefetches++;
 
     if (longDis) {
-        SYNC(4);
         dis = dis << 16 | irc;
         readExtensionWord<E>();
+        if (dataAccess == DataAccess::PREFETCH) prefetches++;
     } else {
-        SYNC(2);
         dis = sign<Word>(static_cast<uint16_t>(dis));
     }
 

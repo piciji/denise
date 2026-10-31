@@ -172,7 +172,7 @@ auto Agnus::serialize(Emulator::Serializer& s, bool light) -> void {
         if (model == OCS_A1000)
             s.array(wom, 256 * 1024);
 
-        s.integer(overclock.speed);
+        s.integer(overclock.speedRequested);
         s.integer(overclock.speedInternal);
         s.integer(overclock.romWaitStates);
         s.integer(overclock.syncAgnus);

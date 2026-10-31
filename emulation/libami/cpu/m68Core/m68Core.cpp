@@ -166,6 +166,8 @@ auto M68Core::reset() -> void { // highest prioritized group 0 routine
     sfc = 0;
     dfc = 0;
     busCycles = 0;
+    dataAccess = DataAccess::NONE;
+    runsDry = false;
     vbr = 0;
     invalidateCache();
 
@@ -662,6 +664,26 @@ auto M68Core::setEngine( Engine engine ) -> void {
         this->engine = engine;
         if (engine == Engine::M68000) build<Engine::M68000>();
         else if (engine == Engine::M68020) build<Engine::M68020>();
+    }
+}
+auto M68Core::idleSequencer() -> void {
+    busCycles = 0;
+    runsDry = false;
+    dataAccess = DataAccess::NONE;
+}
+
+template<unsigned Flags> inline auto M68Core::syncInternal() -> void {
+    if (busCycles < 0) { // nothing on BUS, internal cycles
+        SYNC(-busCycles);
+        if constexpr ((Flags & ForceIdle) == 0)
+            idleSequencer();
+    }
+
+    if constexpr (!!(Flags & ForceIdle))
+        idleSequencer();
+    else if constexpr (!!(Flags & CheckIfPipeRunsDry)) {
+        if (runsDry)
+            idleSequencer();
     }
 }
 

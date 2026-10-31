@@ -79,10 +79,13 @@ protected:
 
     enum {  None = 0, SampleIPL = 1, SkipExtension = 2, EXC = 4,
             PRG = 8, ConcurrentAdrCalc = 0x10 /* happens while prefetching */, Reverse = 0x20,
-            DFC = 0x40, SFC = 0x80, FirstPrefetch = 0x100, DelayPrefetch = 0x200, UpdatePrePost = 0x400
+            DFC = 0x40, SFC = 0x80, FirstPrefetch = 0x100, DelayPrefetch = 0x200, UpdatePrePost = 0x400,
+            ForceIdle = 0x800, CheckIfPipeRunsDry = 0x1000, ImmEA = 0x2000
     };
 
     enum { SF_DATA = 1, SF_PRG = 2, SF_S = 4, SF_EXC = 8, SF_READ = 0x10, SF_DFC = 0x40, SF_SFC = 0x80 };
+
+    enum class DataAccess { NONE, PREFETCH, INST_CACHE, READ, WRITE  } dataAccess;
 
 public:
     enum { Byte = 1, Word = 2, Long = 4, BWL = 7, WL = 6, BW = 3 };
@@ -158,6 +161,7 @@ protected:
     CacheEntry cacheEntries[64];
 
     int busCycles;
+    bool runsDry;
 
     Emulator::WatchPoints watchPoints = Emulator::WatchPoints();
     Emulator::WatchPoints watchPointsWrite = Emulator::WatchPoints();
@@ -261,11 +265,13 @@ private:
     auto setSuperVisor(bool state = true) -> void;
     auto setMasterSP(bool state) -> void;
     auto syncSequencer(unsigned cycles) -> void;
+    template<unsigned Flags = 0> auto syncInternal() -> void;
+    auto idleSequencer() -> void;
     template<uint8_t Size = Word> auto misaligned(uint32_t adr) -> bool;
 
     template <Engine E, unsigned Flags, bool Scale = false> auto indirectIndexBrief(uint32_t B) -> uint32_t;
     template <Engine E, unsigned Flags> auto indirectIndexFull(uint32_t B) -> uint32_t;
-    template <Engine E> auto fetchDisplacement(bool longDis) -> uint32_t;
+    template <Engine E> auto fetchDisplacement(bool longDis, int& prefetches) -> uint32_t;
     template <Engine E> auto fetchDisplacementSkipped(bool longDis, int& extWords) -> uint32_t;
 
     template<uint8_t Size = Long> inline auto readRegD(int reg) -> uint32_t;

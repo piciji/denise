@@ -250,6 +250,8 @@ auto Cpu::serialize(Emulator::Serializer& s) -> void {
         s.integer(stageB);
 
         s.integer(busCycles);
+        s.integer((uint8_t&)dataAccess);
+        s.integer( runsDry );
 
         s.integer(dfc);
         s.integer(sfc);

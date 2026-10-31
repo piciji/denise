@@ -59,7 +59,7 @@ Agnus::Agnus(System* system, Cpu& cpu, Denise& denise, Paula& paula, Cia<MOS_852
 
     encryptedRom = nullptr;
     overclock.cycles = 0;
-    overclock.speed = 0;
+    overclock.speedRequested = 0;
 
     resetFps();
 }
@@ -363,9 +363,9 @@ auto Agnus::prepareOverclock() -> void {
     auto& o = overclock;
 
     o.cycles = 0;
-    o.speedInternal = o.speed;
+    o.speedInternal = o.speedRequested;
     if (cpu.getEngine() == M68FAMILY::M68Core::Engine::M68020) {
-        if (!o.speed)
+        if (!o.speedRequested)
             o.speedInternal = 2;
 
         o.speedInternal <<= 1;
@@ -439,11 +439,17 @@ auto Agnus::prepareOverclock() -> void {
     //fprintf( stdout, "fast %i, rom %i, eclock %i\n", o.fastWaitStates, o.romWaitStates, o.eClockShifter );
 }
 
-template<bool logDma> inline auto Agnus::sync(unsigned cycles) -> void {
+auto Agnus::sync(unsigned cycles) -> void {
+    debugger.dmaLog ? sync<true, false>(cycles) : sync<false, false>(cycles);
+}
+
+template<bool logDma, bool informCpuAboutWaitstates> inline auto Agnus::sync(unsigned cycles) -> void {
 #define o overclock
 
     if (o.speedInternal) {
         o.cycles += cycles;
+        if constexpr (informCpuAboutWaitstates)
+            cpu.addWaitStates( cycles );
 
         while (o.cycles >= o.speedInternal) {
             if constexpr (logDma) {
@@ -479,6 +485,8 @@ template<bool logDma> inline auto Agnus::addWaitstatesToCPU() -> void {
 #define o overclock
 
     if (o.speedInternal) {
+        unsigned waitStates = 0;
+
         if (o.cycles) {
             if constexpr (logDma) {
                 checkDmaStops();
@@ -490,22 +498,40 @@ template<bool logDma> inline auto Agnus::addWaitstatesToCPU() -> void {
                     addDmaLogEntry();
                 }
             }
+
+            waitStates += o.speedInternal - o.cycles + o.syncAgnus;
         }
 
+        while (busUsage != BUS_FREE) {
+            if constexpr (logDma) {
+                checkDmaStops();
+            }
+            dmaCycle();
+            countWaitCycles++;
+            waitStates += o.speedInternal;
+
+            if constexpr (logDma) {
+                if (busUsage != BUS_FREE) {
+                    addDmaLogEntry();
+                }
+            }
+        }
+
+        cpu.addWaitStates( waitStates );
         // access BUS (clock stretch to stock speed)
         o.cycles = o.syncAgnus;
-    }
+    } else {
+        while (busUsage != BUS_FREE) {
+            if constexpr (logDma) {
+                checkDmaStops();
+            }
+            dmaCycle();
+            countWaitCycles++;
 
-    while (busUsage != BUS_FREE) {
-        if constexpr (logDma) {
-            checkDmaStops();
-        }
-        dmaCycle();
-        countWaitCycles++;
-
-        if constexpr (logDma) {
-            if (busUsage != BUS_FREE) {
-                addDmaLogEntry();
+            if constexpr (logDma) {
+                if (busUsage != BUS_FREE) {
+                    addDmaLogEntry();
+                }
             }
         }
     }
@@ -865,10 +891,6 @@ auto Agnus::POSR(bool vhpos) -> uint16_t {
         return ((v >> 8) & 7) | (_lof << 15) | (_lol << 7) | (ntsc << 12) | (1 << 13) | (aga() ? 3 : 0);
 
     return ((v >> 8) & 1) | (_lof << 15) | (ntsc << 12);
-}
-
-auto Agnus::sync(unsigned cycles) -> void {
-    debugger.dmaLog ? sync<true>(cycles) : sync<false>(cycles);
 }
 
 auto Agnus::iackCycle(uint8_t level, uint8_t& vector) -> int {

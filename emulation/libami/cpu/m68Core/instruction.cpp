@@ -13,26 +13,12 @@ template<M68Core::Engine E, uint8_t Inst, uint8_t Size> auto M68Core::opImmShift
 
     if constexpr (E == Engine::M68020) {
         switch (Inst) {
-            case Asl:
-            case Rol:
-            case Ror:
-                syncSequencer( 8 - 2);
-                break;
-
-            case Asr:
-                syncSequencer( 6 - 2);
-                break;
-
-            case Lsl:
-            case Lsr:
-                syncSequencer( 4 - 2);
-                break;
-
-            case Roxl:
-            case Roxr:
-                syncSequencer( 12 - 2);
-                break;
+            case Asl: case Rol: case Ror:   busCycles -= 8; break;
+            case Asr:                       busCycles -= 6; break;
+            case Lsl: case Lsr:             busCycles -= 4; break;
+            case Roxl: case Roxr:           busCycles -= 12; break;
         }
+        syncInternal<CheckIfPipeRunsDry>();
     } else
         SYNC( (Size == Long ? 4 : 2) + shift * 2);
 
@@ -48,23 +34,11 @@ template<M68Core::Engine E, uint8_t Inst, uint8_t Size> auto M68Core::opRegShift
 
     if constexpr (E == Engine::M68020) {
         switch (Inst) {
-            case Asl:
-            case Rol:
-            case Ror:
-                syncSequencer( 8 - 2);
-                break;
-
-            case Asr:
-            case Lsl:
-            case Lsr:
-                syncSequencer( 6 - 2);
-                break;
-
-            case Roxl:
-            case Roxr:
-                syncSequencer( 12 - 2);
-                break;
+            case Asl: case Rol: case Ror:   busCycles -= 8; break;
+            case Asr: case Lsl: case Lsr:   busCycles -= 6; break;
+            case Roxl: case Roxr:           busCycles -= 12; break;
         }
+        syncInternal<CheckIfPipeRunsDry>();
     } else
         SYNC( (Size == Long ? 4 : 2) + shift * 2);
 
@@ -74,25 +48,18 @@ template<M68Core::Engine E, uint8_t Inst, uint8_t Size> auto M68Core::opRegShift
 template<M68Core::Engine E, uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68Core::opShift(uint16_t opcode) -> void {
     uint32_t result, ea;
     result = readEA<E, Mode, Word>(opcode & 7, ea);
-    
+
+    if constexpr (E == Engine::M68020)
+        idleSequencer();
     prefetch<E, SampleIPL>();
 
     if constexpr (E == Engine::M68020) {
         switch (Inst) {
-            case Asl:
-            case Rol:
-            case Ror:
-                syncSequencer( 4);
-                break;
-
-            case Asr:
-            case Lsl:
-            case Lsr:
-            case Roxl:
-            case Roxr:
-                syncSequencer( 2);
-                break;
+            case Rol: case Ror:                                 busCycles -= 4; break;
+            case Asl:                                           busCycles -= dataAccess == DataAccess::PREFETCH ? 4 : 3; break;
+            case Asr: case Lsl: case Lsr: case Roxl: case Roxr: busCycles -= 2; break;
         }
+        syncInternal();
     }
 
     writeEA<E, Mode, Word>(ea, singleShifter<Inst>(result) );
@@ -104,20 +71,25 @@ template<M68Core::Engine E, uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68Co
     int bits = (Size == Long) ? (regsD[ reg ] & 31) : (regsD[ reg ] & 7);
 
     result = readEA<E, Mode, Size>(opcode & 7, ea);
+    if constexpr (E == Engine::M68020 && Size == Byte && Mode != Immediate)
+        idleSequencer();
 
     result = bit<Inst>(result, bits);
     prefetch<E, SampleIPL>();
 
     if constexpr (E == Engine::M68020) {
         if constexpr (Size == Byte) {
-            if constexpr(Inst == Btst) {
-                if (!busCycles) SYNC(4);
-                else syncSequencer( 5 );
-            } else if (!busCycles)
-                SYNC(1);
+            if constexpr (Inst == Btst) {
+                busCycles -= dataAccess == DataAccess::PREFETCH ? 5 : 4;
+                syncInternal<CheckIfPipeRunsDry>();
+            } else {
+                busCycles -= dataAccess == DataAccess::PREFETCH ? 3 : 1;
+                syncInternal();
+            }
+
         } else {
-            if (!busCycles) SYNC(4 - 2);
-            else syncSequencer( 5 - 2 );
+            busCycles -= dataAccess == DataAccess::PREFETCH ? 5 : 4;
+            syncInternal<CheckIfPipeRunsDry>();
         }
     } else {
         if constexpr(Mode == Immediate) SYNC(2);
@@ -132,21 +104,25 @@ template<M68Core::Engine E, uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68Co
     int bits = (Size == Long) ? (irc & 31) : (irc & 7);
     readExtensionWord<E>();
 
-    result = readEA<E, Mode, Size>(opcode & 7, ea);
+    result = readEA<E, Mode, Size, ImmEA>(opcode & 7, ea);
+    if constexpr (E == Engine::M68020 && Size == Byte)
+        idleSequencer();
     
     result = bit<Inst>(result, bits);
     prefetch<E, SampleIPL>();
 
     if constexpr (E == Engine::M68020) {
         if constexpr (Size == Byte) {
-            if constexpr(Inst == Btst) {
-                if (!busCycles) SYNC(4);
-                else syncSequencer( 5 );
-            } else if (!busCycles)
-                SYNC(1);
+            if constexpr (Inst == Btst) {
+                busCycles -= 4;
+                syncInternal<CheckIfPipeRunsDry>();
+            } else {
+                busCycles -= dataAccess == DataAccess::PREFETCH ? 3 : 1;
+                syncInternal();
+            }
         } else {
-            if (!busCycles) SYNC(4 - 2);
-            else syncSequencer( 5 - 2 );
+            busCycles -= dataAccess == DataAccess::PREFETCH ? 5 : 4;
+            syncInternal<CheckIfPipeRunsDry>();
         }
     } else if constexpr(Mode == DataRegisterDirect) cyclesBit<Inst>(bits);
 
@@ -1280,7 +1256,7 @@ template<M68Core::Engine E, uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68Co
     uint16_t IR = ird;
 
     if constexpr(!isAbsMode<Mode>()) {
-        sampleInterrupt(); // like all the other IPL sample points, it happens one clock cycle sooner (confirmed with fx68k)
+        sampleInterrupt();
         if constexpr (E < Engine::M68020) {
             if constexpr(isIndexMode<Mode>()) SYNC(2);
         }

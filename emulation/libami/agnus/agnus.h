@@ -167,7 +167,7 @@ struct Agnus {
     bool secureRA;
 
     struct {
-        unsigned speed; // user requested
+        unsigned speedRequested; // user requested
         unsigned speedInternal;
         unsigned cycles;
         unsigned romWaitStates;
@@ -376,7 +376,7 @@ struct Agnus {
     }
 
     auto sync(unsigned cycles) -> void;
-    template<bool logDma> auto sync(unsigned cycles) -> void;
+    template<bool logDma, bool informCpuAboutWaitstates> auto sync(unsigned cycles) -> void;
     auto dmaCycle() -> void;
     template<bool logDma> auto addWaitstatesToCPU() -> void;
     auto iackCycle(uint8_t level, uint8_t& vector) -> int;
