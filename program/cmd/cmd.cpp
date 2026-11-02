@@ -11,8 +11,8 @@ Cmd::Cmd(int argc, char** argv) {
         return;
 
 	std::string arg;
-    std::string appendedArg = "";
-    std::string configIdent = "";
+    std::string appendedArg;
+    std::string configIdent;
     std::vector<std::string> out;
     hasContent = false;
     invalidParam = "";
