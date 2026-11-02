@@ -120,7 +120,7 @@ auto DiskStructure::createD64FromPRG( System* system, std::string name, uint8_t*
 				_start = 15;
 
             for (i = _start; i >= 0; i--) {
-				uint8_t code = conv.encode(name[i]);
+				uint8_t code = conv.encode<true>(name[i]);
 				if (code == 0 || code > 95)
 					code = 32;
 
