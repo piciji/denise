@@ -77,10 +77,9 @@ protected:
         Movec, Moves, MoveCcr,
     };
 
-    enum {  None = 0, SampleIPL = 1, SkipExtension = 2, EXC = 4,
-            PRG = 8, ConcurrentAdrCalc = 0x10 /* happens while prefetching */, Reverse = 0x20,
+    enum {  None = 0, SampleIPL = 1, SkipExtension = 2, EXC = 4, PRG = 8, ConcurrentAdrCalc = 0x10, Reverse = 0x20,
             DFC = 0x40, SFC = 0x80, FirstPrefetch = 0x100, DelayPrefetch = 0x200, UpdatePrePost = 0x400,
-            ForceIdle = 0x800, CheckIfPipeRunsDry = 0x1000, ImmEA = 0x2000
+            ForceIdle = 0x800, CheckIfPipeRunsDry = 0x1000, ImmEA = 0x2000, ImmEACalc = 0x4000, EACalc = 0x8000,
     };
 
     enum { SF_DATA = 1, SF_PRG = 2, SF_S = 4, SF_EXC = 8, SF_READ = 0x10, SF_DFC = 0x40, SF_SFC = 0x80 };
@@ -514,6 +513,7 @@ private:
     auto setCacr(uint32_t value) -> void;
     auto checkT0() -> void;
     auto incPc() -> void { pc += 2; }
+    auto prefetchLast() const -> bool { return dataAccess == DataAccess::PREFETCH; }
 
     template<bool withRotation = true> auto bfMask(unsigned width, unsigned offset) -> uint32_t;
     template<bool withRotation = true> auto bfShiftLeft(uint32_t data, unsigned offset) -> uint32_t;

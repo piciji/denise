@@ -94,7 +94,7 @@ template<M68Core::Engine E, unsigned Flags> auto M68Core::fullPrefetch() -> void
         if constexpr (Flags & DelayPrefetch) {
             if (!busCycles) SYNC(2);
         }
-        busCycles = 0;
+        idleSequencer();
     } else {
         if constexpr (Flags & DelayPrefetch) SYNC(2);
         prefetch<E, Flags>();
@@ -554,7 +554,7 @@ template<M68Core::Engine E, uint8_t Mode, uint8_t Size, unsigned Flags> auto M68
 }
 
 template<M68Core::Engine E, uint8_t Mode, uint8_t Size, unsigned Flags> auto M68Core::calcEaUpdatePrePost(int reg) -> uint32_t {
-    uint32_t ea = calcEA<E, Mode, Size>(reg);
+    uint32_t ea = calcEA<E, Mode, Size, Flags>(reg);
 
     if constexpr (Mode == AddressRegisterIndirectWithPreDecrement)
         writeRegA(reg, ea);
@@ -572,7 +572,7 @@ template<M68Core::Engine E, uint8_t Mode, uint8_t Size, unsigned Flags> auto M68
         case DataRegisterDirect:
         case AddressRegisterDirect:
             if constexpr (E == Engine::M68020) {
-                if constexpr (!!(Flags & ImmEA)) {
+                if constexpr (!!(Flags & (ImmEA | ImmEACalc) )) {
                     busCycles -= 2;
                 }
             }
@@ -580,19 +580,30 @@ template<M68Core::Engine E, uint8_t Mode, uint8_t Size, unsigned Flags> auto M68
             
         case AddressRegisterIndirect:
             if constexpr (E == Engine::M68020) {
-                busCycles -= 1;
-                syncInternal<ForceIdle>();
+                if constexpr (!!(Flags & (ImmEACalc | EACalc) )) {
+                    busCycles -= 2;
+                } else
+                    busCycles -= 1;
+
+                if constexpr ((Flags & EACalc) == 0)
+                    syncInternal<ForceIdle>();
             }
             return readRegA( reg );
             
         case AddressRegisterIndirectWithPostIncrement:
             if constexpr (E == Engine::M68020) {
-                if constexpr (!!(Flags & ImmEA)) {
+                if constexpr (!!(Flags & (ImmEA | ImmEACalc | EACalc) )) {
                     busCycles -= 2;
+                }
+
+                if constexpr (!!(Flags & (ImmEA | ImmEACalc) )) {
                     syncInternal();
                 }
-                SYNC(1);
-                idleSequencer();
+
+                if constexpr ((Flags & EACalc) == 0) {
+                    SYNC( (Flags & ImmEACalc) ? 2 : 1);
+                    idleSequencer();
+                }
             }
             return readRegA( reg );
             
@@ -601,24 +612,41 @@ template<M68Core::Engine E, uint8_t Mode, uint8_t Size, unsigned Flags> auto M68
                 if constexpr((Flags & ConcurrentAdrCalc) == 0) SYNC(2);
             } else if constexpr (E == Engine::M68020) {
                 busCycles -= 2;
-                syncInternal<ForceIdle>();
+                if constexpr ((Flags & EACalc) == 0)
+                    syncInternal<ForceIdle>();
             }
 
             adr = readRegA( reg );
             
             adr -= (Size == Byte && reg == 7) ? 2 : Size;
             return adr;
-            
+
+        case ProgramCounterIndirectWithDisplacement:
         case AddressRegisterIndirectWithDisplacement:
-            adr = readRegA( reg ) + (int16_t)irc;
+            if constexpr (Mode == AddressRegisterIndirectWithDisplacement)
+                adr = readRegA( reg ) + (int16_t)irc;
+            else
+                adr = pc + (int16_t)irc;
+
             if constexpr((Flags & SkipExtension) == 0) {
+                if constexpr (E == Engine::M68020) {
+                    if constexpr (!!(Flags & ImmEA))
+                        busCycles -= prefetchLast() ? 3 : 1;
+                    else if constexpr (!!(Flags & ImmEACalc))
+                        busCycles -= prefetchLast() ? 3 : 2;
+                }
+
                 readExtensionWord<E>();
                 if constexpr (E == Engine::M68020) {
                     if constexpr (!!(Flags & ImmEA))
-                        busCycles -= dataAccess == DataAccess::PREFETCH ? 4 : 2;
+                        busCycles -= prefetchLast() ? 3 : 1;
+                    else if constexpr (!!(Flags & ImmEACalc))
+                        busCycles -= prefetchLast() ? 3 : 2;
                     else
                         busCycles -= 2;
-                    syncInternal<ForceIdle>();
+
+                    if constexpr ((Flags & EACalc) == 0)
+                        syncInternal<ForceIdle>();
                 }
             } else incPc();
 
@@ -640,13 +668,26 @@ template<M68Core::Engine E, uint8_t Mode, uint8_t Size, unsigned Flags> auto M68
         case AbsoluteShort:
             adr = (int16_t)irc;
             if constexpr((Flags & SkipExtension) == 0) {
+                if constexpr (E == Engine::M68020) {
+                    if constexpr (!!(Flags & ImmEA))
+                        busCycles -= prefetchLast() ? 3 : 1;
+                    else if constexpr (!!(Flags & ImmEACalc))
+                        busCycles -= prefetchLast() ? 3 : 2;
+                }
+
                 readExtensionWord<E>();
                 if constexpr (E == Engine::M68020) {
                     if constexpr (!!(Flags & ImmEA))
-                        busCycles -= dataAccess == DataAccess::PREFETCH ? 4 : 2;
+                        busCycles -= prefetchLast() ? 3 : 1;
+                    else if constexpr (!!(Flags & ImmEACalc))
+                        busCycles -= prefetchLast() ? 3 : 2;
+                    else if constexpr (!!(Flags & EACalc))
+                        busCycles -= 2;
                     else
                         busCycles -= 1;
-                    syncInternal<ForceIdle>();
+
+                    if constexpr ((Flags & EACalc) == 0)
+                        syncInternal<ForceIdle>();
                 }
             } else incPc();
             return adr;
@@ -661,37 +702,45 @@ template<M68Core::Engine E, uint8_t Mode, uint8_t Size, unsigned Flags> auto M68
                 if constexpr (E == Engine::M68020) {
                     if constexpr (!!(Flags & ImmEA))
                         busCycles -= 2;
+                    else if constexpr (!!(Flags & ImmEACalc))
+                        busCycles -= 3;
 
-                    if (dataAccess == DataAccess::PREFETCH)
-                        busCycles -= (Flags & ImmEA) ? 4 : 3;
+                    if (prefetchLast()) {
+                        if constexpr (!!(Flags & ImmEA))
+                            busCycles -= 4;
+                        else if constexpr (!!(Flags & ImmEACalc))
+                            busCycles -= 2;
+                        else
+                            busCycles -= 3;
+                    } else {
+                        if constexpr (!!(Flags & EACalc))
+                            busCycles -= 2;
+                    }
                 }
                 adr |= irc;
             }
             if constexpr((Flags & (SkipExtension | DelayPrefetch) ) == 0) {
                 readExtensionWord<E>();
                 if constexpr (E == Engine::M68020) {
-                    if (dataAccess == DataAccess::PREFETCH)
-                        busCycles -= (Flags & ImmEA) ? 4 : 3;
-                    busCycles -= 1;
-                    syncInternal<ForceIdle>();
+                    if (prefetchLast()) {
+                        if constexpr (!!(Flags & ImmEA))
+                            busCycles -= 4;
+                        else if constexpr (!!(Flags & ImmEACalc))
+                            busCycles -= 2;
+                        else
+                            busCycles -= 3;
+                    } else {
+                        if constexpr (!!(Flags & EACalc))
+                            busCycles -= 2;
+                    }
+
+                    if constexpr ((Flags & EACalc) == 0) {
+                        busCycles -= 1;
+                        syncInternal<ForceIdle>();
+                    }
                 }
             }
             if constexpr(Flags & SkipExtension) incPc();
-            return adr;
-            
-        case ProgramCounterIndirectWithDisplacement:
-            adr = pc + (int16_t)irc;
-            if constexpr((Flags & SkipExtension) == 0) {
-                readExtensionWord<E>();
-                if constexpr (E == Engine::M68020) {
-                    if constexpr (!!(Flags & ImmEA))
-                        busCycles -= dataAccess == DataAccess::PREFETCH ? 4 : 2;
-                    else
-                        busCycles -= 2;
-                    syncInternal<ForceIdle>();
-                }
-            } else incPc();
-
             return adr;
             
         case ProgramCounterIndirectWithIndex: {
@@ -715,16 +764,13 @@ template<M68Core::Engine E, uint8_t Mode, uint8_t Size, unsigned Flags> auto M68
             } else {
                 adr = irc << 16;
                 readExtensionWord<E>();
-                if constexpr (E == Engine::M68020) {
-                    if (dataAccess == DataAccess::PREFETCH)
-                        busCycles -= 1;
-                }
+                if constexpr (E == Engine::M68020)
+                    busCycles -= prefetchLast() ? 3 : 2;
                 adr |= irc;
             }
             readExtensionWord<E>();
             if constexpr (E == Engine::M68020) {
-                if constexpr(Size != Long) busCycles -= 2;
-                else busCycles -= dataAccess == DataAccess::PREFETCH ? 5 : 4;
+                busCycles -= prefetchLast() ? 3 : 2;
                 syncInternal<CheckIfPipeRunsDry>();
             }
             return adr;
@@ -743,14 +789,21 @@ template <M68Core::Engine E, unsigned Flags, bool Scale> auto M68Core::indirectI
     }
     
     if constexpr((Flags & SkipExtension) == 0) {
+        if constexpr (E == Engine::M68020) {
+            if constexpr (!!(Flags & (ImmEA | ImmEACalc) ))
+                busCycles -= prefetchLast() ? 5 : 3;
+        }
+
         readExtensionWord<E>();
 
         if constexpr (E == Engine::M68020) {
-            if constexpr (!!(Flags & ImmEA))
-                busCycles -= (dataAccess == DataAccess::PREFETCH ? 8 : 5);
+            if constexpr (!!(Flags & (ImmEA | ImmEACalc)))
+                busCycles -= prefetchLast() ? 5 : 3;
             else
-                busCycles -= (dataAccess == DataAccess::PREFETCH ? 5 : 4);
-            syncInternal<ForceIdle>();
+                busCycles -= prefetchLast() ? 5 : 4;
+
+            if constexpr ((Flags & EACalc) == 0)
+                syncInternal<ForceIdle>();
         }
     } else incPc();
 
@@ -792,7 +845,7 @@ template <M68Core::Engine E, unsigned Flags> auto M68Core::indirectIndexFull(uin
 
     } else {
         readExtensionWord<E>();
-        if (dataAccess == DataAccess::PREFETCH) prefetches++;
+        if (prefetchLast()) prefetches++;
 
         if (bdSize & 2)
             baseD = fetchDisplacement<E>(bdSize & 1, prefetches);
@@ -801,7 +854,61 @@ template <M68Core::Engine E, unsigned Flags> auto M68Core::indirectIndexFull(uin
             outerD = fetchDisplacement<E>(odSize & 1, prefetches);
     }
 
-    if constexpr (!!(Flags & ImmEA)) {
+    if constexpr (!!(Flags & EACalc)) {
+        if (iis) {
+            switch ((bdSize << 2) | odSize) {
+                default:
+                case 4:
+                case 5:
+                case 0:
+                case 1: busCycles -= prefetches ? 9 : 8; break;
+                case 6:
+                case 2: busCycles -= prefetches ? 12 : 10; break;
+                case 7:
+                case 3: busCycles -= prefetches ? 13 : 10; break;
+                case 9:
+                case 8: busCycles -= prefetches ? 12 : 10; break;
+                case 10: busCycles -= prefetches ? 15 : 12; break;
+                case 11: busCycles -= prefetches ? 16 : 12; break;
+                case 13:
+                case 12: busCycles -= prefetches ? 16 : 14; break;
+                case 14: busCycles -= prefetches ? 18 : 16; break;
+                case 15: busCycles -= prefetches ? 21 : 16; break;
+            }
+
+        } else {
+            if (bdSize == 2)        busCycles -= prefetches ? 10 : 8;
+            else if (bdSize == 3)   busCycles -= prefetches ? 15 : 12;
+            else                    busCycles -= prefetches ? 7 : 6;
+        }
+    } else if constexpr (!!(Flags & ImmEACalc)) {
+        if (iis) {
+            switch ((bdSize << 2) | odSize) {
+                default:
+                case 4:
+                case 5:
+                case 0:
+                case 1: busCycles -= prefetches ? 12 : 10; break;
+                case 6:
+                case 2: busCycles -= prefetches ? 15 : 12; break;
+                case 7:
+                case 3: busCycles -= prefetches ? 16 : 12; break;
+                case 9:
+                case 8: busCycles -= prefetches ? 15 : 12; break;
+                case 10: busCycles -= prefetches ? 18 : 14; break;
+                case 11: busCycles -= prefetches ? 19 : 14; break;
+                case 13:
+                case 12: busCycles -= prefetches ? 19 : 16; break;
+                case 14: busCycles -= prefetches ? 21 : 18; break;
+                case 15: busCycles -= prefetches ? 21 : 18; break;
+            }
+
+        } else {
+            if (bdSize == 2)        busCycles -= prefetches ? 13 : 10;
+            else if (bdSize == 3)   busCycles -= prefetches ? 18 : 14;
+            else                    busCycles -= prefetches ? 10 : 8;
+        }
+    } else if constexpr (!!(Flags & ImmEA)) {
         if (iis) {
             switch ((bdSize << 2) | odSize) {
                 default:
@@ -839,10 +946,10 @@ template <M68Core::Engine E, unsigned Flags> auto M68Core::indirectIndexFull(uin
                 case 6:
                 case 2: busCycles -= prefetches ? 10 : 8; break;
                 case 7:
-                case 3: busCycles -= prefetches == 2 ? 11 : (prefetches == 1 ? 10 : 8); break;
+                case 3: busCycles -= prefetches ? 11 : 8; break;
                 case 9:
                 case 8: busCycles -= prefetches ? 10 : 8; break;
-                case 10: busCycles -= prefetches == 2 ? 13 : (prefetches == 1 ? 12 : 10); break;
+                case 10: busCycles -= prefetches ? 13 : 10; break;
                 case 11: busCycles -= prefetches ? 14 : 10; break;
                 case 13:
                 case 12: busCycles -= prefetches ? 14 : 12; break;
@@ -857,7 +964,8 @@ template <M68Core::Engine E, unsigned Flags> auto M68Core::indirectIndexFull(uin
         }
     }
 
-    syncInternal<ForceIdle>();
+    if constexpr ((Flags & EACalc) == 0)
+        syncInternal<ForceIdle>();
 
     if (iis & 4)
         addr = read<E, Long, Flags>(B + baseD) + xn + outerD;
@@ -866,18 +974,23 @@ template <M68Core::Engine E, unsigned Flags> auto M68Core::indirectIndexFull(uin
     else
         addr = B + baseD + xn;
 
+    if constexpr (!!(Flags & EACalc)) {
+        if (iis)
+            syncInternal<ForceIdle>();
+    }
+
     return addr;
 }
 
 template <M68Core::Engine E> auto M68Core::fetchDisplacement(bool longDis, int& prefetches) -> uint32_t {
     uint32_t dis = irc;
     readExtensionWord<E>();
-    if (dataAccess == DataAccess::PREFETCH) prefetches++;
+    if (prefetchLast()) prefetches++;
 
     if (longDis) {
         dis = dis << 16 | irc;
         readExtensionWord<E>();
-        if (dataAccess == DataAccess::PREFETCH) prefetches++;
+        if (prefetchLast()) prefetches++;
     } else {
         dis = sign<Word>(static_cast<uint16_t>(dis));
     }
