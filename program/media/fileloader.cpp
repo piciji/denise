@@ -891,7 +891,8 @@ auto Fileloader::insertImage(Emulator::Interface* emulator, Emulator::Interface:
         if (mediaGroup->isHardDisk() && mediaGroup->expansion->pcbs.size())
             settings->set<unsigned>(_underscore(media->name) + "_pcb", 0);
 
-        States::getInstance(emulator)->updateImage(fSetting, media);
+        if (!cmd->noGui)
+            States::getInstance(emulator)->updateImage(fSetting, media);
     } else {
         auto ext = GUIKIT::String::getExtension(file->getFile(), "bin");
         GUIKIT::String::toLowerCase(ext);
@@ -903,7 +904,8 @@ auto Fileloader::insertImage(Emulator::Interface* emulator, Emulator::Interface:
 
         updateFileSetting(fSetting, file, item);
 
-        States::getInstance(emulator)->forcePowerNextLoad = true;
+        if (!cmd->noGui)
+            States::getInstance(emulator)->forcePowerNextLoad = true;
     }
 
     auto recentFile = getRecentFile(emulator);
