@@ -138,10 +138,10 @@ auto DiskStructure::prepareD81() -> void {
             trackPtr->size = 6250;
             trackPtr->bits = trackPtr->size << 3;
             trackPtr->data = new uint8_t[trackPtr->size];
-            trackPtr->mfmSync = new uint8_t[trackPtr->size >> 3];
+            trackPtr->mfmSync = new uint8_t[(trackPtr->size + 7) >> 3];
 
             std::memset(trackPtr->data, 0x4e, trackPtr->size);
-            std::memset(trackPtr->mfmSync, 0x00, trackPtr->size >> 3);
+            std::memset(trackPtr->mfmSync, 0x00, (trackPtr->size + 7) >> 3);
 
             if (track < tracksInDxx) {
                 uint8_t* ptr = trackPtr->data;

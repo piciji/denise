@@ -678,7 +678,7 @@ auto DiskStructure::serialize(Emulator::Serializer& s, bool written) -> void {
                             gcrTrack->mfmSync = nullptr;
 
                             if (gcrTrack->size)
-                                gcrTrack->mfmSync = new uint8_t[gcrTrack->size >> 3];
+                                gcrTrack->mfmSync = new uint8_t[(gcrTrack->size + 7) >> 3]();
                         }
                     }
                 }
