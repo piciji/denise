@@ -690,8 +690,12 @@ auto Fileloader::previewFile( std::string filePath, Emulator::Interface* emulato
 }
 
 auto Fileloader::eject(Emulator::Interface* emulator, Emulator::Interface::Media* media) -> void {
+    auto mediaGroup = media->group;
+    auto useExpansion = emulator->getExpansion();
+    auto insertedExpansion = emulator == activeEmulator && useExpansion && useExpansion->mediaGroup == mediaGroup;
+    bool mediaIsRam = media->type == Emulator::Interface::Media::MemoryType::RAM || media->type == Emulator::Interface::Media::MemoryType::SRAM;
 
-    if ( !media->group->isExpansion() ) {
+    if (!mediaGroup->isExpansion() || (insertedExpansion && (mediaIsRam || (media->parent && (mediaGroup->selected == media->parent))))) {
         emulator->ejectMedium(media);
         filePool->assign( _ident(emulator, media->name), nullptr);
         if (!cmd->noGui)
@@ -700,9 +704,7 @@ auto Fileloader::eject(Emulator::Interface* emulator, Emulator::Interface::Media
         if (!cmd->noGui)
             States::getInstance(emulator)->forcePowerNextLoad = true;
     }
-    // an expansion can't be removed while emulation is running.
-    // but we have to cut the file link or EasyFlash could
-    // write back data, even when user has removed file from UI.
+
     media->guid = (uintptr_t)nullptr;
 
     if (view && activeEmulator && media->group->isTape())
