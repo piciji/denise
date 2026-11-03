@@ -49,9 +49,17 @@ auto Gmod2::prepare() -> void {
         if (chip.bank >= 64)
             break;
 
+        if (!binFormat) {
+            if (chip.addr == 0xde00) // EEPROM image in the .crt, not flash
+                continue;
+
+            if (chip.addr != 0x8000)
+                continue;
+        }
+
         offset = chip.bank << 13;
 
-        std::memcpy( flashData + offset, chip.ptr, 0x2000 );
+        std::memcpy( flashData + offset, chip.ptr, std::min( (unsigned)0x2000, (unsigned)chip.size ) );
     }
 }
 
@@ -140,6 +148,17 @@ auto Gmod2::setEeprom(Emulator::Interface::Media* media, uint8_t* rom, unsigned 
 
     if (rom)
         std::memcpy( eepromData, rom, std::min( (unsigned)(2 * 1024), romSize ) );
+
+    else if (!binFormat) {
+        for(auto& chip : chips) {
+            if (chip.bank != 0 || chip.addr != 0xde00)
+                continue;
+
+            std::memcpy( eepromData, chip.ptr, std::min( (unsigned)(2 * 1024), (unsigned)chip.size ) );
+            fprintf(stdout, "GMod2 CRT includes EEPROM");
+            break;
+        }
+    }
  }
 
 auto Gmod2::writeEeprom() -> void {
@@ -255,7 +274,8 @@ auto Gmod2::getSizeNotConsideredForMemorySerialization() -> unsigned {
 }
 
 auto Gmod2::reset(bool softReset) -> void {
-
+    game = true;
+    exRom = false;
     bank = 0;
     writeEnable = false;
     flash.reset();
