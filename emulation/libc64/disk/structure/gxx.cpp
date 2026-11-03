@@ -99,7 +99,7 @@ auto DiskStructure::getTrackOffsetGxx( uint8_t _track, int& error ) -> uint32_t 
         
     offset = Emulator::copyBufferToInt<uint32_t>( &buf[0] );
     
-    if ( rawSize < (offset + 2)) // offset not in bounds of raw file ... wtf
+    if ( static_cast<uint64_t>(rawSize) < (static_cast<uint64_t>(offset) + 2)) // offset not in bounds of raw file ... wtf
         error = -2;
         
     return offset;
@@ -278,9 +278,9 @@ auto DiskStructure::parseMfm(MTrack* trackPtr, unsigned offset) -> void {
     if (trackPtr->size < todo)
         todo = trackPtr->size;
 
-    if (todo < 96)
+    if (todo < (96 + 50))
         return;
-    todo -= 96;
+    todo -= 96 + 50;
 
     memset(ptr, 0x4e, 80); ptr += 80;
     memset(ptr, 0x0, 12); ptr += 12;

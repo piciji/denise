@@ -239,6 +239,9 @@ auto Prg::getListing() -> std::vector<Emulator::Interface::Listing> {
 }
 
 auto Prg::prepareT64( ) -> void {
+    if (size < 64)
+        return;
+
     uint8_t* ptr = data;
     ptr += 32; 
 
@@ -253,7 +256,10 @@ auto Prg::prepareT64( ) -> void {
 
     for( unsigned i = 0; i < maxNumber; i++ ) {
 
-        uint32_t dataOffset = ptr[0x8] | (ptr[0x9] << 8) | (ptr[0xa] << 16) | (ptr[0xb] << 24);			
+        if ((ptr - data + 32) >= size)
+            break;
+
+        uint32_t dataOffset = ptr[0x8] | (ptr[0x9] << 8) | (ptr[0xa] << 16) | (ptr[0xb] << 24);
         dataOffsets.push_back( dataOffset );
 
         if (ptr[0] != 0 ) {

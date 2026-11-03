@@ -76,7 +76,7 @@ namespace LIBC64 {
         uint32_t checkSum = Emulator::copyBufferToInt<uint32_t>( ptr );
         ptr += 4;
 
-        if ((size + 24) > rawSize)
+        if ((static_cast<uint64_t>(size) + 24) > static_cast<uint64_t>(rawSize))
             return false;
 
         Emulator::CRC32 crc32( ptr, size, ~0 );

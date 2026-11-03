@@ -40,7 +40,7 @@ auto RetroReplay::setRom(Emulator::Interface::Media* media, uint8_t* rom, unsign
         // logical bank 1 (64k) is saved first
         unsigned _b = chip.bank < 8 ? (chip.bank + 8) : (chip.bank - 8);
         
-        std::memcpy(flashData + (_b << 13), chip.ptr, chip.size);
+        std::memcpy(flashData + (_b << 13), chip.ptr, std::min( 0x2000u, static_cast<unsigned>(chip.size) ));
     }
 }
 
