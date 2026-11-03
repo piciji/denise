@@ -103,8 +103,12 @@ auto Prg::inject( ) -> void {
     uint16_t start = ram[0x2c] << 8 | ram[0x2b];
     bool matchStart = start == useChunk->offset;
 
+    // a T64 entry can claim more bytes than the file holds
+    unsigned available = static_cast<unsigned>((data + size) - useChunk->data);
+    unsigned count = std::min( useChunk->size, available );
+
     // put prg file in c64 memory
-    for (unsigned i = 0; i < useChunk->size; i++)
+    for (unsigned i = 0; i < count; i++)
         ram[ useChunk->offset + i ] = *(useChunk->data + i);
 
     uint16_t end = useChunk->offset + useChunk->size;
@@ -120,7 +124,7 @@ auto Prg::inject( ) -> void {
     if (dynamic_cast<SuperCpu*>(system->expansionPort)) {
         uint8_t* ram = system->superCpu->sram;
         // put prg file in c64 memory
-        for (unsigned i = 0; i < useChunk->size; i++)
+        for (unsigned i = 0; i < count; i++)
             ram[ useChunk->offset + i ] = *(useChunk->data + i);
 
         uint16_t end = useChunk->offset + useChunk->size;
@@ -265,7 +269,7 @@ auto Prg::prepareT64( ) -> void {
         if (ptr[0] != 0 ) {
             Chunk chunk;
             chunk.id = id++;
-            chunk.data = data + dataOffset;
+            chunk.data = data + std::min( static_cast<unsigned>(dataOffset), size );
             chunk.dataOffset = dataOffset;
             chunk.offset = ptr[0x2] | (ptr[0x3] << 8);
             chunk.end = ptr[0x4] | (ptr[0x5] << 8);

@@ -136,6 +136,9 @@ auto DiskStructure::prepareG81() -> void {
                 continue;
 
             if (offset > 0) {
+                if (static_cast<uint64_t>(offset) + 4 > rawSize)
+                    continue;
+
                 std::memcpy(buf, rawData + offset, 4);
 
                 bitLength = Emulator::copyBufferToInt<uint32_t>(&buf[0]);
