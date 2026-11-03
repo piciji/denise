@@ -563,6 +563,18 @@ structure(system, this) {
     rom1541IISize = sizeof( Firmware::drive1541IIRom );
     Emulator::copyMemory<uint8_t>( rom1541II, rom1541IISize, (uint8_t*)Firmware::drive1541IIRom, rom1541IISize );
 
+    // no firmware manager in -no-gui mode, so preset the other drive ROMs too
+    rom1541Size = sizeof( Firmware::drive1541Rom );
+    Emulator::copyMemory<uint8_t>( rom1541, rom1541Size, (uint8_t*)Firmware::drive1541Rom, rom1541Size );
+    rom1541CSize = sizeof( Firmware::drive1541CRom );
+    Emulator::copyMemory<uint8_t>( rom1541C, rom1541CSize, (uint8_t*)Firmware::drive1541CRom, rom1541CSize );
+    rom1570Size = sizeof( Firmware::drive1570Rom );
+    Emulator::copyMemory<uint8_t>( rom1570, rom1570Size, (uint8_t*)Firmware::drive1570Rom, rom1570Size );
+    rom1571Size = sizeof( Firmware::drive1571Rom );
+    Emulator::copyMemory<uint8_t>( rom1571, rom1571Size, (uint8_t*)Firmware::drive1571Rom, rom1571Size );
+    rom1581Size = sizeof( Firmware::drive1581Rom );
+    Emulator::copyMemory<uint8_t>( rom1581, rom1581Size, (uint8_t*)Firmware::drive1581Rom, rom1581Size );
+
     rom = rom1541II;
     romMask = rom1541IISize - 1;
 

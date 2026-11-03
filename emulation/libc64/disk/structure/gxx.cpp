@@ -234,8 +234,8 @@ auto DiskStructure::prepareGxx() -> void {
             }
 
             if (!ptr->mfmSync) {
-                ptr->mfmSync = new uint8_t[ptr->size >> 3];
-                std::memset(ptr->mfmSync, 0x00, ptr->size >> 3);
+                ptr->mfmSync = new uint8_t[(ptr->size + 7) >> 3];
+                std::memset(ptr->mfmSync, 0x00, (ptr->size + 7) >> 3);
             }
         }
     }
@@ -257,8 +257,8 @@ auto DiskStructure::parseMfm(MTrack* trackPtr, unsigned offset) -> void {
     uint16_t crc;
 
     std::memset(trackPtr->data, 0x4e, trackPtr->size);
-    trackPtr->mfmSync = new uint8_t[trackPtr->size >> 3];
-    std::memset(trackPtr->mfmSync, 0x00, trackPtr->size >> 3);
+    trackPtr->mfmSync = new uint8_t[(trackPtr->size + 7) >> 3];
+    std::memset(trackPtr->mfmSync, 0x00, (trackPtr->size + 7) >> 3);
 
     if ((offset + (5 * 32 + 2)) >= rawSize)
         return;
