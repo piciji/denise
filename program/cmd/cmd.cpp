@@ -579,9 +579,15 @@ auto Cmd::autoloadImages() -> void {
     if (debug) {
         autoloader->init( arguments, Autoloader::Mode::AutoStart, 1 );
     } else {
-        if (!diskListing.empty() && GUIKIT::String::isNumber(diskListing))
-            autoloader->init( arguments, Autoloader::Mode::AutoStart, std::stoi(diskListing) );
-        else {
+        if (!diskListing.empty() && GUIKIT::String::isNumber(diskListing)) {
+            unsigned listing = 0;
+
+            try {
+                listing = std::stoi(diskListing);
+            } catch (...) {}
+
+            autoloader->init( arguments, Autoloader::Mode::AutoStart, listing );
+        } else {
             autoloader->init( arguments, Autoloader::Mode::AutoStart );
             autoloader->setFileToLoad( diskListing );
         }
@@ -653,7 +659,7 @@ auto Cmd::collectAllowedSuffix() -> std::vector<std::string> {
     return allowedSuffix;
 }
 
-auto Cmd::getCycles(std::string arg) -> unsigned {
+auto Cmd::getCycles(const std::string& arg) -> unsigned {
     
     if (!GUIKIT::String::isNumber( arg ))
         return 0;
@@ -665,7 +671,7 @@ auto Cmd::getCycles(std::string arg) -> unsigned {
 	return 0;
 }
 
-auto Cmd::setAutoStartPrg(std::string arg) -> void {
+auto Cmd::setAutoStartPrg(const std::string& arg) -> void {
 		
     if (!GUIKIT::String::isNumber( arg ))
         return;
@@ -675,7 +681,7 @@ auto Cmd::setAutoStartPrg(std::string arg) -> void {
     } catch(...) { }
 }
 
-auto Cmd::setReuSize(std::string arg) -> void {
+auto Cmd::setReuSize(const std::string& arg) -> void {
     
     if (!GUIKIT::String::isNumber( arg ))
         return;
@@ -701,7 +707,7 @@ auto Cmd::setReuSize(std::string arg) -> void {
     }
 }
 
-auto Cmd::setGeoRamSize(std::string arg) -> void {
+auto Cmd::setGeoRamSize(const std::string& arg) -> void {
 
     if (!GUIKIT::String::isNumber( arg ))
         return;

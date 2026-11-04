@@ -742,31 +742,36 @@ auto Fileloader::insertFile( Emulator::Interface* emulator, Emulator::Interface:
 
     auto& items = file->scanArchive();
 
-    archiveViewer->onCallback = [this, media, emulator, autoLoad, selection, settings](GUIKIT::File* file, GUIKIT::File::Item* item) {
+    if (archiveViewer) {
+        archiveViewer->onCallback = [this, media, emulator, autoLoad, selection, settings](GUIKIT::File* file, GUIKIT::File::Item* item) {
+            auto emuView = EmuConfigView::TabWindow::getView( emulator );
 
-        auto emuView = EmuConfigView::TabWindow::getView( emulator );
+            if (!item || (item->info.size == 0) )
+                return FileHelper::errorOpen( file, item, emuView ? emuView->message : view->message );
 
-        if (!item || (item->info.size == 0) )
-            return FileHelper::errorOpen( file, item, emuView ? emuView->message : view->message );
+            emuThread->lock(true);
+            if (emuView && emuView->mediaLayout)
+                emuView->mediaLayout->insertImage(media, file, item);
+            else
+                insertImage( emulator, media, file, item );
 
+            if (media->group->isDrive()) {
+                autoloader->setOnlyForFirstDrive(emulator, media);
+                settings->set<int>("swap_pos", -1, false);
+            }
+
+            if (autoLoad & 1) {
+                autoload(emulator, media, selection, autoLoad & USE_TRAPS, autoLoad & OVERRIDE_SPEEDER);
+            }
+            emuThread->unlock();
+        };
+        archiveViewer->allowNativeArchive(dynamic_cast<LIBAMI::Interface*>(emulator) ? media->group : nullptr);
+        archiveViewer->setView(file, items);
+    } else {
         emuThread->lock(true);
-        if (emuView && emuView->mediaLayout)
-            emuView->mediaLayout->insertImage(media, file, item);
-        else
-            insertImage( emulator, media, file, item );
-
-        if (media->group->isDrive()) {
-            autoloader->setOnlyForFirstDrive(emulator, media);
-            settings->set<int>("swap_pos", -1, false);
-        }
-
-        if (autoLoad & 1) {
-            autoload(emulator, media, selection, autoLoad & USE_TRAPS, autoLoad & OVERRIDE_SPEEDER);
-        }
+        insertImage( emulator, media, file, &items[0] );
         emuThread->unlock();
-    };
-    archiveViewer->allowNativeArchive(dynamic_cast<LIBAMI::Interface*>(emulator) ? media->group : nullptr);
-    archiveViewer->setView(file, items);
+    }
 
     return true;
 }

@@ -60,13 +60,13 @@ struct Cmd {
 
     auto collectAllowedSuffix() -> std::vector<std::string>;
     
-    auto getCycles(std::string arg) -> unsigned;
+    auto getCycles(const std::string& arg) -> unsigned;
     
-    auto setReuSize(std::string arg) -> void;
+    auto setReuSize(const std::string& arg) -> void;
 	
-	auto setGeoRamSize(std::string arg) -> void;
+	auto setGeoRamSize(const std::string& arg) -> void;
 
-	auto setAutoStartPrg(std::string arg) -> void;
+	auto setAutoStartPrg(const std::string& arg) -> void;
 
     auto setCustomConfig(std::string& ident, std::string path) -> void;
 
