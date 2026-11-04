@@ -63,6 +63,7 @@ sysTimer(system->sysTimer) {
 
     idle = true;
     powerOn = false;
+    ready = false;
     kill = false;
     threadInitialized = false;
     useThread = false;
@@ -94,7 +95,7 @@ auto IecBus::initThread() -> void {
             // system->interface->log("IEC prio change high");
         }
 
-        while(1) {
+        while(true) {
             ready = false;
 
             // let drive thread wait until main thread signals a safe start
