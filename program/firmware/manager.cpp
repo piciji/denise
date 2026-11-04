@@ -82,7 +82,8 @@ auto FirmwareManager::useImage(Emulator::Interface::Firmware* firmware, unsigned
         dynamic_cast<LIBC64::Interface*>(emulator) ? (storeLevel == 0) : slotChanged);
 
     // C64 don't store default firmware in state file
-    States::getInstance( emulator )->updateFirmware( (!storeLevel && fallbackToDefaultFirmware) ? nullptr : getSetting( firmware, storeLevel ), firmware );
+    if (!cmd->noGui)
+        States::getInstance( emulator )->updateFirmware( (!storeLevel && fallbackToDefaultFirmware) ? nullptr : getSetting( firmware, storeLevel ), firmware );
     
     return true;
 }
@@ -110,7 +111,7 @@ auto FirmwareManager::addImage(Emulator::Interface::Firmware* firmware, unsigned
 
 auto FirmwareManager::insertFirmware(Emulator::Interface::Firmware* firmware, unsigned storeLevel) -> void {
     
-    while(1) {
+    while(true) {
 
         if (storeLevel <= maxSets) { // savestates use a store level higher than max level. don't use such images without reloading before
             if (useImage(firmware, storeLevel))
@@ -130,7 +131,9 @@ auto FirmwareManager::insertFirmware(Emulator::Interface::Firmware* firmware, un
     }
 
     emulator->setFirmware(firmware->id, nullptr, 0, 0);
-    States::getInstance( emulator )->updateFirmware(nullptr, firmware );
+
+    if (!cmd->noGui)
+        States::getInstance( emulator )->updateFirmware(nullptr, firmware );
 }
 
 auto FirmwareManager::dataInStore( Image* forImage ) -> bool {

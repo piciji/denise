@@ -205,17 +205,16 @@ auto Program::addEmulators() -> void {
         settings->setGuid(dynamic_cast<void*> (emulator));
 
         settingsStorage.push_back( settings );
-		
+
+        firmwareManagers.push_back( new FirmwareManager( emulator, emulatorC64 == emulator ) );
+
 		if (cmd->noGui)
 			continue;
-        
-        // inlcudes hotkeys + emulator keys
+
         inputManagers.push_back( new InputManager( emulator ) );
 
         states.push_back( new States( emulator ) );
-        
-        firmwareManagers.push_back( new FirmwareManager( emulator, emulatorC64 == emulator ) );
-        
+
         videoManagers.push_back( new VideoManager( emulator ) );
         
         if (dynamic_cast<LIBC64::Interface*>( emulator ))
@@ -381,10 +380,9 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
             }
         }
     }
-    
-	if (!cmd->noGui) {
-		FirmwareManager::getInstance( activeEmulator )->insert();
 
+    FirmwareManager::getInstance( activeEmulator )->insert();
+	if (!cmd->noGui) {
 		FileHelper::errorOpen( brokenPaths );
 
 		filePool->unloadOrphaned();
