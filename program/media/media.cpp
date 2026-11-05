@@ -1512,6 +1512,7 @@ auto MediaLayout::drop( std::string filePath, MediaGroupLayout::Block* block ) -
         }
         emuThread->unlock();
     };
+    archiveViewer->preferSuffixes({block->media->group});
     archiveViewer->allowNativeArchive(dynamic_cast<LIBAMI::Interface*>(emulator) ? mediaGroup : nullptr);
     archiveViewer->setView(file, items);
 }

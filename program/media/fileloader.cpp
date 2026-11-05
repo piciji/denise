@@ -766,10 +766,11 @@ auto Fileloader::insertFile( Emulator::Interface* emulator, Emulator::Interface:
             emuThread->unlock();
         };
         archiveViewer->allowNativeArchive(dynamic_cast<LIBAMI::Interface*>(emulator) ? media->group : nullptr);
+        archiveViewer->preferSuffixes({media->group});
         archiveViewer->setView(file, items);
     } else {
         emuThread->lock(true);
-        insertImage( emulator, media, file, &items[0] );
+        insertImage( emulator, media, file, findSuitableItem(items, media->group) );
         emuThread->unlock();
     }
 
@@ -866,7 +867,8 @@ auto Fileloader::updateFileSetting(FileSetting* fSetting, GUIKIT::File* file, GU
 auto Fileloader::insertImage(Emulator::Interface* emulator, Emulator::Interface::Media* media, GUIKIT::File* file, GUIKIT::File::Item* item, int options) -> void {
     bool fromState = options & 1;
     bool dontUpdateSelected = options & 2;
-
+    if (!item)
+        return;
     auto mediaGroup = media->group;
 
     auto settings = Program::getSettings( emulator );
@@ -1165,4 +1167,49 @@ auto Fileloader::getRecentFile(Emulator::Interface* emulator) -> RecentFiles* {
     auto recentFile = new RecentFiles(emulator, path);
     recentFiles.push_back(recentFile);
     return recentFile;
+}
+
+auto Fileloader::findSuitableItem(std::vector<GUIKIT::File::Item>& items, Emulator::Interface::MediaGroup* group) -> GUIKIT::File::Item* {
+    std::vector<Emulator::Interface::MediaGroup*> groups;
+    groups.push_back(group);
+    return findSuitableItem(items, groups);
+}
+
+auto Fileloader::findSuitableItem(std::vector<GUIKIT::File::Item>& items) -> GUIKIT::File::Item* {
+    std::vector<Emulator::Interface::MediaGroup*> groups;
+    for (auto* emulator : emulators)
+        GUIKIT::Vector::combine(groups, emulator->getMediaGroups());
+
+    return findSuitableItem(items, groups);
+}
+
+auto Fileloader::findSuitableItem(std::vector<GUIKIT::File::Item>& items, std::vector<Emulator::Interface::MediaGroup*>& groups) -> GUIKIT::File::Item* {
+    GUIKIT::File::Item* fileItem = nullptr;
+    std::vector<std::string> suffixList;
+
+    for(auto* group : groups)
+        GUIKIT::Vector::combine(suffixList, group->suffix);
+
+    if (items.empty())
+        return nullptr;
+
+    for (auto& item : items) {
+        if (item.isDirectory)
+            continue;
+
+        auto& info = item.info;
+
+        if (!info.size || !info.exists)
+            continue;
+
+        if (!fileItem)
+            fileItem = &item;
+
+        std::string fileSuffix = GUIKIT::String::getExtension(info.name, "exe");
+
+        if (GUIKIT::Vector::find(suffixList, fileSuffix))
+            return &item;
+    }
+
+    return fileItem;
 }

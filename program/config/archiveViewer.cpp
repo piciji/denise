@@ -79,7 +79,10 @@ auto ArchiveViewer::setView(GUIKIT::File* file, std::vector<GUIKIT::File::Item>&
     }
 
     unsigned fileCount = 0;
-    GUIKIT::File::Item* firstFile = nullptr;
+    unsigned sufFileCount = 0;
+    GUIKIT::File::Item* useFile = nullptr;
+    std::string fileSuffix;
+
     tv.reset();
     for(auto& item : itemList) delete item;
     itemList.clear();
@@ -109,7 +112,17 @@ auto ArchiveViewer::setView(GUIKIT::File* file, std::vector<GUIKIT::File::Item>&
             } else {
                 tvi->setImage(imgDocument);
                 fileCount++;
-                if (!firstFile) firstFile = &item;
+
+                if (!suffixList.empty()) {
+                    fileSuffix = GUIKIT::String::getExtension(item.info.name, "exe");
+
+                    if (GUIKIT::Vector::find(suffixList, fileSuffix)) {
+                        sufFileCount++;
+                        if (!useFile)
+                            useFile = &item;
+                    }
+                } else if (!useFile)
+                    useFile = &item;
             }
             return tvi;
         };
@@ -118,11 +131,17 @@ auto ArchiveViewer::setView(GUIKIT::File* file, std::vector<GUIKIT::File::Item>&
         tv.append(*tvi);
     }
 
-    if(fileCount <= 1) {
+    if (useFile && ( ( suffixList.empty() && (fileCount == 1) ) || ( !suffixList.empty() && (sufFileCount == 1) ) ) ) {
         setVisible(false);
         if (onCallback)
-            onCallback( file, fileCount == 0 ? nullptr : firstFile);
-        
+            onCallback( file, useFile);
+        return;
+    }
+
+    if (fileCount == 0) {
+        setVisible(false);
+        if (onCallback)
+            onCallback( file, nullptr);
         return;
     }
 
@@ -217,4 +236,15 @@ auto ArchiveViewer::translate() -> void {
 auto ArchiveViewer::allowNativeArchive(Emulator::Interface::MediaGroup* group) -> void {
     nativeGroup = group;
     loadArchiveNative.setEnabled(group != nullptr);
+}
+
+auto ArchiveViewer::preferSuffixes(std::vector<Emulator::Interface::MediaGroup*> groups) -> void {
+    suffixList.clear();
+
+    if (!groups.empty()) {
+        for (auto group : groups) {
+            for (auto& suffix : group->suffix)
+                suffixList.push_back(&suffix);
+        }
+    }
 }

@@ -230,6 +230,7 @@ auto FirmwareLayout::assign(std::string path, FirmwareContainer::Block* block, F
     };
 
     archiveViewer->allowNativeArchive(nullptr);
+    archiveViewer->preferSuffixes();
     archiveViewer->setView(file, items);    
 }
 

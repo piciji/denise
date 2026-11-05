@@ -323,7 +323,7 @@ auto Autoloader::shouldCaptureMouse(Emulator::Interface* emulator, GUIKIT::Setti
 
 auto Autoloader::loadFiles() -> void {
 
-    if (ddControl.files.size() == 0)
+    if (ddControl.files.empty())
         return postProcessing();    
     
     auto filePath = ddControl.files[0];
@@ -354,13 +354,19 @@ auto Autoloader::loadFiles() -> void {
                 emuThread->unlock();
 		};
 
+	    std::vector<Emulator::Interface::MediaGroup*> groups;
+	    for (auto* emulator : emulators)
+	        GUIKIT::Vector::combine(groups, emulator->getMediaGroups());
+
+	    archiveViewer->preferSuffixes(groups);
         archiveViewer->allowNativeArchive(dynamic_cast<LIBAMI::Interface*>(activeEmulator) ? activeEmulator->getDiskMediaGroup() : nullptr);
 		archiveViewer->setView( file, items );
 	} else if (ddControl.archiveId >= 0) {
 	    if (ddControl.archiveId < items.size())
 	        loadFile( file, &items[ddControl.archiveId] );
-	} else
-		loadFile( file, &items[0] );
+	} else {
+	    loadFile( file, Fileloader::findSuitableItem(items) );
+	}
 }
 
 auto Autoloader::needSlotsForDragnDrop(std::vector<std::string> files) -> unsigned {

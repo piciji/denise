@@ -1833,6 +1833,13 @@ struct Vector {
         return std::find(v.begin(), v.end(), element) != v.end();
     }
     template<typename T>
+    static auto find(const std::vector<T*>& v, const T& element) -> bool {
+	    return std::find_if(v.begin(), v.end(),
+            [&element](const T* ptr) {
+                return ptr != nullptr && *ptr == element;
+            }) != v.end();
+	}
+    template<typename T>
     static auto findPos(std::vector<T>& v, T element) -> int {
 		for (unsigned i = 0; i < v.size(); i++)
 			if (v[i] == element) return i;
@@ -1842,6 +1849,10 @@ struct Vector {
     static auto combine(std::vector<T>& target, const std::vector<T>& source, bool prepend = false) -> void {
         target.insert( prepend ? target.begin() : target.end(), source.begin(), source.end() );
     }
+    template<typename T>
+    static auto combine(std::vector<T*>& target, const std::vector<T*>& source, bool prepend = false) -> void {
+	    target.insert( prepend ? target.begin() : target.end(), source.begin(), source.end() );
+	}
     template <typename T> 
     static auto concat(std::vector<T>& v1, std::vector<T>& v2) -> std::vector<T> {
         std::vector<T> concated = std::vector<T>();

@@ -54,6 +54,10 @@ struct Fileloader {
     auto getSwapMedia(Emulator::Interface* emulator, int swapPos, FileSetting* fSetting) -> Emulator::Interface::Media*;
     auto updateFileSetting(FileSetting* fSetting, GUIKIT::File* file, GUIKIT::File::Item* item ) -> void;
     auto getRecentFile(Emulator::Interface* emulator) -> RecentFiles*;
+
+    static auto findSuitableItem(std::vector<GUIKIT::File::Item>& items) -> GUIKIT::File::Item*;
+    static auto findSuitableItem(std::vector<GUIKIT::File::Item>& items, Emulator::Interface::MediaGroup* group) -> GUIKIT::File::Item*;
+    static auto findSuitableItem(std::vector<GUIKIT::File::Item>& items, std::vector<Emulator::Interface::MediaGroup*>& groups) -> GUIKIT::File::Item*;
 };
 
 extern Fileloader* fileloader;

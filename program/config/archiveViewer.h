@@ -3,12 +3,16 @@
 
 #include "../../guikit/api.h"
 #include "../../emulation/interface.h"
+#include <vector>
+#include <functional>
+#include <string>
 
 struct ArchiveViewer : public GUIKIT::Window {
     GUIKIT::VerticalLayout layout;
     GUIKIT::TreeView tv;
     GUIKIT::Button loadArchiveNative;
     std::vector<GUIKIT::TreeViewItem*> itemList;
+    std::vector<std::string*> suffixList;
     std::function<void (GUIKIT::File* file, GUIKIT::File::Item*)> onCallback = nullptr;
 
     GUIKIT::Image imgFolderOpen;
@@ -27,6 +31,7 @@ struct ArchiveViewer : public GUIKIT::Window {
 	auto translate() -> void;
     auto allowNativeArchive(Emulator::Interface::MediaGroup* group) -> void;
     auto buildMedia(GUIKIT::File* file, std::vector<GUIKIT::File::Item>& items) -> void;
+    auto preferSuffixes(std::vector<Emulator::Interface::MediaGroup*> groups = {}) -> void;
 };
 
 extern ArchiveViewer* archiveViewer;

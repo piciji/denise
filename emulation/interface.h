@@ -883,6 +883,15 @@ struct Interface {
         return nullptr;
     }
 
+    auto getMediaGroups() -> std::vector<MediaGroup*> {
+        std::vector<MediaGroup*> groups;
+
+        for (auto& group : mediaGroups) {
+            groups.push_back(&group);
+        }
+        return groups;
+    }
+
     auto getDriveMediaGroups() -> std::vector<MediaGroup*> {
         std::vector<MediaGroup*> groups;
 
