@@ -567,7 +567,7 @@ template<M68Core::Engine E, uint8_t Mode, uint8_t Size, unsigned Flags> auto M68
 
 template<M68Core::Engine E, uint8_t Mode, uint8_t Size, unsigned Flags> auto M68Core::calcEA(int reg) -> uint32_t {
     uint32_t adr;
-    
+    static_assert(Mode != 34, "Found template parameter 34!");
     switch(Mode) {
         case DataRegisterDirect:
         case AddressRegisterDirect:
@@ -764,14 +764,21 @@ template<M68Core::Engine E, uint8_t Mode, uint8_t Size, unsigned Flags> auto M68
             } else {
                 adr = irc << 16;
                 readExtensionWord<E>();
-                if constexpr (E == Engine::M68020)
-                    busCycles -= prefetchLast() ? 3 : 2;
+                if constexpr (E == Engine::M68020) {
+                    if constexpr ((Flags & EACalc) == 0)
+                        busCycles -= prefetchLast() ? 3 : 2;
+                    else
+                        busCycles -= 2;
+                }
                 adr |= irc;
             }
             readExtensionWord<E>();
             if constexpr (E == Engine::M68020) {
-                busCycles -= prefetchLast() ? 3 : 2;
-                syncInternal<CheckIfPipeRunsDry>();
+                if constexpr ((Flags & EACalc) == 0) {
+                    busCycles -= prefetchLast() ? 3 : 2;
+                    syncInternal<CheckIfPipeRunsDry>();
+                } else
+                    busCycles -= prefetchLast() ? 1 : 2;
             }
             return adr;
     }

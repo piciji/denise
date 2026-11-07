@@ -351,7 +351,7 @@ private:
     OP_DECLARE_EA(Div)
     OP_DECLARE_EA(Divl)
 
-    OP_DECLARE_EA(Move)
+    template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto dasmMove(uint16_t, uint32_t&, DasmHandler&) -> void;
     OP_DECLARE_EA(MoveDataRegisterDirect)
     OP_DECLARE_EA(MoveAddressRegisterIndirect)
     OP_DECLARE_EA(MoveAddressRegisterIndirectWithPostIncrement)
