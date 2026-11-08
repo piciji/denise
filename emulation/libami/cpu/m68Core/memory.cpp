@@ -86,8 +86,10 @@ template<uint8_t Size> auto M68Core::writeRegR( int reg, uint32_t val ) -> void 
 template<M68Core::Engine E, unsigned Flags> auto M68Core::fullPrefetch() -> void {
     firstPrefetch<E>();
     if constexpr (E == Engine::M68020) {
+        busCycles -= 2;
         secondPrefetch<E>();
         prefetch<E, Flags>();
+        busCycles -= 1;
         syncInternal<ForceIdle>();
     } else {
         if constexpr (!!(Flags & DelayPrefetch)) SYNC(2);
