@@ -86,17 +86,11 @@ template<uint8_t Size> auto M68Core::writeRegR( int reg, uint32_t val ) -> void 
 template<M68Core::Engine E, unsigned Flags> auto M68Core::fullPrefetch() -> void {
     firstPrefetch<E>();
     if constexpr (E == Engine::M68020) {
-        if constexpr (Flags & DelayPrefetch) {
-            if (!busCycles) SYNC(2);
-        }
         secondPrefetch<E>();
         prefetch<E, Flags>();
-        if constexpr (Flags & DelayPrefetch) {
-            if (!busCycles) SYNC(2);
-        }
-        idleSequencer();
+        syncInternal<ForceIdle>();
     } else {
-        if constexpr (Flags & DelayPrefetch) SYNC(2);
+        if constexpr (!!(Flags & DelayPrefetch)) SYNC(2);
         prefetch<E, Flags>();
     }
 }
@@ -567,7 +561,7 @@ template<M68Core::Engine E, uint8_t Mode, uint8_t Size, unsigned Flags> auto M68
 
 template<M68Core::Engine E, uint8_t Mode, uint8_t Size, unsigned Flags> auto M68Core::calcEA(int reg) -> uint32_t {
     uint32_t adr;
-    static_assert(Mode != 34, "Found template parameter 34!");
+
     switch(Mode) {
         case DataRegisterDirect:
         case AddressRegisterDirect:
@@ -648,7 +642,11 @@ template<M68Core::Engine E, uint8_t Mode, uint8_t Size, unsigned Flags> auto M68
                     if constexpr ((Flags & EACalc) == 0)
                         syncInternal<ForceIdle>();
                 }
-            } else incPc();
+            } else {
+                incPc();
+                if constexpr (E == Engine::M68020)
+                    busCycles -= 4;
+            }
 
             return adr;
             
@@ -689,7 +687,11 @@ template<M68Core::Engine E, uint8_t Mode, uint8_t Size, unsigned Flags> auto M68
                     if constexpr ((Flags & EACalc) == 0)
                         syncInternal<ForceIdle>();
                 }
-            } else incPc();
+            } else {
+                incPc();
+                if constexpr (E == Engine::M68020)
+                    busCycles -= 2;
+            }
             return adr;
             
         case AbsoluteLong:
@@ -740,7 +742,11 @@ template<M68Core::Engine E, uint8_t Mode, uint8_t Size, unsigned Flags> auto M68
                     }
                 }
             }
-            if constexpr(Flags & SkipExtension) incPc();
+            if constexpr(Flags & SkipExtension) {
+                incPc();
+                if constexpr (E == Engine::M68020)
+                    busCycles -= 2;
+            }
             return adr;
             
         case ProgramCounterIndirectWithIndex: {
@@ -812,7 +818,11 @@ template <M68Core::Engine E, unsigned Flags, bool Scale> auto M68Core::indirectI
             if constexpr ((Flags & EACalc) == 0)
                 syncInternal<ForceIdle>();
         }
-    } else incPc();
+    } else {
+        incPc();
+        if constexpr (E == Engine::M68020)
+            busCycles -= 6;
+    }
 
     return static_cast<int64_t>(B) + xn + static_cast<int64_t>(d);
 }
@@ -861,7 +871,34 @@ template <M68Core::Engine E, unsigned Flags> auto M68Core::indirectIndexFull(uin
             outerD = fetchDisplacement<E>(odSize & 1, prefetches);
     }
 
-    if constexpr (!!(Flags & EACalc)) {
+    if constexpr (!!(Flags & SkipExtension)) {
+        if (iis) {
+            switch ((bdSize << 2) | odSize) {
+                default:
+                case 4:
+                case 5:
+                case 0:
+                case 1: busCycles -= 8; break;
+                case 6:
+                case 2: busCycles -= prefetches ? 14 : 13; break;
+                case 7:
+                case 3: busCycles -= prefetches ? 14 : 13; break;
+                case 9:
+                case 8: busCycles -= prefetches ? 14 : 13; break;
+                case 10: busCycles -= prefetches ? 17 : 15; break;
+                case 11: busCycles -= prefetches ? 17 : 15; break;
+                case 13:
+                case 12: busCycles -= prefetches ? 19 : 17; break;
+                case 14: busCycles -= prefetches ? 21 : 19; break;
+                case 15: busCycles -= prefetches ? 23 : 19; break;
+            }
+
+        } else {
+            if (bdSize == 2)        busCycles -= 8;
+            else if (bdSize == 3)   busCycles -= 12;
+            else                    busCycles -= 6;
+        }
+    } else if constexpr (!!(Flags & EACalc)) {
         if (iis) {
             switch ((bdSize << 2) | odSize) {
                 default:
