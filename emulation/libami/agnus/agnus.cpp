@@ -383,7 +383,7 @@ auto Agnus::prepareOverclock() -> void {
     auto engine = cpu.getEngine();
 
     // fast mem  ~60 ns
-    // rom      ~150 ns (A1200), ~150 - 250 ns (A500)
+    // rom      ~140 ns (A1200), ~150 - 250 ns (A500)
     //
     //  7.09 = ~140.97 ns / cycle
     // 14.19 = ~ 70.48 ns / cycle
@@ -415,15 +415,15 @@ auto Agnus::prepareOverclock() -> void {
         // has 1 minimum cycle for BUS access, add wait cycles if not enough
         switch (o.speedInternal) {
             case 4: // 14.19 MHz
-                o.romWaitStates = 2; // stock A1200 can not access ROM without wait states
+                o.romWaitStates = 1; // stock A1200 can not access ROM without wait states
                 break;
             case 8: // 28.38 MHz
                 o.fastWaitStates = 1;
-                o.romWaitStates = 4;
+                o.romWaitStates = 3;
                 break;
             case 16: // 56.75 MHz
                 o.fastWaitStates = 3;
-                o.romWaitStates = 8;
+                o.romWaitStates = 7;
                 break;
             case 32: // 113.5 MHz
                 o.fastWaitStates = 6;
