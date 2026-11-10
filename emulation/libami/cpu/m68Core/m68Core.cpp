@@ -666,7 +666,7 @@ auto M68Core::setEngine( Engine engine ) -> void {
         else if (engine == Engine::M68020) build<Engine::M68020>();
     }
 }
-auto M68Core::idleSequencer() -> void {
+inline auto M68Core::idleSequencer() -> void {
     busCycles = 0;
     runsDry = false;
     dataAccess = DataAccess::NONE;
@@ -685,14 +685,6 @@ template<unsigned Flags> inline auto M68Core::syncInternal() -> void {
         if (runsDry)
             idleSequencer();
     }
-}
-
-auto M68Core::syncSequencer(unsigned cycles) -> void {
-    if (busCycles) {
-        if (cycles > busCycles)
-            SYNC( cycles - busCycles );
-    } else
-        SYNC( cycles );
 }
 
 auto M68Core::invalidateCache() -> void {
@@ -729,6 +721,7 @@ auto M68Core::setCacr(uint32_t value) -> void {
     }
 
     cacr = value & 3;
+    // fprintf( stdout, "cache: %i\n", cacr & 1 );
 }
 
 }

@@ -263,7 +263,6 @@ private:
     auto sampleInterrupt() -> void;
     auto setSuperVisor(bool state = true) -> void;
     auto setMasterSP(bool state) -> void;
-    auto syncSequencer(unsigned cycles) -> void;
     template<unsigned Flags = 0> auto syncInternal() -> void;
     auto idleSequencer() -> void;
     template<uint8_t Size = Word> auto misaligned(uint32_t adr) -> bool;
