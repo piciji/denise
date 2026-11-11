@@ -1173,7 +1173,7 @@ template<M68Core::Engine E, uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68Co
 template<M68Core::Engine E, uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68Core::opMoveAbsoluteLong(uint16_t opcode) -> void {
     uint32_t result, ea;
     int reg = (opcode >> 9) & 7;
-    result = readEA<E, Mode, Size, Mode == Immediate ? EACalc : 0>(opcode & 7, ea);
+    result = readEA<E, Mode, Size>(opcode & 7, ea);
 
     if constexpr (E < Engine::M68020) {
         if constexpr(!isDirectMode<Mode>())
@@ -1198,19 +1198,17 @@ template<M68Core::Engine E, uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68Co
         prefetch<E, SampleIPL>();
 
     } else {
-        busCycles -= isDirectMode<Mode>() ? 3 : 2;
         ea = irc << 16;
         readExtensionWord<E>();
+        busCycles -= 2;
         ea |= irc;
         readExtensionWord<E>();
+        busCycles -= 1;
 
-        prefetch<E, SampleIPL>();
         syncInternal();
-        if constexpr (isRegisterMode<Mode>())
-            busCycles -= 1;
-
         defaultFlags<Size>(result);
         write<E, Size>(ea, result);
+        prefetch<E, SampleIPL>();
         if constexpr (!isRegisterMode<Mode>())
             busCycles -= 2;
     }
