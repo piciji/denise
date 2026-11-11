@@ -1424,8 +1424,7 @@ template<M68Core::Engine E, uint8_t Inst, uint8_t Size> auto M68Core::opDbcc(uin
         }
 
         if constexpr (E >= Engine::M68020) {
-            irc = stageB;
-            busCycles -= 1;
+            busCycles -= 2;
             syncInternal();
         }
 
@@ -1445,9 +1444,13 @@ template<M68Core::Engine E, uint8_t Inst, uint8_t Size> auto M68Core::opDbcc(uin
             return;
         }
 
-        if constexpr (E == Engine::M68020) {
-            stageB = irc;
-            busCycles -= 5;
+        if constexpr (E >= Engine::M68020) {
+            busCycles -= 3;
+            syncInternal();
+            pc = memPC + 2;
+            fullPrefetch<E, SampleIPL>();
+            syncInternal<CheckIfPipeRunsDry>();
+            return;
         }
 
     } else {
@@ -1461,7 +1464,7 @@ template<M68Core::Engine E, uint8_t Inst, uint8_t Size> auto M68Core::opDbcc(uin
 
     if (E >= Engine::M68020) {
         pc = memPC;
-        readExtensionWord<E, FirstPrefetch>();
+        readExtensionWord<E>();
         prefetch<E, SampleIPL>();
         busCycles -= 2;
         syncInternal<CheckIfPipeRunsDry>();
@@ -1608,7 +1611,7 @@ template<M68Core::Engine E, uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68Co
 
     if constexpr (E == Engine::M68020) {
         idleSequencer();
-        SYNC(5);
+        SYNC(6);
     }
 
     if constexpr(Mode == AddressRegisterIndirectWithPostIncrement)
@@ -1640,7 +1643,7 @@ template<M68Core::Engine E, uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68Co
         prefetch<E>();
 
     if constexpr (E == Engine::M68020) {
-        busCycles -= 4;
+        busCycles -= 2;
         syncInternal();
     }
 }
