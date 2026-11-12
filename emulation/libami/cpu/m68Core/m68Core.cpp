@@ -670,6 +670,7 @@ inline auto M68Core::idleSequencer() -> void {
     busCycles = 0;
     runsDry = false;
     dataAccess = DataAccess::NONE;
+    sampleInterrupt();
 }
 
 template<unsigned Flags> inline auto M68Core::syncInternal() -> void {

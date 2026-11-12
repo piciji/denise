@@ -63,6 +63,7 @@ template<M68Core::Engine E, uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68Co
     }
 
     writeEA<E, Mode, Word>(ea, singleShifter<Inst>(result) );
+    busCycles -= 2;
 }
 
 template<M68Core::Engine E, uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68Core::opBit(uint16_t opcode) -> void {
@@ -1610,9 +1611,7 @@ template<M68Core::Engine E, uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68Co
     if constexpr (E == Engine::M68020) {
         idleSequencer();
         SYNC(6);
-    }
-
-    if constexpr(Mode == AddressRegisterIndirectWithPostIncrement)
+    } else if constexpr(Mode == AddressRegisterIndirectWithPostIncrement)
         sampleInterrupt();
 
     for (int r = 0; r <= 15; r++) {
@@ -1822,7 +1821,9 @@ template<M68Core::Engine E, uint8_t Inst, uint8_t Size> auto M68Core::opCmpm(uin
     if (E < Engine::M68020 && misaligned<Size>(ea))
         throw AddressError(ea, pc + 2, SF_READ | SF_DATA);
 
-    sampleInterrupt();
+    if constexpr (E < Engine::M68020)
+        sampleInterrupt();
+
     dest = read<E, Size>(ea);
     writeRegA(destReg, ea + ((Size == Byte && destReg == 7) ? 2 : Size) );
 
@@ -2140,8 +2141,8 @@ template<M68Core::Engine E> auto M68Core::opReset(uint16_t opcode) -> void {
         idleSequencer();
         SYNC(512);
         prefetch<E>();
-        busCycles -= 2;
-        syncInternal<ForceIdle>();
+        if (!prefetchLast())
+            SYNC(2);
     }
 }
 
@@ -2321,13 +2322,16 @@ template<M68Core::Engine E> auto M68Core::opStop(uint16_t opcode) -> void {
     if (!s)
         return privilegeException<E>();
 
-    sampleInterrupt(); // if detected, no stop at all. like all the other sampling points (one clock cycle sooner)
+    if constexpr (E >= Engine::M68020)
+        idleSequencer();
+    else
+        sampleInterrupt(); // if detected, no stop at all. like all the other sampling points (one clock cycle sooner)
+
     setSR( irc );
     control |= Stop;
     pcEdge = pc + 2;
 
-    if constexpr (E == Engine::M68020)
-        idleSequencer();
+
 
     SYNC(4);
     pc += 4; // no extension word, no prefetch -> internal: SYNC(2), pc += 2, SYNC(2) pc += 2
@@ -2427,7 +2431,9 @@ template<M68Core::Engine E, uint8_t Inst, uint8_t Size> auto M68Core::opLink(uin
     if (E < Engine::M68020 && misaligned<Long>(sp))
         throw AddressError(sp, pc + 2, SF_DATA);
 
-    sampleInterrupt();
+    if constexpr (E < Engine::M68020)
+        sampleInterrupt();
+
     write<E, Long, Reverse>(sp, _regA);
     regsA[7] = sp + sign<Size>(displacement); // 68000: happens 1.5 CPU cycles after "long write"
 
@@ -2447,7 +2453,6 @@ template<M68Core::Engine E, uint8_t Inst, uint8_t Size> auto M68Core::opUnlink(u
     if constexpr (E >= Engine::M68020) {
         busCycles -= 1;
         syncInternal<ForceIdle>();
-        sampleInterrupt();
         data = read<E, Long>( newSP & 0xffffff );
         idleSequencer();
     } else {
