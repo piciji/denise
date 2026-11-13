@@ -147,7 +147,7 @@ protected:
     uint32_t cacr;
     uint32_t caar;
     uint32_t cahr; // cache holding register
-
+    uint8_t cacheLock;
     uint8_t dfc;
     uint8_t sfc;
     uint8_t fc;

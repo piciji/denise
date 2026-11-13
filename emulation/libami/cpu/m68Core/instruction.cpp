@@ -2611,6 +2611,9 @@ template<M68Core::Engine E, uint8_t Inst, uint8_t Size> auto M68Core::opMovecRxR
     uint8_t rn = (irc >> 12) & 0xf;
     uint16_t ctl = irc & 0xfff;
 
+    readExtensionWord<E>();
+    busCycles -= prefetchLast() ? 4 : 3;
+
     uint32_t value = readRegR( rn );
 
     switch (ctl) {
@@ -2627,8 +2630,7 @@ template<M68Core::Engine E, uint8_t Inst, uint8_t Size> auto M68Core::opMovecRxR
             return;
     }
     busCycles -= 6;
-    readExtensionWord<E>();
-    busCycles -= prefetchLast() ? 4 : 3;
+
     prefetch<E, SampleIPL>();
     busCycles -= prefetchLast() ? 4 : 3;
     syncInternal<CheckIfPipeRunsDry>();

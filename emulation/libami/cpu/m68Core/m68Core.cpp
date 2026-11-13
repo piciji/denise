@@ -162,6 +162,7 @@ auto M68Core::reset() -> void { // highest prioritized group 0 routine
     cacr = 0;
     caar = 0;
     cahr = 0;
+    cacheLock = 0;
     fc = 0;
     sfc = 0;
     dfc = 0;
@@ -714,9 +715,10 @@ template<bool withRotation> inline auto M68Core::bfShiftRight(uint32_t data, uns
 }
 
 auto M68Core::setCacr(uint32_t value) -> void {
-    if (value & 8)
+    if (value & 8) {
         invalidateCache();
-    else if (value & 4) {
+        cacheLock = pc & 2 ? 2 : 1;
+    } else if (value & 4) {
         unsigned idx = (caar & 0xfc) >> 2;
         cacheEntries[idx].valid = false;
     }

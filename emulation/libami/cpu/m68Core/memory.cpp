@@ -188,7 +188,11 @@ template<unsigned Flags> auto M68Core::cachedPrefetch(uint32_t adr) -> uint16_t 
             if ((cacr & 3) == 1) {
                 entry.data = cahr;
                 entry.tag = tag;
-                entry.valid = true;
+
+                if (!cacheLock)
+                    entry.valid = true;
+                else
+                    cacheLock--;
             }
             SYNC(1);
             dataAccess = DataAccess::PREFETCH;
