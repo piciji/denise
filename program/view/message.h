@@ -6,7 +6,7 @@
 struct Message {
     GUIKIT::Window* window;
 
-    auto warning(std::string text, std::string title = "") -> void {
+    auto warning(const std::string& text, const std::string& title = "") -> void {
         GUIKIT::MessageWindow()
             .setWindow(*window)
             .setTitle(title.empty() ? APP_NAME " " + trans->get("Warning") : title)
@@ -14,7 +14,7 @@ struct Message {
             .warning();
     }
 
-    auto error(std::string text, std::string title = "") -> void {
+    auto error(const std::string& text, const std::string& title = "") -> void {
         GUIKIT::MessageWindow()
             .setWindow(*window)
             .setTitle(title.empty() ? APP_NAME " " + trans->get("Error") : title)
@@ -22,7 +22,7 @@ struct Message {
             .error();
     }
 
-    auto information(std::string text, std::string title = "") -> void {
+    auto information(const std::string& text, const std::string& title = "") -> void {
         GUIKIT::MessageWindow()
             .setWindow(*window)
             .setTitle(title.empty() ? APP_NAME " " + trans->get("Information") : title)
@@ -30,7 +30,7 @@ struct Message {
             .information();
     }
 
-    auto question(std::string text, std::string title = "") -> bool {
+    auto question(const std::string& text, const std::string& title = "") -> bool {
         return GUIKIT::MessageWindow()
             .setWindow(*window)
             .setTitle(title.empty() ? APP_NAME " " + trans->get("Question") : title )

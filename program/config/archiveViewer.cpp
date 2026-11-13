@@ -225,6 +225,10 @@ auto ArchiveViewer::buildMedia(GUIKIT::File* file, std::vector<GUIKIT::File::Ite
             newFile->unload();        
 
         delete[] result.ptr;
+    } else {
+        Message message(this);
+        message.error(trans->get(nativeGroup->isHardDisk() ? "error native archive harddisk" : "error native archive disk",
+{{"%percent%", "10"}}));
     }
 }
 
