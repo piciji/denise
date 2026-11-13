@@ -36,6 +36,11 @@ struct Fileloader {
     static const unsigned PREV_DIALOG = 1;
     static const unsigned PREV_SOFTWARE = 2;
 
+    static const unsigned DO_AUTOLOAD = 1;
+    static const unsigned USE_TRAPS = 0x80;
+    static const unsigned OVERRIDE_SPEEDER = 0x40;
+    static const unsigned DONT_REMEMBER_FOLDER = 0x100;
+
     auto anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore ) -> void;
     auto load(Emulator::Interface* emulator, Emulator::Interface::Media* media) -> void;
     auto eject(Emulator::Interface* emulator, Emulator::Interface::Media* media) -> void;
@@ -43,7 +48,7 @@ struct Fileloader {
     auto previewFile( std::string filePath, Emulator::Interface* emulator, Emulator::Interface::Media* media = nullptr ) -> std::vector<GUIKIT::BrowserWindow::Listing>;
     auto resetPreview(Emulator::Interface* emulator, bool light = false) -> void;
     auto convertListing( Emulator::Interface* emulator, std::vector<Emulator::Interface::Listing>& emuListings ) -> std::vector<GUIKIT::BrowserWindow::Listing>;
-    auto insertFile( Emulator::Interface* emulator, Emulator::Interface::Media* media, std::string filePath, uint8_t autoLoad = 0, unsigned selection = 0 ) -> bool;
+    auto insertFile( Emulator::Interface* emulator, Emulator::Interface::Media* media, std::string filePath, unsigned flags = 0, unsigned selection = 0 ) -> bool;
     auto insertImage( Emulator::Interface* emulator, Emulator::Interface::Media* media, GUIKIT::File* file, GUIKIT::File::Item* item, int options = 0) -> void;
     auto insertCurrentPreview(Emulator::Interface::MediaGroup* mediaGroup) -> void;
     auto preselectPath( GUIKIT::Settings* settings, std::string& groupName ) -> std::string;

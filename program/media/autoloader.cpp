@@ -487,9 +487,9 @@ auto Autoloader::loadFile( GUIKIT::File* file, GUIKIT::File::Item* item ) -> voi
 					else
                         fileloader->insertImage(emulator, media, file, item, alreadyInUse ? 2 : 0);
 
-                    auto settings = Program::getSettings(emulator);
-                    auto folderPath = GUIKIT::File::buildRelativePath(file->getPath());
-                    settings->set<std::string>(_underscoreEx(mediaGroup.name) + "_folder_auto", folderPath);
+                    //auto settings = Program::getSettings(emulator);
+                    //auto folderPath = GUIKIT::File::buildRelativePath(file->getPath());
+                    //settings->set<std::string>(_underscoreEx(mediaGroup.name) + "_folder_auto", folderPath);
 
                     ddControl.mediaGroups.push_back(&mediaGroup);
 

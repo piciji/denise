@@ -554,7 +554,7 @@ auto Cmd::attachImages() -> void {
         if (attachment.media->group->isDisk())
             autoloader->activateDrive( attachment.emulator, attachment.media->group, attachment.media->id + 1 );
 
-        if (fileloader->insertFile(attachment.emulator, attachment.media, attachment.path))
+        if (fileloader->insertFile(attachment.emulator, attachment.media, attachment.path, Fileloader::DONT_REMEMBER_FOLDER))
             powerEmulator = attachment.emulator;
     }
 

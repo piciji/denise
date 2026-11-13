@@ -1587,7 +1587,7 @@ auto MediaLayout::resetPreview( bool light ) -> void {
             
             if (block->header.fileName.overrideForegroundColor()) {
                 auto fSetting = FileSetting::getInstance( emulator, _underscore(block->media->name) );
-                block->header.fileName.setText( fSetting ? fSetting->file : "" );
+                block->header.fileName.setText( fSetting ? GUIKIT::File::getPath(fSetting->path) : "" );
                 block->header.fileName.setFont( GUIKIT::Font::system() );
                 block->header.fileName.resetForegroundColor();                
             }

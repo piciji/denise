@@ -23,9 +23,6 @@
     if (mIsAcquiredBefore && !inputDriver->mIsAcquired() && view->fullScreen() && fileDialogPtr && fileDialogPtr->detached()) \
         inputDriver->mAcquire();
 
-#define USE_TRAPS 0x80
-#define OVERRIDE_SPEEDER 0x40
-
 Fileloader* fileloader = nullptr;
 
 Fileloader::Fileloader() {
@@ -105,7 +102,7 @@ auto Fileloader::load(Emulator::Interface* emulator, Emulator::Interface::Media*
         if (filePath.empty())
             return false;
 
-        uint8_t _a = 1;
+        unsigned _a = DO_AUTOLOAD;
         if (this->fileDialogPtr->hasChecked() && dynamic_cast<LIBC64::Interface*>(emulator))
             _a |= OVERRIDE_SPEEDER;
 
@@ -121,7 +118,7 @@ auto Fileloader::load(Emulator::Interface* emulator, Emulator::Interface::Media*
             if (filePath.empty())
                 return false;
 
-            uint8_t _a = 1 | USE_TRAPS;
+            unsigned _a = DO_AUTOLOAD | USE_TRAPS;
             if (this->fileDialogPtr->hasChecked() && dynamic_cast<LIBC64::Interface*>(emulator))
                 _a |= OVERRIDE_SPEEDER;
 
@@ -143,7 +140,7 @@ auto Fileloader::load(Emulator::Interface* emulator, Emulator::Interface::Media*
             if (filePath.empty())
                 return false;
 
-            uint8_t _a = 1;
+            unsigned _a = DO_AUTOLOAD;
             if (_useTraps)
                 _a |= USE_TRAPS;
             if (this->fileDialogPtr->hasChecked() && dynamic_cast<LIBC64::Interface*>(emulator))
@@ -723,7 +720,7 @@ auto Fileloader::eject(Emulator::Interface* emulator, Emulator::Interface::Media
     }
 }
 
-auto Fileloader::insertFile( Emulator::Interface* emulator, Emulator::Interface::Media* media, std::string filePath, uint8_t autoLoad, unsigned selection ) -> bool {
+auto Fileloader::insertFile( Emulator::Interface* emulator, Emulator::Interface::Media* media, std::string filePath, unsigned flags, unsigned selection ) -> bool {
 
     auto settings = Program::getSettings( emulator );
     auto emuView = EmuConfigView::TabWindow::getView( emulator );
@@ -732,8 +729,10 @@ auto Fileloader::insertFile( Emulator::Interface* emulator, Emulator::Interface:
     if (!file)
         return false;
 
-    auto folderPath = GUIKIT::File::buildRelativePath(file->getPath());
-    settings->set<std::string>(_underscoreEx(media->group->name) + "_folder_auto", folderPath);
+    if ((flags & DONT_REMEMBER_FOLDER) == 0) {
+        auto folderPath = GUIKIT::File::buildRelativePath(file->getPath());
+        settings->set<std::string>(_underscoreEx(media->group->name) + "_folder_auto", folderPath);
+    }
 
     if (!file->exists() || !file->getSize()) {
         FileHelper::errorOpen(file, nullptr, emuView ? emuView->message : view->message);
@@ -743,7 +742,7 @@ auto Fileloader::insertFile( Emulator::Interface* emulator, Emulator::Interface:
     auto& items = file->scanArchive();
 
     if (archiveViewer) {
-        archiveViewer->onCallback = [this, media, emulator, autoLoad, selection, settings](GUIKIT::File* file, GUIKIT::File::Item* item) {
+        archiveViewer->onCallback = [this, media, emulator, flags, selection, settings](GUIKIT::File* file, GUIKIT::File::Item* item) {
             auto emuView = EmuConfigView::TabWindow::getView( emulator );
 
             if (!item || (item->info.size == 0) )
@@ -760,8 +759,8 @@ auto Fileloader::insertFile( Emulator::Interface* emulator, Emulator::Interface:
                 settings->set<int>("swap_pos", -1, false);
             }
 
-            if (autoLoad & 1) {
-                autoload(emulator, media, selection, autoLoad & USE_TRAPS, autoLoad & OVERRIDE_SPEEDER);
+            if (flags & DO_AUTOLOAD) {
+                autoload(emulator, media, selection, flags & USE_TRAPS, flags & OVERRIDE_SPEEDER);
             }
             emuThread->unlock();
         };
@@ -1012,7 +1011,7 @@ auto Fileloader::insertCurrentPreview(Emulator::Interface::MediaGroup* mediaGrou
 
         if (queuePreview.lastMedia && queuePreview.lastMedia->group == mediaGroup) {
             emuThread->lock(); // important
-            insertFile(queuePreview.emulator, queuePreview.lastMedia, queuePreview.filePath);
+            insertFile(queuePreview.emulator, queuePreview.lastMedia, queuePreview.filePath, DONT_REMEMBER_FOLDER);
         }
     }
 }
