@@ -376,6 +376,7 @@ template<uint8_t Inst> auto M68Core::bitFieldExtract(uint32_t data,  uint32_t wi
             z = zero<Long>(result);
             break;
         default:
+            result = 0;
             break;
     }
 
