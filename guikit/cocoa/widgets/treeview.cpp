@@ -105,7 +105,7 @@
         [content setAllowsEmptySelection:YES];
         [content setAllowsMultipleSelection:NO];
         [content setHeaderView:nil];
-        [content setColumnAutoresizingStyle:NSTableViewNoColumnAutoresizing];
+        [content setColumnAutoresizingStyle:NSTableViewLastColumnOnlyAutoresizingStyle];
         
         font = nil;
         [self setFont:nil];
