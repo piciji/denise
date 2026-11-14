@@ -296,7 +296,8 @@ template<bool changeTrigger> auto InputManager::update() -> void {
             // 2 or more keys are "and" joined successfully.
             // dont expect shorter combinations triggering too, e.g. alt + 1 should not triggering 1 and so on.
             // works only if longest "and" connected mappers have been ordered first
-            ignoreBelow = hidSize;            					
+		    if (!useMapping->emuDevice || useMapping->emuDevice->isKeyboard())
+                ignoreBelow = hidSize;
 		}
         
         Next:
