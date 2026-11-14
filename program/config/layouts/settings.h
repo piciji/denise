@@ -51,8 +51,9 @@ struct AboutLayout : GUIKIT::FramedHorizontalLayout {
     GUIKIT::ImageView denise;
     
     struct Right : GUIKIT::VerticalLayout {
+        GUIKIT::Hyperlink sourceforge;
+        GUIKIT::Hyperlink github;
         GUIKIT::Hyperlink icons8;
-        GUIKIT::Hyperlink trackersWorld;
     } right;
 
     AboutLayout();

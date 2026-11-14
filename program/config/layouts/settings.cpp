@@ -21,8 +21,9 @@ AboutLayout::AboutLayout() {
     left.append(left.author, {0u, 0u}, 2);
     left.append(left.license, {0u, 0u}, 2);
     left.append(left.version, {0u, 0u});
-    right.append(right.icons8, {0u, 0u}, 2);
-    right.append(right.trackersWorld, {0u, 0u});
+    right.append(right.sourceforge, {0u, 0u}, 2);
+    right.append(right.github, {0u, 0u}, 2);
+    right.append(right.icons8, {0u, 0u});
 
     append(left, {0u, 0u}, 10);
     append(denise, {0u, 0u});
@@ -348,9 +349,13 @@ auto SettingsLayout::translate() -> void {
     about.right.icons8.setUri("https://icons8.com", link);
     about.right.icons8.setTooltip("https://icons8.com");
 
-    about.right.trackersWorld.setText("Trackers-World.NET: " + link);
-    about.right.trackersWorld.setUri("https://www.twdotnet.de/wp/2016/11/c64-floppy-sounds/", link);
-    about.right.trackersWorld.setTooltip("Trackers-World.NET");
+    about.right.github.setText("GitHub: " + link);
+    about.right.github.setUri("https://github.com/piciji/denise", link);
+    about.right.github.setTooltip("https://github.com/piciji/denise");
+
+    about.right.sourceforge.setText("SourceForge: " + link);
+    about.right.sourceforge.setUri("https://sourceforge.net/projects/deniseemu/", link);
+    about.right.sourceforge.setTooltip("https://sourceforge.net/projects/deniseemu/");
 
     emuSelection.setText( trans->get("Core Selection") );
 
