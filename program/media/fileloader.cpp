@@ -1183,7 +1183,6 @@ auto Fileloader::findSuitableItem(std::vector<GUIKIT::File::Item>& items) -> GUI
 }
 
 auto Fileloader::findSuitableItem(std::vector<GUIKIT::File::Item>& items, std::vector<Emulator::Interface::MediaGroup*>& groups) -> GUIKIT::File::Item* {
-    GUIKIT::File::Item* fileItem = nullptr;
     std::vector<std::string> suffixList;
 
     for(auto* group : groups)
@@ -1201,14 +1200,12 @@ auto Fileloader::findSuitableItem(std::vector<GUIKIT::File::Item>& items, std::v
         if (!info.size || !info.exists)
             continue;
 
-        if (!fileItem)
-            fileItem = &item;
-
         std::string fileSuffix = GUIKIT::String::getExtension(info.name, "exe");
+        GUIKIT::String::toLowerCase( fileSuffix );
 
         if (GUIKIT::Vector::find(suffixList, fileSuffix))
             return &item;
     }
 
-    return fileItem;
+    return nullptr;
 }

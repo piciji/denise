@@ -115,6 +115,7 @@ auto ArchiveViewer::setView(GUIKIT::File* file, std::vector<GUIKIT::File::Item>&
 
                 if (!suffixList.empty()) {
                     fileSuffix = GUIKIT::String::getExtension(item.info.name, "exe");
+                    GUIKIT::String::toLowerCase( fileSuffix );
 
                     if (GUIKIT::Vector::find(suffixList, fileSuffix)) {
                         sufFileCount++;
