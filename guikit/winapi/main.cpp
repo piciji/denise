@@ -665,6 +665,15 @@ auto CALLBACK pWindow::wndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam
 				}
 			}
 			break;
+        case WM_WINDOWPOSCHANGED:
+            if (pApplication::useDark && window.p.focused() ) {
+                static bool oneTimeHack = false;
+                if (!oneTimeHack) {
+                    pWindow::fixMenuBarInDarkMode(hwnd);
+                    oneTimeHack = true;
+                }
+            }
+            break;
 		case WM_ACTIVATEAPP:
             if (pApplication::useDark)
                 pWindow::fixMenuBarInDarkMode(hwnd);
@@ -1200,24 +1209,25 @@ auto pWindow::addCustomFont( CustomFont& customFont ) -> bool {
 
 auto pWindow::fixMenuBarInDarkMode(HWND& _hwnd) -> bool {
     MENUBARINFO mbi = { sizeof(MENUBARINFO) };
+
     if (!GetMenuBarInfo(_hwnd, OBJID_MENU, 0, &mbi))
         return false;
 
-    RECT rcClient = { 0 };
-    GetClientRect(_hwnd, &rcClient);
-    MapWindowPoints(_hwnd, nullptr, (POINT*)&rcClient, 2);
+    RECT rcWindow{};
+    if (!GetWindowRect(_hwnd, &rcWindow))
+        return false;
 
-    RECT rcWindow = { 0 };
-    GetWindowRect(_hwnd, &rcWindow);
+    RECT rcMenu = mbi.rcBar;
+    OffsetRect(&rcMenu, -rcWindow.left, -rcWindow.top);
 
-    OffsetRect(&rcClient, -rcWindow.left, -rcWindow.top);
-
-    RECT rcAnnoyingLine = rcClient;
-    rcAnnoyingLine.bottom = rcAnnoyingLine.top;
-    rcAnnoyingLine.top--;
+    RECT rcLine = { rcMenu.left, rcMenu.bottom, rcMenu.right, rcMenu.bottom + 1};
 
     HDC hdc = GetWindowDC(_hwnd);
-    FillRect(hdc, &rcAnnoyingLine, pApplication::darkBGBrush);
+    if (!hdc)
+        return false;
+
+    FillRect(hdc, &rcLine, pApplication::darkBGBrush);
+
     ReleaseDC(_hwnd, hdc);
 
     return true;
