@@ -241,7 +241,11 @@ auto Cpu::serialize(Emulator::Serializer& s) -> void {
     s.integer(control);
     s.integer(fc);
 
-    s.integer( reinterpret_cast<uint8_t&>(engine) );
+    Engine _engine = engine;
+    s.integer( reinterpret_cast<uint8_t&>(_engine) );
+
+    if (!s.memUsage() && (s.mode() == Emulator::Serializer::Mode::Load ))
+        setEngine(_engine);
 
     if (engine == Engine::M68020) {
         s.integer(cacr);

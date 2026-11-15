@@ -59,7 +59,7 @@ auto M68Core::parse(const char* s, uint16_t sum) -> uint16_t {
 
 template<M68Core::Engine E> auto M68Core::build() -> void {
     uint16_t o;
-    for( int i = 0; i < 0x10000; i ++ ) {
+    for( int i = 0; i < 0x10000; i++ ) {
         opTable[i] = &M68Core::illegal<E>;
         dasmTable[i] = &M68Core::dasmIllegal;
         mnemonics[i] = DasmHandler::mnemonic( Illegal );
