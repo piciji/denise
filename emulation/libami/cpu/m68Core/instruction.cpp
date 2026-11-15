@@ -13,10 +13,11 @@ template<M68Core::Engine E, uint8_t Inst, uint8_t Size> auto M68Core::opImmShift
 
     if constexpr (E == Engine::M68020) {
         switch (Inst) {
-            case Asl: case Rol: case Ror:   busCycles -= 8; break;
+            case Asl:                       busCycles -= 4; syncInternal<ForceIdle>(); busCycles -= 4; break;
+            case Rol: case Ror:             busCycles -= 6; syncInternal<ForceIdle>(); busCycles -= 2; break;
             case Asr:                       busCycles -= 6; break;
             case Lsl: case Lsr:             busCycles -= 4; break;
-            case Roxl: case Roxr:           busCycles -= 12; break;
+            case Roxl: case Roxr:           busCycles -= 10; syncInternal<ForceIdle>(); busCycles -= 2; break;
         }
         syncInternal<CheckIfPipeRunsDry>();
     } else
@@ -34,9 +35,10 @@ template<M68Core::Engine E, uint8_t Inst, uint8_t Size> auto M68Core::opRegShift
 
     if constexpr (E == Engine::M68020) {
         switch (Inst) {
-            case Asl: case Rol: case Ror:   busCycles -= 8; break;
+            case Asl:                       busCycles -= 4; syncInternal<ForceIdle>(); busCycles -= 4; break;
+            case Rol: case Ror:             busCycles -= 6; syncInternal<ForceIdle>(); busCycles -= 2; break;
             case Asr: case Lsl: case Lsr:   busCycles -= 6; break;
-            case Roxl: case Roxr:           busCycles -= 12; break;
+            case Roxl: case Roxr:           busCycles -= 10; syncInternal<ForceIdle>(); busCycles -= 2; break;
         }
         syncInternal<CheckIfPipeRunsDry>();
     } else
