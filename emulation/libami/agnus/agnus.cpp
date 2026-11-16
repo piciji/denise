@@ -485,7 +485,7 @@ template<bool logDma> inline auto Agnus::addWaitstatesToCPU() -> void {
 #define o overclock
 
     if (o.speedInternal) {
-        unsigned waitStates = 0;
+        unsigned waitStates = o.syncAgnus;
 
         if (o.cycles) {
             if constexpr (logDma) {
@@ -499,7 +499,7 @@ template<bool logDma> inline auto Agnus::addWaitstatesToCPU() -> void {
                 }
             }
 
-            waitStates += o.speedInternal - o.cycles + o.syncAgnus;
+            waitStates += o.speedInternal - o.cycles;
         }
 
         while (busUsage != BUS_FREE) {
