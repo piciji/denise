@@ -95,7 +95,7 @@ USHORT Process_File(unsigned char *fi, unsigned fiSize, unsigned char **fo, unsi
 	pkfsize = (ULONG) ((((ULONG)b1[21])<<16) | (((ULONG)b1[22])<<8) | (ULONG)b1[23]);	/*  Length of total packed data as in archive   */
 	unpkfsize = (ULONG) ((((ULONG)b1[25])<<16) | (((ULONG)b1[26])<<8) | (ULONG)b1[27]);	/*  Length of unpacked data. Usually 901120 bytes  */
 
-	unsigned bufferSize = unpkfsize < 901120 ? 901120 : unpkfsize;
+	unsigned bufferSize = 84 * 2 * 22 * 512; // max 84 track HD
 	*fo = new unsigned char[bufferSize];
 
 	c_version = (USHORT) ((b1[46]<<8) | b1[47]);	/*  version of DMS used to generate it  */
