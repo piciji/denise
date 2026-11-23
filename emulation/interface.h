@@ -382,7 +382,7 @@ struct Interface {
         virtual auto jitPoll(int) -> bool { return false; }
         virtual auto inputPoll(uint16_t, uint16_t) -> int16_t { return 0; }
 		virtual auto videoRefresh8(const uint8_t*, unsigned, unsigned, unsigned) -> void {}
-        virtual auto videoRefresh(const uint16_t*, unsigned, unsigned, unsigned, uint8_t) -> void {}
+        virtual auto videoRefresh(const uint16_t*, unsigned, unsigned, unsigned, unsigned) -> void {}
         virtual auto audioSample(int16_t, int16_t) -> void {}
         virtual auto audioFlush() -> void {}
         virtual auto readMedia(Media*, uint8_t*, unsigned, uint64_t) -> unsigned { return 0; }
@@ -428,7 +428,7 @@ struct Interface {
         bind->audioFlush();
     }
 
-    auto videoRefresh(const uint16_t* frame, unsigned width, unsigned height, unsigned linePitch, uint8_t options) -> void {
+    auto videoRefresh(const uint16_t* frame, unsigned width, unsigned height, unsigned linePitch, unsigned options) -> void {
         bind->videoRefresh(frame, width, height, linePitch, options);
     }
 	
@@ -666,7 +666,7 @@ struct Interface {
     virtual auto cropData() -> uint8_t* { return nullptr; }
     virtual auto cropData16() -> uint16_t* { return nullptr; }
     virtual auto cropPitch() -> unsigned { return 0; }
-    virtual auto cropOptions() -> uint8_t { return 0; }
+    virtual auto cropOptions() -> unsigned { return 0; }
     // for taking screenshots with different crop than the visible one
     virtual auto cropAlternatively(unsigned& width, unsigned& height, unsigned& pitch) -> uint8_t* { return nullptr; }
     

@@ -500,7 +500,7 @@ cpu(this, sysTimer, cia1, cia2, iecBus, traps) {
         }
     };
 
-    crop->removeBorderCallback = [this](unsigned& top, unsigned& bottom, unsigned& left, unsigned& right) {
+    crop->removeBorderCallback = [this](unsigned& top, unsigned& bottom, unsigned& left, unsigned& right, unsigned options) {
 
         vicII->setBorderData();
 
@@ -510,7 +510,7 @@ cpu(this, sysTimer, cia1, cia2, iecBus, traps) {
         right = vicII->crop.right;
     };
 
-    crop->monitorBorderCallback = [this](unsigned& top, unsigned& bottom, unsigned& left, unsigned& right) {
+    crop->monitorBorderCallback = [this](unsigned& top, unsigned& bottom, unsigned& left, unsigned& right, unsigned options) {
 
         top = vicII->crop.topOverscan;
         bottom = vicII->crop.bottomOverscan;
@@ -522,12 +522,12 @@ cpu(this, sysTimer, cia1, cia2, iecBus, traps) {
         return vicII->getCrop(_w, _h);
     };
 
-    vicIICycle.debugger.crop.removeBorderCallback = [this](unsigned& top, unsigned& bottom, unsigned& left, unsigned& right) {
-        crop->removeBorderCallback(top, bottom, left, right);
+    vicIICycle.debugger.crop.removeBorderCallback = [this](unsigned& top, unsigned& bottom, unsigned& left, unsigned& right, unsigned options) {
+        crop->removeBorderCallback(top, bottom, left, right, options);
     };
 
-    vicIICycle.debugger.crop.monitorBorderCallback = [this](unsigned& top, unsigned& bottom, unsigned& left, unsigned& right) {
-        crop->monitorBorderCallback(top, bottom, left, right);
+    vicIICycle.debugger.crop.monitorBorderCallback = [this](unsigned& top, unsigned& bottom, unsigned& left, unsigned& right, unsigned options) {
+        crop->monitorBorderCallback(top, bottom, left, right, options);
     };
 
     tape.setReadTransition = [this]() {
@@ -1093,8 +1093,7 @@ auto System::videoRefresh( uint8_t* frame, unsigned width, unsigned height, unsi
     }
 
     if (!runAhead.pos && frame) {
-        crop->apply( frame, width, height, linePitch, vicII->debugger.dmaView ? 0x80 : 0);
-        // for lightguns
+        crop->apply( frame, width, height, linePitch, vicII->debugger.dmaView ? Crop8::SUPPRESS_CROP : 0);
         input.drawCursor();
     }
 

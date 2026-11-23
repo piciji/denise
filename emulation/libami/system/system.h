@@ -43,7 +43,7 @@ struct System {
 
     DebuggerSnapshot debuggerSnapshot;
 
-    Emulator::Crop<uint16_t> crop;
+    Crop16 crop;
 
     Cia<MOS_8520> cia1;
     Cia<MOS_8520> cia2;
@@ -84,7 +84,7 @@ struct System {
     auto powerOff() -> void;
     auto run() -> void;
     auto informAboutKeyUpdate() -> void;
-    auto videoRefresh( uint16_t* frame, unsigned width, unsigned height, unsigned linePitch, uint8_t options) -> void;
+    auto videoRefresh( uint16_t* frame, unsigned width, unsigned height, unsigned linePitch, unsigned options) -> void;
     auto audioRefresh(int16_t left, int16_t right) -> void;
     auto setModel(uint8_t model) -> void;
     auto getModel() -> uint8_t;

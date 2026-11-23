@@ -265,7 +265,7 @@ auto Program::getVideoDriver() -> std::string {
 	return DRIVER::Video::preferred();
 }
 
-auto Program::videoRefresh(const uint16_t* frame, unsigned width, unsigned height, unsigned linePitch, uint8_t options) -> void {
+auto Program::videoRefresh(const uint16_t* frame, unsigned width, unsigned height, unsigned linePitch, unsigned options) -> void {
 
 	if (cmd->noGui)
 		return;
@@ -273,7 +273,7 @@ auto Program::videoRefresh(const uint16_t* frame, unsigned width, unsigned heigh
     statusHandler->updateFrameCounter();
 	
     if (frame) {
-        switch(options) {
+        switch(options & 0xf) {
             //lores
             case 0: activeVideoManager->renderFrame<uint16_t, 0>(frame, width, height, linePitch); break; // non lace
             case 1: activeVideoManager->renderFrame<uint16_t, 1>(frame, width, height, linePitch); break; // lace odd
@@ -318,7 +318,7 @@ auto Program::repeatLastFrame() -> void {
             unsigned _pitch = activeEmulator->cropPitch();
             unsigned _options = activeEmulator->cropOptions();
 
-            switch(_options) {
+            switch(_options & 0xf) {
                 case 0: activeVideoManager->renderFrame<uint16_t, 0x10 | 0>(cropData16, _width, _height, _pitch); break;
                 case 1: activeVideoManager->renderFrame<uint16_t, 0x10 | 1>(cropData16, _width, _height, _pitch); break;
                 case 2: activeVideoManager->renderFrame<uint16_t, 0x10 | 2>(cropData16, _width, _height, _pitch); break;

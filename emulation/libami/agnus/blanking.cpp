@@ -6,7 +6,7 @@ namespace LIBAMI {
 #define DEBUG_SCROLL_MAX 30
 
 auto Agnus::startHblankDebug() -> void {
-    denise.process();
+    denise.process(beamCon & VARBEAMEN ? -1 : 0);
 
     int width = denise.lineWidthMultiplier() * LINE_DEBUG_WIDTH;
     unsigned _pixPerDma = denise.pixelPerDma();
@@ -31,9 +31,9 @@ auto Agnus::startHblankDebug() -> void {
 
         paula.sampleUpdate();
 
-        uint8_t _res = 0;
-        if (denise.frameMode == Denise::HIRES_FRAME) _res = 4;
-        else if (denise.frameMode == Denise::SHRES_FRAME) _res = 8;
+        unsigned _opt = 0;
+        if (denise.frameMode == Denise::HIRES_FRAME) _opt |= Crop16::HIRES;
+        else if (denise.frameMode == Denise::SHRES_FRAME) _opt |= Crop16::SHRES;
 
         // fprintf( stderr, "v %i h %i f %i ", lineVCounter, denise.linePos, laceFrame | _res );
 
@@ -41,7 +41,7 @@ auto Agnus::startHblankDebug() -> void {
         unsigned _height = (ntsc ? 244 : 289) * (laceFrame & 3 ? 2 : 1) - ((laceFrame & 1) ? 1 : 0);
         unsigned _pitch = LINE_BUFFER_WIDTH - width;
         uint16_t* _ptr = frameBuffer + LINE_RENDER_OFFSET;
-        _crop.apply( _ptr, _width, _height, _pitch, laceFrame | _res );
+        _crop.apply( _ptr, _width, _height, _pitch, (unsigned)laceFrame | _opt );
 
         int offsetX = 0;
         int offsetY = 0;
@@ -89,7 +89,7 @@ auto Agnus::startHblankDebug() -> void {
 
         if (!endDmaView) {
             system->videoRefresh(frameBuffer + (offsetFrameY * LINE_BUFFER_WIDTH) + offsetFrameX, width - offsetX, lineVCounter - offsetY,
-                LINE_BUFFER_WIDTH - (width - offsetX ), laceFrame | _res);
+                LINE_BUFFER_WIDTH - (width - offsetX ), (unsigned)laceFrame | _opt | Crop16::SUPPRESS_CROP);
         }
 
         lineVCounter = 0;
@@ -105,10 +105,7 @@ auto Agnus::startHblankDebug() -> void {
         else if (laceMode & 3) denise.frameMode = Denise::HIRES_FRAME;
         else denise.frameMode = Denise::LORES_FRAME;
 
-        if (hTotalChanged) {
-            hTotalChanged = false;
-            std::memset(frameBuffer, 0, LINE_BUFFER_WIDTH * LINE_BUFFER_HEIGHT );
-        } else if (!(laceFrame & 3) && (laceMode & 3)) {
+        if (!(laceFrame & 3) && (laceMode & 3)) {
             laceMode |= 0x80; // first lace frame
             denise.setDisableSequencer( 0 );
         } else if ((laceFrame & 3) && !(laceMode & 3)) {
@@ -146,30 +143,20 @@ auto Agnus::startHblank() -> void {
     }
 
     if (_vblank && lineVCounter) {
-        denise.process();
+        denise.process(beamCon & VARBEAMEN ? -1 : 0);
         if (laceFrame & 1)
             lineVCounter--;
 
-        if (lineVCounter < ((laceFrame & 3) ? 300 : 150)) {// could happen, if beam position has been changed or uncontrolled register usage
-            lineVCounter = (laceFrame & 3) ? 300 : 150; // otherwise video driver could crash
-            std::memset(frameBuffer, 0, LINE_BUFFER_WIDTH * LINE_BUFFER_HEIGHT ); // lost sync
-        } else if (lineVCounter > ((laceFrame & 3) ? 600 : 300) ) {
-            lineVCounter = (laceFrame & 3) ? 600 : 300;
-        }
-        
-        if (laceFrame & 3)
-            vBlankOffset <<= 1;
+        bool _variableH = (beamCon & VARBEAMEN) && (hTotal != 0xe2);
+        bool _variableV = (beamCon & VARBEAMEN) && (vTotal != (ntsc ? 261 : 311));
 
-        // ECS Worms VBI use programmed vblank from v 2 - 5. The current programming would increase the number of visible lines beyond what is possible.
-        // This needs to be compensated for. todo: solve this better
-
-        if (vBlankOffset < lineVCounter)
-            lineVCounter -= vBlankOffset;
-        
         int width = denise.lineWidthMultiplier() * LINE_MAX_WIDTH;
+        if (_variableH)
+            width = denise.linePos;
+
         sanitizeCrop(width, lineVCounter);
 
-		if (laceFrame & 0x80) {
+		if (laceFrame & 0x80) { // prevents artifacts, when toggling interlace
 		    if (laceFrame & 1) {
 		        for(unsigned h = 0; h < lineVCounter; h += 2)
 		            std::memcpy(frameBuffer + LINE_RENDER_OFFSET + ((h + 1) * LINE_BUFFER_WIDTH), frameBuffer + LINE_RENDER_OFFSET + (h + 0) * LINE_BUFFER_WIDTH, LINE_BUFFER_WIDTH << 1 );
@@ -182,64 +169,27 @@ auto Agnus::startHblank() -> void {
         if (paula.ledChange & 0x80)
             paula.informPowerLED(false);
 
-        uint8_t _res = 0;
-        if (denise.frameMode == Denise::HIRES_FRAME) _res = 4;
-        else if (denise.frameMode == Denise::SHRES_FRAME) _res = 8;
+        unsigned _opt = 0;
+        if (denise.frameMode == Denise::HIRES_FRAME) _opt = Crop16::HIRES;
+        else if (denise.frameMode == Denise::SHRES_FRAME) _opt = _variableH ? Crop16::HIRES : Crop16::SHRES;
+        if (_variableH) _opt |= Crop16::NON_STANDARD_H;
+        if (_variableV) _opt |= Crop16::NON_STANDARD_V;
 
         paula.sampleUpdate();
-        system->videoRefresh(frameBuffer + (vBlankOffset * LINE_BUFFER_WIDTH) + LINE_RENDER_OFFSET, width, lineVCounter,
-            LINE_BUFFER_WIDTH - width, laceFrame | _res);
+        checkLostSync();
+
+        system->videoRefresh(frameBuffer + LINE_RENDER_OFFSET, width, lineVCounter,
+            LINE_BUFFER_WIDTH - width, (unsigned)laceFrame | _opt);
 
         lineVCounter = 0;
-        vBlankOffset = 0;
         secureRA = system->runAhead.pos == 1;
     }
 
-    if (_vblank) {
-        hBlank = false;
-    } else {
-        if (beamCon & VARHSYEN) { // Alcatraz-Blitter ECS
-            int _ht = (beamCon & VARBEAMEN) ? (hTotal + lol) : (0xe2 + lol);
-
-            if ((hsStop > _ht) || (hsStop < hsStrt)) {
-                denise.process();
-                std::memset(denise.linePtr, 0, LINE_BUFFER_WIDTH << 1);
-            }
-        }
-        hBlank = true;
-    }
-
-}
-
-auto Agnus::startHsync() -> void {
-    // needed if vposw write misses vblank start
-    bool state = false;
-
-    if (ntsc) {
-        if (vPos == 3)
-            state = true;
-    } else {
-        if (lof && vPos == 3) state = true;
-        else if (!lof && vPos == 2) state = true;
-    }
-
-    if (state) {
-        vBlank = true;
-        vBlankStart = true;
-        if ((debugger.dmaLog & DmaLogView) == 0)
-            startHblank();
-        if (system->isProcessFrame())
-            observeFrameDuration();
-    }
-
-    if (denise.extblanken && ecs()) {
-        if ((beamCon & BLANKEN) == 0)
-            denise.csync(csyncPolTrue(true));
-    }
+    hBlank = !_vblank;
 }
 
 auto Agnus::endHblank() -> void {
-    denise.process();
+    denise.process(beamCon & VARBEAMEN ? -1 : 0);
 
     if (debugger.dmaLog & DmaLogView)
         return;
@@ -256,10 +206,7 @@ auto Agnus::endHblank() -> void {
             else denise.frameMode = Denise::LORES_FRAME;
 
             // Denise doesn't need to know of interlace or vertical position.
-            if (hTotalChanged) {
-                hTotalChanged = false;
-                std::memset(frameBuffer, 0, LINE_BUFFER_WIDTH * LINE_BUFFER_HEIGHT );
-            } else if (!(laceFrame & 3) && (laceMode & 3)) {
+            if (!(laceFrame & 3) && (laceMode & 3)) {
 				laceMode |= 0x80; // first lace frame
                 denise.setDisableSequencer( 0 );
             } else if ((laceFrame & 3) && !(laceMode & 3)) {
@@ -289,48 +236,49 @@ auto Agnus::endHblank() -> void {
     }
 }
 
+auto Agnus::checkLostSync() -> void {
+    if (lineVCounter < ((laceFrame & 3) ? 300 : 150)) {
+        // could happen, if beam position has been changed or uncontrolled register usage
+        lineVCounter = (laceFrame & 3) ? 300 : 150; // otherwise video driver could crash
+        std::memset(frameBuffer, 0, LINE_BUFFER_WIDTH * LINE_BUFFER_HEIGHT ); // lost sync
+    } else if ((beamCon & BLANKEN) && (beamCon & VARHSYEN) && !hasActiveEvent<EVENT_BLANKEN>()) { // Alcatraz-Blitter ECS
+        std::memset(frameBuffer, 0, LINE_BUFFER_WIDTH * LINE_BUFFER_HEIGHT ); // lost sync
+    }
+}
+
 auto Agnus::updateCropLeft(int pos) -> void {
-    if (lineVCounter == LINE_CROP_TEST)
+    if (lineVCounter >= LINE_CROP_TEST)
         crop.left = pos;
 }
 
 auto Agnus::updateCropRight(int pos) -> void {
-    if (lineVCounter != LINE_CROP_TEST)
-        return;
-
-    unsigned diff = 0;
-    unsigned limit = LINE_MAX_WIDTH;
-    if (denise.frameMode == Denise::SHRES_FRAME) limit <<= 2;
-    else if (denise.frameMode == Denise::HIRES_FRAME) limit <<= 1;
-
-    if (limit > pos)
-        diff = limit - pos;
-
-    crop.right = diff;
+    if (lineVCounter >= LINE_CROP_TEST)
+        crop.right = pos;
 }
 
 auto Agnus::updateCropTop() -> void {
-    if (!crop.top) {
+    if (!crop.top)
         crop.top = lineVCounter;
-        if (crop.top && (laceFrame & 2))
-            crop.top -= 1;
-    }
 }
 
 auto Agnus::updateCropBottom() -> void {
     if (!crop.bottom)
         crop.bottom = lineVCounter;
-    if (crop.bottom && (laceFrame & 2))
-        crop.bottom -= 1;
 }
 
 auto Agnus::sanitizeCrop(int width, int height) -> void {
     crop.bottom = (height > crop.bottom) ? (height - crop.bottom) : 0;
+    crop.right = (width > crop.right) ? (width - crop.right) : 0;
+    if (laceFrame & 2) {
+        crop.bottom += 1;
+        if (crop.top)
+            crop.top -= 1;
+    }
 
     width >>= 1;
     height >>= 1;
 
-    if (!denise.useSequencer() || (laceFrame & 3) ) {
+    if (!denise.useSequencer() ) {
         crop.reset();
     } else {
         if (crop.left > width) crop.left = 0;

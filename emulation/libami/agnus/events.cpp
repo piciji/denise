@@ -202,14 +202,14 @@ template<bool isPtr> auto Agnus::inactivateOneCycleEvent(int job) -> void {
 }
 
 inline auto Agnus::updateOneCycleEvent() -> void {
-    int64_t nextClock = rJob1.clock;
-    if (rJob2.clock < nextClock)
-        nextClock = rJob2.clock;
+    int64_t _nextClock = rJob1.clock;
+    if (rJob2.clock < _nextClock)
+        _nextClock = rJob2.clock;
 
-    if (rJob3.clock < nextClock)
-        nextClock = rJob3.clock;
+    if (rJob3.clock < _nextClock)
+        _nextClock = rJob3.clock;
 
-    updateEventAbs<Agnus::EVENT_ONE_CYCLE_DELAY>(nextClock);
+    updateEventAbs<Agnus::EVENT_ONE_CYCLE_DELAY>(_nextClock);
 }
 
 template<bool tooSoon> auto Agnus::processOneCycleEvent(RapidJob& rJob) -> void {
@@ -447,7 +447,7 @@ auto Agnus::debuggerUpdateEvent() -> void {
 
 auto Agnus::HTotalEvent() -> void {
     if (hTotalFirst) {
-        if (vPos == (lines + lof) ) {
+        if (vPos >= (lines + lof) ) {
             if (lace()) {
                 lof ^= 1;
                 laceMode = lof ? 1 : 2;
@@ -477,7 +477,9 @@ auto Agnus::HTotalEvent() -> void {
 
         hPos = 0;
         if (lolToggle) lol ^= 1;
-        updateEvent<EVENT_HTOTAL>((beamCon & VARBEAMEN) ? (hTotal + lol) : (0xe2 + lol));
+        lineCycles = (beamCon & VARBEAMEN) ? hTotal : 0xe2;
+        lineCycles += lol;
+        updateEvent<EVENT_HTOTAL>(lineCycles);
         hTotalFirst = true;
         paula.sampleUpdate<false>();
 

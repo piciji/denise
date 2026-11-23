@@ -30,6 +30,7 @@ namespace Emulator {
 }
 
 namespace LIBC64 {
+typedef Emulator::Crop<uint8_t> Crop8;
 
 struct Prg;
 struct KeyBuffer;
@@ -159,7 +160,7 @@ struct System {
 	Callback countDownPowerSupply;
     Callback debuggerAutoUpdater;
 	
-	Emulator::Crop<uint8_t>* crop;
+	Crop8* crop;
     unsigned serializationSize;
     unsigned serializationSizeLight;
     uint8_t requestedSids;

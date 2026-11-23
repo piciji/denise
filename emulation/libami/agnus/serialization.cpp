@@ -41,13 +41,12 @@ auto Agnus::serialize(Emulator::Serializer& s, bool light) -> void {
     s.integer(sprInhibited);
     s.integer(blitterConflict);
     s.integer(lines);
+    s.integer(lineCycles);
     s.integer(vTotal);
     s.integer(vBStrt);
     s.integer(vBStop);
     s.integer(hTotal);
     s.integer(beamCon);
-    s.integer(hsStrt);
-    s.integer(hsStop);
     s.integer(hBStrt);
     s.integer(hBStop);
 

@@ -7,7 +7,7 @@
 
 namespace LIBAMI {
 
-const std::string Interface::Version = "249";
+const std::string Interface::Version = "250";
 
 Interface::Interface() : Emulator::Interface( "Amiga" ) {
 
@@ -758,7 +758,7 @@ auto Interface::cropPitch() -> unsigned {
     return system->crop.latest.linePitch;
 }
 
-auto Interface::cropOptions() -> uint8_t {
+auto Interface::cropOptions() -> unsigned {
     return system->crop.latest.options;
 }
 

@@ -553,14 +553,15 @@ auto Agnus::writeCustom(uint16_t adr, uint16_t value, uint8_t triggeredBy) -> vo
                     fpsChange |= 1;
 
                 beamCon = value;
+                // productivity: blanken varbeamen varvsyen loldis varvben
+                system->interface->log( "beamcon " + std::to_string(value));
                 if (value & BLANKEN)
-                    updateEvent<EVENT_BLANKEN>(1);
+                    blanken();
                 else
                     setEventInactive<EVENT_BLANKEN>();
                     
                 bool _ntscBefore = ntsc;
                 ntsc = (value & BEAM_PAL) == 0;
-                setLines();
                 bool lolToggleBefore = lolToggle;
                 lolToggle = !(value & LOLDIS) && !(value & BEAM_PAL);
                 if (lolToggleBefore != lolToggle)
@@ -614,85 +615,83 @@ auto Agnus::writeCustom(uint16_t adr, uint16_t value, uint8_t triggeredBy) -> vo
 
         case 0x1c0:
             if (ecsAndHigher()) {
-                if (hTotal != (value & 0xff) )
-                    hTotalChanged = true;
                 hTotal = value & 0xff;
+                system->interface->log( "htotal " + std::to_string(hTotal));
                 fpsChange |= 1;
-            }
+            } break;
 
         case 0x1c2:
             if (ecsAndHigher()) {
-                // system->interface->log( "hsync stop written " + std::to_string(value));
-                hsStop = value & 0xff;
-                if (beamCon & BLANKEN)
-                    updateEvent<EVENT_BLANKEN>(1);
                 fpsChange |= 2;
-            }
+                system->interface->log( "hsync stop " + std::to_string(value & 0xff));
+            } break;
 
         case 0x1c4:
             if (ecsAndHigher()) {
-                // system->interface->log( "hblank start written " + std::to_string(value));
                 hBStrt = value & 0xff;
                 if (beamCon & BLANKEN)
-                    updateEvent<EVENT_BLANKEN>(1);
-            }
+                    blanken();
+                system->interface->log( "hblank start " + std::to_string(hBStrt));
+            } break;
 
         case 0x1c6:
             if (ecsAndHigher()) {
-                // system->interface->log( "hblank stop written " + std::to_string(value));
                 hBStop = value & 0xff;
                 if (beamCon & BLANKEN)
-                    updateEvent<EVENT_BLANKEN>(1);
-            }
+                    blanken();
+                system->interface->log( "hblank stop " + std::to_string(hBStop));
+                system->interface->log( std::to_string(vPos), false);
+            } break;
 
         case 0x1c8:
             if (ecsAndHigher()) {
                 vTotal = value & 0x7ff;
-                setLines();
                 fpsChange |= 1;
-            }
-            break;
+                system->interface->log( "vtotal " + std::to_string(vTotal));
+            } break;
 
         case 0x1ca:
             if (ecsAndHigher()) {
-                // system->interface->log( "vsync stop written " + std::to_string(value));
-            }
+                 system->interface->log( "vsync stop " + std::to_string(value));
+            } break;
 
         case 0x1cc:
             if (ecsAndHigher()) {
                 vBStrt = value & 0x7ff;
                 if (beamCon & VARVBEN)
                     fpsChange |= 2;
+                system->interface->log( "vblank start " + std::to_string(vBStrt));
             }
             break;
 
         case 0x1ce:
             if (ecsAndHigher()) {
                 vBStop = value & 0x7ff;
+                if (vBStop < (ntsc ? 19 : 24))
+                    vBStop = ntsc ? 19 : 24;
+
                 if (beamCon & VARVBEN)
                     fpsChange |= 2;
+                system->interface->log( "vblank stop " + std::to_string(vBStop));
             }
             break;
 
         case 0x1de:
             if (ecsAndHigher()) {
-                // system->interface->log( "hsync start written " + std::to_string(value));
-                hsStrt = value & 0xff;
-                if (beamCon & BLANKEN)
-                    updateEvent<EVENT_BLANKEN>(1);
                 fpsChange |= 2;
+                system->interface->log( "hsync start " + std::to_string(value & 0xff));
             }
             break;
 
         case 0x1e0:
             if (ecsAndHigher()) {
-                // system->interface->log( "vsync start written " + std::to_string(value));
+                 system->interface->log( "vsync start " + std::to_string(value));
             }
             break;
 
         case 0x1e2:
             if (ecsAndHigher()) {
-                // system->interface->log( "hcenter written " + std::to_string(value));
+                system->interface->log( "hcenter " + std::to_string(value & 0xff));
             }
             break;
 

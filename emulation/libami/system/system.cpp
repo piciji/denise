@@ -158,30 +158,33 @@ rtc(agnus) {
         paula.scheduleIntreqCia2(state);
     };
 
-    crop.monitorBorderCallback = [this](unsigned& top, unsigned& bottom, unsigned& left, unsigned& right) {
+    crop.monitorBorderCallback = [this](unsigned& top, unsigned& bottom, unsigned& left, unsigned& right, unsigned options) {
         left = 31; // 384 CRT monitor, 344 CRT TV
         right = 9;
 
-        if (denise.frameMode == Denise::SHRES_FRAME) {
+        if (options & Crop16::SHRES) {
             left <<= 2;
             right <<= 2;
-        } else if (denise.frameMode == Denise::HIRES_FRAME) {
+        } else if (options & Crop16::HIRES) {
             left <<= 1;
             right <<= 1;
         }
 
-    //    bool _ntsc = this->interface->stats.isNtsc();
+        if (options & Crop16::NON_STANDARD_V) {
+            top = 0;
+            bottom = 2;
+        } else {
+            top = 7;
+            bottom = 2;
+        }
 
-        top = 7;
-        bottom = 2;
-
-        if (agnus.laceFrame & 3) {
+        if (options & Crop16::LACE) {
             top <<= 1;
             bottom <<= 1;
         }
     };
 
-    crop.removeBorderCallback = [this](unsigned& top, unsigned& bottom, unsigned& left, unsigned& right) {
+    crop.removeBorderCallback = [this](unsigned& top, unsigned& bottom, unsigned& left, unsigned& right, unsigned options) {
         left = agnus.crop.left;
         right = agnus.crop.right;
         top = agnus.crop.top;
@@ -211,12 +214,12 @@ rtc(agnus) {
         return _c;
     };
 
-    agnus.debugger.crop.removeBorderCallback = [this](unsigned& top, unsigned& bottom, unsigned& left, unsigned& right) {
-        crop.removeBorderCallback(top, bottom, left, right);
+    agnus.debugger.crop.removeBorderCallback = [this](unsigned& top, unsigned& bottom, unsigned& left, unsigned& right, unsigned options) {
+        crop.removeBorderCallback(top, bottom, left, right, options);
     };
 
-    agnus.debugger.crop.monitorBorderCallback = [this](unsigned& top, unsigned& bottom, unsigned& left, unsigned& right) {
-        crop.monitorBorderCallback(top, bottom, left, right);
+    agnus.debugger.crop.monitorBorderCallback = [this](unsigned& top, unsigned& bottom, unsigned& left, unsigned& right, unsigned options) {
+        crop.monitorBorderCallback(top, bottom, left, right, options);
     };
 
     paula.activeDrive = &diskDrives[0];
@@ -402,14 +405,9 @@ auto System::setFirmware(unsigned typeId, uint8_t* data, unsigned size, bool all
     }
 }
 
-auto System::videoRefresh( uint16_t* frame, unsigned width, unsigned height, unsigned linePitch, uint8_t options) -> void {
-    if (!runAhead.pos && frame) {
-        if (agnus.debugger.dmaLog & Agnus::DmaLogView)
-            options |= 0x80;
-        crop.apply( frame, width, height, linePitch, options & 0x8f );
-        // for lightguns
-        // input.drawCursor();
-    }
+auto System::videoRefresh( uint16_t* frame, unsigned width, unsigned height, unsigned linePitch, unsigned options) -> void {
+    if (!runAhead.pos && frame)
+        crop.apply( frame, width, height, linePitch, options );
 
     if (warp.config & (unsigned)Interface::WarpMode::NoVideoOut)
         frame = nullptr;
@@ -419,7 +417,7 @@ auto System::videoRefresh( uint16_t* frame, unsigned width, unsigned height, uns
         denise.setDisableSequencer( (warp.config & (unsigned)Interface::WarpMode::NoVideoSequencer) ? 1 : 2 );
 
     } else if (warp.frameMask) {
-        if ((options & 0xc0) == 0) // lace frame toggle
+        if ((options & Crop16::LACE_TOGGLE ) == 0) // lace frame toggle
             frame = nullptr;
 
         if ((++warp.frameCounter & warp.frameMask) == 0) {
@@ -430,7 +428,7 @@ auto System::videoRefresh( uint16_t* frame, unsigned width, unsigned height, uns
     }
 
     if (!runAhead.pos) {
-        this->interface->videoRefresh(frame, width, height, linePitch, options & 0xf);
+        this->interface->videoRefresh(frame, width, height, linePitch, options);
     }
 
     leaveEmulation = true;

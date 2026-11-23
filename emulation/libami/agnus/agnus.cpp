@@ -19,7 +19,7 @@
 #define LINE_DEBUG_WIDTH (384 + 70 + 2)
 #define LINE_RENDER_OFFSET 5 // needed to avoid costly sanity checking for CRT emulation later on
 #define LINE_BUFFER_WIDTH (2048)
-#define LINE_BUFFER_HEIGHT 640
+#define LINE_BUFFER_HEIGHT (640 * 2)
 #define LINE_CROP_TEST 150
 
 #include "agnus.h"
@@ -167,16 +167,14 @@ auto Agnus::power(bool softReset, bool resetInstruction) -> void {
     vBStrt = 0;
     vBStop = 0;
     hTotal = 0xff;
-    hTotalChanged = false;
 
-    hsStrt = 0;
-    hsStop = 0;
     hBStrt = 0;
     hBStop = 0;
 
     ntsc = system->ntsc;
     beamCon = (ntsc || !ecsAndHigher()) ? 0 : BEAM_PAL;
     lines = ntsc ? 261 : 311;
+    lineCycles = 0xe2;
 
     rJob1.reset();
     rJob2.reset();
@@ -267,7 +265,6 @@ auto Agnus::power(bool softReset, bool resetInstruction) -> void {
     debugger.frameLine = debugger.dmaFrame;
     debugger.dmaLog &= ~(DmaLogBlitter);
     lineVCounter = 0;
-    vBlankOffset = 0;
     crop.reset();
     updateDdfEnableCache();
     debuggerUpdateEvent();
@@ -545,6 +542,8 @@ template<bool logDma> inline auto Agnus::addWaitstatesToCPU() -> void {
 }
 
 auto Agnus::updateVCounter() -> void {
+    bool frameInit = false;
+
     if (vBlankStart)
         vBlankStart = false;
 
@@ -555,8 +554,7 @@ auto Agnus::updateVCounter() -> void {
         vBlankEndNext = false;
 
     if (initVCounter) {
-        if (system->isProcessFrame())
-            observeFrameDuration();
+        lines = (beamCon & VARBEAMEN) ? vTotal : (ntsc ? 261 : 311);
 
         if (!harddisV) {
             diwFlipFlop = false;
@@ -569,8 +567,8 @@ auto Agnus::updateVCounter() -> void {
             vBlankStart = true;
         }
         copper.strobeCOPJMP(1, Trigger_Vsync);
-        if (debugger.oneTimeAction == Emulator::Interface::DebuggerAction::Frame)
-            oneTimeDebuggerAction();
+
+        frameInit = true;
     } else {
         vPos++;
         vPos &= ecsAndHigher() ? 0x7ff : 0x1ff; // register change of VPos could lead to a wrap around of 9-bit (OCS Agnus) counter.
@@ -584,13 +582,14 @@ auto Agnus::updateVCounter() -> void {
     if (beamCon & VARVBEN) {
         if (vPos == vBStrt) {
             vBlank = true;
-            vBlankStart = true;
-            if (vPos < (ntsc ? 19 : 24))
-                vBlankOffset = (ntsc ? 19 : 24) - vPos;
         }
         if (vPos == vBStop) {
             vBlank = false;
             vBlankEnd = true;
+        }
+        if (!vBlank && (vPos < vBStop) && (vPos > vBStrt) ) {
+            vBlank = true;
+            frameInit = true;
         }
     } else {
         if (vPos == (ntsc ? 19 : 24)) {
@@ -601,6 +600,18 @@ auto Agnus::updateVCounter() -> void {
             vBlank = true;
             vBlankStart = true;
         }
+        if (!vBlank && (vPos < (ntsc ? 19 : 24))) { // Mexx-Intro92x jumps from line 259 -> 3
+            vBlank = true;
+            frameInit = true;
+        }
+    }
+
+    if (frameInit) {
+        if (system->isProcessFrame())
+            observeFrameDuration();
+
+        if (debugger.oneTimeAction == Emulator::Interface::DebuggerAction::Frame)
+            oneTimeDebuggerAction();
     }
 }
 
@@ -669,7 +680,8 @@ inline auto Agnus::dmaCycle() -> void {
             dmal >>= 2;
             break;
         case 0xc:
-            startHblank();
+            if (((beamCon & BLANKEN) == 0) || !hasActiveEvent<EVENT_BLANKEN>())
+                startHblank();
             break;
         case 0xd:
             if (dmal & 3)
@@ -691,14 +703,13 @@ inline auto Agnus::dmaCycle() -> void {
             dmal >>= 2;
             break;
 
-        case 0x12:
-            if (!vBlank) startHsync();
-            break;
-
         case 0x13:
             if (dmal & 0x3)
                 fetchSample<1>( dmal & 0x1 );
             dmal >>= 2;
+
+            if (denise.extblanken && ecs() && ((beamCon & BLANKEN) == 0))
+                denise.csync(vBlank);
 
             if (!lof && (ERSY == 0) && (vPos == (ntsc ? 6 : 5) ) ) {
                 if (model != OCS_A1000) cia1.tod(eClockCycle & 3); // hardwired vsync end
@@ -728,11 +739,12 @@ inline auto Agnus::dmaCycle() -> void {
         case 0x1f: if (!vBlank) spriteControl<2, true>(); break;
         case 0x21: if (!vBlank) spriteControl<2, false>(); break;
         case 0x23: if (!vBlank) spriteControl<3, true>(); break;
-        case 0x24: // hsync end
+        case 0x24: // hardwired hsync end, todo: trigger cia2 and csync at hsstrt in programmed mode
+            // prod mode don't set VARHSYEN or VARCSYEN. so it should use hardwired hsync end
             if (ERSY == 0)
                 cia2.tod(eClockCycle & 3);
             if (denise.extblanken && ecs() && ((beamCon & BLANKEN) == 0))
-                denise.csync(csyncPolTrue(vBlank));
+                denise.csync(vBlank);
             break;
         case 0x25: if (!vBlank) spriteControl<3, false>(); break;
         case 0x27: if (!vBlank) spriteControl<4, true>(); break;
@@ -740,8 +752,11 @@ inline auto Agnus::dmaCycle() -> void {
         case 0x2b: if (!vBlank) spriteControl<5, true>(); break;
         case 0x2d: if (!vBlank) spriteControl<5, false>(); break;
         case 0x2f:
-            endHblank();
-            if (!vBlank) spriteControl<6, true>(); break;
+            if (((beamCon & BLANKEN) == 0) || !hasActiveEvent<EVENT_BLANKEN>())
+                endHblank();
+            if (!vBlank)
+                spriteControl<6, true>();
+            break;
         case 0x31: if (!vBlank) spriteControl<6, false>(); break;
         case 0x33: if (!vBlank) spriteControl<7, true>(); break;
         case 0x35: if (!vBlank) spriteControl<7, false>(); break;
@@ -760,8 +775,15 @@ inline auto Agnus::dmaCycle() -> void {
             }
             break;
 
-        case 0x85:
-            if (lof && (ERSY == 0) && (vPos == (ntsc ? 6 : 5) ) ) {
+        case 0x47: // hcenter in prod mode, todo: dynamic for any hcenter, at non hardwired vsstrt
+            if (lof && (beamCon & VARVSYEN) && (ERSY == 0) && (vPos == (ntsc ? 6 : 5) ) ) {
+                // at vsync start
+                if (model != OCS_A1000) cia1.tod(eClockCycle & 3);
+            }
+            break;
+        case 0x85: // hcenter (hardwired) -> not reachable in prod mode
+            if (lof && ((beamCon & VARVSYEN) == 0) && (ERSY == 0) && (vPos == (ntsc ? 6 : 5) ) ) {
+                // at vsync start
                 if (model != OCS_A1000) cia1.tod(eClockCycle & 3);
             }
             break;
@@ -823,34 +845,40 @@ inline auto Agnus::dmaCycle() -> void {
 }
 
 auto Agnus::blanken() -> void {
-    int delayStrt, delayStop;
-
-    if (beamCon & VARCSYEN) {
-        if (hPos == hsStop) denise.csync(csyncPolTrue(false));
-        else if (hPos == hsStrt) denise.csync(csyncPolTrue(true));
-
-        delayStop = hsStop - hPos;
-        if (delayStop <= 0)
-            delayStop = ((beamCon & VARBEAMEN) ? (hTotal + lol) : (0xe2 + lol)) - hPos + hsStop;
-
-        delayStrt = hsStrt - hPos;
-        if (delayStrt <= 0)
-            delayStrt = ((beamCon & VARBEAMEN) ? (hTotal + lol) : (0xe2 + lol)) - hPos + hsStrt;
-
-    } else {
-        if (hPos == hBStop) denise.csync(csyncPolTrue(false));
-        else if (hPos == hBStrt) denise.csync(csyncPolTrue(true));
-
-        delayStop = hBStop - hPos;
-        if (delayStop <= 0)
-            delayStop = ((beamCon & VARBEAMEN) ? (hTotal + lol) : (0xe2 + lol)) - hPos + hBStop;
-
-        delayStrt = hBStrt - hPos;
-        if (delayStrt <= 0)
-            delayStrt = ((beamCon & VARBEAMEN) ? (hTotal + lol) : (0xe2 + lol)) - hPos + hBStrt;
+    if (hPos == hBStop) {
+        endHblank();
+        denise.csync(false);
+    } else if (hPos == ((hBStrt + 1) & 0xff) ) {
+        startHblank();
+        denise.csync(true);
     }
 
-    updateEvent<EVENT_BLANKEN>(delayStop <= delayStrt ? delayStop : delayStrt);
+    int delayStop = getCyclesToHpos( hBStop );
+    int delayStrt = getCyclesToHpos( hBStrt + 1 );
+
+    if (delayStop > 0 && delayStrt > 0)
+        updateEvent<EVENT_BLANKEN>(delayStop <= delayStrt ? delayStop : delayStrt);
+    else if (delayStop > 0)
+        updateEvent<EVENT_BLANKEN>(delayStop);
+    else if (delayStrt > 0)
+        updateEvent<EVENT_BLANKEN>(delayStrt);
+    else
+        setEventInactive<EVENT_BLANKEN>();
+}
+
+auto Agnus::getCyclesToHpos(uint8_t target) -> int {
+    int delay = -1;
+
+    if (target > lineCycles)
+        delay = -1;
+    else if (hPos > lineCycles)
+        delay = 255 - hPos + target + 1;
+    else if (hPos >= target)
+        delay = lineCycles - hPos + target + 1;
+    else
+        delay = target - hPos;
+
+    return delay;
 }
 
 auto Agnus::POSR(bool vhpos) -> uint16_t {
@@ -858,7 +886,7 @@ auto Agnus::POSR(bool vhpos) -> uint16_t {
     auto v = vPos;
     auto _lol = lol;
     auto _lof = lof;
-    uint8_t hCompare = (beamCon & VARBEAMEN) ? ((hTotal - 1) & 0xff + _lol) : (226 + _lol);
+    //system->interface->log(vhpos ? "posr" : "posr6");
 
     // reading V(H)POS get the already incremented (pointing to next cycle) position, Copper uses the current position for comparisons.
     // for performance reasons following is calculated with beginning of next cycle, so we do it here temporarily
@@ -869,10 +897,10 @@ auto Agnus::POSR(bool vhpos) -> uint16_t {
         else { v++; v &= ecsAndHigher() ? 0x7ff : 0x1ff; }
     }
 
-    if (h == hCompare) {
+    if (h == lineCycles) {
         if (lace() && (v == (lines + _lof) )) _lof ^= 1;
 
-    } else if (h == (hCompare + 1) ) {
+    } else if (h == (lineCycles + 1) ) {
         h = 0;
         if (lolToggle) _lol ^= 1;
     }
@@ -1016,7 +1044,7 @@ auto Agnus::vposw(uint16_t value) -> void {
     vPos &= 0xff;
     if (ecsAndHigher()) {
         vPos |= (value & 7) << 8;
-        lol = 0;
+        lol = false;
     } else {
         vPos |= (value & 1) << 8;
     }
@@ -1025,6 +1053,10 @@ auto Agnus::vposw(uint16_t value) -> void {
         fpsChange |= 1;
     if (vPosBefore != vPos)
         fpsChange |= 2;
+
+    // interface->log("vpos");
+    // interface->log(vPos,0);
+    // interface->log(vPosBefore,0);
 
     //if (fpsChange && !hasActiveEvent<EVENT_LEAVE_EMULATION>())
       //  updateEvent<EVENT_LEAVE_EMULATION>(150000);
@@ -1046,12 +1078,11 @@ auto Agnus::vhposw(uint16_t value) -> void {
         fpsChange |= 2;
 
         int delay = 1;
-        int limit = (beamCon & VARBEAMEN) ? hTotal : 0xe2;
 
-        if (hPos > (limit + lol) ) // miss comparator -> wrap around
-            delay += (0xff - hPos) + (limit + lol);
+        if (hPos > lineCycles ) // miss comparator -> wrap around
+            delay += (0xff - hPos) + lineCycles;
         else
-            delay += limit - hPos + lol;
+            delay += lineCycles - hPos;
 
         if (!hTotalFirst) {
             hTotalFirst = true;
@@ -1070,10 +1101,10 @@ auto Agnus::vhposw(uint16_t value) -> void {
 
         updateEvent<EVENT_HTOTAL>(delay);
 
-//        interface->log("vhpos");
-//        interface->log(vPos,0);
-//        interface->log(hPosBefore,0,1);
-//        interface->log(hPos,0,1);
+        // interface->log("vhpos");
+        // interface->log(vPos,0);
+        // interface->log(hPosBefore,0,1);
+        // interface->log(hPos,0,1);
 
         // For ease of use, the emulator increases the position at the beginning of the cycle.
         // However, when writing the position manually, this is a problem.
@@ -1087,52 +1118,49 @@ auto Agnus::vhposw(uint16_t value) -> void {
 auto Agnus::observeFrameDuration() -> void {
     // caution: extreme deviations lead to faulty synchronization.
 
-    if (!fpsChange)
-        return;
+    if (fpsChange) {
+        double fpsOld = fps;
 
-    double fpsOld = fps;
+        if (fpsChange & 2) { // Beam position altered
+            double elapsedCycles = (double)fallBackCycles( frameClock );
+            fps = (double)frequency() / elapsedCycles;
 
-    if (fpsChange & 2) { // Beam position altered
-        double elapsedCycles = (double)fallBackCycles( frameClock );
-        fps = (double)frequency() / elapsedCycles;
+            if (fps < 1.0) fps = 1.0;
 
-        if (fps < 1.0) fps = 1.0;
+            fpsChange = 1; // reset to "typical" in next frame, if the beam position has not been changed again.
 
-        fpsChange = 1; // reset to "typical" in next frame, if the beam position has not been changed again.
+            system->updateStats();
+            if (std::fabs(fpsOld - fps) > 0.03) {
+                //interface->log("fps change 2");
+                //interface->log(fps, 0);
+                interface->fpsChanged();
+            }
 
-        system->updateStats();
-        if (std::fabs(fpsOld - fps) > 0.03) {
-            //interface->log("fps change 2");
-            //interface->log(fps, 0);
-            interface->fpsChanged();
-        }
+        } else if (fpsChange & 1) { // typical, e.g. lace change
+            double linesPerField;
+            double cyclesPerLine;
 
-    } else if (fpsChange & 1) { // typical, e.g. lace change
-        double linesPerField;
-        double cyclesPerLine;
+            if (laceMode & 3)
+                linesPerField = lines + 1.5;
+            else
+                linesPerField = lines + (lof ? 2.0 : 1.0);
 
-        if (laceMode & 3)
-            linesPerField = lines + 1.5;
-        else
-            linesPerField = lines + (lof ? 2.0 : 1.0);
-
-        if (lolToggle)
-            cyclesPerLine = ((beamCon & VARBEAMEN) ? ((double)hTotal + 1.0) : 227.0) + 0.5;
-        else {
             cyclesPerLine = (beamCon & VARBEAMEN) ? ((double)hTotal + 1.0) : 227.0;
-            if (lol)
+            if (lolToggle)
+                cyclesPerLine += 0.5;
+            else if (lol)
                 cyclesPerLine += 1.0;
-        }
 
-        fps = (double)frequency() / (cyclesPerLine * linesPerField);
-        if (fps < 1.0) fps = 1.0;
-        fpsChange = 0;
+            fps = (double)frequency() / (cyclesPerLine * linesPerField);
+            if (fps < 1.0) fps = 1.0;
+            fpsChange = 0;
 
-        system->updateStats();
-        if (std::fabs(fpsOld - fps) > 0.03) {
-            //interface->log("fps change 1");
-            //interface->log(fps, 0);
-            interface->fpsChanged();
+            system->updateStats();
+            if (std::fabs(fpsOld - fps) > 0.03) {
+                //interface->log("fps change 1");
+                //interface->log(fps, 0);
+                interface->fpsChanged();
+            }
         }
     }
 
@@ -1146,10 +1174,6 @@ auto Agnus::resetFps() -> void {
         fps = (double)frequency() / (227.0 * 313.0);
 }
 
-inline auto Agnus::setLines() -> void {
-    lines = (beamCon & VARBEAMEN) ? vTotal : (ntsc ? 261 : 311);
-}
-
 auto Agnus::setBltConflictThisCycle() -> void {
     blitterConflict = true;
     addOneCycleEvent(Agnus::END_BLT_CONFLICT, sprQueue & 0xff, 1);
@@ -1160,10 +1184,6 @@ auto Agnus::checkHardDrives() -> void {
     
     for(auto& hardDrive : system->hardDrives)
         hardDrivesBusy |= hardDrive.process();
-}
-
-inline auto Agnus::csyncPolTrue(bool state) -> bool {
-    return (beamCon & CSYTRUE) ? !state : state;
 }
 
 auto Agnus::debugPointReached(int source, Emulator::WatchPoints& wp, unsigned addr) -> void {

@@ -8,8 +8,23 @@ namespace Emulator {
 	
 template<typename T>
 struct Crop {
+
+    static constexpr unsigned LACE_EVEN = 1;
+    static constexpr unsigned LACE_ODD = 2;
+    static constexpr unsigned HIRES = 4;
+    static constexpr unsigned SHRES = 8;
+    static constexpr unsigned NON_STANDARD_H = 0x10; // productivity horizontal
+    static constexpr unsigned NON_STANDARD_V = 0x20; // productivity vertical
+    static constexpr unsigned LACE_TOGGLE_OFF = 0x40; // first non lace frame
+    static constexpr unsigned LACE_TOGGLE_ON = 0x80; // first lace frame
+
+    static constexpr unsigned SUPPRESS_CROP = 0x8000; // temporarily suppress crop setting
+
+    static constexpr unsigned LACE = LACE_EVEN | LACE_ODD;
+    static constexpr unsigned LACE_TOGGLE = LACE_TOGGLE_OFF | LACE_TOGGLE_ON;
+
     typedef Interface::CropType CropType;
-	using BorderCallback = std::function<void( unsigned& top, unsigned& bottom, unsigned& left, unsigned& right )>;
+	using BorderCallback = std::function<void( unsigned& top, unsigned& bottom, unsigned& left, unsigned& right, unsigned options)>;
 	
 	BorderCallback removeBorderCallback;
 	BorderCallback monitorBorderCallback;
@@ -28,7 +43,7 @@ struct Crop {
         unsigned left;
         unsigned linePitch;
         bool topLeftChanged;
-    	uint8_t options;
+    	unsigned options;
     } latest;
 
 	struct {
@@ -46,18 +61,18 @@ struct Crop {
 
 	auto active() -> bool { return settings.type != CropType::Off; }
 
-	auto updateBorder(uint8_t& options ) -> bool {
+	auto updateBorder(unsigned options ) -> bool {
         
-		if ( (options & 0x80) || (settings.type == CropType::Off) ) {
+		if ( (options & SUPPRESS_CROP) || (settings.type == CropType::Off) ) {
             top = left = right = bottom = 0;
 			return false;
 		}
         
 		if( settings.type == CropType::Auto || settings.type == CropType::AutoRatio ) {
-			removeBorderCallback( top, bottom, left, right );
+			removeBorderCallback( top, bottom, left, right, options );
 		
 		} else if( settings.type == CropType::Monitor ) {		
-			monitorBorderCallback( top, bottom, left, right );            
+			monitorBorderCallback( top, bottom, left, right, options );
             
         } else if( settings.type == CropType::AllSides || settings.type == CropType::AllSidesRatio ) {
 			top = settings.crop.left;
@@ -65,14 +80,16 @@ struct Crop {
 			right = settings.crop.left;
 			bottom = settings.crop.left;
 
-            if (options & 3) {
+            if (options & LACE) {
                 top <<= 1;
                 bottom <<= 1;
             }
-			if (options & 0xc) {
-				unsigned _shift = (options & 0xc) >> 2;
-				left <<= _shift;
-				right <<= _shift;
+            if (options & HIRES) {
+                left <<= 1;
+                right <<= 1;
+            } else if (options & SHRES) {
+                left <<= 2;
+                right <<= 2;
             }
 			
 		} else if( settings.type == CropType::Free ) {			
@@ -81,20 +98,22 @@ struct Crop {
 			right = settings.crop.right;
 			bottom = settings.crop.bottom;
 
-            if (options & 3) {
+		    if (options & LACE) {
                 top <<= 1;
                 bottom <<= 1;
             }
-			if (options & 0xc) {
-				unsigned _shift = (options & 0xc) >> 2;
-				left <<= _shift;
-				right <<= _shift;
-			}
+		    if (options & HIRES) {
+		        left <<= 1;
+		        right <<= 1;
+		    } else if (options & SHRES) {
+		        left <<= 2;
+		        right <<= 2;
+		    }
 		}
 		return true;
 	}
 	
-	auto apply(T*& frame, unsigned& width, unsigned& height, unsigned& linePitch, uint8_t options = 0) -> void {		
+	auto apply(T*& frame, unsigned& width, unsigned& height, unsigned& linePitch, unsigned options = 0) -> void {
 		original.width = width;
 		original.height = height;
 
@@ -122,13 +141,12 @@ struct Crop {
         memoryLatest( frame, width, height, linePitch, options );
 	}
     
-    auto memoryLatest( T*& frame, unsigned& width, unsigned& height, unsigned& linePitch, uint8_t& options ) -> void {
-        // remember result of last crop for post processing ( e.g. lightgun )
+    auto memoryLatest( T*& frame, unsigned& width, unsigned& height, unsigned& linePitch, unsigned options ) -> void {
         latest.frame = frame;
         latest.width = width;
         latest.height = height;
         latest.linePitch = linePitch;
-		latest.options = options & 0x7f;
+		latest.options = options;
 
         if ( (latest.top != top) || (latest.left != left) ) {
             latest.top = top;
@@ -146,10 +164,7 @@ struct Crop {
 		return (unsigned) ( value + 0.5 );
 	}
 	
-	auto correct( unsigned width, unsigned height, uint8_t& options ) -> void {
-		bool lace = options & 3;
-        bool hires = options & 0xc;
-
+	auto correct( unsigned width, unsigned height, unsigned options ) -> void {
 		unsigned _correctedHeight = roundUp( (double)croppedWidth * (double)height / (double)width );
         unsigned diff;
 
@@ -162,7 +177,7 @@ struct Crop {
 
 			croppedHeight = _correctedHeight;
 
-            if (lace) {
+            if (options & LACE) {
                 top &= ~1;
                 croppedHeight &= ~1;
             }
@@ -179,7 +194,7 @@ struct Crop {
 
         croppedWidth = _correctedWidth;
 
-        if (hires) {
+        if (options & (HIRES | SHRES) ) {
             left &= ~1;
             croppedWidth &= ~1;
         }
@@ -189,7 +204,7 @@ struct Crop {
 		if (!screenshotBorderCallback)
 			return nullptr;
 
-		Emulator::Crop<T> _crop;
+		Crop<T> _crop;
 		_crop.settings.type = CropType::Free;
 		_crop.settings.crop = screenshotBorderCallback(width, height);
 

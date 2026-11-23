@@ -111,7 +111,7 @@ struct Interface : Emulator::Interface  {
     auto cropCoordUpdated(unsigned& top, unsigned& left) -> bool;
     auto cropData16() -> uint16_t*;
     auto cropPitch() -> unsigned;
-    auto cropOptions() -> uint8_t;
+    auto cropOptions() -> unsigned;
     auto cropAlternatively(unsigned& width, unsigned& height, unsigned& pitch) -> uint8_t*;
 
     // jit

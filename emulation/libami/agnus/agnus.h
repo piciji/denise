@@ -12,17 +12,10 @@
 #include "../system/debuggerSnapshot.h"
 #include "../../tools/crop.h"
 
-/**
- * todos:
- * AGA
- *
- * variable vsync, vblank, hsync, hblank, hcenter
- * UHRES/DUAL stuff
- */
-
 namespace LIBAMI {
 typedef Emulator::Interface::DebuggerAction DebuggerAction;
 typedef Emulator::Interface::DebuggerTheme DebuggerTheme;
+typedef Emulator::Crop<uint16_t> Crop16;
 
 struct System;
 struct Interface;
@@ -153,13 +146,12 @@ struct Agnus {
     bool vBlank;
     bool vBlankStart;
     bool sprInhibited;
-    uint8_t hsStrt;
-    uint8_t hsStop;
-    uint8_t hBStrt;
-    uint8_t hBStop;
 
     uint16_t lines;
+    uint16_t lineCycles;
     uint16_t vTotal;
+    uint8_t hBStrt;
+    uint8_t hBStop;
     uint16_t vBStrt;
     uint16_t vBStop;
     uint8_t hTotal;
@@ -198,7 +190,7 @@ struct Agnus {
         Emulator::Interface::DebuggerAction oneTimeAction;
         unsigned stopLine = ~0;
 
-        Emulator::Crop<uint16_t> crop;
+        Crop16 crop;
 
         int scrollDirection = 0;
         unsigned scrollCounter = 0;
@@ -279,9 +271,7 @@ struct Agnus {
     uint8_t laceMode;
     uint8_t laceFrame;
     int lineVCounter;
-    int vBlankOffset;
     uint16_t* frameBuffer;
-    bool hTotalChanged = false;
 
     struct {
         int left;
@@ -382,7 +372,6 @@ struct Agnus {
     auto iackCycle(uint8_t level, uint8_t& vector) -> int;
     auto resetOut() -> void;
     auto pullResetLine(bool state = true) -> void;
-    auto setLines() -> void;
 
     constexpr static auto msecToDMACycles(const unsigned ms) -> unsigned { return 3550 * ms; } // average for PAL/NTSC, todo: check if more accuracy is needed
     auto usecToDMACycles(unsigned us) -> unsigned { return 3.55f * (float)us + 0.5f; }
@@ -500,7 +489,7 @@ struct Agnus {
     auto startHblankDebug() -> void;
 
     auto endHblank() -> void;
-    auto startHsync() -> void;
+    auto checkLostSync() -> void;
 
     template<bool quadruple> auto doubleResMidframe(bool fromHires) -> void;
     template<bool quadruple> auto doubleResMidDebugframe(bool fromHires) -> void;
@@ -521,9 +510,9 @@ struct Agnus {
     auto isSlowMem(uint32_t addr) -> bool;
     auto isFastMem(uint32_t addr) -> bool;
     auto isMem(uint32_t addr) -> bool;
-    auto csyncPolTrue(bool state) -> bool;
 
     auto blanken() -> void;
+    auto getCyclesToHpos(uint8_t target) -> int;
 
     auto getMemorySize() -> unsigned {
         unsigned _size = chipMemMask + 1 + slowMemSize + fastMemSize;
