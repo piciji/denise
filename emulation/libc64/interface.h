@@ -69,6 +69,7 @@ struct Interface : Emulator::Interface {
         CartridgeIdRGCDHucky = 571, CartridgeIdEasyCalc = 59, CartridgeIdHyperBasic = 79, CartridgeIdBusinessBasic/*KingSoft*/ = 54,
 	    CartridgeIdMagicDesk2 = 85, CartridgeIdStructuredBasic = 22, CartridgeIdProphet64 = 43,
         CartridgeIdExpert = 6,
+        CartridgeIdEpyxFastLoad = 10,
     };
 
     enum FirmwareId {

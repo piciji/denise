@@ -9,6 +9,7 @@
 #include "../../tools/serializer.h"
 #include "../../tools/rand.h"
 #include "../expansionPort/freezer/actionReplayMK2.h"
+#include "../expansionPort/gameCart/epyxFastLoad.h"
 #include "clipboard.h"
 #include "firmware.h"
 #include "testbench.h"
@@ -740,6 +741,8 @@ auto System::power( bool softReset ) -> void {
             action.buffer = {'L', 'O', 'A', 'D', 'E', 'R'};
         else if (dynamic_cast<BusinessBasic*>(expansionPort))
             action.buffer = {'O', 'K', '.'};
+        else if (dynamic_cast<EpyxFastLoad*>(expansionPort))
+            action.buffer = {'F', 'A', 'S', 'T', 'L', 'O', 'A', 'D'};
 
         action.delay = 0;
         action.blinkingCursor = true;

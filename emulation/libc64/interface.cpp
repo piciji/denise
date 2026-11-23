@@ -276,6 +276,7 @@ auto Interface::prepareExpansions() -> void {
         expansion.pcbs.push_back( {CartridgeIdBusinessBasic, "Kingsoft Business Basic"} );
         expansion.pcbs.push_back( {CartridgeIdStructuredBasic, "Structured Basic"} );
         expansion.pcbs.push_back( {CartridgeIdProphet64, "Prophet64"} );
+        expansion.pcbs.push_back( {CartridgeIdEpyxFastLoad, "Epyx FastLoad"} );
 
         mediaGroups[MediaGroupIdExpansionGame].expansion = &expansion;
     }

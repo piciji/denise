@@ -311,6 +311,7 @@ auto Cart::isSupported() -> bool {
         case LIBC64::Interface::CartridgeIdWarpSpeed:
         case LIBC64::Interface::CartridgeIdAtomicPower:
         case LIBC64::Interface::CartridgeIdMach5:
+        case LIBC64::Interface::CartridgeIdEpyxFastLoad:
         case LIBC64::Interface::CartridgeIdRoss:        
         case LIBC64::Interface::CartridgeIdWestermann:
         case LIBC64::Interface::CartridgeIdPagefox:

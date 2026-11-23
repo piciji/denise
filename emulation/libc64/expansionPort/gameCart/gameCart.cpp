@@ -24,6 +24,7 @@
 #include "rgcd.h"
 #include "structuredBasic.h"
 #include "prophet64.h"
+#include "epyxFastLoad.h"
 
 namespace LIBC64 {
 
@@ -186,6 +187,10 @@ auto GameCart::create( Interface::CartridgeId cartridgeId, unsigned _size ) -> G
 
         case Interface::CartridgeIdMach5:
             cart = new Mach5(system);
+            break;
+
+        case Interface::CartridgeIdEpyxFastLoad:
+            cart = new EpyxFastLoad(system);
             break;
 
         case Interface::CartridgeIdRoss:
