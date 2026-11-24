@@ -554,7 +554,7 @@ auto Agnus::writeCustom(uint16_t adr, uint16_t value, uint8_t triggeredBy) -> vo
 
                 beamCon = value;
                 // productivity: blanken varbeamen varvsyen loldis varvben
-                system->interface->log( "beamcon " + std::to_string(value));
+                // system->interface->log( "beamcon " + std::to_string(value));
                 if (value & BLANKEN)
                     blanken();
                 else
@@ -616,14 +616,14 @@ auto Agnus::writeCustom(uint16_t adr, uint16_t value, uint8_t triggeredBy) -> vo
         case 0x1c0:
             if (ecsAndHigher()) {
                 hTotal = value & 0xff;
-                system->interface->log( "htotal " + std::to_string(hTotal));
+                //system->interface->log( "htotal " + std::to_string(hTotal));
                 fpsChange |= 1;
             } break;
 
         case 0x1c2:
             if (ecsAndHigher()) {
                 fpsChange |= 2;
-                system->interface->log( "hsync stop " + std::to_string(value & 0xff));
+                //system->interface->log( "hsync stop " + std::to_string(value & 0xff));
             } break;
 
         case 0x1c4:
@@ -631,7 +631,7 @@ auto Agnus::writeCustom(uint16_t adr, uint16_t value, uint8_t triggeredBy) -> vo
                 hBStrt = value & 0xff;
                 if (beamCon & BLANKEN)
                     blanken();
-                system->interface->log( "hblank start " + std::to_string(hBStrt));
+                //system->interface->log( "hblank start " + std::to_string(hBStrt));
             } break;
 
         case 0x1c6:
@@ -639,20 +639,20 @@ auto Agnus::writeCustom(uint16_t adr, uint16_t value, uint8_t triggeredBy) -> vo
                 hBStop = value & 0xff;
                 if (beamCon & BLANKEN)
                     blanken();
-                system->interface->log( "hblank stop " + std::to_string(hBStop));
-                system->interface->log( std::to_string(vPos), false);
+                //system->interface->log( "hblank stop " + std::to_string(hBStop));
+                //system->interface->log( std::to_string(vPos), false);
             } break;
 
         case 0x1c8:
             if (ecsAndHigher()) {
                 vTotal = value & 0x7ff;
                 fpsChange |= 1;
-                system->interface->log( "vtotal " + std::to_string(vTotal));
+                //system->interface->log( "vtotal " + std::to_string(vTotal));
             } break;
 
         case 0x1ca:
             if (ecsAndHigher()) {
-                 system->interface->log( "vsync stop " + std::to_string(value));
+                 //system->interface->log( "vsync stop " + std::to_string(value));
             } break;
 
         case 0x1cc:
@@ -660,7 +660,7 @@ auto Agnus::writeCustom(uint16_t adr, uint16_t value, uint8_t triggeredBy) -> vo
                 vBStrt = value & 0x7ff;
                 if (beamCon & VARVBEN)
                     fpsChange |= 2;
-                system->interface->log( "vblank start " + std::to_string(vBStrt));
+                //system->interface->log( "vblank start " + std::to_string(vBStrt));
             }
             break;
 
@@ -672,26 +672,26 @@ auto Agnus::writeCustom(uint16_t adr, uint16_t value, uint8_t triggeredBy) -> vo
 
                 if (beamCon & VARVBEN)
                     fpsChange |= 2;
-                system->interface->log( "vblank stop " + std::to_string(vBStop));
+                //system->interface->log( "vblank stop " + std::to_string(vBStop));
             }
             break;
 
         case 0x1de:
             if (ecsAndHigher()) {
                 fpsChange |= 2;
-                system->interface->log( "hsync start " + std::to_string(value & 0xff));
+                //system->interface->log( "hsync start " + std::to_string(value & 0xff));
             }
             break;
 
         case 0x1e0:
             if (ecsAndHigher()) {
-                 system->interface->log( "vsync start " + std::to_string(value));
+                 //system->interface->log( "vsync start " + std::to_string(value));
             }
             break;
 
         case 0x1e2:
             if (ecsAndHigher()) {
-                system->interface->log( "hcenter " + std::to_string(value & 0xff));
+                //system->interface->log( "hcenter " + std::to_string(value & 0xff));
             }
             break;
 
