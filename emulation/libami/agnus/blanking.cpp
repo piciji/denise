@@ -25,8 +25,10 @@ auto Agnus::startHblankDebug() -> void {
         if (++_pos > debugger.lastHpos)
             _pos = 0;
     }
+    
+    bool vTrigger = (vPos == 0) || (vBlankStart && (vPos <= (beamCon & VARVBEN ? vBStrt : (ntsc ? 19 : 24))));
 
-    if (vPos == 0 || vPos == vTotal) {
+    if (vTrigger || vPos == vTotal) {
         unsigned _opt = 0;
         if (denise.frameMode == Denise::HIRES_FRAME) _opt = _variableH ? 0 : Crop16::HIRES;
         else if (denise.frameMode == Denise::SHRES_FRAME) _opt = _variableH ? Crop16::HIRES : Crop16::SHRES;
@@ -38,7 +40,7 @@ auto Agnus::startHblankDebug() -> void {
 
         _opt |= frameOptions & (Crop16::LACE | Crop16::LACE_TOGGLE);
 
-        if (vPos == (_variableH ? vTotal : 0)) {
+        if (_variableV ? vPos == vTotal : vTrigger) {
             uint16_t* _ptr = frameBuffer + LINE_RENDER_OFFSET;
             unsigned _width = denise.lineWidthMultiplier() * LINE_MAX_WIDTH;
             if (_variableH) {
@@ -63,10 +65,9 @@ auto Agnus::startHblankDebug() -> void {
             _height = _height * (frameOptions & Crop16::LACE ? 2 : 1) - ((frameOptions & Crop16::LACE_EVEN) ? 1 : 0);
             unsigned _pitch = LINE_BUFFER_WIDTH - _width;
             debugger.crop.apply( _ptr, _width, _height, _pitch, _opt );
-
         }
 
-        if (vPos == 0) {
+        if (vTrigger) {
             auto& _crop = debugger.crop;
             if (frameOptions & Crop16::LACE_EVEN)
                 lineVCounter--;

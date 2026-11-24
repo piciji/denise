@@ -590,6 +590,7 @@ auto Agnus::updateVCounter() -> void {
         }
         if (!vBlank && (vPos < vBStop) && (vPos > vBStrt) ) {
             vBlank = true;
+            vBlankStart = true;
             frameInit = true;
         }
     } else {
@@ -603,6 +604,7 @@ auto Agnus::updateVCounter() -> void {
         }
         if (!vBlank && (vPos < (ntsc ? 19 : 24))) { // Mexx-Intro92x jumps from line 259 -> 3
             vBlank = true;
+            vBlankStart = true;
             frameInit = true;
         }
     }
