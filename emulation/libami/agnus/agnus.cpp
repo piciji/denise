@@ -265,6 +265,7 @@ auto Agnus::power(bool softReset, bool resetInstruction) -> void {
     denise.linePtr = frameBuffer;
     debugger.frameLine = debugger.dmaFrame;
     debugger.dmaLog &= ~(DmaLogBlitter);
+    debugger.lineVCounter = 0;
     lineVCounter = 0;
     crop.reset();
     updateDdfEnableCache();

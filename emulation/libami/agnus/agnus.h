@@ -189,6 +189,8 @@ struct Agnus {
 
         Emulator::Interface::DebuggerAction oneTimeAction;
         unsigned stopLine = ~0;
+        int lineVCounter = 0;
+        int rememberLinePos = 0;
 
         Crop16 crop;
 
@@ -490,6 +492,8 @@ struct Agnus {
 
     auto endHblank() -> void;
     auto checkLostSync() -> void;
+    auto setFrameData() -> void;
+    auto getFrameOptions() -> unsigned;
 
     template<bool quadruple> auto doubleResMidframe(bool fromHires) -> void;
     template<bool quadruple> auto doubleResMidDebugframe(bool fromHires) -> void;

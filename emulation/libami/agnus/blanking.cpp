@@ -1,6 +1,4 @@
 
-//#include "agnus.h"
-
 namespace LIBAMI {
 
 #define DEBUG_SCROLL_MAX 30
@@ -8,7 +6,6 @@ namespace LIBAMI {
 auto Agnus::startHblankDebug() -> void {
     denise.process(beamCon & VARBEAMEN ? -1 : 0);
     bool _variableH = (beamCon & VARBEAMEN) && (hTotal != 0xe2);
-    bool _variableV = (beamCon & VARBEAMEN) && (vTotal != (ntsc ? 261 : 311));
 
     int width = denise.lineWidthMultiplier() * LINE_DEBUG_WIDTH;
     if (_variableH)
@@ -25,148 +22,91 @@ auto Agnus::startHblankDebug() -> void {
         if (++_pos > debugger.lastHpos)
             _pos = 0;
     }
-    
+
     bool vTrigger = (vPos == 0) || (vBlankStart && (vPos <= (beamCon & VARVBEN ? vBStrt : (ntsc ? 19 : 24))));
 
-    if (vTrigger || vPos == vTotal) {
-        unsigned _opt = 0;
-        if (denise.frameMode == Denise::HIRES_FRAME) _opt = _variableH ? 0 : Crop16::HIRES;
-        else if (denise.frameMode == Denise::SHRES_FRAME) _opt = _variableH ? Crop16::HIRES : Crop16::SHRES;
-        if (_variableH) _opt |= Crop16::NON_STANDARD_H;
-        if (_variableV) _opt |= Crop16::NON_STANDARD_V;
+    if (vTrigger) {
+        unsigned _opt = getFrameOptions();
 
-        if ((frameOptions & Crop16::HRES) != (_opt & Crop16::HRES))
-            _opt |= Crop16::HRES_CHANGE;
+        auto& _crop = debugger.crop;
+        if (frameOptions & Crop16::LACE_EVEN)
+            debugger.lineVCounter--;
 
-        _opt |= frameOptions & (Crop16::LACE | Crop16::LACE_TOGGLE);
+        int offsetX = 0;
+        int offsetY = 0;
+        int offsetFrameX = 0;
+        int offsetFrameY = 0;
+        bool endDmaView = false;
 
-        if (_variableV ? vPos == vTotal : vTrigger) {
-            uint16_t* _ptr = frameBuffer + LINE_RENDER_OFFSET;
-            unsigned _width = denise.lineWidthMultiplier() * LINE_MAX_WIDTH;
-            if (_variableH) {
-                _width = hTotal;
-                if (hBStop > hBStrt) {
-                    int dis = hBStop - hBStrt - 1;
-                    if (dis < _width)
-                        _width -= dis;
+        if (debugger.scrollDirection != 0) {
+            if (((debugger.scrollDirection == 1) && (debugger.scrollCounter < DEBUG_SCROLL_MAX))
+            || ((debugger.scrollDirection == -1) && debugger.scrollCounter)) {
+                if (_crop.latest.width < width) {
+                    offsetX = width - _crop.latest.width;
+                    offsetX = offsetX - (offsetX * debugger.scrollCounter) / DEBUG_SCROLL_MAX;
                 }
-                _width *= _pixPerDma;
-            }
 
-            unsigned _height = ntsc ? 244 : 289;
-            if (_variableV) {
-                _height = vTotal;
-                if (vBStop > vBStrt) {
-                    int dis = vBStop - vBStrt - 1;
-                    if (dis < _height)
-                        _height -= dis;
+                if (_crop.latest.height < debugger.lineVCounter) {
+                    offsetY = debugger.lineVCounter - _crop.latest.height;
+                    offsetY = offsetY - (offsetY * debugger.scrollCounter) / DEBUG_SCROLL_MAX;
                 }
+
+                if (width > _crop.original.width) {
+                    unsigned lastLeft = (width - _crop.original.width) + _crop.latest.left;
+                    if  (lastLeft)
+                        offsetFrameX = lastLeft - ((lastLeft * debugger.scrollCounter) / DEBUG_SCROLL_MAX);
+                }
+
+                if (debugger.lineVCounter > _crop.original.height) {
+                    unsigned lastTop = (debugger.lineVCounter - _crop.original.height) + _crop.latest.top;
+                    if (lastTop)
+                        offsetFrameY = lastTop - ((lastTop * debugger.scrollCounter) / DEBUG_SCROLL_MAX);
+                }
+
+                if (debugger.scrollDirection == 1)
+                    debugger.scrollCounter++;
+                else
+                    debugger.scrollCounter--;
+
+            } else {
+               if (debugger.scrollDirection == -1)
+                   endDmaView = true;
+
+               debugger.scrollDirection = 0;
             }
-            _height = _height * (frameOptions & Crop16::LACE ? 2 : 1) - ((frameOptions & Crop16::LACE_EVEN) ? 1 : 0);
-            unsigned _pitch = LINE_BUFFER_WIDTH - _width;
-            debugger.crop.apply( _ptr, _width, _height, _pitch, _opt );
         }
 
-        if (vTrigger) {
-            auto& _crop = debugger.crop;
-            if (frameOptions & Crop16::LACE_EVEN)
-                lineVCounter--;
-
-            if (paula.ledChange & 0x80)
-                paula.informPowerLED(false);
-
-            paula.sampleUpdate();
-
-            int offsetX = 0;
-            int offsetY = 0;
-            int offsetFrameX = 0;
-            int offsetFrameY = 0;
-            bool endDmaView = false;
-
-            if (debugger.scrollDirection != 0) {
-                if (((debugger.scrollDirection == 1) && (debugger.scrollCounter < DEBUG_SCROLL_MAX))
-                || ((debugger.scrollDirection == -1) && debugger.scrollCounter)) {
-                    if (_crop.latest.width < width) {
-                        offsetX = width - _crop.latest.width;
-                        offsetX = offsetX - (offsetX * debugger.scrollCounter) / DEBUG_SCROLL_MAX;
-                    }
-
-                    if (_crop.latest.height < lineVCounter) {
-                        offsetY = lineVCounter - _crop.latest.height;
-                        offsetY = offsetY - (offsetY * debugger.scrollCounter) / DEBUG_SCROLL_MAX;
-                    }
-
-                    if (width > _crop.original.width) {
-                        unsigned lastLeft = (width - _crop.original.width) + _crop.latest.left;
-                        if  (lastLeft)
-                            offsetFrameX = lastLeft - ((lastLeft * debugger.scrollCounter) / DEBUG_SCROLL_MAX);
-                    }
-
-                    if (lineVCounter > _crop.original.height) {
-                        unsigned lastTop = (lineVCounter - _crop.original.height) + _crop.latest.top;
-                        if (lastTop)
-                            offsetFrameY = lastTop - ((lastTop * debugger.scrollCounter) / DEBUG_SCROLL_MAX);
-                    }
-
-                    if (debugger.scrollDirection == 1)
-                        debugger.scrollCounter++;
-                    else
-                        debugger.scrollCounter--;
-
-                } else {
-                   if (debugger.scrollDirection == -1)
-                       endDmaView = true;
-
-                   debugger.scrollDirection = 0;
-                }
-            }
-
-            if (!endDmaView) {
-                system->videoRefresh(frameBuffer + (offsetFrameY * LINE_BUFFER_WIDTH) + offsetFrameX, width - offsetX, lineVCounter - offsetY,
-                    LINE_BUFFER_WIDTH - (width - offsetX ), _opt | Crop16::SUPPRESS_CROP);
-            }
-
-            Emulator::copyMasked<uint8_t>(frameOptions, _opt, Crop16::HRES);
-            lineVCounter = 0;
-
-            if (endDmaView) {
-                debugger.dmaLog &= ~DmaLogView;
-                hBlank = false;
-                return;
-            }
-
-            if (denise.isShres()) denise.frameMode = Denise::SHRES_FRAME;
-            else if (denise.isHires()) denise.frameMode = Denise::HIRES_FRAME;
-            else if (laceMode & 3) denise.frameMode = Denise::HIRES_FRAME;
-            else denise.frameMode = Denise::LORES_FRAME;
-
-            if (!(frameOptions & Crop16::LACE) && (laceMode & Crop16::LACE)) {
-                laceMode |= Crop16::LACE_TOGGLE_ON; // first lace frame
-                denise.setDisableSequencer( 0 );
-            } else if ((frameOptions & Crop16::LACE) && !(laceMode & Crop16::LACE)) {
-                laceMode |= Crop16::LACE_TOGGLE_OFF; // first non lace frame
-                denise.setDisableSequencer( 0 );
-            }
-
-            Emulator::copyMasked<uint8_t>(frameOptions, laceMode, Crop16::LACE | Crop16::LACE_TOGGLE);
-            laceMode &= ~Crop16::LACE_TOGGLE;
-            if (frameOptions & Crop16::LACE_ODD)
-                lineVCounter = 1;
+        if (!endDmaView) {
+            system->videoRefresh(frameBuffer + (offsetFrameY * LINE_BUFFER_WIDTH) + offsetFrameX, width - offsetX, debugger.lineVCounter - offsetY,
+                LINE_BUFFER_WIDTH - (width - offsetX ), _opt | Crop16::SUPPRESS_CROP);
         }
+
+        Emulator::copyMasked<uint8_t>(frameOptions, _opt, Crop16::HRES);
+        debugger.lineVCounter = 0;
+
+        if (endDmaView) {
+            debugger.dmaLog &= ~DmaLogView;
+            hBlank = false;
+            return;
+        }
+
+        setFrameData();
+
+        if (frameOptions & Crop16::LACE_ODD)
+            debugger.lineVCounter = 1;
     }
 
-    if (lineVCounter >= LINE_BUFFER_HEIGHT)
-        lineVCounter = LINE_BUFFER_HEIGHT - 1;
+    if (debugger.lineVCounter >= LINE_BUFFER_HEIGHT)
+        debugger.lineVCounter = LINE_BUFFER_HEIGHT - 1;
 
-    debugger.frameLine = debugger.dmaFrame + lineVCounter * LINE_BUFFER_WIDTH;
-    denise.linePtr = frameBuffer + lineVCounter * LINE_BUFFER_WIDTH;
+    debugger.frameLine = debugger.dmaFrame + debugger.lineVCounter * LINE_BUFFER_WIDTH;
+    denise.linePtr = frameBuffer + debugger.lineVCounter * LINE_BUFFER_WIDTH;
     denise.linePos = 0;
-    lineVCounter += (frameOptions & Crop16::LACE) ? 2 : 1;
+    debugger.lineVCounter += (frameOptions & Crop16::LACE) ? 2 : 1;
 }
 
 auto Agnus::startHblank() -> void {
-    if (debugger.dmaLog & DmaLogView)
-        return startHblankDebug();
+    bool debugView = debugger.dmaLog & DmaLogView;
 
     bool _vblank = vBlank && !vBlankStart;
 
@@ -185,11 +125,14 @@ auto Agnus::startHblank() -> void {
             lineVCounter--;
 
         bool _variableH = (beamCon & VARBEAMEN) && (hTotal != 0xe2);
-        bool _variableV = (beamCon & VARBEAMEN) && (vTotal != (ntsc ? 261 : 311));
 
         int width = denise.lineWidthMultiplier() * LINE_MAX_WIDTH;
-        if (_variableH)
+        if (_variableH) {
             width = denise.linePos;
+
+            if (debugView)
+                width -= debugger.rememberLinePos;
+        }
 
         sanitizeCrop(width, lineVCounter);
 
@@ -206,60 +149,49 @@ auto Agnus::startHblank() -> void {
         if (paula.ledChange & 0x80)
             paula.informPowerLED(false);
 
-        unsigned _opt = 0;
-        if (denise.frameMode == Denise::HIRES_FRAME) _opt = _variableH ? 0 : Crop16::HIRES;
-        else if (denise.frameMode == Denise::SHRES_FRAME) _opt = _variableH ? Crop16::HIRES : Crop16::SHRES;
-        if (_variableH) _opt |= Crop16::NON_STANDARD_H;
-        if (_variableV) _opt |= Crop16::NON_STANDARD_V;
-
+        unsigned _opt = getFrameOptions();
         paula.sampleUpdate();
         checkLostSync();
 
-        if ((frameOptions & Crop16::HRES) != (_opt & Crop16::HRES))
-            _opt |= Crop16::HRES_CHANGE;
+        if (debugView) {
+            unsigned _h = lineVCounter;
+            unsigned _w = width;
+            unsigned _pi = LINE_BUFFER_WIDTH - width;
+            uint16_t* _p = frameBuffer + LINE_RENDER_OFFSET;
+            debugger.crop.apply( _p, _w, _h,_pi, _opt );
+        } else {
+            system->videoRefresh(frameBuffer + LINE_RENDER_OFFSET, width, lineVCounter,
+        LINE_BUFFER_WIDTH - width, _opt);
 
-        _opt |= frameOptions & (Crop16::LACE | Crop16::LACE_TOGGLE);
-
-        system->videoRefresh(frameBuffer + LINE_RENDER_OFFSET, width, lineVCounter,
-            LINE_BUFFER_WIDTH - width, _opt);
-
-        Emulator::copyMasked<uint8_t>(frameOptions, _opt, Crop16::HRES);
+            Emulator::copyMasked<uint8_t>(frameOptions, _opt, Crop16::HRES);
+        }
 
         lineVCounter = 0;
         secureRA = system->runAhead.pos == 1;
     }
 
     hBlank = !_vblank;
+
+    if (debugView)
+        startHblankDebug();
 }
 
 auto Agnus::endHblank() -> void {
     denise.process(beamCon & VARBEAMEN ? -1 : 0);
 
-    if (debugger.dmaLog & DmaLogView)
-        return;
+    bool debugView = debugger.dmaLog & DmaLogView;
 
     if (hBlank) {
-        denise.linePos = 0;
+        debugger.rememberLinePos = denise.linePos;
+
+        if (!debugView)
+            denise.linePos = 0;
 
         if (lineVCounter == 0) {
             crop.reset();
 
-            if (denise.isShres()) denise.frameMode = Denise::SHRES_FRAME;
-            else if (denise.isHires()) denise.frameMode = Denise::HIRES_FRAME;
-            else if (laceMode & 3) denise.frameMode = Denise::HIRES_FRAME;
-            else denise.frameMode = Denise::LORES_FRAME;
-
-            // Denise doesn't need to know of interlace or vertical position.
-            if (!(frameOptions & 3) && (laceMode & 3)) {
-				laceMode |= Crop16::LACE_TOGGLE_ON; // first lace frame
-                denise.setDisableSequencer( 0 );
-            } else if ((frameOptions & 3) && !(laceMode & 3)) {
-                laceMode |= Crop16::LACE_TOGGLE_OFF; // first non lace frame
-                denise.setDisableSequencer( 0 );
-            }
-
-            Emulator::copyMasked<uint8_t>(frameOptions, laceMode, Crop16::LACE | Crop16::LACE_TOGGLE);
-            laceMode &= ~Crop16::LACE_TOGGLE;
+            if (!debugView)
+                setFrameData();
 
             if (frameOptions & Crop16::LACE_ODD)
                 lineVCounter = 1;
@@ -276,10 +208,48 @@ auto Agnus::endHblank() -> void {
         if (lineVCounter >= LINE_BUFFER_HEIGHT) // could happen, if beam position has been changed
             lineVCounter = LINE_BUFFER_HEIGHT - 1;
 
-        denise.linePtr = frameBuffer + lineVCounter * LINE_BUFFER_WIDTH + LINE_RENDER_OFFSET;
+        if (!debugView)
+            denise.linePtr = frameBuffer + lineVCounter * LINE_BUFFER_WIDTH + LINE_RENDER_OFFSET;
+
         lineVCounter += (frameOptions & Crop16::LACE) ? 2 : 1;
         hBlank = false;
     }
+}
+
+auto Agnus::setFrameData() -> void {
+    if (denise.isShres()) denise.frameMode = Denise::SHRES_FRAME;
+    else if (denise.isHires()) denise.frameMode = Denise::HIRES_FRAME;
+    else if (laceMode & Crop16::LACE) denise.frameMode = Denise::HIRES_FRAME;
+    else denise.frameMode = Denise::LORES_FRAME;
+
+    // Denise doesn't need to know of interlace or vertical position.
+    if (!(frameOptions & Crop16::LACE) && (laceMode & Crop16::LACE)) {
+        laceMode |= Crop16::LACE_TOGGLE_ON; // first lace frame
+        denise.setDisableSequencer( 0 );
+    } else if ((frameOptions & Crop16::LACE) && !(laceMode & Crop16::LACE)) {
+        laceMode |= Crop16::LACE_TOGGLE_OFF; // first non lace frame
+        denise.setDisableSequencer( 0 );
+    }
+
+    Emulator::copyMasked<uint8_t>(frameOptions, laceMode, Crop16::LACE | Crop16::LACE_TOGGLE);
+    laceMode &= ~Crop16::LACE_TOGGLE;
+}
+
+inline auto Agnus::getFrameOptions() -> unsigned {
+    bool _variableH = (beamCon & VARBEAMEN) && (hTotal != 0xe2);
+    bool _variableV = (beamCon & VARBEAMEN) && (vTotal != (ntsc ? 261 : 311));
+
+    unsigned _opt = 0;
+    if (denise.frameMode == Denise::HIRES_FRAME) _opt = _variableH ? 0 : Crop16::HIRES;
+    else if (denise.frameMode == Denise::SHRES_FRAME) _opt = _variableH ? Crop16::HIRES : Crop16::SHRES;
+    if (_variableH) _opt |= Crop16::NON_STANDARD_H;
+    if (_variableV) _opt |= Crop16::NON_STANDARD_V;
+
+    if ((frameOptions & Crop16::HRES) != (_opt & Crop16::HRES))
+        _opt |= Crop16::HRES_CHANGE;
+
+    _opt |= frameOptions & (Crop16::LACE | Crop16::LACE_TOGGLE);
+    return _opt;
 }
 
 auto Agnus::checkLostSync() -> void {
@@ -293,13 +263,19 @@ auto Agnus::checkLostSync() -> void {
 }
 
 auto Agnus::updateCropLeft(int pos) -> void {
-    if (lineVCounter >= LINE_CROP_TEST)
+    if (lineVCounter >= LINE_CROP_TEST) {
+        if (debugger.dmaLog & DmaLogView && pos >= debugger.rememberLinePos)
+            pos -= debugger.rememberLinePos;
         crop.left = pos;
+    }
 }
 
 auto Agnus::updateCropRight(int pos) -> void {
-    if (lineVCounter >= LINE_CROP_TEST)
+    if (lineVCounter >= LINE_CROP_TEST) {
+        if (debugger.dmaLog & DmaLogView && pos >= debugger.rememberLinePos)
+            pos -= debugger.rememberLinePos;
         crop.right = pos;
+    }
 }
 
 auto Agnus::updateCropTop() -> void {
@@ -374,7 +350,7 @@ template<bool quadruple> auto Agnus::doubleResMidDebugframe(bool fromHires) -> v
     if (fromHires)
         _lineWidth <<= 1;
 
-    for (; y < lineVCounter; y = y + inc ) {
+    for (; y < debugger.lineVCounter; y = y + inc ) {
         curLinePtr = frameBuffer + y * LINE_BUFFER_WIDTH;
         curDmaPtr = debugger.dmaFrame + y * LINE_BUFFER_WIDTH;
         xStart = curLinePtr != denise.linePtr ? (_lineWidth - 1) : (denise.linePos - 1);
