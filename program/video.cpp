@@ -266,32 +266,16 @@ auto Program::getVideoDriver() -> std::string {
 }
 
 auto Program::videoRefresh(const uint16_t* frame, unsigned width, unsigned height, unsigned linePitch, unsigned options) -> void {
-
 	if (cmd->noGui)
 		return;
     
     statusHandler->updateFrameCounter();
 	
-    if (frame) {
-        switch(options & 0xf) {
-            //lores
-            case 0: activeVideoManager->renderFrame<uint16_t, 0>(frame, width, height, linePitch); break; // non lace
-            case 1: activeVideoManager->renderFrame<uint16_t, 1>(frame, width, height, linePitch); break; // lace odd
-            case 2: activeVideoManager->renderFrame<uint16_t, 2>(frame, width, height, linePitch); break; // lace even
-            // hires
-            case 4: activeVideoManager->renderFrame<uint16_t, 4>(frame, width, height, linePitch); break;
-            case 5: activeVideoManager->renderFrame<uint16_t, 5>(frame, width, height, linePitch); break;
-            case 6: activeVideoManager->renderFrame<uint16_t, 6>(frame, width, height, linePitch); break;
-            // shres
-            case 8: activeVideoManager->renderFrame<uint16_t, 8>(frame, width, height, linePitch); break;
-            case 9: activeVideoManager->renderFrame<uint16_t, 9>(frame, width, height, linePitch); break;
-            case 10: activeVideoManager->renderFrame<uint16_t, 10>(frame, width, height, linePitch); break;
-        }
-    }
+    if (frame)
+        activeVideoManager->renderFrame<uint16_t>(frame, width, height, linePitch, options);
 }
 
 auto Program::videoRefresh8(const uint8_t* frame, unsigned width, unsigned height, unsigned linePitch) -> void {
-    
 	if (cmd->noGui)
 		return;
 	
@@ -308,31 +292,17 @@ auto Program::repeatLastFrame() -> void {
     auto cropData = activeEmulator->cropData();
 
     if (cropData) {
-        activeVideoManager->renderFrame<uint8_t, 0x10>(cropData, activeEmulator->cropWidth(), activeEmulator->cropHeight(), activeEmulator->cropPitch());
+        activeVideoManager->renderFrame<uint8_t>(cropData, activeEmulator->cropWidth(), activeEmulator->cropHeight(),
+            activeEmulator->cropPitch(), VideoManager::RENDER_OPT_PAUSE);
     } else {
         auto cropData16 = activeEmulator->cropData16();
 
         if (cropData16) {
-            unsigned _width = activeEmulator->cropWidth();
-            unsigned _height = activeEmulator->cropHeight();
-            unsigned _pitch = activeEmulator->cropPitch();
-            unsigned _options = activeEmulator->cropOptions();
-
-            switch(_options & 0xf) {
-                case 0: activeVideoManager->renderFrame<uint16_t, 0x10 | 0>(cropData16, _width, _height, _pitch); break;
-                case 1: activeVideoManager->renderFrame<uint16_t, 0x10 | 1>(cropData16, _width, _height, _pitch); break;
-                case 2: activeVideoManager->renderFrame<uint16_t, 0x10 | 2>(cropData16, _width, _height, _pitch); break;
-
-                case 4: activeVideoManager->renderFrame<uint16_t, 0x10 | 4>(cropData16, _width, _height, _pitch); break;
-                case 5: activeVideoManager->renderFrame<uint16_t, 0x10 | 5>(cropData16, _width, _height, _pitch); break;
-                case 6: activeVideoManager->renderFrame<uint16_t, 0x10 | 6>(cropData16, _width, _height, _pitch); break;
-
-                case 8: activeVideoManager->renderFrame<uint16_t, 0x10 | 8>(cropData16, _width, _height, _pitch); break;
-                case 9: activeVideoManager->renderFrame<uint16_t, 0x10 | 9>(cropData16, _width, _height, _pitch); break;
-                case 10: activeVideoManager->renderFrame<uint16_t, 0x10 | 10>(cropData16, _width, _height, _pitch); break;
-            }
+            activeVideoManager->renderFrame<uint16_t>(cropData16, activeEmulator->cropWidth(), activeEmulator->cropHeight(),
+                activeEmulator->cropPitch(), activeEmulator->cropOptions() | VideoManager::RENDER_OPT_PAUSE);
         }
     }
+
     if (VideoManager::takeScreenShots && view && isPause) {
         view->screenshot.pause = isPause;
         isPause = 0;

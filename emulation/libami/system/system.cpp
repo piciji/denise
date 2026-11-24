@@ -159,8 +159,13 @@ rtc(agnus) {
     };
 
     crop.monitorBorderCallback = [this](unsigned& top, unsigned& bottom, unsigned& left, unsigned& right, unsigned options) {
-        left = 31; // 384 CRT monitor, 344 CRT TV
-        right = 9;
+        if (options & Crop16::NON_STANDARD_H) {
+            left = 12;
+            right = 0;
+        } else {
+            left = 31; // 384 CRT monitor, 344 CRT TV
+            right = 9;
+        }
 
         if (options & Crop16::SHRES) {
             left <<= 2;
@@ -206,7 +211,7 @@ rtc(agnus) {
             _c.bottom = 2;
         }
 
-        if (agnus.laceFrame & 3) {
+        if (agnus.frameOptions & Crop16::LACE) {
             _c.top <<= 1;
             _c.bottom <<= 1;
         }
@@ -428,7 +433,7 @@ auto System::videoRefresh( uint16_t* frame, unsigned width, unsigned height, uns
     }
 
     if (!runAhead.pos) {
-        this->interface->videoRefresh(frame, width, height, linePitch, options);
+        this->interface->videoRefresh(frame, width, height, linePitch, options & ~Crop16::RESERVED);
     }
 
     leaveEmulation = true;

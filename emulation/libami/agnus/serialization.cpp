@@ -96,7 +96,7 @@ auto Agnus::serialize(Emulator::Serializer& s, bool light) -> void {
     s.integer(lolToggle);
     s.integer(ntsc);
     s.integer(laceMode);
-    s.integer(laceFrame);
+    s.integer(frameOptions);
 
     s.integer(lineVCounter);
     s.integer(crop.left);

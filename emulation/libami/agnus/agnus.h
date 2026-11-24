@@ -269,7 +269,7 @@ struct Agnus {
     bool lolToggle;
     bool ntsc;
     uint8_t laceMode;
-    uint8_t laceFrame;
+    uint8_t frameOptions;
     int lineVCounter;
     uint16_t* frameBuffer;
 

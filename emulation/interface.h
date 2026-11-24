@@ -67,6 +67,12 @@ struct Interface {
     enum class LedId { Power, CapsLock, MHz2 };
     enum RefreshOptions { REF_Normal = 0, REF_LACE_ODD = 1, REF_LACE_EVEN = 2, REF_HIRES = 4, REF_SHRES = 8 };
 
+    enum RenderOpt : unsigned {
+        None = 0, LACE_EVEN = 1, LACE_ODD = 2, LACE = 3,
+        HIRES = 4, SHRES = 8, NON_STANDARD_H = 0x10, NON_STANDARD_V = 0x20,
+        LACE_TOGGLE_OFF = 0x40, LACE_TOGGLE_ON = 0x80, HRES_CHANGE = 0x100
+    };
+
     std::string ident;
     
 	Interface( const std::string& ident ) {

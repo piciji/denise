@@ -64,6 +64,8 @@ struct C64ColorSpectrum {
     double amplitudeEven;
 };
 
+typedef Emulator::Interface::RenderOpt EmuRenderOpt;
+
 struct VideoManager {
     VideoManager(Emulator::Interface* emulator);
     ~VideoManager();
@@ -75,6 +77,8 @@ struct VideoManager {
     static uint8_t frameRenderTrigger;
     static bool needUpdateForAllInstances;
     static unsigned takeScreenShots;
+
+    static constexpr unsigned RENDER_OPT_PAUSE = 0x1000000;
 
     static auto setFrameRender(uint8_t limit) -> void;
     static auto setSynchronize() -> void;
@@ -138,7 +142,6 @@ struct VideoManager {
 
     DmaColor* dmaColors = nullptr;
 
-    uint8_t frameOptions = 0;
     bool colorTableUpdated = false;
     auto needUpdate() -> bool { return !colorTableUpdated; }
     auto requestUpdate() -> void;
@@ -155,12 +158,12 @@ struct VideoManager {
     static auto convertRGBToYUV(ColorLumaChroma* dest, ColorRgb* src) -> void;
     auto setPalette(Emulator::Interface::Palette* palette) -> void;
 
-    template<typename T, bool interlace = false, bool field = false> auto renderToLumaChroma(unsigned width, unsigned height, const T* src, unsigned srcPitch, uint32_t* dest, unsigned destPitch, bool odd) -> void;
-    template<typename T, bool interlace = false, bool field = false> auto renderToRgb(unsigned width, unsigned height, const T* src, unsigned srcPitch, unsigned* dest, unsigned destPitch) -> void;
-    template<typename T, bool interlace = false, bool field = false> auto renderToRgbWithDma(unsigned width, unsigned height, const T* src, unsigned srcPitch, unsigned* dest, unsigned destPitch) -> void;
-    template<typename T> auto renderToScreenshot(unsigned width, unsigned height, const T* src, unsigned srcPitch, uint8_t* dest, uint8_t _options) -> void;
-    template<typename T, uint8_t options = 0> auto renderFrame(const T* src, unsigned width, unsigned height, unsigned srcPitch) -> void;
-    template<uint8_t options> auto getRenderOptions() -> unsigned;
+    template<typename T> auto renderToLumaChroma(unsigned width, unsigned height, const T* src, unsigned srcPitch, uint32_t* dest, unsigned destPitch, bool odd, unsigned options) -> void;
+    template<typename T> auto renderToRgb(unsigned width, unsigned height, const T* src, unsigned srcPitch, unsigned* dest, unsigned destPitch, unsigned options) -> void;
+    template<typename T> auto renderToRgbWithDma(unsigned width, unsigned height, const T* src, unsigned srcPitch, unsigned* dest, unsigned destPitch, unsigned options) -> void;
+    template<typename T> auto renderToScreenshot(unsigned width, unsigned height, const T* src, unsigned srcPitch, uint8_t* dest, unsigned _options) -> void;
+    template<typename T> auto renderFrame(const T* src, unsigned width, unsigned height, unsigned srcPitch, unsigned options = 0) -> void;
+    auto getRenderOptions(unsigned options) -> unsigned;
     auto convertYUVToRGB(ColorRgb* dest, ColorLumaChroma* src, bool odd) -> void;
     auto convertYIQToRGB(ColorRgb* dest, ColorLumaChroma* src, bool odd) -> void;
     auto update() -> void;
@@ -237,7 +240,7 @@ struct VideoManager {
     auto lumaChromaMode() -> bool;
     auto sampleLuma(unsigned width, unsigned height, const uint8_t* src, unsigned srcPitch) -> void;
     auto fetchShader(ShaderPreset::Pass& pass, unsigned passId) -> bool;
-    template<typename T> auto takeScreenshot(unsigned unscaled, const T* _src, unsigned _width, unsigned _height, unsigned _pitch, uint8_t _options) -> void;
+    template<typename T> auto takeScreenshot(unsigned unscaled, const T* _src, unsigned _width, unsigned _height, unsigned _pitch, unsigned _options) -> void;
     auto toggleShaderTemporary() -> bool;
 };
 

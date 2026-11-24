@@ -17,11 +17,15 @@ struct Crop {
     static constexpr unsigned NON_STANDARD_V = 0x20; // productivity vertical
     static constexpr unsigned LACE_TOGGLE_OFF = 0x40; // first non lace frame
     static constexpr unsigned LACE_TOGGLE_ON = 0x80; // first lace frame
+    static constexpr unsigned HRES_CHANGE = 0x100; // lores <> hires <> shres
 
     static constexpr unsigned SUPPRESS_CROP = 0x8000; // temporarily suppress crop setting
 
     static constexpr unsigned LACE = LACE_EVEN | LACE_ODD;
     static constexpr unsigned LACE_TOGGLE = LACE_TOGGLE_OFF | LACE_TOGGLE_ON;
+    static constexpr unsigned HRES = HIRES | SHRES;
+
+    static constexpr unsigned RESERVED = 0xff000000; // reserved don't use it
 
     typedef Interface::CropType CropType;
 	using BorderCallback = std::function<void( unsigned& top, unsigned& bottom, unsigned& left, unsigned& right, unsigned options)>;

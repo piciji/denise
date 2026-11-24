@@ -26,6 +26,7 @@
 #include "../../tools/sanitizer.h"
 #include "../system/system.h"
 #include "../interface.h"
+#include "../../tools/bits.h"
 typedef Emulator::Interface::DebuggerDma::Hilight DebuggerDmaHilight;
 
 #include "events.cpp"
@@ -217,7 +218,7 @@ auto Agnus::power(bool softReset, bool resetInstruction) -> void {
     lof = true;
     lolToggle = ntsc;
     laceMode = 0;
-    laceFrame = 0;
+    frameOptions = 0;
 
     initVCounter = false;
     shortLineBefore = true;
@@ -845,16 +846,16 @@ inline auto Agnus::dmaCycle() -> void {
 }
 
 auto Agnus::blanken() -> void {
-    if (hPos == hBStop) {
+    if (hPos == ((hBStop + 1) & 0xff) ) {
         endHblank();
         denise.csync(false);
-    } else if (hPos == ((hBStrt + 1) & 0xff) ) {
+    } else if (hPos == ((hBStrt + 2) & 0xff) ) {
         startHblank();
         denise.csync(true);
     }
 
-    int delayStop = getCyclesToHpos( hBStop );
-    int delayStrt = getCyclesToHpos( hBStrt + 1 );
+    int delayStop = getCyclesToHpos( hBStop + 1 );
+    int delayStrt = getCyclesToHpos( hBStrt + 2 );
 
     if (delayStop > 0 && delayStrt > 0)
         updateEvent<EVENT_BLANKEN>(delayStop <= delayStrt ? delayStop : delayStrt);

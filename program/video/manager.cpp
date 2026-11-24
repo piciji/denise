@@ -370,23 +370,30 @@ auto VideoManager::toggleShaderTemporary() -> bool {
     return suppressShaderByHotkey;
 }
 
-template<typename T, uint8_t options> auto VideoManager::renderFrame(const T* src, unsigned width, unsigned height, unsigned srcPitch ) -> void {
+template<typename T> auto VideoManager::renderFrame(const T* src, unsigned width, unsigned height, unsigned srcPitch, unsigned options ) -> void {
 	unsigned gpuPitch;
     unsigned* gpuData;
     unsigned cropTop, cropLeft;
-    constexpr bool interlace = options & 3;
-    constexpr bool field = options & 2;
-    constexpr bool hires = options & 4;
-    constexpr bool shres = options & 8;
-    constexpr bool isPause = options & 0x10;
-    constexpr bool lores = !hires && !shres;
+    bool interlace = options & EmuRenderOpt::LACE;
+    bool field = options & EmuRenderOpt::LACE_ODD;
+    bool hires = options & EmuRenderOpt::HIRES;
+    bool shres = options & EmuRenderOpt::SHRES;
+    bool nonStandardV = options & EmuRenderOpt::NON_STANDARD_V;
+    bool isPause = options & RENDER_OPT_PAUSE;
+    bool lores = !hires && !shres;
     bool iHold = interlace && !field && !interlaceFields;
     bool suppressShader = suppressShaderByHotkey
     || (
         program->warp.disableShader && ((program->warp.mode == Program::Warp::Normal) || (program->warp.mode == Program::Warp::Aggressive))
     );
     bool rewind = audioManager->rewind;
-    uint8_t gpuOptions = iHold | (interlace << 1) | (suppressShader << 2) | (isPause << 5) | (rewind << 6);
+
+    uint8_t gpuOptions = 0;
+    if (iHold)          gpuOptions |= DRIVER::OPT_HoldFrame;
+    if (interlace)      gpuOptions |= DRIVER::OPT_Interlace;
+    if (suppressShader) gpuOptions |= DRIVER::OPT_DisallowShader;
+    if (isPause)        gpuOptions |= DRIVER::OPT_Pause;
+    if (rewind)         gpuOptions |= DRIVER::OPT_Rewind;
 
     if (needUpdateForAllInstances)
         updateAll();
@@ -418,22 +425,21 @@ template<typename T, uint8_t options> auto VideoManager::renderFrame(const T* sr
         }
     }
 
-    frameOptions &= ~0x80; // init lace toggle
-    if (frameOptions != ( (hires << 1) | interlace) ) {
-        frameOptions = 0;
-        if (interlace && ((frameOptions & 1) == 0) ) {
-            gpuOptions &= ~1; // prevent hold in first lace frame
-            frameOptions |= 0x80; // lace off -> on
+    if (options & (EmuRenderOpt::HRES_CHANGE | EmuRenderOpt::LACE_TOGGLE_ON) ) {
+        if (options & EmuRenderOpt::LACE_TOGGLE_ON ) {
+            //fprintf( stdout, "lace on\n" );
+            gpuOptions &= ~DRIVER::OPT_HoldFrame; // prevent hold in first lace frame
             iHold = false;
         }
+
+        //if (options & EmuRenderOpt::HRES_CHANGE )
+          //  fprintf( stdout, "res change\n" );
 
         auto appData = videoDriver->getAppData();
         if (appData) {
             appData->lace = (float)interlace;
             appData->hires = (float)hires;
         }
-
-        frameOptions |= (hires << 1) | interlace;
     }
 
     if (++frameRenderPos != frameRenderTrigger) {
@@ -462,7 +468,14 @@ template<typename T, uint8_t options> auto VideoManager::renderFrame(const T* sr
     }
 
     frameRenderPos = 0;
-    videoDriver->setIntegerScalingDimension( lores ? (width << 1) : (hires ? width : (width >> 1)), interlace ? height : (height << 1), shres | hires | interlace);
+
+    // to obtain correct proportions for native scaling in Productivity and Super72
+    // todo: solve this better
+    nonStandardV = nonStandardV && height > (400 << interlace);
+
+    videoDriver->setIntegerScalingDimension( lores ? (width << 1) : (hires ? width : (width >> 1)),
+        interlace ? (nonStandardV ? height >> 1 : height) : (nonStandardV ? height : (height << 1)),
+        shres | hires | interlace | nonStandardV);
 
     if (dmaColors) {
         gpuOptions |= (uint8_t)DRIVER::OPT_DisallowShader | (uint8_t)DRIVER::OPT_DisallowFilter;
@@ -470,7 +483,7 @@ template<typename T, uint8_t options> auto VideoManager::renderFrame(const T* sr
         if (!videoDriver->lock(gpuData, gpuPitch, width, height, gpuOptions))
             return;
 
-        renderToRgbWithDma<T, interlace, field>(width, height, src, srcPitch, gpuData, gpuPitch - width);
+        renderToRgbWithDma<T>(width, height, src, srcPitch, gpuData, gpuPitch - width, options);
 
     } else if (suppressShader) {
         goto Typical;
@@ -481,20 +494,20 @@ template<typename T, uint8_t options> auto VideoManager::renderFrame(const T* sr
             if (!videoDriver->lock(gpuData, gpuPitch, width, height, gpuOptions | (uint8_t)DRIVER::OPT_RGB10 ))
                 goto Typical;
 
-            renderToLumaChroma<T, interlace, field>(width, height, src, srcPitch, gpuData, gpuPitch - width, cropTop & 1);
+            renderToLumaChroma<T>(width, height, src, srcPitch, gpuData, gpuPitch - width, cropTop & 1, options);
 
         } else {
 Typical:
             if (!videoDriver->lock(gpuData, gpuPitch, width, height, gpuOptions))
                 return;
 
-            renderToRgb<T, interlace, field>(width, height, src, srcPitch, gpuData, gpuPitch - width);
+            renderToRgb<T>(width, height, src, srcPitch, gpuData, gpuPitch - width, options);
         }
 	} else { // old legacy CRT over CPU
         if (!videoDriver->lock(gpuData, gpuPitch, width, (scanlines && !interlace) ? (height << 1) : height, gpuOptions))
             return;
 
-        scVideo->renderCrt<T>(width, height, src, srcPitch, iHold ? nullptr : gpuData, gpuPitch - width, cropTop, getRenderOptions<options>());
+        scVideo->renderCrt<T>(width, height, src, srcPitch, iHold ? nullptr : gpuData, gpuPitch - width, cropTop, getRenderOptions(options));
 	}
 
     if (audioManager->lumaInterference.enabled)
@@ -503,7 +516,7 @@ Typical:
     videoDriver->unlockAndRedraw( );
 }
 
-template<typename T> auto VideoManager::takeScreenshot(unsigned unscaled, const T* _src, unsigned _width, unsigned _height, unsigned _pitch, uint8_t _options) -> void {
+template<typename T> auto VideoManager::takeScreenshot(unsigned unscaled, const T* _src, unsigned _width, unsigned _height, unsigned _pitch, unsigned _options) -> void {
     const T* _fT = _src;
 
     if (unscaled > 1) {
@@ -522,9 +535,9 @@ template<typename T> auto VideoManager::takeScreenshot(unsigned unscaled, const 
     unsigned h = _height;
 
     if (_options) {
-        bool interlace = _options & 3;
-        bool hires = _options & 4;
-        bool shres = _options & 8;
+        bool interlace = _options & EmuRenderOpt::LACE;
+        bool hires = _options & EmuRenderOpt::HIRES;
+        bool shres = _options & EmuRenderOpt::SHRES;
 
         if (shres && !interlace)
             _height <<= 2;
@@ -542,11 +555,11 @@ template<typename T> auto VideoManager::takeScreenshot(unsigned unscaled, const 
     delete[] _dest;
 }
 
-template<typename T, bool interlace, bool field> auto VideoManager::renderToRgbWithDma(unsigned width, unsigned height, const T* src, unsigned srcPitch, unsigned* dest, unsigned destPitch) -> void {
+template<typename T> auto VideoManager::renderToRgbWithDma(unsigned width, unsigned height, const T* src, unsigned srcPitch, unsigned* dest, unsigned destPitch, unsigned options) -> void {
     unsigned mask = (1 << countColorBits) - 1;
     uint8_t* dmaDump = emulator->getDmaDump();
     if (!dmaDump)
-        return renderToRgb<T, interlace, field>(width, height, src, srcPitch, dest, destPitch);
+        return renderToRgb<T>(width, height, src, srcPitch, dest, destPitch, options);
 
     unsigned color;
     unsigned dmaColor;
@@ -570,17 +583,18 @@ template<typename T, bool interlace, bool field> auto VideoManager::renderToRgbW
     }
 }
 
-template<typename T, bool interlace, bool field> inline auto VideoManager::renderToRgb(unsigned width, unsigned height, const T* src, unsigned srcPitch, unsigned* dest, unsigned destPitch) -> void {
+template<typename T> inline auto VideoManager::renderToRgb(unsigned width, unsigned height, const T* src, unsigned srcPitch, unsigned* dest, unsigned destPitch, unsigned options) -> void {
     unsigned mask = (1 << countColorBits) - 1;
 
-    if constexpr (interlace) {
+    if (options & EmuRenderOpt::LACE) {
         unsigned color;
         RGBDescriptor colorDecayed;
-        bool laceToggle = !!(frameOptions & 0x80);
+        bool laceToggleOn = options & EmuRenderOpt::LACE_TOGGLE_ON;
+        bool field = options & EmuRenderOpt::LACE_ODD;
         unsigned iRate = (100 - interlaceDecay); // simulate phosphor decay
-        if (laceToggle)
+        if (laceToggleOn)
             iRate = 100;
-        if (!laceToggle && !field && !interlaceFields) // hold -> update full frames only
+        if (!laceToggleOn && !field && !interlaceFields) // hold -> update full frames only
             return;
 
         for(unsigned h = 0; h < height; h++) {
@@ -648,20 +662,19 @@ auto VideoManager::sampleLuma(unsigned width, unsigned height, const uint8_t* sr
 #define screenshot3channel(x) { auto& _x = x; *dest++ = _x.r; *dest++ = _x.g; *dest++ = _x.b; }
 #define screenshot3channel2x(x) { auto& _x = x; *dest++ = _x.r; *dest++ = _x.g; *dest++ = _x.b; *dest++ = _x.r; *dest++ = _x.g; *dest++ = _x.b; }
 
-template<typename T> auto VideoManager::renderToScreenshot(unsigned width, unsigned height, const T* src, unsigned srcPitch, uint8_t* dest, uint8_t _options) -> void {
+template<typename T> auto VideoManager::renderToScreenshot(unsigned width, unsigned height, const T* src, unsigned srcPitch, uint8_t* dest, unsigned _options) -> void {
     unsigned mask = (1 << countColorBits) - 1;
-    bool interlace = _options & 3;
-    bool field = _options & 2;
-    bool hires = _options & 4;
-    bool shres = _options & 8;
+    bool interlace = _options & EmuRenderOpt::LACE;
+    bool field = _options & EmuRenderOpt::LACE_ODD;
+    bool hires = _options & EmuRenderOpt::HIRES;
+    bool shres = _options & EmuRenderOpt::SHRES;
 
     if (interlace) {
         bool repeatWidth = !hires && !shres;
         unsigned color;
         RGBDescriptor colorDecayed;
-        bool laceToggle = !!(frameOptions & 0x80);
         unsigned iRate = (100 - interlaceDecay); // simulate phosphor decay
-        if (laceToggle)
+        if (_options & EmuRenderOpt::LACE_TOGGLE_ON)
             iRate = 100;
 
         for (unsigned h = 0; h < height; h++) {
@@ -724,17 +737,19 @@ template<typename T> auto VideoManager::renderToScreenshot(unsigned width, unsig
 }
 #undef screenshot3channel
 
-template<typename T, bool interlace, bool field> auto VideoManager::renderToLumaChroma(unsigned width, unsigned height, const T* src, unsigned srcPitch, uint32_t* dest, unsigned destPitch, bool odd) -> void {
+template<typename T> auto VideoManager::renderToLumaChroma(unsigned width, unsigned height, const T* src, unsigned srcPitch, uint32_t* dest, unsigned destPitch, bool odd, unsigned options) -> void {
     T color;
     unsigned metaShift = countColorBits;
     unsigned mask = (1 << metaShift) - 1;
-    bool laceToggle = !!(frameOptions & 0x80);
+    bool laceToggleOn = options & EmuRenderOpt::LACE_TOGGLE_ON;
+    bool field = options & EmuRenderOpt::LACE_ODD;
+    bool interlace = options & EmuRenderOpt::LACE;
     uint32_t* colorTableRGB10;
 
-    if (interlace && !field && !laceToggle && !interlaceFields) // hold -> update full frames only
+    if (interlace && !field && !laceToggleOn && !interlaceFields) // hold -> update full frames only
         return;
 
-    if (interlace && !laceToggle) {
+    if (interlace && !laceToggleOn) {
         float iRate = (float)(100 - interlaceDecay);
         uint32_t _c;
         uint16_t _r, _g, _b;
@@ -910,25 +925,22 @@ inline auto VideoManager::uclamp10(double x) -> uint16_t {
     return std::min( std::max((int)(x + 0.5), 0), 1023 );
 }
 
-template<uint8_t options> auto VideoManager::getRenderOptions() -> unsigned {
+auto VideoManager::getRenderOptions(unsigned options) -> unsigned {
     unsigned out = 0;
-    constexpr bool interlace = options & 3;
-    constexpr bool field = options & 2;
-    constexpr bool hires = options & 4;
-    constexpr bool shres = options & 8;
+    bool interlace = options & EmuRenderOpt::LACE;
 
     if (scanlines && !interlace) out |= 1; // suppress user requested scanlines if software requests interlace
     if ((countColorBits == 4) && useLumaDelay()) out |= 2;
     if (interlace) {
-        bool laceToggle = !!(frameOptions & 0x80);
+        bool laceToggleOn = options & EmuRenderOpt::LACE_TOGGLE_ON;
         out |= 4;
-        if (laceToggle) out |= 64;
-        else if (field) out |= 8;
+        if (laceToggleOn) out |= 64;
+        else if (options & EmuRenderOpt::LACE_ODD) out |= 8;
 
-        if (!interlaceFields && !laceToggle) out |= 16;
+        if (!interlaceFields && !laceToggleOn) out |= 16;
     }
-    if (hires) out |= 32;
-    if (shres) out |= 0x100;
+    if (options & EmuRenderOpt::HIRES) out |= 32;
+    if (options & EmuRenderOpt::SHRES) out |= 0x100;
     return out;
 }
 
@@ -1444,28 +1456,8 @@ auto VideoManager::requestUpdate() -> void {
     needUpdateForAllInstances = true;
 }
 
-template auto VideoManager::renderFrame<uint8_t>(const uint8_t* src, unsigned width, unsigned height, unsigned srcPitch) -> void;
-template auto VideoManager::renderFrame<uint8_t, 0x10>(const uint8_t* src, unsigned width, unsigned height, unsigned srcPitch) -> void;
-
-template auto VideoManager::renderFrame<uint16_t, 0>(const uint16_t* src, unsigned width, unsigned height, unsigned srcPitch) -> void;
-template auto VideoManager::renderFrame<uint16_t, 1>(const uint16_t* src, unsigned width, unsigned height, unsigned srcPitch) -> void;
-template auto VideoManager::renderFrame<uint16_t, 2>(const uint16_t* src, unsigned width, unsigned height, unsigned srcPitch) -> void;
-template auto VideoManager::renderFrame<uint16_t, 4>(const uint16_t* src, unsigned width, unsigned height, unsigned srcPitch) -> void;
-template auto VideoManager::renderFrame<uint16_t, 5>(const uint16_t* src, unsigned width, unsigned height, unsigned srcPitch) -> void;
-template auto VideoManager::renderFrame<uint16_t, 6>(const uint16_t* src, unsigned width, unsigned height, unsigned srcPitch) -> void;
-template auto VideoManager::renderFrame<uint16_t, 8>(const uint16_t* src, unsigned width, unsigned height, unsigned srcPitch) -> void;
-template auto VideoManager::renderFrame<uint16_t, 9>(const uint16_t* src, unsigned width, unsigned height, unsigned srcPitch) -> void;
-template auto VideoManager::renderFrame<uint16_t, 10>(const uint16_t* src, unsigned width, unsigned height, unsigned srcPitch) -> void;
-
-template auto VideoManager::renderFrame<uint16_t, 0x10 | 0>(const uint16_t* src, unsigned width, unsigned height, unsigned srcPitch) -> void;
-template auto VideoManager::renderFrame<uint16_t, 0x10 | 1>(const uint16_t* src, unsigned width, unsigned height, unsigned srcPitch) -> void;
-template auto VideoManager::renderFrame<uint16_t, 0x10 | 2>(const uint16_t* src, unsigned width, unsigned height, unsigned srcPitch) -> void;
-template auto VideoManager::renderFrame<uint16_t, 0x10 | 4>(const uint16_t* src, unsigned width, unsigned height, unsigned srcPitch) -> void;
-template auto VideoManager::renderFrame<uint16_t, 0x10 | 5>(const uint16_t* src, unsigned width, unsigned height, unsigned srcPitch) -> void;
-template auto VideoManager::renderFrame<uint16_t, 0x10 | 6>(const uint16_t* src, unsigned width, unsigned height, unsigned srcPitch) -> void;
-template auto VideoManager::renderFrame<uint16_t, 0x10 | 8>(const uint16_t* src, unsigned width, unsigned height, unsigned srcPitch) -> void;
-template auto VideoManager::renderFrame<uint16_t, 0x10 | 9>(const uint16_t* src, unsigned width, unsigned height, unsigned srcPitch) -> void;
-template auto VideoManager::renderFrame<uint16_t, 0x10 | 10>(const uint16_t* src, unsigned width, unsigned height, unsigned srcPitch) -> void;
+template auto VideoManager::renderFrame<uint8_t>(const uint8_t* src, unsigned width, unsigned height, unsigned srcPitch, unsigned options) -> void;
+template auto VideoManager::renderFrame<uint16_t>(const uint16_t* src, unsigned width, unsigned height, unsigned srcPitch, unsigned options) -> void;
 
 template auto VideoManager::updateData<bool>(std::string ident, bool data) -> void;
 template auto VideoManager::updateData<int>(std::string ident, int data) -> void;
