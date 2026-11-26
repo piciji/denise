@@ -269,7 +269,9 @@ auto M68Core::dasmMoveQ( uint16_t opcode, uint32_t& adr, DasmHandler& d ) -> voi
 template<uint8_t Inst, uint8_t Size>
 auto M68Core::dasmBcc( uint16_t opcode, uint32_t& adr, DasmHandler& d ) -> void {
     uint32_t _adr = adr + 2;
-    _adr += (Size == Word ? (int16_t) peekInc<Word>( adr, d ) : (int8_t) (opcode & 0xff));
+    if constexpr (Size == Byte) _adr += (int8_t) (opcode & 0xff);
+    if constexpr (Size == Word) _adr += (int16_t) peekInc<Word>( adr, d );
+    if constexpr (Size == Long) _adr = (int64_t)_adr + (int64_t)(int32_t)peekInc<Long>( adr, d );
 
     d.Ins( Inst ).sis( Size ).tab().hex( _adr );
 }
