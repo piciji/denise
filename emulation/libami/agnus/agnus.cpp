@@ -374,7 +374,7 @@ auto Agnus::prepareOverclock() -> void {
     o.fastWaitStates = 0;
     o.eClockShifter = 0;
 
-    if (!o.speedInternal) // A500 stock speed has a values of 0 (means: 2), A1200 stock speed has a value of 4
+    if (!o.speedInternal) // A500 stock speed has a value of 0 (means: 2), A1200 stock speed has a value of 4
         return;
 
     o.eClockShifter = o.speedInternal >> 2;
@@ -429,7 +429,10 @@ auto Agnus::prepareOverclock() -> void {
                 o.romWaitStates = 14;
                 break;
         }
-        o.syncAgnus = o.speedInternal - 1; // minimum access cycle is 1 CPU clock
+        // When determining the number of wait states, Alice takes into account the CPU cycle
+        // used for data transfer. A 68020 turbo card connected to Agnus does not receive this information
+        // and therefore waits until the DMA cycle has completed.
+        o.syncAgnus = o.speedInternal - (!aga() ? 0 : 1); // minimum access cycle is 1 CPU clock
     }
 
     // for maximum speed there are no fastram wait states for overclocked CPU's
