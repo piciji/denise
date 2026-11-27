@@ -770,7 +770,7 @@ template<M68Core::Engine E, uint8_t Mode, uint8_t Size, unsigned Flags> auto M68
             if constexpr (E == Engine::M68020) {
                 if constexpr ((Flags & EACalc) == 0) {
                     busCycles -= prefetchLast() ? 3 : 2;
-                    syncInternal<CheckIfPipeRunsDry>();
+                    syncInternal();
                 } else
                     busCycles -= prefetchLast() ? 1 : 2;
             }
